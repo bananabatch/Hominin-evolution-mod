@@ -13,8 +13,8 @@
         "count": 3
       },
       {
-        "id": "scavenge_carcasses",
-        "description": "Successfully scavenge and process 5 carcasses.",
+        "id": "scavenge_bones",
+        "description": "Crack open and extract the marrow from 5 scavenged long bones.",
         "count": 5
       },
       {

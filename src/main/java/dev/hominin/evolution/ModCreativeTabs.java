@@ -17,13 +17,20 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hominin_evolution"))
                     .icon(() -> new ItemStack(ModItems.FLAKE.get()))
                     .displayItems((parameters, output) -> {
+                        output.accept(ModItems.ROCK.get());
+                        output.accept(ModItems.GRINDING_ROCK.get());
                         output.accept(ModItems.FLAKE.get());
                         output.accept(ModItems.CHOPPER.get());
                         output.accept(ModItems.HAMMERSTONE.get());
+                        output.accept(ModItems.DIGGING_STICK.get());
+                        output.accept(ModItems.LONG_BRANCH.get());
+                        output.accept(ModItems.SHARPENED_STICK.get());
+                        output.accept(ModItems.SHARPENED_SPEAR.get());
                         output.accept(ModItems.GRUB.get());
                         output.accept(ModItems.BEETLE.get());
                         output.accept(ModItems.EARTHWORM.get());
-                        output.accept(ModItems.CARCASS.get());
+                        output.accept(ModItems.LONG_BONE.get());
+                        output.accept(ModItems.BONE_MARROW.get());
                     })
                     .build());
 

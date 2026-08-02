@@ -1,0 +1,22 @@
+{
+  "type": "hominin_evolution:shapeless_transforming",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "hominin_evolution:long_branch"
+    },
+    {
+      "item": "hominin_evolution:rock"
+    }
+  ],
+  "transform": {
+    "hominin_evolution:rock": "hominin_evolution:grinding_rock"
+  },
+  "result": {
+    "id": "hominin_evolution:sharpened_spear",
+    "count": 1,
+    "components": {
+      "minecraft:max_damage": 60
+    }
+  }
+}

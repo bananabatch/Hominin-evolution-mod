@@ -1,0 +1,24 @@
+{
+  "display_name": "Homo erectus",
+  "gate": {
+    "required": {
+      "id": "erectus_placeholder",
+      "description": "Homo erectus content is not built yet.",
+      "count": 1
+    },
+    "optional_pool": [],
+    "choose": 0
+  },
+  "milestone": {
+    "type": "hominin_evolution:erectus_placeholder",
+    "description": "Homo erectus content is not built yet."
+  },
+  "behaviors_gained": [
+    "Fire and cooked food",
+    "Hafted tools (Acheulean hand axe)",
+    "Persistence hunting"
+  ],
+  "behaviors_lost": [
+    "Obligate tree sleeping"
+  ]
+}

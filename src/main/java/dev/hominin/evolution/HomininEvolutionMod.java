@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import dev.hominin.evolution.command.HomininCommand;
+import dev.hominin.evolution.event.BlockBreakHandler;
 import dev.hominin.evolution.event.EvolutionEventHandler;
+import dev.hominin.evolution.recipe.ModRecipeSerializers;
 import dev.hominin.evolution.stage.BuiltinMilestones;
 import dev.hominin.evolution.stage.StageDefinitionReloadListener;
 import net.neoforged.bus.api.IEventBus;
@@ -23,6 +25,7 @@ public class HomininEvolutionMod {
         Attachments.ATTACHMENT_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
+        ModRecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
 
         BuiltinMilestones.bootstrap();
 
@@ -31,7 +34,13 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinishUsingItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onItemCrafted);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickItem);
+        NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onAttackEntity);
+        NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onPlayerLoggedOut);
+        NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockBreak);
+        NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(HomininCommand::onRegisterCommands);
     }
 }

@@ -57,6 +57,20 @@ public final class EvolutionManager {
         }
     }
 
+    /**
+     * Whether performing this milestone act right now would actually evolve the player.
+     * Lets a caller offer an ordinary use of an interaction instead of nagging about
+     * a gate that is not open yet.
+     */
+    public static boolean isReadyForMilestone(ServerPlayer player, ResourceLocation milestoneType) {
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        StageDefinition stage = StageRegistry.get(data.getStage());
+        return stage != null
+                && stage.milestone().type().equals(milestoneType)
+                && stage.nextStage().isPresent()
+                && isGateReady(data, stage);
+    }
+
     public static boolean attemptMilestone(ServerPlayer player, ResourceLocation milestoneType) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         StageDefinition stage = StageRegistry.get(data.getStage());

@@ -1,10 +1,17 @@
 {
   "itemGroup.hominin_evolution": "Hominin Evolution",
+  "item.hominin_evolution.rock": "Rock",
+  "item.hominin_evolution.grinding_rock": "Grinding Rock",
   "item.hominin_evolution.flake": "Flake",
   "item.hominin_evolution.chopper": "Chopper",
   "item.hominin_evolution.hammerstone": "Hammerstone",
+  "item.hominin_evolution.digging_stick": "Digging Stick",
+  "item.hominin_evolution.long_branch": "Long Branch",
+  "item.hominin_evolution.sharpened_stick": "Sharpened Stick",
+  "item.hominin_evolution.sharpened_spear": "Sharpened Spear",
   "item.hominin_evolution.grub": "Grub",
   "item.hominin_evolution.beetle": "Beetle",
   "item.hominin_evolution.earthworm": "Earthworm",
-  "item.hominin_evolution.carcass": "Carcass"
+  "item.hominin_evolution.long_bone": "Long Bone",
+  "item.hominin_evolution.bone_marrow": "Bone Marrow"
 }
