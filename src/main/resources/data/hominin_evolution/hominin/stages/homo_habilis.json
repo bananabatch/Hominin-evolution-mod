@@ -1,0 +1,43 @@
+{
+  "display_name": "Homo habilis",
+  "gate": {
+    "required": {
+      "id": "notice_fire_source",
+      "description": "Locate a natural fire source (lightning strike, wildfire, lava) without using it.",
+      "count": 1
+    },
+    "optional_pool": [
+      {
+        "id": "craft_oldowan_tools",
+        "description": "Craft and use at least 3 distinct Oldowan-tier stone tools.",
+        "count": 3
+      },
+      {
+        "id": "scavenge_carcasses",
+        "description": "Successfully scavenge and process 5 carcasses.",
+        "count": 5
+      },
+      {
+        "id": "cold_biome_edge",
+        "description": "Find/reach a colder or more exposed biome edge and turn back once.",
+        "count": 1
+      },
+      {
+        "id": "ground_night_survival",
+        "description": "Survive a night without tree cover at least once, relying on group vigilance.",
+        "count": 1
+      }
+    ],
+    "choose": 3
+  },
+  "milestone": {
+    "type": "hominin_evolution:fire_transfer",
+    "description": "Successfully transfer/capture fire from a natural source into a sustainable form for the first time."
+  },
+  "next_stage": "hominin_evolution:homo_erectus",
+  "behaviors_gained": [
+    "Stone knapping unlocked (Oldowan tier)",
+    "Scavenged meat now allowed"
+  ],
+  "behaviors_lost": []
+}

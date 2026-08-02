@@ -46,7 +46,7 @@ displayName="${mod_name}" #mandatory
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Example mod description.
+A NeoForge survival challenge mod: progress your player character through the stages of hominin evolution, from Australopithecus through Homo habilis, erectus, heidelbergensis, and a fork into Homo sapiens or Homo neanderthalensis, gated by readiness criteria and deliberate milestone actions.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
