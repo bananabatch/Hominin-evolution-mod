@@ -151,6 +151,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     // Adrenaline: fight, flight, or freeze.
     private static final int ADRENALINE_COOLDOWN = 5 * 60 * 20;
     private static final int ADRENALINE_TICKS = 20 * 20;
+    /** How long the first sprint of a flight lasts before it settles into a run. */
+    private static final int PANIC_BURST_TICKS = 5 * 20;
     private static final float FREEZE_CHANCE = 0.12F;
     private static final int FREEZE_TICKS = 100;
     /** How long a freeze goes on before the band notices. */
@@ -1681,8 +1683,12 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             updateHands();
             Band.announceDiscovery(this, "'s blood is up - they turn and fight!");
         } else {
+            // The same shape as a struck animal's flight: a burst nothing can follow, then a
+            // longer, slower run. Twenty seconds of Speed II made a frightened member vanish.
             addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, ADRENALINE_TICKS, 1));
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, ADRENALINE_TICKS, 0));
+            addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, PANIC_BURST_TICKS, 1));
             panicking = true;
             fleeTicks = ADRENALINE_TICKS;
             defendTicks = 0;
