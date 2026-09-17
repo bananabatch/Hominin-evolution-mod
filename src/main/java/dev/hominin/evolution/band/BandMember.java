@@ -77,6 +77,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     /** Synced so the talk menu knows it is facing another band. */
     private static final EntityDataAccessor<Boolean> WILD =
             SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
+    /** Synced for the climbing animation: hauling itself up a wall or cliff. */
+    private static final EntityDataAccessor<Boolean> WALL_CLIMBING =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
 
     /** Entity event: play the threat display animation on clients. */
     public static final byte DISPLAY_EVENT = 64;
@@ -118,7 +121,52 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private static final String[] SYLLABLES = {"ka", "nu", "ba", "mo", "ti", "ra", "ku", "sha", "do", "le",
             "ma", "gu", "ri", "ya", "zo", "en", "ok", "wa", "hu", "ji"};
 
-    private final SimpleContainer inventory = new SimpleContainer(8);
+    /** Nine things in all, like a hotbar: two hands and seven carried. */
+    public static final int PACK_SLOTS = 7;
+    private final SimpleContainer inventory = new SimpleContainer(PACK_SLOTS);
+
+    /** Tools that help dig for insects, best last. */
+    private static final List<Supplier<Item>> FORAGING_TOOLS = List.of(
+            () -> net.minecraft.world.item.Items.STICK, ModItems.SHARPENED_STICK, ModItems.DIGGING_STICK);
+
+    /** What the hands are wanted for, set by whatever the member is busy with. */
+    public enum HandTask {
+        NONE, FORAGE, FISH
+    }
+
+    private HandTask handTask = HandTask.NONE;
+    /** Heard the band's alarm or display: arm up for a while. */
+    private int alarmTicks;
+    /** Something hunted this member. Once it is safe, a stick gets a point on it. */
+    private boolean sharpenUrge;
+    private boolean predatorNearby;
+
+    // Adrenaline: fight, flight, or freeze.
+    private static final int ADRENALINE_COOLDOWN = 5 * 60 * 20;
+    private static final int ADRENALINE_TICKS = 20 * 20;
+    private static final float FREEZE_CHANCE = 0.12F;
+    private static final int FREEZE_TICKS = 100;
+    /** How long a freeze goes on before the band notices. */
+    private static final int FREEZE_NOTICED_AFTER = 60;
+    private long adrenalineReadyAt;
+    private long fightingUntil;
+    private boolean panicking;
+    private int freezeTicks;
+    @Nullable
+    private LivingEntity freezeThreat;
+
+    // Fission-fusion: which party of the band this member is in today. 0 stays with the leader.
+    private int party;
+    @Nullable
+    private UUID partyHead;
+
+    // Wall climbing when the way is blocked.
+    private boolean wallClimbing;
+    private double wallClimbStartY;
+    private int stuckTicks;
+    private int wallClimbCooldown;
+    @Nullable
+    private BlockPos unreachableTarget;
     @Nullable
     private UUID leader;
     @Nullable
@@ -204,6 +252,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         super(type, level);
         setCanPickUpLoot(true);
         setDropChance(EquipmentSlot.MAINHAND, 1.0F);
+        setDropChance(EquipmentSlot.OFFHAND, 1.0F);
         female = random.nextBoolean();
     }
 
@@ -222,17 +271,21 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         builder.define(BABY, false);
         builder.define(CLIMBING, false);
         builder.define(WILD, false);
+        builder.define(WALL_CLIMBING, false);
     }
 
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new dev.hominin.evolution.band.goal.FreezeGoal(this));
         goalSelector.addGoal(1, new FleeToTreeGoal(this));
         goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.WrestleGoal(this));
         goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.FetchGoal(this));
         goalSelector.addGoal(3, new ArmSelfGoal(this));
         goalSelector.addGoal(4, new GatherItemsGoal(this));
+        goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SharpenStickGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TermiteFishGoal(this));
         goalSelector.addGoal(5, new ForageGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TinkerGoal(this));
@@ -368,6 +421,16 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             }
         }
         Player player = companionPlayer();
+        if (player != null && party > 0 && partyHead != null && level() instanceof ServerLevel server) {
+            // Off with a party for the day: keep with its head, who keeps within reach of the leader.
+            if (!partyHead.equals(getUUID())) {
+                if (server.getEntity(partyHead) instanceof BandMember head && head.isAlive() && head.party == party) {
+                    return head;
+                }
+            } else if (distanceToSqr(player) < PARTY_LEASH * PARTY_LEASH) {
+                return null;
+            }
+        }
         if (player != null) {
             return player;
         }
@@ -376,6 +439,23 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             return alphaMember;
         }
         return null;
+    }
+
+    /** How far a party's head lets the leader get before walking back towards them. */
+    public static final double PARTY_LEASH = 30.0D;
+
+    public int getParty() {
+        return party;
+    }
+
+    public void joinParty(int party, @Nullable UUID head) {
+        this.party = party;
+        this.partyHead = party == 0 ? null : head;
+    }
+
+    /** A party's head stops well short of the leader: it only means to stay in reach. */
+    public float followStopDistance(LivingEntity target, float normal) {
+        return party > 0 && target instanceof Player && getUUID().equals(partyHead) ? 18.0F : normal;
     }
 
     public boolean isFemale() {
@@ -452,6 +532,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public boolean hasFood() {
+        if (getOffhandItem().has(DataComponents.FOOD)) {
+            return true;
+        }
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             if (inventory.getItem(slot).has(DataComponents.FOOD)) {
                 return true;
@@ -461,6 +544,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     private boolean eatFromInventory() {
+        ItemStack inHand = getOffhandItem();
+        FoodProperties handFood = inHand.get(DataComponents.FOOD);
+        if (handFood != null) {
+            consume(handFood);
+            inHand.shrink(1);
+            return true;
+        }
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack stack = inventory.getItem(slot);
             FoodProperties food = stack.get(DataComponents.FOOD);
@@ -471,6 +561,63 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             }
         }
         return false;
+    }
+
+    private static final int EATING_TICKS = 32;
+    private int eatingTicks;
+
+    /** Food to the off hand, and start chewing - the way a player eats, not in one gulp. */
+    private void startEating() {
+        if (isBaby()) {
+            eatFromInventory();
+            return;
+        }
+        if (!getOffhandItem().has(DataComponents.FOOD)) {
+            int foodSlot = -1;
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                if (inventory.getItem(slot).has(DataComponents.FOOD)) {
+                    foodSlot = slot;
+                    break;
+                }
+            }
+            if (foodSlot < 0) {
+                return;
+            }
+            ItemStack previous = getOffhandItem();
+            setItemSlot(EquipmentSlot.OFFHAND, inventory.removeItemNoUpdate(foodSlot));
+            if (!previous.isEmpty()) {
+                ItemStack left = inventory.addItem(previous);
+                if (!left.isEmpty()) {
+                    spawnAtLocation(left);
+                }
+            }
+        }
+        eatingTicks = EATING_TICKS;
+    }
+
+    private void tickEating() {
+        ItemStack food = getOffhandItem();
+        FoodProperties properties = food.get(DataComponents.FOOD);
+        if (properties == null) {
+            eatingTicks = 0;
+            return;
+        }
+        if (eatingTicks % 4 == 0) {
+            playSound(SoundEvents.GENERIC_EAT, 0.5F + 0.5F * random.nextInt(2),
+                    (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F);
+            if (level() instanceof ServerLevel server) {
+                net.minecraft.world.phys.Vec3 mouth = getEyePosition().add(getLookAngle().scale(0.35D)).subtract(0.0D, 0.15D, 0.0D);
+                server.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, food),
+                        mouth.x, mouth.y, mouth.z, 3, 0.08D, 0.05D, 0.08D, 0.03D);
+            }
+        }
+        if (eatingTicks % 8 == 0) {
+            swing(InteractionHand.OFF_HAND);
+        }
+        if (--eatingTicks == 0) {
+            consume(properties);
+            food.shrink(1);
+        }
     }
 
     private void consume(FoodProperties food) {
@@ -517,16 +664,70 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return -1;
     }
 
+    /** Holding a weapon, ready to use. */
     public boolean hasWeapon() {
         return isWeapon(getMainHandItem());
     }
 
-    /** Food, and things to hit with. Stone and wood for making are left for the player. */
+    /** Has a weapon somewhere - in hand or carried. */
+    public boolean carriesWeapon() {
+        return bestWeaponRank() >= 0;
+    }
+
+    /** Food, and things to hit with, and a stick or two for termites. The rest is left for the player. */
     @Override
     public boolean wantsToPickUp(ItemStack stack) {
         boolean useful = stack.has(DataComponents.FOOD) || isWeapon(stack)
+                || (stack.is(net.minecraft.world.item.Items.STICK) && countCarried(s -> s.is(stack.getItem())) < 2)
                 || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this) && wantsMaterial(stack));
-        return useful && inventory.canAddItem(stack);
+        return useful && hasRoomFor(stack);
+    }
+
+    /** What a thing is worth keeping, to this member: its trade worth to its own kind. */
+    private int keepValue(ItemStack stack) {
+        int value = Trading.valueOf(stack, getStage());
+        if (stack.is(net.minecraft.world.item.Items.STICK)) {
+            // A stick is for termites and sharpening: worth more than it trades for.
+            value += 5;
+        }
+        if (stack.has(DataComponents.FOOD) && isHungry()) {
+            value += 10;
+        }
+        return value;
+    }
+
+    /** The carried slot that would be given up first for something better, or -1 if none. */
+    private int leastValuableSlot() {
+        int worst = -1;
+        int worstValue = Integer.MAX_VALUE;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.isEmpty() && keepValue(stack) < worstValue) {
+                worstValue = keepValue(stack);
+                worst = slot;
+            }
+        }
+        return worst;
+    }
+
+    /** Room for it now, or something worth less that could be dropped to make room. */
+    public boolean hasRoomFor(ItemStack stack) {
+        if (inventory.canAddItem(stack)) {
+            return true;
+        }
+        int worst = leastValuableSlot();
+        return worst >= 0 && keepValue(inventory.getItem(worst)) < keepValue(stack);
+    }
+
+    /** Hands full: drops the least valuable thing carried, if the new one is worth more. */
+    private void makeRoomFor(ItemStack stack) {
+        if (inventory.canAddItem(stack)) {
+            return;
+        }
+        int worst = leastValuableSlot();
+        if (worst >= 0 && keepValue(inventory.getItem(worst)) < keepValue(stack)) {
+            spawnAtLocation(inventory.removeItemNoUpdate(worst));
+        }
     }
 
     /** Makers keep a little raw material: a couple of sticks, a few stones, a flake. */
@@ -580,11 +781,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     @Override
     protected void pickUpItem(ItemEntity itemEntity) {
+        makeRoomFor(itemEntity.getItem());
         InventoryCarrier.pickUpItem(this, this, itemEntity);
         equipBestWeapon();
     }
 
     public void addToInventory(ItemStack stack) {
+        makeRoomFor(stack);
         ItemStack left = inventory.addItem(stack);
         if (!left.isEmpty()) {
             spawnAtLocation(left);
@@ -592,25 +795,104 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         equipBestWeapon();
     }
 
-    /** Holds the best weapon carried, putting a worse one back in the pack. */
+    /** Puts the right thing in each hand for what is going on. */
     public void equipBestWeapon() {
-        if (isBaby()) {
+        updateHands();
+    }
+
+    public void setHandTask(HandTask task) {
+        if (handTask != task) {
+            handTask = task;
+            updateHands();
+        }
+    }
+
+    /** The band is alarmed - a display, or a call for help: have something to fight with in hand. */
+    public void raiseAlarm(int ticks) {
+        alarmTicks = Math.max(alarmTicks, ticks);
+        updateHands();
+    }
+
+    /** Hurt, under attack, alarmed, or a predator close by. */
+    public boolean inDanger() {
+        return fleeTicks > 0 || defendTicks > 0 || alarmTicks > 0 || getTarget() != null
+                || getHealth() < getMaxHealth() * 0.5F || predatorNearby;
+    }
+
+    private void lookForPredators() {
+        predatorNearby = !level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, getBoundingBox().inflate(10.0D),
+                mob -> mob.isAlive() && (mob.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)
+                        || (mob instanceof net.minecraft.world.entity.monster.Enemy && mob.getTarget() != null))).isEmpty();
+    }
+
+    /**
+     * The hands follow the situation. In danger, the best weapon. Foraging, something to dig
+     * with; fishing, the stick. Otherwise a weapon if there is one, or the best tool. And a
+     * hungry member keeps food ready in the other hand.
+     */
+    public void updateHands() {
+        if (isBaby() || level().isClientSide()) {
             return;
         }
+        if (inDanger()) {
+            wieldBest(BandMember::weaponRank);
+        } else if (handTask == HandTask.FORAGE) {
+            wieldBest(BandMember::foragingRank);
+        } else if (handTask == HandTask.FISH) {
+            wieldBest(s -> s.is(net.minecraft.world.item.Items.STICK) ? 0 : -1);
+        } else {
+            // Nothing to do: carry the most valuable thing, where it can be seen.
+            ResourceLocation stage = getStage();
+            wieldBest(s -> s.isEmpty() || s.has(DataComponents.FOOD) ? -1 : Trading.valueOf(s, stage));
+        }
+        ItemStack off = getOffhandItem();
+        if (off.isEmpty() && isHungry()) {
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                if (inventory.getItem(slot).has(DataComponents.FOOD)) {
+                    setItemSlot(EquipmentSlot.OFFHAND, inventory.removeItemNoUpdate(slot));
+                    break;
+                }
+            }
+        } else if (!off.isEmpty() && (!isHungry() || !off.has(DataComponents.FOOD)) && inventory.canAddItem(off)) {
+            setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+            inventory.addItem(off);
+        }
+    }
+
+    private static int foragingRank(ItemStack stack) {
+        for (int i = 0; i < FORAGING_TOOLS.size(); i++) {
+            if (stack.is(FORAGING_TOOLS.get(i).get())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** How much the held tool helps turn up insects: nothing for bare hands. */
+    public float foragingBonus() {
+        return switch (foragingRank(getMainHandItem())) {
+            case 0, 1 -> 0.15F;
+            case 2 -> 0.25F;
+            default -> 0.0F;
+        };
+    }
+
+    /** Swaps the best-ranked carried thing into the main hand, if it beats what is there. */
+    private void wieldBest(java.util.function.ToIntFunction<ItemStack> rank) {
         int bestSlot = -1;
-        int bestRank = weaponRank(getMainHandItem());
+        int bestRank = rank.applyAsInt(getMainHandItem());
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            int rank = weaponRank(inventory.getItem(slot));
-            if (rank > bestRank) {
-                bestRank = rank;
+            int r = rank.applyAsInt(inventory.getItem(slot));
+            if (r > bestRank) {
+                bestRank = r;
                 bestSlot = slot;
             }
         }
         if (bestSlot < 0) {
-            holdSomethingUseful();
             return;
         }
-        ItemStack chosen = inventory.removeItem(bestSlot, 1);
+        ItemStack stored = inventory.getItem(bestSlot);
+        ItemStack chosen = stored.getCount() > 1 ? stored.split(1) : inventory.removeItemNoUpdate(bestSlot);
         ItemStack previous = getMainHandItem();
         setItemSlot(EquipmentSlot.MAINHAND, chosen);
         if (!previous.isEmpty()) {
@@ -791,6 +1073,14 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     public void clearReady() {
         readyTicks = 0;
+    }
+
+    public boolean wantsToSharpen() {
+        return sharpenUrge;
+    }
+
+    public void sharpened() {
+        sharpenUrge = false;
     }
 
     // ------------------------------------------------------------ wrestling
@@ -1070,7 +1360,15 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         if (hurt && !level().isClientSide() && source.getEntity() instanceof LivingEntity attacker
                 && !(attacker instanceof Player)) {
-            if (!hasWeapon() || isBaby()) {
+            if (!(attacker instanceof BandMember)) {
+                sharpenUrge = true;
+            }
+            adrenaline(attacker);
+            raiseAlarm(100);
+            if (freezeTicks > 0 || isFighting() || panicking) {
+                return hurt;
+            }
+            if (!carriesWeapon() || isBaby()) {
                 if (!isBaby() && random.nextFloat() < ARM_INSTEAD_OF_FLEE) {
                     armUrgencyTicks = 200;
                 } else {
@@ -1099,7 +1397,177 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public boolean shouldFlee() {
-        return fleeTicks > 0 && (isBaby() || (!hasWeapon() && !isDefending()));
+        return fleeTicks > 0 && freezeTicks <= 0 && (isBaby() || panicking || (!carriesWeapon() && !isDefending()));
+    }
+
+    // ------------------------------------------------------------ adrenaline
+
+    /** Flight fired: run for a tree - or, at erectus and later, for the safety of the band. */
+    public boolean fleesToSafety() {
+        String stage = getStage().getPath();
+        return !stage.equals("ardipithecus") && !stage.equals("australopithecus") && !stage.equals("homo_habilis");
+    }
+
+    /** Fight fired: stronger, tougher, and more likely to do real harm with each blow. */
+    public boolean isFighting() {
+        return level().getGameTime() < fightingUntil;
+    }
+
+    public boolean isFrozen() {
+        return freezeTicks > 0;
+    }
+
+    /**
+     * Something has come for this member. Once in five minutes the body answers for it:
+     * fight - strength and resistance, and blows that tear and crack - or flight, a burst
+     * of speed away. Now and then neither: it freezes, and the band has to come for it.
+     */
+    public void adrenaline(LivingEntity threat) {
+        long now = level().getGameTime();
+        if (isBaby() || now < adrenalineReadyAt || !threat.isAlive() || threat instanceof Player) {
+            return;
+        }
+        adrenalineReadyAt = now + ADRENALINE_COOLDOWN;
+        if (random.nextFloat() < FREEZE_CHANCE) {
+            freezeTicks = FREEZE_TICKS;
+            freezeThreat = threat;
+            getNavigation().stop();
+            Band.announceDiscovery(this, " freezes in terror!");
+            return;
+        }
+        float fightChance = carriesWeapon() ? 0.65F : 0.35F;
+        if (random.nextFloat() < fightChance) {
+            fightingUntil = now + ADRENALINE_TICKS;
+            addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, ADRENALINE_TICKS, 1));
+            addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, ADRENALINE_TICKS, 0));
+            panicking = false;
+            fleeTicks = 0;
+            defendTicks = DEFEND_TICKS;
+            setTarget(threat);
+            updateHands();
+            Band.announceDiscovery(this, "'s blood is up - they turn and fight!");
+        } else {
+            addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, ADRENALINE_TICKS, 1));
+            panicking = true;
+            fleeTicks = ADRENALINE_TICKS;
+            defendTicks = 0;
+            setTarget(null);
+            Band.announceDiscovery(this, " bolts in a panic!");
+        }
+    }
+
+    private void tickFreeze() {
+        if (freezeTicks <= 0) {
+            return;
+        }
+        freezeTicks--;
+        if (FREEZE_TICKS - freezeTicks == FREEZE_NOTICED_AFTER && freezeThreat != null && freezeThreat.isAlive()) {
+            Band.rushToDefend(this, freezeThreat);
+        }
+        if (freezeTicks == 0) {
+            freezeThreat = null;
+            fleeTicks = Math.max(fleeTicks, 200);
+        }
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        if (hit && target instanceof LivingEntity living && !(target instanceof Player)) {
+            float bonus = isFighting() ? 0.25F : 0.0F;
+            dev.hominin.evolution.combat.WoundHandler.cutBy(this, getMainHandItem(), living, bonus);
+            dev.hominin.evolution.combat.HeadTraumaHandler.bludgeonBy(this, getMainHandItem(), living, bonus);
+        }
+        return hit;
+    }
+
+    // ------------------------------------------------------------ getting over walls
+
+    public boolean isWallClimbing() {
+        return entityData.get(WALL_CLIMBING);
+    }
+
+    /** Leaves give way to a hominin up a tree or a wall, and to one just dropping out of the canopy. */
+    public boolean phasesThroughLeaves() {
+        return isClimbingTree() || wallClimbing || safeLandingTicks > 0;
+    }
+
+    /**
+     * Blocked, and still trying to get somewhere: climb. Pushing into a wall for a moment,
+     * or standing below a place the path could not reach, starts it; like the player, a
+     * member can haul itself up four blocks of anything before it has to let go.
+     */
+    private void tickWallClimb() {
+        if (isClimbingTree() || isInWater() || isPassenger() || freezeTicks > 0) {
+            stopWallClimb(false);
+            return;
+        }
+        net.minecraft.world.level.pathfinder.Path path = getNavigation().getPath();
+        if (path != null && !path.canReach() && path.getTarget().getY() > getBlockY()) {
+            unreachableTarget = path.getTarget();
+        }
+        net.minecraft.world.phys.Vec3 ahead = net.minecraft.world.phys.Vec3.directionFromRotation(0.0F, getYRot());
+        if (wallClimbing) {
+            resetFallDistance();
+            if (unreachableTarget != null) {
+                getMoveControl().setWantedPosition(unreachableTarget.getX() + 0.5D, unreachableTarget.getY(),
+                        unreachableTarget.getZ() + 0.5D, 1.0D);
+            } else {
+                getMoveControl().setWantedPosition(getX() + ahead.x * 2.0D, getY() + 1.0D, getZ() + ahead.z * 2.0D, 1.0D);
+            }
+            if (!horizontalCollision) {
+                // Over the top: a last shove onto the ledge.
+                setDeltaMovement(ahead.x * 0.25D, Math.max(getDeltaMovement().y, 0.1D), ahead.z * 0.25D);
+                stopWallClimb(false);
+            } else if (getY() - wallClimbStartY >= dev.hominin.evolution.climb.Climbing.WALL_CLIMB_LIMIT) {
+                stopWallClimb(true);
+            }
+            return;
+        }
+        if (wallClimbCooldown > 0) {
+            wallClimbCooldown--;
+            stuckTicks = 0;
+            return;
+        }
+        boolean trying = !getNavigation().isDone() || getMoveControl().hasWanted();
+        if (getNavigation().isDone() && unreachableTarget != null) {
+            double dx = unreachableTarget.getX() + 0.5D - getX();
+            double dz = unreachableTarget.getZ() + 0.5D - getZ();
+            double flat = dx * dx + dz * dz;
+            if (unreachableTarget.getY() > getY() + 0.5D && flat < 12.0D * 12.0D && flat > 0.5D) {
+                getMoveControl().setWantedPosition(unreachableTarget.getX() + 0.5D, unreachableTarget.getY(),
+                        unreachableTarget.getZ() + 0.5D, 1.0D);
+                trying = true;
+            } else {
+                unreachableTarget = null;
+            }
+        }
+        if (trying && horizontalCollision && onGround()) {
+            if (++stuckTicks >= 12) {
+                wallClimbing = true;
+                wallClimbStartY = getY();
+                entityData.set(WALL_CLIMBING, true);
+                stuckTicks = 0;
+            }
+        } else if (stuckTicks > 0) {
+            stuckTicks--;
+        }
+    }
+
+    private void stopWallClimb(boolean gaveUp) {
+        if (!wallClimbing) {
+            return;
+        }
+        wallClimbing = false;
+        entityData.set(WALL_CLIMBING, false);
+        safeLandingTicks = Math.max(safeLandingTicks, 40);
+        if (gaveUp) {
+            wallClimbCooldown = 200;
+            unreachableTarget = null;
+        }
     }
 
     public boolean wantsWeaponUrgently() {
@@ -1124,7 +1592,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     @Override
     public boolean onClimbable() {
-        return (isClimbingTree() && horizontalCollision) || super.onClimbable();
+        return (isClimbingTree() && horizontalCollision) || wallClimbing || super.onClimbable();
     }
 
     @Override
@@ -1134,6 +1602,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     public void callToDisplay(int delay) {
         displayDelay = delay;
+        raiseAlarm(200);
     }
 
     @Override
@@ -1153,15 +1622,22 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (tickCount == 1) {
             ensureName();
             applyFightSkill();
+            // Glowing is saved with the entity; an excursion from before a reload may not have been.
+            if (excursionTicks <= 0 && hasEffect(net.minecraft.world.effect.MobEffects.GLOWING)
+                    && !(isBaby() && caretaker != null)) {
+                removeEffect(net.minecraft.world.effect.MobEffects.GLOWING);
+            }
         }
         if (!isBaby() && ++hungerClock >= HUNGER_TICKS) {
             hungerClock = 0;
             hunger = Math.max(0, hunger - 1);
         }
-        if (eatCooldown > 0) {
+        if (eatingTicks > 0) {
+            tickEating();
+        } else if (eatCooldown > 0) {
             eatCooldown--;
         } else if (hunger < EATS_BELOW) {
-            eatFromInventory();
+            startEating();
         }
         if (tickCount % HEAL_TICKS == 0) {
             if (hunger >= HUNGRY && getHealth() < getMaxHealth()) {
@@ -1174,6 +1650,18 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             complainIfHungry();
         }
         fleeTicks = Math.max(0, fleeTicks - 1);
+        if (fleeTicks == 0) {
+            panicking = false;
+        }
+        alarmTicks = Math.max(0, alarmTicks - 1);
+        tickFreeze();
+        tickWallClimb();
+        if (tickCount % 20 == 7) {
+            lookForPredators();
+        }
+        if (tickCount % 10 == 3) {
+            updateHands();
+        }
         armUrgencyTicks = Math.max(0, armUrgencyTicks - 1);
         defendTicks = Math.max(0, defendTicks - 1);
         readyTicks = Math.max(0, readyTicks - 1);
@@ -1275,6 +1763,15 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putBoolean("HuntWithLeader", huntWithLeader);
         tag.putInt("Bond", bond);
         tag.putBoolean("MadeChopper", madeChopper);
+        tag.putInt("Party", party);
+        if (partyHead != null) {
+            tag.putUUID("PartyHead", partyHead);
+        }
+        tag.putBoolean("SharpenUrge", sharpenUrge);
+        if (excursionTicks > 0 && excursionTarget != null) {
+            tag.putInt("ExcursionTicks", excursionTicks);
+            tag.putLong("ExcursionTarget", excursionTarget.asLong());
+        }
         net.minecraft.nbt.ListTag favourites = new net.minecraft.nbt.ListTag();
         for (ResourceLocation food : favouriteFoods) {
             favourites.add(net.minecraft.nbt.StringTag.valueOf(food.toString()));
@@ -1320,6 +1817,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         huntWithLeader = !tag.contains("HuntWithLeader") || tag.getBoolean("HuntWithLeader");
         bond = tag.getInt("Bond");
         madeChopper = tag.getBoolean("MadeChopper");
+        party = tag.getInt("Party");
+        partyHead = tag.hasUUID("PartyHead") ? tag.getUUID("PartyHead") : null;
+        sharpenUrge = tag.getBoolean("SharpenUrge");
+        excursionTicks = tag.getInt("ExcursionTicks");
+        excursionTarget = tag.contains("ExcursionTarget") ? BlockPos.of(tag.getLong("ExcursionTarget")) : null;
         favouriteFoods.clear();
         for (net.minecraft.nbt.Tag food : tag.getList("FavouriteFoods", net.minecraft.nbt.Tag.TAG_STRING)) {
             ResourceLocation id = ResourceLocation.tryParse(food.getAsString());
@@ -1380,6 +1882,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (!held.isEmpty()) {
             all.add(held);
             setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+        if (!getOffhandItem().isEmpty()) {
+            all.add(getOffhandItem());
+            setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
         }
         return all;
     }

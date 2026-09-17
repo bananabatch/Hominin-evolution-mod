@@ -70,6 +70,7 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, Band::onAttackEntity);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerDeath);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerRespawn);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, Band::onMemberThreatened);
         modEventBus.addListener((EntityAttributeCreationEvent event) ->
         {
             event.put(ModEntities.BAND_MEMBER.get(), BandMember.createAttributes().build());

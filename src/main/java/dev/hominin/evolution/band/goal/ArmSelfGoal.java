@@ -46,7 +46,7 @@ public class ArmSelfGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (member.hasWeapon() || member.isBaby() || member.isUpATree() || !EventHooks.canEntityGrief(member.level(), member)) {
+        if (member.carriesWeapon() || member.isBaby() || member.isUpATree() || !EventHooks.canEntityGrief(member.level(), member)) {
             return false;
         }
         boolean urgent = member.wantsWeaponUrgently();
@@ -80,7 +80,7 @@ public class ArmSelfGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return leaves != null && !member.hasWeapon() && tries < MAX_TRIES && ticks < GIVE_UP_TICKS;
+        return leaves != null && !member.carriesWeapon() && tries < MAX_TRIES && ticks < GIVE_UP_TICKS;
     }
 
     @Override
@@ -141,6 +141,6 @@ public class ArmSelfGoal extends Goal {
         } else if (roll < BRANCH_CHANCE + STICK_CHANCE) {
             net.minecraft.world.level.block.Block.popResource(level, leaves, new ItemStack(Items.STICK));
         }
-        leaves = member.hasWeapon() ? null : findLeaves();
+        leaves = member.carriesWeapon() ? null : findLeaves();
     }
 }

@@ -25,7 +25,10 @@ public record StagePayload(UUID player, ResourceLocation stage) implements Custo
             StagePayload::new);
 
     public static void handle(StagePayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> dev.hominin.evolution.client.ClientSync.stage(payload.player(), payload.stage()));
+        context.enqueueWork(() -> {
+            dev.hominin.evolution.inventory.InventoryLimits.rememberClientStage(payload.player(), payload.stage());
+            dev.hominin.evolution.client.ClientSync.stage(payload.player(), payload.stage());
+        });
     }
 
     @Override

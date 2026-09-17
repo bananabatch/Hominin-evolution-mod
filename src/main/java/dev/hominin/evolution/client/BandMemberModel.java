@@ -45,7 +45,7 @@ public class BandMemberModel extends PlayerModel<BandMember> {
         int sinceDisplay = member.tickCount - member.clientDisplayStart;
         if (sinceDisplay >= 0 && sinceDisplay < DISPLAY_TICKS) {
             play(DISPLAY, sinceDisplay + partial);
-        } else if (member.isClimbingTree()) {
+        } else if (member.isClimbingTree() || member.isWallClimbing()) {
             play(CLIMB, ageInTicks);
         } else {
             playHeld(member.getMainHandItem(), ageInTicks);

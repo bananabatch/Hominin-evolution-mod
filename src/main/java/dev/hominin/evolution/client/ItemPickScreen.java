@@ -40,7 +40,8 @@ public class ItemPickScreen extends Screen {
         for (int i = 0; i < stacks.size(); i++) {
             ItemStack stack = stacks.get(i);
             int slot = slots.get(i);
-            int tier = Trading.tierOf(stack);
+            var player = Minecraft.getInstance().player;
+            int tier = Trading.tierOf(stack, player == null ? null : ClientSync.stageOf(player.getUUID()));
             Component label = Component.literal(stack.getHoverName().getString()
                     + (stack.getCount() > 1 ? " x" + stack.getCount() : "")
                     + (tier > 0 ? "  (tier " + tier + ")" : ""));

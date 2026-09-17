@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BlockStateBaseMixin",
-    "LivingEntityMixin"
+    "InventoryMixin",
+    "LivingEntityMixin",
+    "SlotMixin"
   ],
   "client": [
     "client.AbstractClientPlayerMixin"

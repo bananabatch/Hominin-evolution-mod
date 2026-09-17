@@ -56,8 +56,9 @@ public class FollowLeaderGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        float stop = leader == null ? stopDistance : member.followStopDistance(leader, stopDistance);
         return leader != null && leader.isAlive() && !member.getNavigation().isDone()
-                && member.distanceToSqr(leader) > stopDistance * stopDistance;
+                && member.distanceToSqr(leader) > stop * stop;
     }
 
     @Override

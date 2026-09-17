@@ -74,6 +74,21 @@ public final class WoundHandler {
     }
 
     /**
+     * A band member's blow. The same edges cut the same way; a member whose blood is up
+     * ({@code bonus}) opens wounds more often.
+     */
+    public static void cutBy(LivingEntity attacker, ItemStack weapon, LivingEntity target, float bonus) {
+        Edge edge = edgeOf(weapon);
+        if (edge == null || target.getRandom().nextFloat() >= Math.min(0.95F, edge.chance() + bonus)) {
+            return;
+        }
+        MobEffectInstance existing = target.getEffect(ModEffects.BLEEDING);
+        int severity = existing == null ? 0 : Math.min(edge.maxSeverity(), existing.getAmplifier() + 1);
+        int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
+        target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
+    }
+
+    /**
      * Hostile mobs press the attack instead - a zombie does not run from a cut. Everything
      * else bolts, and the goal is added once and re-aimed on every later wound.
      */

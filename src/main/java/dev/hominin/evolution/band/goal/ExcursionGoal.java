@@ -13,10 +13,12 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * other goals make of the place - until the trip is over and it comes back.
  */
 public class ExcursionGoal extends Goal {
-    private static final int RETARGET_TICKS = 300;
-
     private final BandMember member;
     private int ticks;
+    private int idle;
+    private int pause = 40;
+    private int stalled;
+    private net.minecraft.world.phys.Vec3 lastPos = net.minecraft.world.phys.Vec3.ZERO;
 
     public ExcursionGoal(BandMember member) {
         this.member = member;
@@ -37,29 +39,46 @@ public class ExcursionGoal extends Goal {
     @Override
     public void tick() {
         ticks++;
-        BlockPos target = member.getExcursionTarget();
-        if (target == null) {
+        // A path that goes nowhere: still "walking", but not moving. Drop it and pick somewhere else.
+        if (!member.getNavigation().isDone()) {
+            if (member.position().distanceToSqr(lastPos) < 0.01D) {
+                if (++stalled >= 60) {
+                    stalled = 0;
+                    member.getNavigation().stop();
+                }
+            } else {
+                stalled = 0;
+            }
+            lastPos = member.position();
+        }
+        if (member.getExcursionTarget() == null || !member.getNavigation().isDone()) {
+            idle = 0;
             return;
         }
-        boolean arrived = member.distanceToSqr(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D) < 9.0D;
-        if (arrived && ticks % RETARGET_TICKS == 0) {
-            // Poke about the area instead of standing on one spot.
-            int x = target.getX() + member.getRandom().nextInt(17) - 8;
-            int z = target.getZ() + member.getRandom().nextInt(17) - 8;
-            if (member.level().hasChunk(x >> 4, z >> 4)) {
-                int y = member.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-                member.setExcursionTarget(new BlockPos(x, y, z));
-            }
+        // Stopped - arrived, or the way was blocked. Pause a moment, then poke about somewhere
+        // else nearby, so an explorer never just stands on one spot.
+        if (++idle < pause) {
+            return;
         }
-        if (member.getNavigation().isDone() && ticks % 20 == 0) {
-            walk();
+        idle = 0;
+        pause = 30 + member.getRandom().nextInt(70);
+        for (int attempt = 0; attempt < 6; attempt++) {
+            int x = member.getBlockX() + member.getRandom().nextInt(25) - 12;
+            int z = member.getBlockZ() + member.getRandom().nextInt(25) - 12;
+            if (!member.level().hasChunk(x >> 4, z >> 4)) {
+                continue;
+            }
+            BlockPos next = new BlockPos(x, member.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            member.setExcursionTarget(next);
+            if (walk()) {
+                return;
+            }
         }
     }
 
-    private void walk() {
+    private boolean walk() {
         BlockPos target = member.getExcursionTarget();
-        if (target != null) {
-            member.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, 0.9D);
-        }
+        return target != null
+                && member.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, 0.9D);
     }
 }

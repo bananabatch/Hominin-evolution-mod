@@ -56,6 +56,60 @@ public final class Trading {
     private static final Map<String, Integer> WITHIN_TIER = Map.of(
             "oldowan_multitool", 3, "chert_hammerstone", 2, "chopper", 2, "flake", 2, "termite_stick", 1);
 
+    /**
+     * Technology, by the stage that first makes it, and how highly it ranks at that stage.
+     * To a band that has not reached it yet, it is treasure; to one that has moved past it,
+     * it is worth less and less.
+     */
+    private record Tech(int stage, int peakTier) {
+    }
+
+    private static final Map<String, Tech> TECHNOLOGY = Map.ofEntries(
+            Map.entry("lomekwian_tool", new Tech(1, 5)), Map.entry("hammerstone", new Tech(1, 3)),
+            Map.entry("sharpened_stick", new Tech(1, 3)),
+            Map.entry("flake", new Tech(2, 3)), Map.entry("chopper", new Tech(2, 4)),
+            Map.entry("pointy_stick", new Tech(2, 3)), Map.entry("digging_stick", new Tech(2, 3)),
+            Map.entry("grinding_rock", new Tech(2, 3)), Map.entry("sharpened_spear", new Tech(2, 4)),
+            Map.entry("chert_hammerstone", new Tech(2, 5)), Map.entry("oldowan_multitool", new Tech(2, 5)),
+            Map.entry("wooden_club", new Tech(3, 4)), Map.entry("fire_hardened_spear", new Tech(3, 5)));
+
+    /** Tiers lost for each stage a band has moved past a technology. */
+    private static final int TIERS_LOST_PER_STAGE = 3;
+
+    private static int stageOrder(ResourceLocation stage) {
+        return switch (stage.getPath()) {
+            case "ardipithecus", "australopithecus" -> 1;
+            case "homo_habilis" -> 2;
+            case "homo_erectus" -> 3;
+            default -> 4;
+        };
+    }
+
+    /** The trade tier of this item to a band at the given stage. */
+    public static int tierOf(ItemStack stack, @javax.annotation.Nullable ResourceLocation stage) {
+        if (stage == null || stack.isEmpty()) {
+            return tierOf(stack);
+        }
+        Tech tech = TECHNOLOGY.get(BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath());
+        if (tech == null || !BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(HomininEvolutionMod.MODID)) {
+            return tierOf(stack);
+        }
+        int era = stageOrder(stage);
+        if (tech.stage() > era) {
+            return MAX_TIER;
+        }
+        return Math.max(1, tech.peakTier() - TIERS_LOST_PER_STAGE * (era - tech.stage()));
+    }
+
+    public static int valueOf(ItemStack stack, @javax.annotation.Nullable ResourceLocation stage) {
+        int tier = tierOf(stack, stage);
+        if (tier == 0) {
+            return 0;
+        }
+        String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+        return tier * 10 + WITHIN_TIER.getOrDefault(path, 0);
+    }
+
     /** The trade tier of one of this item, 0 if a band has no use for it. */
     public static int tierOf(ItemStack stack) {
         if (stack.isEmpty()) {
@@ -98,7 +152,8 @@ public final class Trading {
      * kind of thing straight back.
      */
     public static void offer(BandMember member, Player player, ItemStack offered) {
-        int offerTier = tierOf(offered);
+        ResourceLocation era = member.getStage();
+        int offerTier = tierOf(offered, era);
         if (offerTier <= 0) {
             player.displayClientMessage(Component.literal(
                     member.getName().getString() + " turns it over and hands it back. No use to them."), true);
@@ -108,15 +163,15 @@ public final class Trading {
         int bestSlot = -2;
         int bestValue = 0;
         ItemStack held = member.getMainHandItem();
-        if (isFairReturn(held, offered, offerTier) && valueOf(held) > bestValue) {
+        if (isFairReturn(held, offered, offerTier, era) && valueOf(held, era) > bestValue) {
             bestSlot = -1;
-            bestValue = valueOf(held);
+            bestValue = valueOf(held, era);
         }
         for (int slot = 0; slot < pack.getContainerSize(); slot++) {
             ItemStack stack = pack.getItem(slot);
-            if (isFairReturn(stack, offered, offerTier) && valueOf(stack) > bestValue) {
+            if (isFairReturn(stack, offered, offerTier, era) && valueOf(stack, era) > bestValue) {
                 bestSlot = slot;
-                bestValue = valueOf(stack);
+                bestValue = valueOf(stack, era);
             }
         }
         if (bestSlot == -2) {
@@ -147,8 +202,8 @@ public final class Trading {
                 .append(givenName).append("."), true);
     }
 
-    private static boolean isFairReturn(ItemStack candidate, ItemStack offered, int offerTier) {
-        int tier = tierOf(candidate);
+    private static boolean isFairReturn(ItemStack candidate, ItemStack offered, int offerTier, ResourceLocation era) {
+        int tier = tierOf(candidate, era);
         return tier > 0 && tier <= offerTier && !candidate.is(offered.getItem());
     }
 

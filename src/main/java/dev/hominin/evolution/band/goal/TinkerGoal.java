@@ -32,8 +32,10 @@ public class TinkerGoal extends Goal {
     private static final int KNAP_TICKS = 60;
     private static final int GIVE_UP_TICKS = 500;
     /** Between tries, whatever the outcome. Tool-making is an occasional thing. */
-    private static final int MIN_COOLDOWN = 3600;
-    private static final int COOLDOWN_SPREAD = 4800;
+    private static final int MIN_COOLDOWN = 12000;
+    private static final int COOLDOWN_SPREAD = 12000;
+    /** Most blind attempts come to nothing. */
+    private static final float EARLY_SUCCESS = 0.35F;
 
     private static final ResourceLocation ARDIPITHECUS =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "ardipithecus");
@@ -58,6 +60,12 @@ public class TinkerGoal extends Goal {
         }
         if (member.tickCount < nextTry || member.isBaby() || member.isUpATree() || member.isHungry()
                 || member.getRandom().nextInt(20) != 0) {
+            return false;
+        }
+        // Blind knapping is a rare accident, not a pastime: never on the first day, and at most
+        // one core a day for the whole band.
+        if (!CraftGoal.canCraft(member) && !Band.mayMakeLomekwian(member)) {
+            nextTry = member.tickCount + MIN_COOLDOWN;
             return false;
         }
         if (stones() >= 2) {
@@ -144,7 +152,14 @@ public class TinkerGoal extends Goal {
         boolean early = ARDIPITHECUS.equals(stage) || AUSTRALOPITHECUS.equals(stage);
         Item made;
         if (early) {
+            if (random.nextFloat() >= EARLY_SUCCESS) {
+                // Usually the stone just breaks into nothing worth keeping.
+                knapping = 0;
+                ticks = GIVE_UP_TICKS;
+                return;
+            }
             made = ModItems.LOMEKWIAN_TOOL.get();
+            Band.lomekwianMade(member);
         } else {
             float roll = random.nextFloat();
             made = roll < 0.5F ? ModItems.FLAKE.get() : roll < 0.75F ? ModItems.CHOPPER.get() : ModItems.LOMEKWIAN_TOOL.get();

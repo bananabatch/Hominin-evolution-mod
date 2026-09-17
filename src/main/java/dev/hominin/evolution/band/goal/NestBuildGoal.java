@@ -43,7 +43,10 @@ public class NestBuildGoal extends Goal {
     public boolean canUse() {
         Level level = member.level();
         long day = level.getDayTime() / 24000L;
-        if (!level.isNight() || day == lastNestDay || member.isBaby() || member.isUpATree()
+        // From sunset, not full dark: a leader who goes straight to bed would otherwise sleep through it.
+        long time = level.getDayTime() % 24000L;
+        boolean evening = time >= 11500L && time < 23000L;
+        if (!evening || day == lastNestDay || member.isBaby() || member.isUpATree()
                 || member.getRandom().nextInt(40) != 0 || !EventHooks.canEntityGrief(level, member)) {
             return false;
         }
@@ -54,11 +57,12 @@ public class NestBuildGoal extends Goal {
             return false;
         }
         BlockPos origin = withLeader ? leader.blockPosition() : member.blockPosition();
-        if (Nests.nestNearby(level, origin, SHARE_RADIUS)) {
+        // A wild band shares one nest; your own band each make their own, close around you.
+        if (!withLeader && Nests.nestNearby(level, origin, SHARE_RADIUS)) {
             lastNestDay = day;
             return false;
         }
-        cells = Nests.siteNear(level, origin, 5, member.getRandom());
+        cells = Nests.siteNear(level, origin, withLeader ? 9 : 5, member.getRandom());
         return cells != null;
     }
 

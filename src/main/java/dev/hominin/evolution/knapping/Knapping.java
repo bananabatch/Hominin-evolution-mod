@@ -50,11 +50,14 @@ public final class Knapping {
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "australopithecus");
 
     /** Stone a multi tool takes. Chert flakes less cleanly than obsidian, so it needs more. */
-    private static final int MULTITOOL_CHERT_COST = 3;
+    private static final int MULTITOOL_CHERT_COST = 8;
     private static final int MULTITOOL_OBSIDIAN_COST = 2;
 
     /** A chert hammerstone is one big nodule - it breaks down into this much stone. */
     private static final int SPLIT_CORE_YIELD = 4;
+    /** A multi tool is a lot of good stone - broken back down, it is a pile of chert. */
+    private static final int MULTITOOL_SPLIT_YIELD = 12;
+    private static final List<KnappingChoice> MULTITOOL_CHOICES = List.of(KnappingChoice.SPLIT_CORE);
 
     /** Chance a multi tool shatters in the hands of someone who never made the cruder one first. */
     private static final float UNPRACTISED_MULTITOOL_FAIL = 0.4F;
@@ -72,6 +75,9 @@ public final class Knapping {
     public static List<KnappingChoice> choicesFor(ItemStack stone) {
         if (stone.is(ModItems.CHERT_HAMMERSTONE.get())) {
             return CORE_CHOICES;
+        }
+        if (stone.is(ModItems.OLDOWAN_MULTITOOL.get())) {
+            return MULTITOOL_CHOICES;
         }
         return stone.is(ModTags.Items.KNAPPABLE_STONE) ? STONE_CHOICES : List.of();
     }
@@ -213,7 +219,14 @@ public final class Knapping {
     }
 
     private static void splitCore(ServerPlayer player, ItemStack main) {
+        boolean multitool = main.is(ModItems.OLDOWAN_MULTITOOL.get());
         strike(player, main);
+        if (multitool) {
+            give(player, new ItemStack(ModItems.CHERT_ROCK.get(), MULTITOOL_SPLIT_YIELD));
+            player.displayClientMessage(Component.literal(
+                    "You break the multi tool back down into a heap of good chert."), true);
+            return;
+        }
         give(player, new ItemStack(ModItems.CHERT_ROCK.get(), SPLIT_CORE_YIELD));
         player.displayClientMessage(Component.literal(
                 "The nodule breaks along its bedding into clean pieces of chert."), true);

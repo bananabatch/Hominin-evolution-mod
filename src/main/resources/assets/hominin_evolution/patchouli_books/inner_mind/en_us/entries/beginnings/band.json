@@ -38,7 +38,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Treasured$()$(br)Top of the tiers, and hard to part with: $(#b87333)obsidian$(), a $(#b87333)chert hammerstone$(), an $(#b87333)Oldowan multi tool$().$(br2)Hold one out to another band and they will give you their best.$(br2)Ask your own band to fetch things too. They go and look for real."
+      "text": "$(l)Treasured$()$(br)Top of the tiers: $(#b87333)obsidian$(), a $(#b87333)chert hammerstone$(), an $(#b87333)Oldowan multi tool$().$(br2)Worth is not fixed. Tools a band has never made are treasure to them; tools their ancestors made, they barely value."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each of them carries nine things: two in the hands, seven more. Full up, they drop the least worth keeping for something better. They take out what the moment needs - a weapon when danger is near, a stick to dig or fish termites with, food in hand when hungry.$(br2)From habilis on, a big band splits into parties by day and comes together at night. Only those near you will come if you are attacked."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Frightened, the body decides: fight, stronger and harder to hurt, or flight, fast - up a tree, or later, back to the band. Sometimes it decides nothing, and they freeze until the band comes for them. It takes five minutes to happen again."
     }
   ]
 }

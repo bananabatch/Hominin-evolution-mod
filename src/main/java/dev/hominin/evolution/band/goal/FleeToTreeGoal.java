@@ -43,7 +43,8 @@ public class FleeToTreeGoal extends Goal {
     public boolean canContinueToUse() {
         if (trunk != null && clingTicks > 0) {
             // Up the tree: stay while the attack is recent and the clinging not too long.
-            return (member.shouldFlee() || member.hasClimbOrder()) && clingTicks < MAX_CLING_TICKS;
+            // Told to stay up: stays until called down. Fleeing: comes down after a while.
+            return member.hasClimbOrder() || (member.shouldFlee() && clingTicks < MAX_CLING_TICKS);
         }
         return member.shouldFlee() || member.hasClimbOrder();
     }
@@ -52,7 +53,8 @@ public class FleeToTreeGoal extends Goal {
     public void start() {
         ticks = 0;
         clingTicks = 0;
-        trunk = findTrunk();
+        // Later hominins run for the band, not a tree - unless they were told to climb.
+        trunk = member.fleesToSafety() && !member.hasClimbOrder() ? null : findTrunk();
         if (trunk != null) {
             member.getNavigation().moveTo(trunk.getX() + 0.5D, trunk.getY(), trunk.getZ() + 0.5D, RUN_SPEED);
         } else {
@@ -93,7 +95,9 @@ public class FleeToTreeGoal extends Goal {
         // Push into the trunk; while climbing, that collision is what lifts it.
         member.getNavigation().stop();
         member.setClimbingTree(true);
-        clingTicks++;
+        if (++clingTicks == 40 && !member.onGround()) {
+            dev.hominin.evolution.band.Band.contribute(member, "climb_trees");
+        }
         // Out of reach now: whatever was chasing loses interest, as it would with a player.
         if (member.getLastHurtByMob() instanceof Mob chaser && chaser.getTarget() == member
                 && member.getY() - chaser.getY() >= 2.5D) {
@@ -107,10 +111,43 @@ public class FleeToTreeGoal extends Goal {
     private void runAway() {
         LivingEntity threat = member.getLastHurtByMob();
         Vec3 from = threat != null ? threat.position() : member.position();
+        if (member.fleesToSafety() && runToSafety(threat)) {
+            return;
+        }
         Vec3 away = DefaultRandomPos.getPosAway(member, 16, 7, from);
         if (away != null) {
             member.getNavigation().moveTo(away.x, away.y, away.z, RUN_SPEED);
         }
+    }
+
+    /**
+     * Safety in numbers: the nearest of the band who is not in the fight and not near the
+     * threat, or the leader if they are clear of it.
+     */
+    private boolean runToSafety(LivingEntity threat) {
+        LivingEntity refuge = null;
+        double best = Double.MAX_VALUE;
+        for (BandMember other : dev.hominin.evolution.band.Band.near(member, 32.0D)) {
+            if (other == member || !other.isAlliedTo(member) || other.getTarget() != null || other.inDanger()) {
+                continue;
+            }
+            if (threat != null && other.distanceToSqr(threat) < 12.0D * 12.0D) {
+                continue;
+            }
+            double distance = other.distanceToSqr(member);
+            if (distance < best) {
+                best = distance;
+                refuge = other;
+            }
+        }
+        net.minecraft.world.entity.player.Player leader = member.companionPlayer();
+        if (refuge == null && leader != null && (threat == null || leader.distanceToSqr(threat) > 12.0D * 12.0D)) {
+            refuge = leader;
+        }
+        if (refuge == null || refuge.distanceToSqr(member) < 9.0D) {
+            return false;
+        }
+        return member.getNavigation().moveTo(refuge, RUN_SPEED);
     }
 
     /** The nearest log with its base near our level - a trunk, not a branch overhead. */

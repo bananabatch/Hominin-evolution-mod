@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "There is a list at the edge of your vision. It is not a to-do list. It is a description of the animal you are becoming.$(br2)If it ever becomes too much, $(thing)/hominin checklist$() will quiet it. It will still be there when you look again."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "With nothing to carry things in, you hold what your hands and arms can: your hotbar. Erectus carries another row; heidelbergensis and sapiens three. Only Neanderthals carry everything."
     }
   ]
 }

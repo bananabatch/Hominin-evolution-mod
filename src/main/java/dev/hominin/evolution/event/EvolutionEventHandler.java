@@ -657,6 +657,10 @@ public final class EvolutionEventHandler {
         if (player.level().isClientSide() || !(event.getTarget() instanceof LivingEntity target)) {
             return;
         }
+        // Your own band and the bands walking with you only ever take pulled blows.
+        if (target instanceof dev.hominin.evolution.band.BandMember member && member.isCompanionOf(player)) {
+            return;
+        }
         HeadTraumaHandler.strike(player, target);
         WoundHandler.strike(player, target);
     }
@@ -679,6 +683,15 @@ public final class EvolutionEventHandler {
      * goes down - the point of the criterion is using the tool, not owning it.
      */
     private static void creditHunt(@Nullable net.minecraft.world.entity.Entity killer, LivingEntity victim) {
+        if (killer instanceof dev.hominin.evolution.band.BandMember member) {
+            ItemStack weapon = member.getMainHandItem();
+            if (weapon.is(ModItems.SHARPENED_STICK.get())) {
+                Band.contribute(member, "hunt_with_stick");
+            } else if (weapon.is(ModItems.SHARPENED_SPEAR.get()) || weapon.is(ModItems.FIRE_HARDENED_SPEAR.get())) {
+                Band.contribute(member, "hunt_with_spear");
+            }
+            return;
+        }
         if (!(killer instanceof ServerPlayer player)) {
             return;
         }
@@ -753,6 +766,7 @@ public final class EvolutionEventHandler {
         ClimbingServer.tick(player);
         WildBands.tick(player);
         Band.tickPlayer(player);
+        dev.hominin.evolution.inventory.InventoryLimits.tick(player);
         dev.hominin.evolution.entity.WildAnimals.tick(player);
         // Climbing is checked far more often than the rest: a player is only up a
         // tree for a few seconds, so a once-a-second sweep would miss most climbs.

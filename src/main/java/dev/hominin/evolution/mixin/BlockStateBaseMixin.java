@@ -33,11 +33,18 @@ public abstract class BlockStateBaseMixin {
     private void hominin$passThroughLeaves(BlockGetter level, BlockPos pos, CollisionContext context,
             CallbackInfoReturnable<VoxelShape> cir) {
         // Cheapest checks first: this runs for every block near every moving entity.
-        if (context instanceof EntityCollisionContext entityContext
-                && entityContext.getEntity() instanceof Player player
-                && ((BlockBehaviour.BlockStateBase) (Object) this).is(BlockTags.LEAVES)
-                && Climbing.isClimbing(player)) {
-            cir.setReturnValue(Shapes.empty());
+        if (context instanceof EntityCollisionContext entityContext) {
+            net.minecraft.world.entity.Entity entity = entityContext.getEntity();
+            if (entity instanceof Player player) {
+                if (((BlockBehaviour.BlockStateBase) (Object) this).is(BlockTags.LEAVES) && Climbing.isClimbing(player)) {
+                    cir.setReturnValue(Shapes.empty());
+                }
+            } else if (entity instanceof dev.hominin.evolution.band.BandMember member
+                    && ((BlockBehaviour.BlockStateBase) (Object) this).is(BlockTags.LEAVES)
+                    && member.phasesThroughLeaves()) {
+                // Band members go through the canopy the same way, while climbing and dropping out of it.
+                cir.setReturnValue(Shapes.empty());
+            }
         }
     }
 }

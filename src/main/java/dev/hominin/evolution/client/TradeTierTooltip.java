@@ -8,12 +8,14 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 /** Shows what an item is worth to another band, so trades can be planned. */
 public final class TradeTierTooltip {
     public static void onTooltip(ItemTooltipEvent event) {
-        int tier = Trading.tierOf(event.getItemStack());
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        var stage = player == null ? null : ClientSync.stageOf(player.getUUID());
+        int tier = Trading.tierOf(event.getItemStack(), stage);
         if (tier <= 0) {
             return;
         }
         String pips = "\u25CF".repeat(tier) + "\u25CB".repeat(Trading.MAX_TIER - tier);
-        event.getToolTip().add(Component.literal("Trade: " + pips + " " + Trading.TIER_NAMES[tier])
+        event.getToolTip().add(Component.literal("Trade (to bands of your kind): " + pips + " " + Trading.TIER_NAMES[tier])
                 .withStyle(ChatFormatting.GOLD));
     }
 

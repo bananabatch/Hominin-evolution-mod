@@ -31,7 +31,7 @@ public final class Social {
         TRAVEL("Let's stick together today"),
         HUNT("Let's hunt together"),
         NO_HUNT("Don't hunt with me"),
-        CLIMB("Let's climb a tree");
+        CLIMB("Let's climb a tree / All clear");
 
         private final String label;
 
@@ -61,7 +61,8 @@ public final class Social {
     private static final int GUARD_BUFF_TICKS = 15 * 20;
 
     private static final int HUNT_TICKS = 60 * 20;
-    private static final int CLIMB_ORDER_TICKS = 30 * 20;
+    /** Up the tree until called down - with a long ceiling, in case the player forgets. */
+    private static final int CLIMB_ORDER_TICKS = 10 * 60 * 20;
 
     private static final Map<UUID, Long> lastHurtCall = new HashMap<>();
 
@@ -123,10 +124,18 @@ public final class Social {
                     say(player, "Your kind have mostly given up the trees.");
                     return;
                 }
+                if (listeners.stream().anyMatch(BandMember::hasClimbOrder)) {
+                    // Asked again: come down.
+                    for (BandMember member : listeners) {
+                        member.orderClimb(0);
+                    }
+                    say(player, "All clear!");
+                    return;
+                }
                 for (BandMember member : listeners) {
                     member.orderClimb(CLIMB_ORDER_TICKS);
                 }
-                say(player, who + (individual ? " heads" : " head") + " for the nearest tree.");
+                say(player, who + (individual ? " heads" : " head") + " for the nearest tree. Ask again to call them down.");
             }
         }
     }

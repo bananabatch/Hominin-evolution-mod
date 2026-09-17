@@ -84,6 +84,7 @@ public class ForageGoal extends Goal {
     public void start() {
         ticks = 0;
         working = 0;
+        member.setHandTask(BandMember.HandTask.FORAGE);
         if (!member.isForagingTogether()) {
             dev.hominin.evolution.band.Band.announce(member, " says they're going to forage.");
         }
@@ -93,6 +94,7 @@ public class ForageGoal extends Goal {
     @Override
     public void stop() {
         spot = null;
+        member.setHandTask(BandMember.HandTask.NONE);
         member.getNavigation().stop();
     }
 
@@ -123,9 +125,11 @@ public class ForageGoal extends Goal {
             level.setBlock(spot, state.setValue(SweetBerryBushBlock.AGE, 1), 2);
             level.playSound(null, spot, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.NEUTRAL, 1.0F, 1.0F);
             member.addToInventory(new ItemStack(Items.SWEET_BERRIES, 1 + member.getRandom().nextInt(2)));
-        } else if (member.getRandom().nextFloat() < SUCCESS_CHANCE) {
+            dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
+        } else if (member.getRandom().nextFloat() < SUCCESS_CHANCE + member.foragingBonus()) {
             Item[] insects = {ModItems.GRUB.get(), ModItems.BEETLE.get(), ModItems.EARTHWORM.get()};
             member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)]));
+            dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
         }
         spot = null;
     }

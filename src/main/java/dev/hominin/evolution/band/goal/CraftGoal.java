@@ -128,7 +128,7 @@ public class CraftGoal extends Goal {
             }
         }
         boolean flake = has(s -> s.is(ModTags.Items.FLAKES));
-        if (!member.hasWeapon() || weakWeapon()) {
+        if (!member.carriesWeapon() || weakWeapon()) {
             if (flake && has(s -> s.is(ModItems.LONG_BRANCH.get()))) {
                 return Plan.SPEAR;
             }
@@ -143,8 +143,8 @@ public class CraftGoal extends Goal {
             return Plan.CHOPPER;
         }
         if (member.hasMadeChopper() && !has(s -> s.is(ModItems.OLDOWAN_MULTITOOL.get()))
-                && (count(ModItems.CHERT_ROCK.get()) >= 3 || count(ModItems.OBSIDIAN_ROCK.get()) >= 2)
-                && stones() >= 4) {
+                && (count(ModItems.CHERT_ROCK.get()) >= 8 || count(ModItems.CHERT_HAMMERSTONE.get()) >= 1
+                        || count(ModItems.OBSIDIAN_ROCK.get()) >= 2)) {
             return Plan.MULTITOOL;
         }
         return null;
@@ -198,8 +198,9 @@ public class CraftGoal extends Goal {
                 }
             }
             case MULTITOOL -> {
-                Item stone = count(ModItems.OBSIDIAN_ROCK.get()) >= 2 ? ModItems.OBSIDIAN_ROCK.get() : ModItems.CHERT_ROCK.get();
-                int cost = stone == ModItems.OBSIDIAN_ROCK.get() ? 2 : 3;
+                Item stone = count(ModItems.CHERT_HAMMERSTONE.get()) >= 1 ? ModItems.CHERT_HAMMERSTONE.get()
+                        : count(ModItems.OBSIDIAN_ROCK.get()) >= 2 ? ModItems.OBSIDIAN_ROCK.get() : ModItems.CHERT_ROCK.get();
+                int cost = stone == ModItems.CHERT_HAMMERSTONE.get() ? 1 : stone == ModItems.OBSIDIAN_ROCK.get() ? 2 : 8;
                 for (int i = 0; i < cost; i++) {
                     take(s -> s.is(stone));
                 }
@@ -211,6 +212,7 @@ public class CraftGoal extends Goal {
     private void make(Item item, String announcement) {
         member.addToInventory(new ItemStack(item));
         Band.announceDiscovery(member, announcement);
+        Band.contribute(member, "craft_oldowan_tools");
     }
 
     private void say(String rest) {

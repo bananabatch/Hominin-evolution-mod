@@ -196,7 +196,7 @@ public final class Band {
 
     /** Joining in on whatever the leader attacks - unless told not to hunt with them. */
     public static void assist(ServerPlayer player, LivingEntity target) {
-        for (BandMember member : companionsNear(player, DEFEND_RADIUS)) {
+        for (BandMember member : defendersOf(player)) {
             if (member.huntsWithLeader()) {
                 member.defendAgainst(target);
             }
@@ -242,6 +242,58 @@ public final class Band {
         leader.sendSystemMessage(Component.literal(member.getName().getString() + rest).withStyle(ChatFormatting.GOLD));
     }
 
+    // ------------------------------------------------------------ helping with the leader's tasks
+
+    /** Chance that something a member does counts toward one of the leader's repeated tasks. */
+    private static final float CONTRIBUTION_CHANCE = 0.4F;
+
+    /**
+     * A member did something one of the leader's tasks asks for. Tasks done more than once
+     * can be helped along; a one-off task is always the player's own to do.
+     */
+    public static void contribute(BandMember member, String criterionId) {
+        if (!(member.leaderPlayer() instanceof ServerPlayer player)
+                || member.getRandom().nextFloat() >= CONTRIBUTION_CHANCE) {
+            return;
+        }
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        var stage = dev.hominin.evolution.stage.StageRegistry.get(data.getStage());
+        if (stage == null) {
+            return;
+        }
+        var criterion = java.util.stream.Stream.concat(stage.gate().required().stream(), stage.gate().optionalPool().stream())
+                .filter(c -> c.id().equals(criterionId))
+                .findFirst().orElse(null);
+        if (criterion == null || criterion.requiredCount() <= 1 || EvolutionManager.isCriterionSatisfied(data, criterion)) {
+            return;
+        }
+        EvolutionManager.incrementCriterion(player, criterionId, 1);
+        member.ensureName();
+        player.sendSystemMessage(Component.literal(member.getName().getString() + " helped: "
+                + criterion.description() + " +1").withStyle(ChatFormatting.DARK_GREEN));
+    }
+
+    // ------------------------------------------------------------ rare discoveries
+
+    private static final Map<UUID, Long> lastLomekwianDay = new HashMap<>();
+
+    /** A Lomekwian core only after the first day, and one a day at most per band. */
+    public static boolean mayMakeLomekwian(BandMember member) {
+        long day = member.level().getDayTime() / 24000L;
+        if (day < 1) {
+            return false;
+        }
+        UUID band = member.getLeader() != null ? member.getLeader() : member.getBandId();
+        return band == null || lastLomekwianDay.getOrDefault(band, -1L) < day;
+    }
+
+    public static void lomekwianMade(BandMember member) {
+        UUID band = member.getLeader() != null ? member.getLeader() : member.getBandId();
+        if (band != null) {
+            lastLomekwianDay.put(band, member.level().getDayTime() / 24000L);
+        }
+    }
+
     // ------------------------------------------------------------ alloparenting
 
     private static final String STABILITY_LOSS = EvolutionManager.SKILL_PREFIX + "band_stability_loss";
@@ -285,8 +337,12 @@ public final class Band {
     public static void childInDanger(BandMember child, LivingEntity attacker) {
         child.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 net.minecraft.world.effect.MobEffects.GLOWING, 30 * 20, 0, false, false));
+        boolean parties = splitsUp(child.getStage());
         for (BandMember adult : near(child, DEFEND_RADIUS)) {
             if (adult == child || adult.isBaby() || !adult.isAlliedTo(child)) {
+                continue;
+            }
+            if (parties && adult.getParty() != child.getParty() && adult.distanceToSqr(child) >= CLOSE_BY * CLOSE_BY) {
                 continue;
             }
             adult.addEffect(new net.minecraft.world.effect.MobEffectInstance(
@@ -404,8 +460,140 @@ public final class Band {
     }
 
     public static void defend(ServerPlayer player, LivingEntity attacker) {
-        for (BandMember member : companionsNear(player, DEFEND_RADIUS)) {
+        for (BandMember member : defendersOf(player)) {
             member.defendAgainst(attacker);
+        }
+    }
+
+    // ------------------------------------------------------------ fission-fusion
+
+    /** Close enough that anyone in the band comes, whatever party they are in. */
+    private static final double CLOSE_BY = 10.0D;
+    private static final int PARTY_CHECK_TICKS = 400;
+    private static final Map<UUID, Long> lastSplitDay = new HashMap<>();
+
+    /**
+     * Australopithecus bands are small enough to move as one. From habilis on, a band
+     * splits into parties by day - fission-fusion, as chimpanzees and every human society
+     * since still do - and comes back together at night.
+     */
+    public static boolean splitsUp(ResourceLocation stage) {
+        String path = stage.getPath();
+        return !path.equals("ardipithecus") && !path.equals("australopithecus");
+    }
+
+    /**
+     * Who comes when the leader is in trouble. In a band that splits up, only the party
+     * with the leader and anyone else close by; guests travelling along always come.
+     */
+    public static List<BandMember> defendersOf(ServerPlayer player) {
+        List<BandMember> near = companionsNear(player, DEFEND_RADIUS);
+        if (!splitsUp(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+            return near;
+        }
+        return near.stream()
+                .filter(m -> !m.isLedBy(player) || m.getParty() == 0 || m.distanceToSqr(player) < CLOSE_BY * CLOSE_BY)
+                .toList();
+    }
+
+    /** Someone froze in fear, and the band has noticed: its party, and anyone close, come running. */
+    public static void rushToDefend(BandMember frozen, LivingEntity threat) {
+        boolean parties = splitsUp(frozen.getStage());
+        int came = 0;
+        for (BandMember other : near(frozen, DEFEND_RADIUS)) {
+            if (other == frozen || other.isBaby() || !other.isAlliedTo(frozen) || other.isFrozen()) {
+                continue;
+            }
+            if (parties && other.getParty() != frozen.getParty() && other.distanceToSqr(frozen) >= CLOSE_BY * CLOSE_BY) {
+                continue;
+            }
+            other.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, CHILD_DEFENCE_TICKS, 0));
+            other.defendAgainst(threat);
+            came++;
+        }
+        if (came > 0) {
+            announceDiscovery(frozen, came == 1 ? " is frozen stiff - someone rushes in to help!"
+                    : " is frozen stiff - the band rushes in to defend them!");
+        }
+    }
+
+    /** A predator has picked out one of the band: the body gets ready before the blow lands. */
+    public static void onMemberThreatened(net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent event) {
+        if (event.isCanceled() || !(event.getNewAboutToBeSetTarget() instanceof BandMember member)
+                || !(event.getEntity() instanceof net.minecraft.world.entity.Mob mob) || mob instanceof BandMember
+                || member.level().isClientSide()) {
+            return;
+        }
+        boolean threat = mob.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)
+                || mob instanceof net.minecraft.world.entity.monster.Enemy;
+        if (threat && mob.distanceToSqr(member) < 12.0D * 12.0D) {
+            member.adrenaline(mob);
+            member.raiseAlarm(100);
+        }
+    }
+
+    /**
+     * Splits the band into parties for the day, and brings it back together at night. The
+     * ones nearest the leader stay with them; the rest go off in parties of four or five,
+     * each following one of its own, never far out of reach.
+     */
+    private static void organiseParties(ServerPlayer player) {
+        List<BandMember> members = all(player);
+        boolean split = members.stream().anyMatch(m -> m.getParty() > 0);
+        boolean canSplit = splitsUp(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())
+                && player.level().isDay();
+        List<BandMember> adults = members.stream().filter(m -> !m.isBaby()).toList();
+        if (!canSplit || adults.size() <= 6) {
+            if (split) {
+                members.forEach(m -> m.joinParty(0, null));
+                if (!player.level().isDay()) {
+                    player.sendSystemMessage(Component.literal("The parties drift back in, and the band is whole for the night.")
+                            .withStyle(ChatFormatting.GRAY));
+                }
+            }
+            return;
+        }
+        long day = player.level().getDayTime() / 24000L;
+        if (split || lastSplitDay.getOrDefault(player.getUUID(), -1L) == day) {
+            return;
+        }
+        lastSplitDay.put(player.getUUID(), day);
+        List<BandMember> byDistance = new java.util.ArrayList<>(adults);
+        byDistance.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(player)));
+        int withLeader = 3 + player.getRandom().nextInt(3);
+        int party = 0;
+        int inParty = 0;
+        UUID head = null;
+        int partySize = withLeader;
+        for (BandMember member : byDistance) {
+            if (inParty >= partySize) {
+                party++;
+                inParty = 0;
+                head = member.getUUID();
+                partySize = 4 + player.getRandom().nextInt(2);
+            }
+            member.joinParty(party, head);
+            inParty++;
+        }
+        // Children go with whoever is minding them.
+        for (BandMember child : members) {
+            if (!child.isBaby()) {
+                continue;
+            }
+            int childParty = 0;
+            UUID childHead = null;
+            if (child.getCaretaker() != null && player.serverLevel().getEntity(child.getCaretaker()) instanceof BandMember minder) {
+                childParty = minder.getParty();
+                childHead = byDistance.stream().filter(m -> m.getParty() == minder.getParty()).findFirst()
+                        .map(BandMember::getUUID).orElse(null);
+            }
+            child.joinParty(childParty, childHead);
+        }
+        if (party > 0) {
+            player.sendSystemMessage(Component.literal("The band splits up for the day: " + withLeader
+                    + " stay with you, the rest go off in " + party + (party == 1 ? " party." : " parties.")
+                    + " Only those near you will come if you are attacked.").withStyle(ChatFormatting.GRAY));
         }
     }
 
@@ -672,6 +860,9 @@ public final class Band {
         if (player.tickCount % 100 == 0) {
             assignCaretakers(player);
         }
+        if (player.tickCount % PARTY_CHECK_TICKS == 0 && !player.isSpectator()) {
+            organiseParties(player);
+        }
     }
 
     /** A band that has lost its leader walks to where they are - or, if too far, simply turns up. */
@@ -808,6 +999,7 @@ public final class Band {
     }
 
     public static void forget(UUID player) {
+        lastSplitDay.remove(player);
         heirs.remove(player);
     }
 

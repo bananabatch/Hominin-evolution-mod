@@ -133,6 +133,45 @@ public final class HeadTraumaHandler {
         return true;
     }
 
+    /** Base odds, per blow from a band member, of a concussion and - after one - a bleed. */
+    private static final float MEMBER_BRANCH_CONCUSS = 0.15F;
+
+    /**
+     * A band member's blow with a branch or club. Members do not count blows the way a
+     * player's careful swings do: each hit simply has a chance to concuss, and once
+     * concussed, to start a brain bleed. Blood up ({@code bonus}) makes both likelier.
+     */
+    public static void bludgeonBy(LivingEntity attacker, ItemStack weapon, LivingEntity target, float bonus) {
+        Profile profile = profileFor(weapon);
+        if (profile == null) {
+            return;
+        }
+        var random = target.level().getRandom();
+        HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
+        trauma.addBlow();
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS / 2, 6, false, false, true));
+        if (profile.club() && random.nextFloat() < CLUB_FRACTURE_CHANCE / 2.0F + bonus) {
+            fracture(target);
+        }
+        if (!trauma.isConcussed()) {
+            float chance = (profile.club() ? CLUB_CONCUSS_CHANCE : MEMBER_BRANCH_CONCUSS) + bonus;
+            if (random.nextFloat() < chance) {
+                trauma.setConcussed(true);
+                if (target instanceof PathfinderMob mob) {
+                    mob.goalSelector.addGoal(0, new ConcussedGoal(mob, 1.0D));
+                }
+                if (random.nextFloat() < PACIFY_CHANCE) {
+                    pacify(target, trauma);
+                }
+            }
+            return;
+        }
+        if (!trauma.isBleeding() && random.nextFloat() < profile.bleedChance() + bonus) {
+            trauma.setBleeding(true);
+            target.addEffect(new MobEffectInstance(ModEffects.BRAIN_BLEED, BLEED_TICKS, 0, false, true, true));
+        }
+    }
+
     /**
      * A predator is anything hostile by nature, or anything that had decided to
      * come for this player - which is what makes a stunned bear or wolf count.
