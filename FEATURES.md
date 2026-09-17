@@ -105,7 +105,7 @@ You play a hominin, not a person, and you earn your way up the line.
 - **Old bone beds** generate in the homeland, about as rare as a chert outcrop: 3–5 bones, 2–3 long bones, 1–2 ribs.
 - A fresh kill may draw a Pachycrocuta, which eats the carcass if it beats you to it. Armed erectus can walk it off the kill and take it.
 - **Lone hominins:** 12% of fresh kills and 30% of old bone beds have a solitary hominin of your species sitting at them. Walk up and they join you. A carcass with one at it is never taken by a hyena.
-- **Prey bolts:** anything you strike runs — Speed II for 5 seconds, then Speed I for 10 — and every animal within 12 blocks runs with it. Predators, the fearless, and baboons with a troop behind them stand their ground instead. Hominins are never treated as prey.
+- **Prey bolts:** anything you strike runs — Speed II for 2 seconds, then Speed I for 3 — and every animal within 12 blocks runs with it. Predators, the fearless, and baboons with a troop behind them stand their ground instead. Hominins are never treated as prey.
 - **Persistence hunting:** from habilis, think after the animal has run and it is marked for its first run (30 s). Erectus can re-mark whenever the mark fades, with no cooldown, for 4 water a time. A bleeding animal does not heal for 3 minutes. Only for animals big enough to outrun you.
 
 ---
@@ -139,9 +139,9 @@ Band members are hominins of your own species who follow you and look after them
 - They make their own tools, want things and ask you for them, offer trades, and say what they are thinking.
 
 **Fear and fighting**
-- Whatever attacks you, they attack. Whatever you attack, they join — unless told otherwise.
+- Whatever attacks you, they attack. Whatever you attack, they join — unless told otherwise, and never against another hominin.
 - Your blows never hurt them while you hold anything; sneak-attacking is wrestling, which teaches both of you to fight.
-- **Adrenaline**, once every 5 minutes: fight (Strength II, Resistance I, worse wounds inflicted), flight (Speed II for 5 seconds then Speed I, up a tree or back to the band), or freeze — and after 3 seconds the band notices and comes for them.
+- **Adrenaline**, once every 5 minutes: fight (Strength II, Resistance I, worse wounds inflicted), flight (Speed II for 2 seconds then Speed I for 3, up a tree or back to the band), or freeze — and after 3 seconds the band notices and comes for them.
 
 **Fission-fusion**
 - From habilis, a band over 6 adults splits into parties by day and merges at night. Only your party, and anyone within 10 blocks, comes when you are attacked.
@@ -155,7 +155,7 @@ Band members are hominins of your own species who follow you and look after them
 
 ## 6. Other bands
 
-- Wild bands settle where water and stone are — best of all where both are — roughly every 100–200 blocks. Their call tells you the direction and distance, and they light up when you get within 64 blocks.
+- Wild bands settle where water and stone are — best of all where both are — and keep well apart: none spawns within 220 blocks of another. Their call tells you the direction and distance, and they light up when you get within 64 blocks.
 - They will not join you, but they trade. Value is era-relative: a Lomekwian core is Treasured to Australopithecus and Common to erectus.
 - **Territory:** foraging, drinking or knapping within 28 blocks of their site is noticed. Habilis keeps away from you by day; erectus tells you to stop and then demands payment. Trade them something Crafted or better, or get them to travel with you, and the ground is shared.
 - Species come and go: Australopithecus is gone by erectus, habilis thins out, erectus lasts until sapiens.

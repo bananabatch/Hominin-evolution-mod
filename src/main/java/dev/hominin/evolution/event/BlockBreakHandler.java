@@ -100,9 +100,25 @@ public final class BlockBreakHandler {
         }
     }
 
+    /**
+     * Outcrops and mounds are landmarks, not blocks to be mined. A deposit is a face you
+     * work with a hammerstone - over and over, because the seam outlasts you - and a
+     * termite mound is a larder that never moves. Pulling either apart by hand skipped the
+     * whole point of finding one, and carrying a quarry in your pocket skipped the walk.
+     */
+    private static boolean isWorkedNotMined(BlockState state) {
+        return state.is(dev.hominin.evolution.ModBlocks.CHERT_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.QUARTZITE_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.LIMESTONE_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get());
+    }
+
     private static boolean canBreak(Player player, BlockState state) {
         if (player.isCreative() || isDeveloperMode(player)) {
             return true;
+        }
+        if (isWorkedNotMined(state)) {
+            return false;
         }
         ItemStack held = player.getMainHandItem();
         for (ToolGate gate : TOOL_GATES) {
@@ -181,6 +197,13 @@ public final class BlockBreakHandler {
             return;
         }
         lastBlockedMessageTick.put(player.getUUID(), gameTime);
+        if (isWorkedNotMined(state)) {
+            player.sendSystemMessage(Component.literal(
+                    state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get())
+                            ? "The mound is baked hard as fired clay. Fish it with a stick instead."
+                            : "You cannot pull the rock apart. Strike a face off it with a hammerstone."));
+            return;
+        }
         for (ToolGate gate : TOOL_GATES) {
             if (state.is(gate.blocks())) {
                 player.sendSystemMessage(Component.literal(gate.denial()));

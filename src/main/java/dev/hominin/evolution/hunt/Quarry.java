@@ -33,10 +33,10 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * marks it out for its first run. Erectus can do it over and over, and pays in water.
  */
 public final class Quarry {
-    /** The first panic: everything outruns you here. */
-    private static final int BURST_TICKS = 100;
-    /** The long run afterwards, which is where a hunter catches up. */
-    private static final int STRIDE_TICKS = 200;
+    /** The first panic: two seconds where nothing on two legs can follow. */
+    private static final int BURST_TICKS = 40;
+    /** The run afterwards, which is where a hunter begins to catch up. */
+    private static final int STRIDE_TICKS = 60;
 
     /** How long a seeded mark lasts, and how long the erectus re-mark lasts. */
     private static final int FIRST_RUN_TICKS = 30 * 20;

@@ -191,8 +191,15 @@ public final class Band {
         }
     }
 
-    /** Joining in on whatever the leader attacks - unless told not to hunt with them. */
+    /**
+     * Joining in on whatever the leader attacks - unless told not to hunt with them, and
+     * never against another hominin. A stray swing at somebody else's band used to start a
+     * war between two groups of people who have no reason to fight.
+     */
     public static void assist(ServerPlayer player, LivingEntity target) {
+        if (target instanceof BandMember) {
+            return;
+        }
         for (BandMember member : defendersOf(player)) {
             if (member.huntsWithLeader()) {
                 member.defendAgainst(target);
@@ -615,7 +622,7 @@ public final class Band {
             }
             return;
         }
-        if (!(target instanceof Player)) {
+        if (!(target instanceof Player) && !(target instanceof BandMember)) {
             assist(player, target);
         }
     }

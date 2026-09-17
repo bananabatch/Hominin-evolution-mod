@@ -30,10 +30,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * Wild bands are not kept when nobody is near them, so the world does not fill up.
  */
 public final class WildBands {
-    private static final int CHECK_INTERVAL_TICKS = 600;
-    private static final float SPAWN_CHANCE = 0.6F;
-    /** No new band while one is already this close: roughly one band every 100-200 blocks. */
-    private static final double CROWDING_RADIUS = 100.0D;
+    private static final int CHECK_INTERVAL_TICKS = 1800;
+    private static final float SPAWN_CHANCE = 0.25F;
+    /** No new band while one is already this close. Neighbours are neighbours, not a crowd. */
+    private static final double CROWDING_RADIUS = 220.0D;
     private static final int MIN_DISTANCE = 64;
     private static final int MAX_DISTANCE = 150;
     private static final int MIN_SIZE = 3;
