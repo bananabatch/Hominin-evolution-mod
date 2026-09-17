@@ -1,0 +1,234 @@
+package dev.hominin.evolution.combat;
+
+import java.util.List;
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
+import dev.hominin.evolution.Attachments;
+import dev.hominin.evolution.HomininEvolutionMod;
+import dev.hominin.evolution.ModItems;
+import dev.hominin.evolution.ModTags;
+import dev.hominin.evolution.data.PlayerEvolutionData;
+import dev.hominin.evolution.food.MeatSplitting;
+import dev.hominin.evolution.knapping.Knapping;
+import dev.hominin.evolution.tool.Grinding;
+import dev.hominin.evolution.tool.ToolUse;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+
+/**
+ * Two-handed work: hold the piece in one hand, the tool in the other, and press
+ * the interact key.
+ *
+ * <p>Everything a hominin makes is made this way rather than on a crafting grid -
+ * there is no workbench in the Lower Palaeolithic, and putting the recipes on the
+ * hands keeps the stages honest, because each one needs a specific pairing the
+ * player has to have found first.
+ *
+ * <p>Holding the right pairing is not enough on its own. Every recipe here has to
+ * be worked out first, by {@link dev.hominin.evolution.mind.Thinking}; until then
+ * the hands go through the motions and sometimes ruin the material. That is the
+ * point of the mechanic - the insight is the invention, and the invention is the
+ * part that actually took a hundred thousand years.
+ */
+public final class ItemInteractions {
+    private static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, path);
+    }
+
+    private static final ResourceLocation HABILIS = id("homo_habilis");
+    private static final ResourceLocation ERECTUS = id("homo_erectus");
+
+    /** Chance a blind attempt ruins something, and which hand pays when it does. */
+    private static final float FUMBLE_CHANCE = 0.2F;
+    private static final float FUMBLE_HAND_SPLIT = 0.5F;
+
+    /**
+     * One recipe: what goes in each hand, what comes out, the earliest stage that
+     * can do it, and whether it has to be done beside a fire. The id doubles as
+     * the key for whether the player has had the idea yet.
+     */
+    public record HandRecipe(ResourceLocation id, Supplier<Item> mainHand, @Nullable Supplier<Item> offHand,
+            Supplier<Item> result, List<ResourceLocation> stages, boolean needsFire, boolean consumesOffHand,
+            boolean needsThought, String message, String insight) {
+    }
+
+    private static final int FIRE_RADIUS = 3;
+
+    private static final List<HandRecipe> RECIPES = List.of(
+            // Habilis: finishing a gnawed point with a flake. No idea needed - it is
+            // the same job the teeth were already doing, with a better tool.
+            new HandRecipe(id("pointy_stick"), ModItems.SHARPENED_STICK, ModItems.FLAKE, ModItems.POINTY_STICK,
+                    List.of(HABILIS, ERECTUS), false, false, false,
+                    "You pare the point down with the flake until it is fine and even.",
+                    ""),
+            // Habilis: a flake is sharp enough to whittle a branch to a point.
+            new HandRecipe(id("sharpened_spear"), ModItems.LONG_BRANCH, ModItems.FLAKE, ModItems.SHARPENED_SPEAR,
+                    List.of(HABILIS, ERECTUS), false, false, true,
+                    "You work the branch to a point with the flake.",
+                    "A point. The branch wants to be a point, and the flake is what cuts it."),
+            // Habilis: a flake against a cobble trims it down to a working edge. This
+            // and the digging stick are what give habilis three separate things to
+            // work out, which is what the stage asks for.
+            new HandRecipe(id("chopper"), ModItems.ROCK, ModItems.FLAKE, ModItems.CHOPPER,
+                    List.of(HABILIS, ERECTUS), false, false, true,
+                    "You trim the cobble down until one side will cut.",
+                    "The edge does not have to be thin. It has to be an edge."),
+            // Habilis: a chopper is the first tool that can shape another tool.
+            new HandRecipe(id("digging_stick"), ModItems.LONG_BRANCH, ModItems.CHOPPER, ModItems.DIGGING_STICK,
+                    List.of(HABILIS, ERECTUS), false, false, true,
+                    "You hack the branch down to a blunt, strong point.",
+                    "Not everything worth eating is above the ground."),
+            // Erectus: beating the end of a branch with a stone leaves the weight at one end.
+            new HandRecipe(id("wooden_club"), ModItems.LONG_BRANCH, ModItems.ROCK, ModItems.WOODEN_CLUB,
+                    List.of(ERECTUS), false, false, true,
+                    "You batter the end of the branch until it carries its own weight.",
+                    "Weight at the far end. It would land harder if it were heavier where it lands."),
+            // Erectus: turning the point in a fire case-hardens the wood. Needs a free
+            // hand rather than a second ingredient - the fire is the other half.
+            new HandRecipe(id("fire_hardened_spear"), ModItems.SHARPENED_SPEAR, null, ModItems.FIRE_HARDENED_SPEAR,
+                    List.of(ERECTUS), true, false, true,
+                    "You turn the point in the embers until the wood darkens and hardens.",
+                    "Fire does something to wood short of burning it. The point could be harder."));
+
+    /**
+     * A null requirement means the hand must be empty. A recipe naming a rock, a
+     * flake or a chopper means the role, not that exact item - any cobble batters a
+     * branch, and a multi tool cuts as well as a flake does.
+     */
+    private static boolean matches(ItemStack stack, @Nullable Supplier<Item> wanted) {
+        if (wanted == null) {
+            return stack.isEmpty();
+        }
+        TagKey<Item> role = roleOf(wanted);
+        return role != null ? stack.is(role) : stack.is(wanted.get());
+    }
+
+    @Nullable
+    private static TagKey<Item> roleOf(Supplier<Item> wanted) {
+        if (wanted == ModItems.ROCK) {
+            return ModTags.Items.ROCKS;
+        }
+        if (wanted == ModItems.FLAKE) {
+            return ModTags.Items.FLAKES;
+        }
+        return wanted == ModItems.CHOPPER ? ModTags.Items.CHOPPERS : null;
+    }
+
+    /** The recipe the player's hands currently describe, if any. */
+    @Nullable
+    public static HandRecipe match(ItemStack main, ItemStack off) {
+        for (HandRecipe recipe : RECIPES) {
+            if (matches(main, recipe.mainHand()) && matches(off, recipe.offHand())) {
+                return recipe;
+            }
+        }
+        return null;
+    }
+
+    public static boolean isAvailable(PlayerEvolutionData data, HandRecipe recipe) {
+        return data.isDeveloperMode() || recipe.stages().contains(data.getStage());
+    }
+
+    public static boolean isKnown(PlayerEvolutionData data, HandRecipe recipe) {
+        return data.isDeveloperMode() || data.getUnlockedRecipes().contains(recipe.id());
+    }
+
+    public static void interact(ServerPlayer player) {
+        ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
+        ItemStack off = player.getItemInHand(InteractionHand.OFF_HAND);
+
+        // Knapping is checked first: a rock under a hammerstone is its own job and
+        // never collides with a recipe, none of which take a bare stone in hand.
+        if (Knapping.tryOpen(player, main, off)) {
+            return;
+        }
+        if (MeatSplitting.trySplit(player, main, off)) {
+            return;
+        }
+        if (Grinding.tryGrind(player, main, off)) {
+            return;
+        }
+
+        HandRecipe recipe = match(main, off);
+        if (recipe == null) {
+            return;
+        }
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        if (!isAvailable(data, recipe)) {
+            player.displayClientMessage(
+                    Component.literal("You turn it over in your hands, but nothing comes of it yet."), true);
+            return;
+        }
+        if (recipe.needsThought() && !isKnown(data, recipe)) {
+            fumble(player, main, off);
+            return;
+        }
+        if (recipe.needsFire() && !nearFire(player)) {
+            player.displayClientMessage(Component.literal("This needs a fire."), true);
+            return;
+        }
+        main.shrink(1);
+        if (recipe.consumesOffHand()) {
+            off.shrink(1);
+        } else {
+            // The tool that did the work pays for it; a plain rock or flake does not wear.
+            ToolUse.wear(player, InteractionHand.OFF_HAND);
+        }
+        ItemStack result = new ItemStack(recipe.result().get());
+        ToolUse.creditOldowanTool(player, result.getItem());
+        if (!player.getInventory().add(result)) {
+            player.drop(result, false);
+        }
+        player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_BREAK,
+                SoundSource.PLAYERS, 0.7F, 1.1F);
+        player.displayClientMessage(Component.literal(recipe.message()), true);
+    }
+
+    /**
+     * Working material you have not worked out yet. Usually nothing happens; now
+     * and then you destroy it, because that is what happens when the hands move
+     * ahead of the idea behind them.
+     */
+    private static void fumble(ServerPlayer player, ItemStack main, ItemStack off) {
+        if (player.getRandom().nextFloat() >= FUMBLE_CHANCE) {
+            player.displayClientMessage(
+                    Component.literal("You aren't sure what to do with what you're holding yet."), true);
+            return;
+        }
+        boolean ruinMain = off.isEmpty() || player.getRandom().nextFloat() < FUMBLE_HAND_SPLIT;
+        (ruinMain ? main : off).shrink(1);
+        player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_BREAK,
+                SoundSource.PLAYERS, 0.9F, 0.7F);
+        player.displayClientMessage(Component.literal("You try to do something, but break it."), true);
+    }
+
+    private static boolean nearFire(ServerPlayer player) {
+        Level level = player.level();
+        BlockPos origin = player.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-FIRE_RADIUS, -2, -FIRE_RADIUS),
+                origin.offset(FIRE_RADIUS, 2, FIRE_RADIUS))) {
+            var state = level.getBlockState(pos);
+            if (state.is(BlockTags.FIRE) || state.is(Blocks.CAMPFIRE) || state.is(Blocks.SOUL_CAMPFIRE)
+                    || state.is(Blocks.LAVA) || state.is(Blocks.MAGMA_BLOCK)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ItemInteractions() {
+    }
+}

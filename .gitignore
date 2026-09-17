@@ -41,3 +41,7 @@ repo/
 
 ### Claude Code (machine-local settings) ###
 .claude/settings.local.json
+
+### Python ###
+__pycache__/
+*.pyc

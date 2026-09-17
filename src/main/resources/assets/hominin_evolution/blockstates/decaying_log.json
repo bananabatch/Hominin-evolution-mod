@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "hominin_evolution:block/decaying_log"
+    },
+    "axis=z": {
+      "model": "hominin_evolution:block/decaying_log_horizontal",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "hominin_evolution:block/decaying_log_horizontal",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Wounds That Stay Open",
+  "icon": "hominin_evolution:sharpened_spear",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A true edge opens a cut that does not close on its own. A point is not the same as an edge; a stick that is merely sharp will not do it.$(br2)A cut animal runs. Let it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "You are not faster than it. You do not need to be.$(br2)Stay close. Keep following. An animal that cannot shake you will slow, and then stop.$(br2)This is the oldest hunting there is, and it is won by the one who does not give up."
+    }
+  ]
+}

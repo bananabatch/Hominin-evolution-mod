@@ -1,0 +1,12 @@
+{
+  "name": "Drinking",
+  "icon": "minecraft:water_bucket",
+  "category": "hominin_evolution:body",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Water comes from the source. Get down to it.$(br2)The country is wide, and not all of it is wet. Knowing where water is - more than one place - is a kind of wealth nobody can steal."
+    }
+  ]
+}

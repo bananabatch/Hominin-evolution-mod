@@ -1,0 +1,17 @@
+{
+  "name": "The Larder That Walks Nowhere",
+  "icon": "hominin_evolution:termite_stick",
+  "category": "hominin_evolution:body",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Some food does not run. Mounds of baked earth. Dead wood full of holes.$(br2)Something lives inside both, in numbers, and it bites whatever pokes at it. A plain stick, patience, and a little repetition turn that into a meal."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:termite_stick",
+      "text": "Eat what the stick brings back, and you will find you still have the stick. A tool you keep is a technique you can learn."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Striking Well",
+  "icon": "hominin_evolution:flake",
+  "category": "hominin_evolution:stone",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A stone in one hand. Something to strike with in the other. $(k:hominin_evolution.item_interact).$(br2)Where you aim decides what you get, at least in theory. The stone has opinions of its own, and soft stone lies about all of them."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:flake",
+      "text": "The humblest thing a rock can become, and the one that changes everything after it.",
+      "title": "The First Edge"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:grinding_rock",
+      "text": "Edges dull - a flake fastest of all. A rough, flat stone in the other hand remembers what a worn edge used to be."
+    }
+  ]
+}

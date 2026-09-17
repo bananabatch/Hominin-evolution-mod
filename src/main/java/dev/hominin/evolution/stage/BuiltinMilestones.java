@@ -5,9 +5,12 @@ import dev.hominin.evolution.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public final class BuiltinMilestones {
     public static final ResourceLocation STRIKE_FLAKE = ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "strike_flake");
+    public static final ResourceLocation WALK_UPRIGHT = ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "walk_upright");
+    public static final ResourceLocation FIRE_TRANSFER = ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "fire_transfer");
 
     private BuiltinMilestones() {
     }
@@ -15,7 +18,13 @@ public final class BuiltinMilestones {
     public static void bootstrap() {
         MilestoneHandlers.register(STRIKE_FLAKE, (player, stage) -> {
             player.addItem(new ItemStack(ModItems.FLAKE.get()));
-            player.sendSystemMessage(Component.literal("You strike the rock against another - a sharp flake breaks free."));
+            player.sendSystemMessage(Component.literal("The blow lands where you meant it to. A sharp flake breaks free."));
+        });
+        MilestoneHandlers.register(WALK_UPRIGHT, (player, stage) -> player.sendSystemMessage(Component.literal(
+                "You think about the ground a long way below the trees - and decide to walk on it.")));
+        MilestoneHandlers.register(FIRE_TRANSFER, (player, stage) -> {
+            player.addItem(new ItemStack(Items.TORCH));
+            player.sendSystemMessage(Component.literal("You coax the flame onto a bundle of tinder and carry it away, alight."));
         });
     }
 }

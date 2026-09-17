@@ -1,0 +1,16 @@
+{
+  "name": "You, Right Now",
+  "icon": "minecraft:player_head",
+  "category": "hominin_evolution:beginnings",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "You walk upright, mostly. You climb better than you think. Your hands can hold things your mind does not yet understand.$(br2)That gap - between what the body can do and what the mind has thought of - is where your whole future lives."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "There is a list at the edge of your vision. It is not a to-do list. It is a description of the animal you are becoming.$(br2)If it ever becomes too much, $(thing)/hominin checklist$() will quiet it. It will still be there when you look again."
+    }
+  ]
+}

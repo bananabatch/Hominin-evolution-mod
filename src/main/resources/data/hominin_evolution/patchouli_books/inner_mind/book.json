@@ -1,0 +1,8 @@
+{
+  "name": "Your Inner Mind",
+  "subtitle": "by Sahelanthropus?",
+  "landing_text": "$(l)A Guide to Your Inner Mind and Future$()$(br)by the chimp-human last common ancestor - possibly $(o)Sahelanthropus tchadensis$(), though nobody has been able to ask.$(br2)You have no language, no fire, and no idea what a rock is for. $(l)This is fine.$() Read slowly.",
+  "use_resource_pack": true,
+  "model": "patchouli:book_brown",
+  "show_progress": false
+}

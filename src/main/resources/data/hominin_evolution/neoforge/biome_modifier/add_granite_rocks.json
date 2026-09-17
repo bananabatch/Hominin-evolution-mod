@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#hominin_evolution:has_granite_rock",
+  "features": [
+    "hominin_evolution:granite_rock_patch",
+    "hominin_evolution:granite_rock_field"
+  ],
+  "step": "vegetal_decoration"
+}

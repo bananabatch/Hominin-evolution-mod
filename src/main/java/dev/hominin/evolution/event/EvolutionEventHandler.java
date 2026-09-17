@@ -1,26 +1,53 @@
 package dev.hominin.evolution.event;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import dev.hominin.evolution.Attachments;
 import dev.hominin.evolution.EvolutionManager;
+import dev.hominin.evolution.HomininEvolutionMod;
+import dev.hominin.evolution.ModBlocks;
 import dev.hominin.evolution.ModItems;
+import dev.hominin.evolution.ModSounds;
 import dev.hominin.evolution.ModTags;
+import dev.hominin.evolution.band.Band;
+import dev.hominin.evolution.band.WildBands;
+import dev.hominin.evolution.climb.Climbing;
+import dev.hominin.evolution.climb.ClimbingServer;
+import dev.hominin.evolution.combat.HeadTraumaHandler;
+import dev.hominin.evolution.combat.ThreatDisplay;
+import dev.hominin.evolution.combat.WoundHandler;
+import dev.hominin.evolution.stage.ChecklistTracker;
 import dev.hominin.evolution.data.PlayerEvolutionData;
+import dev.hominin.evolution.mind.Thinking;
+import dev.hominin.evolution.tool.ToolUse;
+import dev.hominin.evolution.stage.Arrival;
 import dev.hominin.evolution.stage.BuiltinMilestones;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -28,7 +55,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -51,15 +82,32 @@ public final class EvolutionEventHandler {
     /** {@link #advance} result: this click landed too soon after the previous one. */
     private static final int TOO_SOON = 0;
 
-    private static final float FORAGE_SUCCESS_CHANCE = 0.2F;
-    /** Poking through soil/leaf litter with a stick turns up far more than bare hands. */
-    private static final float FORAGE_SUCCESS_CHANCE_WITH_STICK = 0.5F;
+    private static final float FORAGE_SUCCESS_CHANCE = 0.35F;
+    /**
+     * Poking through soil and leaf litter with a point turns up far more than bare
+     * hands. It has to be the sharpened stick rather than a plain one: an unworked
+     * stick is the thing you whittle, and having both jobs on the same item meant
+     * a forage was quietly sharpening the stick it was being done with.
+     */
+    private static final float FORAGE_SUCCESS_CHANCE_WITH_STICK = 0.6F;
     /** Breathing room after a forage resolves, so you cannot strip a patch by holding right-click. */
     private static final long FORAGE_COOLDOWN_TICKS = 60L;
     private static final long KNAP_COOLDOWN_TICKS = 40L;
 
     /** A club to the head buys you five seconds to get away, or to hit it again. */
-    private static final int STUN_TICKS = 100;
+
+    /** Knock count at which the strike becomes a warning rather than just noise. */
+    private static final int KNOCKS_TO_WARN = 2;
+    /** Knocks needed before the warning turns into a call for the band. */
+    private static final int KNOCKS_TO_CALL = 4;
+    private static final double KNOCK_SCARE_RADIUS = 12.0D;
+    private static final float KNOCK_SCARE_CHANCE = 0.6F;
+
+    /** Of the animals that react, this share bolts; the rest freeze in place. */
+    private static final float STARTLE_FLEE_SHARE = 0.4F;
+    private static final int STARTLE_STUN_TICKS = 120;
+
+    private static final double FLEE_SPEED = 1.3D;
 
     private static final float LONG_BONE_DROP_CHANCE = 0.1F;
     /** Only animals with real limb bones in them; chickens and rabbits have nothing worth cracking. */
@@ -68,7 +116,6 @@ public final class EvolutionEventHandler {
     private static final Map<UUID, Progress> knapProgress = new HashMap<>();
     private static final Map<UUID, Progress> forageProgress = new HashMap<>();
     private static final Map<UUID, Progress> knockProgress = new HashMap<>();
-    private static final Map<UUID, Progress> stickSharpenProgress = new HashMap<>();
 
     /**
      * A repeated-click action in flight. {@code pos} is null when the action is not
@@ -86,17 +133,27 @@ public final class EvolutionEventHandler {
             return;
         }
         // Banging a branch works against any block, so it is checked before the
-        // block-specific interactions below.
+        // block-specific interactions below. It has to be an upright face though -
+        // you hammer a branch against a trunk, not down into the dirt.
         if (event.getItemStack().is(ModItems.LONG_BRANCH.get())) {
-            knockForBand(player, event.getLevel(), event.getPos());
+            if (event.getFace() != null && event.getFace().getAxis().isHorizontal()) {
+                knockForBand(player, event.getLevel(), event.getPos());
+            }
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
+        // Fishing comes before the block's own interaction: the stick is what makes
+        // it termite fishing rather than whatever else the block would have done.
+        if (state.is(ModTags.Blocks.TERMITE_SOURCE) && event.getItemStack().is(Items.STICK)) {
+            fishForTermites(player, event.getLevel(), event.getPos(), event.getItemStack());
+            return;
+        }
         if (state.is(ModTags.Blocks.WORKABLE_STONE_DEPOSIT)) {
+            // The deposit is only a quarry now. Striking a flake happens in the
+            // knapping screen, on a rock you are holding, which is the one place
+            // the player actually chooses what they are trying to make.
             if (player.isShiftKeyDown()) {
                 EvolutionManager.incrementCriterion(player, "notice_stone_deposit", 1);
-            } else if (EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.STRIKE_FLAKE)) {
-                EvolutionManager.attemptMilestone(player, BuiltinMilestones.STRIKE_FLAKE);
             } else {
                 knapRock(player, event.getLevel(), event.getPos());
             }
@@ -106,7 +163,100 @@ public final class EvolutionEventHandler {
             if (player.isShiftKeyDown()) {
                 forage(player, event.getLevel(), event.getPos());
             }
+        } else if (state.getFluidState().is(FluidTags.WATER)) {
+            if (player.isShiftKeyDown()) {
+                drinkWater(player);
+            }
+        } else if (isFireSource(event.getLevel(), event.getPos())) {
+            if (player.isShiftKeyDown()) {
+                EvolutionManager.incrementCriterion(player, "notice_fire_source", 1);
+                player.displayClientMessage(Component.literal("You take note of the flame, careful not to touch it."), true);
+            } else if (EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.FIRE_TRANSFER)) {
+                EvolutionManager.attemptMilestone(player, BuiltinMilestones.FIRE_TRANSFER);
+            }
         }
+    }
+
+
+    private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+    }
+
+    /**
+     * Working a stick into a mound and drawing it back out loaded with soldiers.
+     *
+     * <p>Chimps do this with a stripped twig and it takes them years to learn, so it
+     * gets the same three-strike rhythm as every other worked action here rather
+     * than paying out on one click. The mound is not consumed - a colony outlasts
+     * anything that eats from it, which is what makes it worth remembering where
+     * one is.
+     */
+    private static void fishForTermites(ServerPlayer player, Level level, BlockPos pos, ItemStack stick) {
+        int count = advance(forageProgress, player.getUUID(), level.getGameTime(), pos, FORAGE_COOLDOWN_TICKS);
+        if (count == TOO_SOON) {
+            return;
+        }
+        if (count == ON_COOLDOWN) {
+            player.displayClientMessage(Component.literal("The soldiers have gone back down. Give it a moment."), true);
+            return;
+        }
+        level.playSound(null, pos, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.PLAYERS, 0.5F, 1.3F);
+        if (count < CLICKS_REQUIRED) {
+            player.displayClientMessage(
+                    Component.literal("Working the stick in " + count + "/" + CLICKS_REQUIRED + "..."), true);
+            return;
+        }
+        // Give before taking, so a full inventory cannot eat the stick.
+        ItemStack loaded = new ItemStack(ModItems.TERMITE_STICK.get());
+        if (!player.getInventory().add(loaded)) {
+            player.drop(loaded, false);
+        }
+        stick.shrink(1);
+        player.displayClientMessage(
+                Component.literal("You draw the stick out covered in soldiers."), true);
+    }
+
+    /** A fire or lava block right here, or immediately adjacent - "wildfire, lava" without touching either. */
+    private static boolean isFireSource(Level level, BlockPos pos) {
+        if (isFireOrLava(level, pos)) {
+            return true;
+        }
+        for (Direction direction : Direction.values()) {
+            if (isFireOrLava(level, pos.relative(direction))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isFireOrLava(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE) || state.getFluidState().is(FluidTags.LAVA);
+    }
+
+    /**
+     * Drinking straight from a natural source. Any distinct biome the player has
+     * drunk in counts toward the criterion, same "variety of place" logic as
+     * foraging - exact coordinates aren't tracked, only where.
+     */
+    private static void drinkWater(ServerPlayer player) {
+        ResourceKey<Biome> biomeKey = currentBiomeKey(player);
+        if (biomeKey == null) {
+            return;
+        }
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        if (data.getWaterSourceBiomes().add(biomeKey.location())) {
+            EvolutionManager.incrementCriterion(player, "water_sources", 1);
+            player.displayClientMessage(Component.literal("You drink from the water."), true);
+        }
+    }
+
+    @Nullable
+    private static ResourceKey<Biome> currentBiomeKey(ServerPlayer player) {
+        Holder<Biome> biomeHolder = player.level().getBiome(player.blockPosition());
+        return biomeHolder.unwrapKey().orElse(null);
     }
 
     /**
@@ -114,7 +264,59 @@ public final class EvolutionEventHandler {
      * stone - there is no mining - so it has to stay repeatable, otherwise every
      * stone tool downstream of it becomes uncraftable.
      */
+    /**
+     * What a worked deposit gives up. Quartzite is the common, coarse result and
+     * comes in quantity; chert is the better stone and the rarer one, so the split
+     * is between a lot of adequate material and a little good material.
+     */
+    private static final float QUARTZITE_SHARE = 0.6F;
+    private static final int QUARTZITE_YIELD = 3;
+    private static final int CHERT_YIELD = 2;
+
+    /**
+     * Chance a worked face turns up a cobble already the right shape and weight to
+     * strike with. Loose surface quartzite carries the same chance in its loot
+     * table, which is where a first hammerstone comes from.
+     */
+    private static final float HAMMERSTONE_FIND_CHANCE = 0.12F;
+    private static final float CHERT_HAMMERSTONE_FIND_CHANCE = 0.1F;
+
+    /**
+     * Rarer than a plain hammerstone: a chert nodule round enough to strike with.
+     * Rolled first, so a chert face gives up one or the other, never both.
+     */
+    private static final float CHERT_NODULE_FIND_CHANCE = 0.06F;
+
+    /**
+     * What a face comes off as. A named outcrop gives up its own stone, which is
+     * what makes finding a chert seam worth the walk; plain country rock is a
+     * mixed quarry and rolls for it.
+     */
+    private static ItemStack yieldOf(BlockState state, Level level) {
+        if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
+            return new ItemStack(ModItems.CHERT_ROCK.get(), CHERT_YIELD);
+        }
+        if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
+            return new ItemStack(ModItems.GRANITE_ROCK.get(), QUARTZITE_YIELD);
+        }
+        if (state.is(ModBlocks.LIMESTONE_DEPOSIT.get())) {
+            return new ItemStack(ModItems.LIMESTONE_ROCK.get(), QUARTZITE_YIELD);
+        }
+        return level.getRandom().nextFloat() < QUARTZITE_SHARE
+                ? new ItemStack(ModItems.GRANITE_ROCK.get(), QUARTZITE_YIELD)
+                : new ItemStack(ModItems.CHERT_ROCK.get(), CHERT_YIELD);
+    }
+
     private static void knapRock(ServerPlayer player, Level level, BlockPos pos) {
+        // Bare hands do nothing to a rock face. Loose surface cobbles are the way
+        // in - two of those make a hammerstone, and the hammerstone opens deposits.
+        // Either hand will do - what matters is that something to strike with is to hand.
+        InteractionHand hammer = ToolUse.handWith(player, ModTags.Items.HAMMERSTONES);
+        if (hammer == null) {
+            player.displayClientMessage(
+                    Component.literal("Your hands are not enough. You need a hammerstone."), true);
+            return;
+        }
         int count = advance(knapProgress, player.getUUID(), level.getGameTime(), pos, KNAP_COOLDOWN_TICKS);
         if (count == TOO_SOON) {
             return;
@@ -130,12 +332,33 @@ public final class EvolutionEventHandler {
             return;
         }
         level.playSound(null, pos, SoundEvents.STONE_BREAK, SoundSource.PLAYERS, 0.8F, 1.1F);
+        ToolUse.wear(player, hammer);
 
-        ItemStack rock = new ItemStack(ModItems.ROCK.get());
-        if (!player.getInventory().add(rock)) {
-            player.drop(rock, false);
+        ItemStack won = yieldOf(level.getBlockState(pos), level);
+        boolean quartzite = won.is(ModItems.GRANITE_ROCK.get());
+        boolean chert = won.is(ModItems.CHERT_ROCK.get());
+        giveOrDrop(player, won);
+        if (won.is(ModItems.LIMESTONE_ROCK.get())) {
+            player.displayClientMessage(Component.literal(
+                    "Chalky stuff comes away in slabs. It will not hold an edge."), true);
+            return;
         }
-        player.displayClientMessage(Component.literal("A fist-sized rock breaks free."), true);
+        if (chert && level.getRandom().nextFloat() < CHERT_NODULE_FIND_CHANCE) {
+            giveOrDrop(player, new ItemStack(ModItems.CHERT_HAMMERSTONE.get()));
+            player.displayClientMessage(Component.literal(
+                    "A whole nodule of chert drops free - round, dense, and just the size of a fist."), true);
+            return;
+        }
+        float hammerChance = chert ? CHERT_HAMMERSTONE_FIND_CHANCE : HAMMERSTONE_FIND_CHANCE;
+        if ((quartzite || chert) && level.getRandom().nextFloat() < hammerChance) {
+            giveOrDrop(player, new ItemStack(ModItems.HAMMERSTONE.get()));
+            player.displayClientMessage(Component.literal(
+                    "One piece comes away round and heavy. It sits in the hand like it was meant to."), true);
+            return;
+        }
+        player.displayClientMessage(Component.literal(quartzite
+                ? "The face shears away - coarse quartzite, and plenty of it."
+                : "A seam of chert comes loose. Finer stone, and less of it."), true);
     }
 
     private static void forage(ServerPlayer player, Level level, BlockPos pos) {
@@ -148,13 +371,17 @@ public final class EvolutionEventHandler {
             return;
         }
         level.playSound(null, pos, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.PLAYERS, 0.6F, 1.0F);
+        if (count == 1) {
+            Band.leaderForaging(player, pos);
+        }
         if (count < CLICKS_REQUIRED) {
             player.displayClientMessage(
                     Component.literal("Foraging " + count + "/" + CLICKS_REQUIRED + "..."), true);
             return;
         }
 
-        boolean withStick = player.getMainHandItem().is(Items.STICK) || player.getOffhandItem().is(Items.STICK);
+        boolean withStick = player.getMainHandItem().is(ModItems.SHARPENED_STICK.get())
+                || player.getOffhandItem().is(ModItems.SHARPENED_STICK.get());
         float successChance = withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
         if (level.getRandom().nextFloat() >= successChance) {
             player.displayClientMessage(Component.literal("You search the soil but find nothing."), true);
@@ -173,40 +400,96 @@ public final class EvolutionEventHandler {
     }
 
     /**
-     * Hammering a branch against something. Volume 4 puts the audible range at about
-     * 64 blocks, which is the "call" part - anything nearby hears where you are.
+     * Hammering a branch against something. Knocking is a warning that may drive
+     * animals off; keep going and it becomes a call that carries far enough to
+     * reach a band. Stopping early is a deliberate choice, not a failed attempt.
      */
     private static void knockForBand(ServerPlayer player, Level level, BlockPos pos) {
         int count = advance(knockProgress, player.getUUID(), level.getGameTime(), null, NO_COOLDOWN);
         if (count <= TOO_SOON) {
             return;
         }
-        level.playSound(null, pos, SoundEvents.WOOD_HIT, SoundSource.PLAYERS, 4.0F, 0.7F);
-        if (count < CLICKS_REQUIRED) {
+        if (count < KNOCKS_TO_WARN) {
+            level.playSound(null, pos, ModSounds.BRANCH_KNOCK.get(), SoundSource.PLAYERS, 1.6F, 1.0F);
             player.displayClientMessage(
-                    Component.literal("Knock " + count + "/" + CLICKS_REQUIRED + "..."), true);
+                    Component.literal("Knock " + count + "/" + KNOCKS_TO_CALL + "..."), true);
             return;
         }
+        if (count < KNOCKS_TO_CALL) {
+            level.playSound(null, pos, ModSounds.BRANCH_KNOCK.get(), SoundSource.PLAYERS, 2.4F, 0.9F);
+            int startled = startleNearby(player, KNOCK_SCARE_RADIUS, KNOCK_SCARE_CHANCE, false);
+            player.displayClientMessage(startled > 0
+                    ? Component.literal("The noise sends something crashing away.")
+                    : Component.literal("Knock " + count + "/" + KNOCKS_TO_CALL + "..."), true);
+            return;
+        }
+        level.playSound(null, pos, ModSounds.BAND_CALL.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
         player.sendSystemMessage(Component.literal("You hammer out a call. It carries across the landscape."));
     }
 
     /**
-     * Right-clicking the air with a bone or a stick. Bones get cracked open for
-     * marrow; a stick gets whittled to a point. A long branch is not handled here -
-     * turning one into a spear needs a rock to grind it against, so it happens in
-     * the crafting grid instead.
+     * Startles nearby animals. Each candidate rolls separately, so a display that
+     * works on one animal may not faze the one beside it. An animal that does react
+     * either bolts or freezes - most things caught off guard lock up rather than
+     * run, so freezing is the commoner outcome.
+     *
+     * @param predatorsOnly limit the effect to things tagged as predators
+     * @return how many actually reacted
+     */
+    public static int startleNearby(LivingEntity player, double radius, float chance, boolean predatorsOnly) {
+        Level level = player.level();
+        AABB area = player.getBoundingBox().inflate(radius);
+        int startled = 0;
+        for (PathfinderMob mob : level.getEntitiesOfClass(PathfinderMob.class, area)) {
+            if (predatorsOnly && !mob.getType().is(ModTags.EntityTypes.PREDATORS)) {
+                continue;
+            }
+            if (level.getRandom().nextFloat() >= chance) {
+                continue;
+            }
+            // Drop us as a target either way, otherwise the mob's own attack goal
+            // just re-paths straight back the moment it can move again.
+            if (mob.getTarget() == player) {
+                mob.setTarget(null);
+            }
+            if (level.getRandom().nextFloat() < STARTLE_FLEE_SHARE) {
+                Vec3 away = DefaultRandomPos.getPosAway(mob, 16, 7, player.position());
+                if (away != null && mob.getNavigation().moveTo(away.x, away.y, away.z, FLEE_SPEED)) {
+                    startled++;
+                }
+            } else {
+                mob.getNavigation().stop();
+                mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STARTLE_STUN_TICKS, 6, false, false, false));
+                mob.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STARTLE_STUN_TICKS, 1, false, false, false));
+                startled++;
+            }
+        }
+        return startled;
+    }
+
+    /**
+     * Right-clicking the air with a bone cracks it open for marrow. Sticks are not
+     * sharpened here any more - that is held on the work key, so a right-click with
+     * a stick stays free for fishing termites and everything else.
      */
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        if (event.getFace() != null) {
+            return;
+        }
         ItemStack held = event.getItemStack();
+        if (event.getHand() == InteractionHand.MAIN_HAND && player.isShiftKeyDown()
+                && ThreatDisplay.isThrowable(held) && ThreatDisplay.throwHeld(player, held)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         if (held.is(ModItems.LONG_BONE.get())) {
             crackBone(player, held, 2);
         } else if (held.is(Items.BONE)) {
             crackBone(player, held, 1);
-        } else if (held.is(Items.STICK)) {
-            sharpenStick(player, held);
         }
     }
 
@@ -226,28 +509,27 @@ public final class EvolutionEventHandler {
             player.drop(marrow, false);
         }
         bone.shrink(1);
+        dullFlake(player);
 
         EvolutionManager.incrementCriterion(player, "scavenge_bones", 1);
         player.getData(Attachments.PLAYER_EVOLUTION_DATA).addMeatScavenged(1);
         player.sendSystemMessage(Component.literal("You crack the bone open and scrape out the marrow."));
     }
 
-    /** Whittling a stick to a point: three passes with a flake in the pack. */
-    private static void sharpenStick(ServerPlayer player, ItemStack stick) {
-        if (!hasFlake(player)) {
-            player.sendSystemMessage(Component.literal("You need a flake to work this to a point."));
-            return;
-        }
-        int count = advance(stickSharpenProgress, player.getUUID(), player.level().getGameTime(), null, NO_COOLDOWN);
-        if (count <= TOO_SOON) {
+    /**
+     * Gnawing a stick to a point. No tool needed - Fongoli chimps sharpen their
+     * jabbing sticks with their teeth, and a hominin can do the same.
+     *
+     * <p>Called once the client has seen the work key held long enough. The hold is
+     * the effort, so there is no click count here; the server still checks that a
+     * stick is really in hand.
+     */
+    public static void sharpenHeldStick(ServerPlayer player) {
+        ItemStack stick = player.getMainHandItem();
+        if (!stick.is(Items.STICK)) {
             return;
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 0.5F, 1.4F);
-        if (count < CLICKS_REQUIRED) {
-            player.displayClientMessage(
-                    Component.literal("Sharpening " + count + "/" + CLICKS_REQUIRED + "..."), true);
-            return;
-        }
 
         // Same ordering trap as the marrow: give first, shrink second.
         ItemStack sharpened = new ItemStack(ModItems.SHARPENED_STICK.get());
@@ -261,8 +543,26 @@ public final class EvolutionEventHandler {
                 .append(Component.literal(".")));
     }
 
+    /** Wears the flake doing the work: the one in hand if there is one, otherwise the first carried. */
+    private static void dullFlake(ServerPlayer player) {
+        InteractionHand hand = ToolUse.handWith(player, ModTags.Items.FLAKES);
+        if (hand != null) {
+            ToolUse.wear(player, hand);
+            return;
+        }
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.is(ModTags.Items.FLAKES) && stack.isDamageableItem()) {
+                stack.hurtAndBreak(1, player.serverLevel(), player, item -> {
+                });
+                return;
+            }
+        }
+    }
+
     private static boolean hasFlake(ServerPlayer player) {
-        return player.getInventory().countItem(ModItems.FLAKE.get()) > 0;
+        return player.getInventory().contains(ModTags.Items.FLAKES);
     }
 
     /**
@@ -298,12 +598,26 @@ public final class EvolutionEventHandler {
     /** Wipes a departing player's half-finished actions so the trackers do not grow forever. */
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID playerId = event.getEntity().getUUID();
+        if (event.getEntity() instanceof ServerPlayer leaving) {
+            ChecklistTracker.forget(leaving);
+            Thinking.forget(leaving);
+            Arrival.forget(leaving);
+        }
         knapProgress.remove(playerId);
         forageProgress.remove(playerId);
         knockProgress.remove(playerId);
-        stickSharpenProgress.remove(playerId);
+        ThreatDisplay.forget(playerId);
+        ClimbingServer.forget(playerId);
+        dev.hominin.evolution.band.Social.forget(playerId);
+        touchedColdBiome.remove(playerId);
+        wasNight.remove(playerId);
+        nightTreeCoverSeen.remove(playerId);
+        climbedTrees.remove(playerId);
         BlockBreakHandler.forget(playerId);
     }
+
+    /** How far a lightning strike is noticeable from - it's the flash people react to, not proximity to the char mark. */
+    private static final double LIGHTNING_NOTICE_RADIUS = 24.0D;
 
     public static void onFinalizeSpawn(FinalizeSpawnEvent event) {
         if (event.getEntity().getType().is(ModTags.EntityTypes.BLOCKED_SPAWNS)) {
@@ -314,25 +628,40 @@ public final class EvolutionEventHandler {
         }
     }
 
-    /** A branch barely hurts, but a solid swing to the head leaves an animal reeling. */
+    /**
+     * Lightning bolts are plain entities, not Mobs, so FinalizeSpawnEvent (which
+     * only fires from within Mob#finalizeSpawn) never sees them - this is the
+     * general "any entity entered the level" hook instead.
+     */
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof LightningBolt bolt) {
+            notifyLightningWitnesses(bolt);
+        }
+    }
+
+    private static void notifyLightningWitnesses(LightningBolt bolt) {
+        Level level = bolt.level();
+        if (level.isClientSide()) {
+            return;
+        }
+        AABB area = bolt.getBoundingBox().inflate(LIGHTNING_NOTICE_RADIUS);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, area)) {
+            EvolutionManager.incrementCriterion(player, "notice_fire_source", 1);
+            player.displayClientMessage(Component.literal("Lightning strikes nearby - you take note of it."), true);
+        }
+    }
+
+    /**
+     * A wooden weapon barely breaks skin, so it works by concussion instead.
+     * The escalation lives in {@link HeadTraumaHandler}.
+     */
     public static void onAttackEntity(AttackEntityEvent event) {
         Player player = event.getEntity();
-        if (player.level().isClientSide() || !player.getMainHandItem().is(ModItems.LONG_BRANCH.get())) {
+        if (player.level().isClientSide() || !(event.getTarget() instanceof LivingEntity target)) {
             return;
         }
-        if (!(event.getTarget() instanceof LivingEntity target)) {
-            return;
-        }
-        // Only a fully wound-up swing connects hard enough to daze anything.
-        if (player.getAttackStrengthScale(0.5F) < 0.9F) {
-            return;
-        }
-        // Slowness VII takes the target's movement speed to zero outright.
-        // The 6-arg constructor is the one that takes `visible` separately from
-        // `showIcon`; particle rendering keys off `visible` alone, so this is the
-        // only way to stun something without wrapping it in swirling particles.
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 6, false, false, true));
-        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_TICKS, 1, false, false, true));
+        HeadTraumaHandler.strike(player, target);
+        WoundHandler.strike(player, target);
     }
 
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -340,10 +669,27 @@ public final class EvolutionEventHandler {
         if (entity.level().isClientSide() || entity instanceof Player) {
             return;
         }
+        creditHunt(event.getSource().getEntity(), entity);
         dropAt(entity, new ItemStack(Items.BONE));
         if (entity.getBbHeight() >= LONG_BONE_MIN_HEIGHT
                 && entity.level().getRandom().nextFloat() < LONG_BONE_DROP_CHANCE) {
             dropAt(entity, new ItemStack(ModItems.LONG_BONE.get()));
+        }
+    }
+
+    /**
+     * A kill only counts as a hunt if the weapon is still in hand when the animal
+     * goes down - the point of the criterion is using the tool, not owning it.
+     */
+    private static void creditHunt(@Nullable net.minecraft.world.entity.Entity killer, LivingEntity victim) {
+        if (!(killer instanceof ServerPlayer player)) {
+            return;
+        }
+        ItemStack weapon = player.getMainHandItem();
+        if (weapon.is(ModItems.SHARPENED_STICK.get())) {
+            EvolutionManager.incrementCriterion(player, "hunt_with_stick", 1);
+        } else if (weapon.is(ModItems.SHARPENED_SPEAR.get()) || weapon.is(ModItems.FIRE_HARDENED_SPEAR.get())) {
+            EvolutionManager.incrementCriterion(player, "hunt_with_spear", 1);
         }
     }
 
@@ -360,8 +706,7 @@ public final class EvolutionEventHandler {
         if (!stack.has(DataComponents.FOOD)) {
             return;
         }
-        Holder<Biome> biomeHolder = player.level().getBiome(player.blockPosition());
-        ResourceKey<Biome> biomeKey = biomeHolder.unwrapKey().orElse(null);
+        ResourceKey<Biome> biomeKey = currentBiomeKey(player);
         if (biomeKey == null) {
             return;
         }
@@ -372,30 +717,209 @@ public final class EvolutionEventHandler {
         }
     }
 
+    /** The hammerstone is still a grid recipe; every other tool credits itself where it is made. */
     public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        Item craftedItem = event.getCrafting().getItem();
-        if (craftedItem == ModItems.CHOPPER.get() || craftedItem == ModItems.HAMMERSTONE.get()) {
-            EvolutionManager.incrementCriterion(player, "craft_oldowan_tools", 1);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ToolUse.creditOldowanTool(player, event.getCrafting().getItem());
         }
     }
 
+    /** How far out to look for tree cover when judging where a player slept. */
+    private static final int TREE_COVER_RADIUS = 3;
+
+    /**
+     * Distance between payouts, in {@code walkDist} units. Vanilla accumulates
+     * walkDist at 0.6x the blocks actually travelled, so this is about 1200 blocks
+     * on foot - far enough to feel like a real search, and it excludes boats and
+     * mounts because vanilla skips walkDist entirely while riding.
+     */
+    private static final float DISTANCE_CREDIT_UNITS = 1200.0F * 0.6F;
+
+    /**
+     * Criteria that depend on what generated near the player, and so need a
+     * guaranteed route that pure effort can reach.
+     */
+    private static final String[] DISTANCE_BACKED_CRITERIA = {
+            "forage_biomes", "water_sources", "cold_biome_edge"};
+
+    private static final Map<UUID, Boolean> touchedColdBiome = new HashMap<>();
+    private static final Map<UUID, Boolean> wasNight = new HashMap<>();
+    private static final Map<UUID, Boolean> nightTreeCoverSeen = new HashMap<>();
+
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         ServerPlayer player = event.getEntity() instanceof ServerPlayer sp ? sp : null;
-        if (player == null || player.tickCount % DAY_CHECK_INTERVAL_TICKS != 0) {
+        if (player == null) {
             return;
         }
+        Arrival.tick(player);
+        ThreatDisplay.tick(player);
+        ClimbingServer.tick(player);
+        WildBands.tick(player);
+        Band.tickPlayer(player);
+        // Climbing is checked far more often than the rest: a player is only up a
+        // tree for a few seconds, so a once-a-second sweep would miss most climbs.
+        if (player.tickCount % CLIMB_CHECK_INTERVAL_TICKS == 0) {
+            checkTreeClimb(player);
+        }
+        if (player.tickCount % DAY_CHECK_INTERVAL_TICKS != 0) {
+            return;
+        }
+        // Rides the existing slow tick; it only sends a packet when a line changes.
+        ChecklistTracker.refresh(player);
         long currentDay = player.level().getDayTime() / TICKS_PER_DAY;
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         if (data.getLastCountedDay() < 0) {
             data.setLastCountedDay(currentDay);
-            return;
-        }
-        if (currentDay > data.getLastCountedDay()) {
+        } else if (currentDay > data.getLastCountedDay()) {
             data.setLastCountedDay(currentDay);
             EvolutionManager.incrementCriterion(player, "survive_days", 1);
         }
+
+        checkColdBiomeEdge(player);
+        checkNightSurvival(player);
+        checkDistanceCredit(player, data);
+    }
+
+    /**
+     * Ground covered is the fallback for criteria that depend on what happened to
+     * generate nearby. Some worlds simply have no cold biome or third water source
+     * within reach; walking far enough gets you there anyway, slowly, so no one is
+     * ever hard-stuck behind terrain luck.
+     */
+    private static void checkDistanceCredit(ServerPlayer player, PlayerEvolutionData data) {
+        float walked = player.walkDist - data.getStageStartWalkDistance();
+        if (walked < 0.0F) {
+            // Lifetime distance only ever climbs, so a negative gap means the
+            // snapshot is stale (an older save, or a stage set before this existed).
+            data.setStageStartWalkDistance(player.walkDist);
+            return;
+        }
+        int earned = (int) (walked / DISTANCE_CREDIT_UNITS);
+        if (earned <= data.getDistanceCredits()) {
+            return;
+        }
+        data.setDistanceCredits(earned);
+        for (String criterion : DISTANCE_BACKED_CRITERIA) {
+            EvolutionManager.incrementCriterion(player, criterion, 1);
+        }
+        player.sendSystemMessage(Component.literal(
+                "You have covered a lot of ground, and learned the country by crossing it."));
+    }
+
+    private static final int CLIMB_CHECK_INTERVAL_TICKS = 10;
+
+    /** How far above the foot of the tree counts as being up it rather than beside it. */
+    private static final int CLIMB_MIN_HEIGHT = 4;
+
+    /** Tallest tree worth scanning down through - jungle giants top out well below this. */
+    private static final int CLIMB_MAX_SCAN = 32;
+
+    /** How far out to look for a trunk, so a leafy hillside is not mistaken for a tree. */
+    private static final int CLIMB_TRUNK_RADIUS = 2;
+
+    /**
+     * Trees already credited, held in memory rather than on the player's save data.
+     * The counter itself persists; this only stops one tree being climbed over and
+     * over for credit in a single session, and re-earning it after a restart is a
+     * fair trade for not spending one of the save's remaining codec fields.
+     */
+    private static final Map<UUID, Set<Long>> climbedTrees = new HashMap<>();
+
+    /**
+     * Credits a climb when the player is stood on a tree, high enough above what
+     * the tree grows out of. Trees are keyed by a 4x4 patch of the ground beneath
+     * them, so moving around one canopy cannot be farmed for repeat credit.
+     */
+    private static void checkTreeClimb(ServerPlayer player) {
+        boolean climbing = Climbing.isClimbing(player);
+        if (!player.onGround() && !climbing) {
+            return;
+        }
+        Level level = player.level();
+        BlockPos support = player.blockPosition().below();
+        BlockState standing = level.getBlockState(support);
+        // Mid-climb there may be nothing underfoot yet; the trunk check below still applies.
+        if (!climbing && !standing.is(BlockTags.LOGS) && !standing.is(BlockTags.LEAVES)) {
+            return;
+        }
+        if (!hasTrunkNearby(level, support)) {
+            return;
+        }
+        // Drop through the canopy - and any gaps in it - to whatever the tree stands on.
+        BlockPos ground = support;
+        for (int i = 0; i < CLIMB_MAX_SCAN; i++) {
+            BlockPos below = ground.below();
+            BlockState state = level.getBlockState(below);
+            if (!state.isAir() && !state.is(BlockTags.LOGS) && !state.is(BlockTags.LEAVES)) {
+                break;
+            }
+            ground = below;
+        }
+        if (support.getY() - ground.getY() < CLIMB_MIN_HEIGHT) {
+            return;
+        }
+        long key = (((long) (ground.getX() >> 2)) << 32) | ((ground.getZ() >> 2) & 0xFFFFFFFFL);
+        if (climbedTrees.computeIfAbsent(player.getUUID(), id -> new HashSet<>()).add(key)) {
+            EvolutionManager.incrementCriterion(player, "climb_trees", 1);
+        }
+    }
+
+    private static boolean hasTrunkNearby(Level level, BlockPos center) {
+        for (BlockPos pos : BlockPos.betweenClosed(
+                center.offset(-CLIMB_TRUNK_RADIUS, -1, -CLIMB_TRUNK_RADIUS),
+                center.offset(CLIMB_TRUNK_RADIUS, 1, CLIMB_TRUNK_RADIUS))) {
+            if (level.getBlockState(pos).is(BlockTags.LOGS)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** "Reach a colder edge and turn back" - fires the moment a cold spell ends. */
+    private static void checkColdBiomeEdge(ServerPlayer player) {
+        UUID id = player.getUUID();
+        BlockPos pos = player.blockPosition();
+        boolean cold = player.level().getBiome(pos).value().coldEnoughToSnow(pos);
+        if (cold) {
+            touchedColdBiome.put(id, true);
+        } else if (Boolean.TRUE.equals(touchedColdBiome.remove(id))) {
+            EvolutionManager.incrementCriterion(player, "cold_biome_edge", 1);
+        }
+    }
+
+    /**
+     * Watches a full night for tree cover. Whether the criterion fires is decided
+     * the moment night ends, based on whether cover was ever seen while it lasted.
+     */
+    private static void checkNightSurvival(ServerPlayer player) {
+        UUID id = player.getUUID();
+        boolean isNight = player.level().isNight();
+        boolean previouslyNight = wasNight.getOrDefault(id, false);
+        if (isNight) {
+            if (!previouslyNight) {
+                nightTreeCoverSeen.put(id, false);
+            }
+            if (isNearTreeCover(player)) {
+                nightTreeCoverSeen.put(id, true);
+            }
+        } else if (previouslyNight && !nightTreeCoverSeen.getOrDefault(id, true)) {
+            EvolutionManager.incrementCriterion(player, "ground_night_survival", 1);
+        }
+        wasNight.put(id, isNight);
+    }
+
+    /** Scans a small box around the player for logs/leaves - shared with the future tree-sleeping penalty. */
+    private static boolean isNearTreeCover(ServerPlayer player) {
+        BlockPos center = player.blockPosition();
+        Level level = player.level();
+        for (BlockPos pos : BlockPos.betweenClosed(
+                center.offset(-TREE_COVER_RADIUS, -1, -TREE_COVER_RADIUS),
+                center.offset(TREE_COVER_RADIUS, TREE_COVER_RADIUS, TREE_COVER_RADIUS))) {
+            BlockState state = level.getBlockState(pos);
+            if (state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

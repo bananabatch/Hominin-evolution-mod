@@ -1,0 +1,1034 @@
+package dev.hominin.evolution.band;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
+import dev.hominin.evolution.HomininEvolutionMod;
+import dev.hominin.evolution.ModItems;
+import dev.hominin.evolution.band.goal.ArmSelfGoal;
+import dev.hominin.evolution.band.goal.ArmedMeleeGoal;
+import dev.hominin.evolution.band.goal.FleeToTreeGoal;
+import dev.hominin.evolution.band.goal.FollowLeaderGoal;
+import dev.hominin.evolution.band.goal.ForageGoal;
+import dev.hominin.evolution.band.goal.GatherItemsGoal;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+/**
+ * A hominin in a band: another member of the player's species, who wanders, keeps up
+ * with its band, feeds itself and looks after itself.
+ *
+ * <p>It has the same needs a player has and meets them the same way. It gets hungry,
+ * and forages or eats what it carries - or what it is handed, and says so when it is
+ * going short. It picks up food and weapons. With nothing to defend itself with it
+ * pulls a branch out of a tree, and when something attacks it, it fights with what it
+ * holds or runs for a trunk and climbs out of reach. When something attacks its
+ * leader, it fights regardless.
+ *
+ * <p>Two kinds exist. Members of the player's band have a leader (the player). Members
+ * of a wild band have a band id and follow that band's alpha instead; they cannot be
+ * recruited, only traded with.
+ */
+public class BandMember extends PathfinderMob implements InventoryCarrier {
+    private static final EntityDataAccessor<String> STAGE =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> BABY =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CLIMBING =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
+    /** Synced so the talk menu knows it is facing another band. */
+    private static final EntityDataAccessor<Boolean> WILD =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
+
+    /** Entity event: play the threat display animation on clients. */
+    public static final byte DISPLAY_EVENT = 64;
+
+    public static final int MAX_HUNGER = 20;
+    /** Below this it starts looking for food. */
+    public static final int HUNGRY = 16;
+    /** Below this it eats what it is carrying. */
+    private static final int EATS_BELOW = 14;
+    /** Below this it tells its leader. */
+    private static final int COMPLAINS_BELOW = 10;
+    /** One point of hunger a minute: a full stomach lasts most of a day. */
+    private static final int HUNGER_TICKS = 1200;
+    private static final int HEAL_TICKS = 200;
+    private static final int TALK_COOLDOWN = 3600;
+
+    private static final float ARM_INSTEAD_OF_FLEE = 0.35F;
+    private static final float DISPLAY_WHEN_HURT = 0.3F;
+
+    /** One in-game day from conception to birth; two more to grow up. */
+    private static final int PREGNANCY_TICKS = 24000;
+    private static final int GROW_UP_TICKS = 48000;
+    /** How long after being fed a member is ready to pair with another who was fed. */
+    private static final int READY_TICKS = 200;
+
+    /** Every bout of wrestling makes a better fighter, up to +2 damage. */
+    public static final int MAX_FIGHT_SKILL = 20;
+    private static final ResourceLocation FIGHT_SKILL_ID =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "fight_skill");
+
+    /** How long defending a leader overrides the urge to run. */
+    private static final int DEFEND_TICKS = 300;
+
+    /** Weapons in order of preference, worst first. */
+    private static final List<Supplier<Item>> WEAPONS = List.of(
+            ModItems.LONG_BRANCH, ModItems.SHARPENED_STICK, ModItems.POINTY_STICK,
+            ModItems.WOODEN_CLUB, ModItems.SHARPENED_SPEAR, ModItems.FIRE_HARDENED_SPEAR);
+
+    private static final String[] SYLLABLES = {"ka", "nu", "ba", "mo", "ti", "ra", "ku", "sha", "do", "le",
+            "ma", "gu", "ri", "ya", "zo", "en", "ok", "wa", "hu", "ji"};
+
+    private final SimpleContainer inventory = new SimpleContainer(8);
+    @Nullable
+    private UUID leader;
+    @Nullable
+    private UUID bandId;
+    @Nullable
+    private UUID alpha;
+    private boolean female;
+    private int hunger = MAX_HUNGER;
+    private int hungerClock;
+    private int eatCooldown;
+    private int fightSkill;
+
+    private int fleeTicks;
+    private int armUrgencyTicks;
+    private int defendTicks;
+    private int safeLandingTicks;
+    private int displayDelay = -1;
+    private int readyTicks;
+    private int pregnancyTicks;
+    private int growUpTicks;
+    private long nextTalk;
+    private int forageTogetherTicks;
+    @Nullable
+    private BlockPos forageAnchor;
+    private int wrestleCooldown;
+
+    /** A wild band travelling with a player for the day. */
+    @Nullable
+    private UUID guestOf;
+    /** Where a wild band is heading when it leaves for the night. */
+    @Nullable
+    private BlockPos leavePos;
+    private int leaveTicks;
+    @Nullable
+    private UUID wrestlePartner;
+    private int wrestleTicks;
+    /** Asked to find food and bring it to this player. */
+    @Nullable
+    private UUID deliverFoodTo;
+    private int deliverTicks;
+
+    /** Client only: tick the last display started, for the animation. */
+    public int clientDisplayStart = -1000;
+
+    public BandMember(EntityType<? extends BandMember> type, Level level) {
+        super(type, level);
+        setCanPickUpLoot(true);
+        setDropChance(EquipmentSlot.MAINHAND, 1.0F);
+        female = random.nextBoolean();
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return PathfinderMob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 16.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.3D)
+                .add(Attributes.ATTACK_DAMAGE, 1.0D)
+                .add(Attributes.FOLLOW_RANGE, 24.0D);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(STAGE, HomininEvolutionMod.MODID + ":australopithecus");
+        builder.define(BABY, false);
+        builder.define(CLIMBING, false);
+        builder.define(WILD, false);
+    }
+
+    @Override
+    protected void registerGoals() {
+        goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(1, new FleeToTreeGoal(this));
+        goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
+        goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.WrestleGoal(this));
+        goalSelector.addGoal(3, new ArmSelfGoal(this));
+        goalSelector.addGoal(4, new GatherItemsGoal(this));
+        goalSelector.addGoal(5, new ForageGoal(this));
+        goalSelector.addGoal(6, new FollowLeaderGoal(this, 1.1D, 10.0F, 4.0F));
+        goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        // Players are ignored: a stray swing from your own leader is not a reason to fight them.
+        targetSelector.addGoal(1, new HurtByTargetGoal(this, Player.class).setAlertOthers());
+    }
+
+    // ------------------------------------------------------------ identity
+
+    public ResourceLocation getStage() {
+        ResourceLocation stage = ResourceLocation.tryParse(entityData.get(STAGE));
+        return stage != null ? stage : ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "australopithecus");
+    }
+
+    public void setStage(ResourceLocation stage) {
+        entityData.set(STAGE, stage.toString());
+    }
+
+    @Nullable
+    public UUID getLeader() {
+        return leader;
+    }
+
+    public void setLeader(@Nullable UUID leader) {
+        this.leader = leader;
+    }
+
+    @Nullable
+    public Player leaderPlayer() {
+        return leader == null ? null : level().getPlayerByUUID(leader);
+    }
+
+    public boolean isLedBy(Player player) {
+        return player.getUUID().equals(leader);
+    }
+
+    @Nullable
+    public UUID getBandId() {
+        return bandId;
+    }
+
+    public boolean isWild() {
+        return bandId != null && leader == null;
+    }
+
+    /** Joins a wild band, following its alpha - or leading it, if the alpha is null. */
+    public void joinWildBand(UUID band, @Nullable UUID alphaId) {
+        this.bandId = band;
+        this.alpha = alphaId;
+        this.leader = null;
+        entityData.set(WILD, true);
+    }
+
+    /** Client-safe: whether this is a member of some other band. */
+    public boolean isOtherBand() {
+        return entityData.get(WILD);
+    }
+
+    public boolean isAlpha() {
+        return isWild() && alpha == null;
+    }
+
+    @Nullable
+    public UUID getAlpha() {
+        return alpha;
+    }
+
+    public boolean isGuestOf(Player player) {
+        return player.getUUID().equals(guestOf);
+    }
+
+    public boolean isGuest() {
+        return guestOf != null;
+    }
+
+    /** Fission-fusion: this wild band joins the player's for the rest of the day. */
+    public void travelWith(Player player) {
+        guestOf = player.getUUID();
+        leavePos = null;
+        leaveTicks = 0;
+    }
+
+    /** Leaves for the night, heading away from the player. */
+    public void leaveTowards(BlockPos where) {
+        guestOf = null;
+        leavePos = where;
+        leaveTicks = 1200;
+    }
+
+    @Nullable
+    public BlockPos getLeavePos() {
+        return leavePos;
+    }
+
+    /** Whoever this member currently keeps company with: its leader, or the player its band travels with. */
+    @Nullable
+    public Player companionPlayer() {
+        Player player = leaderPlayer();
+        if (player == null && guestOf != null) {
+            player = level().getPlayerByUUID(guestOf);
+        }
+        return player;
+    }
+
+    public boolean isCompanionOf(Player player) {
+        return isLedBy(player) || isGuestOf(player);
+    }
+
+    /** Who this member keeps up with: its leader, or its wild band's alpha. */
+    @Nullable
+    public LivingEntity followTarget() {
+        if (leavePos != null) {
+            return null;
+        }
+        Player player = companionPlayer();
+        if (player != null) {
+            return player;
+        }
+        if (alpha != null && level() instanceof ServerLevel server
+                && server.getEntity(alpha) instanceof BandMember alphaMember && alphaMember.isAlive()) {
+            return alphaMember;
+        }
+        return null;
+    }
+
+    public boolean isFemale() {
+        return female;
+    }
+
+    /** A name, given the first time one is needed. */
+    public void ensureName() {
+        if (!hasCustomName()) {
+            String name = SYLLABLES[random.nextInt(SYLLABLES.length)] + SYLLABLES[random.nextInt(SYLLABLES.length)];
+            setCustomName(Component.literal(Character.toUpperCase(name.charAt(0)) + name.substring(1)));
+        }
+    }
+
+    // ------------------------------------------------------------ age
+
+    @Override
+    public boolean isBaby() {
+        return entityData.get(BABY);
+    }
+
+    public void makeBaby() {
+        entityData.set(BABY, true);
+        growUpTicks = GROW_UP_TICKS;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (BABY.equals(key)) {
+            refreshDimensions();
+        }
+    }
+
+    public boolean isPregnant() {
+        return pregnancyTicks > 0;
+    }
+
+    // ------------------------------------------------------------ hunger
+
+    public int getHunger() {
+        return hunger;
+    }
+
+    public boolean isHungry() {
+        return hunger < HUNGRY;
+    }
+
+    public boolean hasFood() {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if (inventory.getItem(slot).has(DataComponents.FOOD)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean eatFromInventory() {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            FoodProperties food = stack.get(DataComponents.FOOD);
+            if (food != null) {
+                consume(food);
+                stack.shrink(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void consume(FoodProperties food) {
+        hunger = Math.min(MAX_HUNGER, hunger + food.nutrition());
+        eatCooldown = 40;
+        swing(InteractionHand.MAIN_HAND);
+        playSound(SoundEvents.GENERIC_EAT, 0.8F, 0.9F + random.nextFloat() * 0.2F);
+        // A stick of termites leaves the stick behind, for a hominin as for a player.
+        food.usingConvertsTo().ifPresent(leftover -> addToInventory(leftover.copy()));
+    }
+
+    /** The leader started foraging while this member was hungry: go and forage beside them. */
+    public void forageAlongside(BlockPos where) {
+        forageTogetherTicks = 600;
+        forageAnchor = where;
+    }
+
+    public boolean isForagingTogether() {
+        return forageTogetherTicks > 0 && forageAnchor != null;
+    }
+
+    @Nullable
+    public BlockPos getForageAnchor() {
+        return forageAnchor;
+    }
+
+    // ------------------------------------------------------------ items
+
+    @Override
+    public SimpleContainer getInventory() {
+        return inventory;
+    }
+
+    public static boolean isWeapon(ItemStack stack) {
+        return weaponRank(stack) >= 0;
+    }
+
+    private static int weaponRank(ItemStack stack) {
+        for (int i = 0; i < WEAPONS.size(); i++) {
+            if (stack.is(WEAPONS.get(i).get())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public boolean hasWeapon() {
+        return isWeapon(getMainHandItem());
+    }
+
+    /** Food, and things to hit with. Stone and wood for making are left for the player. */
+    @Override
+    public boolean wantsToPickUp(ItemStack stack) {
+        boolean useful = stack.has(DataComponents.FOOD) || isWeapon(stack);
+        return useful && inventory.canAddItem(stack);
+    }
+
+    @Override
+    protected void pickUpItem(ItemEntity itemEntity) {
+        InventoryCarrier.pickUpItem(this, this, itemEntity);
+        equipBestWeapon();
+    }
+
+    public void addToInventory(ItemStack stack) {
+        ItemStack left = inventory.addItem(stack);
+        if (!left.isEmpty()) {
+            spawnAtLocation(left);
+        }
+        equipBestWeapon();
+    }
+
+    /** Holds the best weapon carried, putting a worse one back in the pack. */
+    public void equipBestWeapon() {
+        if (isBaby()) {
+            return;
+        }
+        int bestSlot = -1;
+        int bestRank = weaponRank(getMainHandItem());
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            int rank = weaponRank(inventory.getItem(slot));
+            if (rank > bestRank) {
+                bestRank = rank;
+                bestSlot = slot;
+            }
+        }
+        if (bestSlot < 0) {
+            return;
+        }
+        ItemStack chosen = inventory.removeItem(bestSlot, 1);
+        ItemStack previous = getMainHandItem();
+        setItemSlot(EquipmentSlot.MAINHAND, chosen);
+        if (!previous.isEmpty()) {
+            ItemStack left = inventory.addItem(previous);
+            if (!left.isEmpty()) {
+                spawnAtLocation(left);
+            }
+        }
+    }
+
+    /** Hands over one carried thing: something from the pack first, the held weapon last. */
+    private ItemStack handOver() {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if (!inventory.getItem(slot).isEmpty()) {
+                return inventory.removeItem(slot, 1);
+            }
+        }
+        ItemStack held = getMainHandItem();
+        if (!held.isEmpty()) {
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+        return held;
+    }
+
+    // ------------------------------------------------------------ interaction
+
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
+        if (level().isClientSide()) {
+            if (player.isShiftKeyDown()) {
+                SocialSelection.entityId = getId();
+                SocialSelection.selectedAtMillis = net.minecraft.Util.getMillis();
+            }
+            return InteractionResult.SUCCESS;
+        }
+        ensureName();
+        ItemStack held = player.getItemInHand(hand);
+        if (player.isShiftKeyDown()) {
+            describeTo(player);
+            player.sendSystemMessage(Component.literal("Press H within 5 seconds to talk to "
+                    + getName().getString() + ".").withStyle(ChatFormatting.GRAY));
+            return InteractionResult.CONSUME;
+        }
+        if (isWild()) {
+            FoodProperties guestFood = held.get(DataComponents.FOOD);
+            if (guestFood != null && isGuestOf(player)) {
+                feedFromHand(player, held, guestFood);
+            } else if (!held.isEmpty()) {
+                Trading.offer(this, player, held);
+            } else {
+                player.displayClientMessage(Component.literal(getName().getString()
+                        + " watches you warily. Offer something."), true);
+            }
+            return InteractionResult.CONSUME;
+        }
+        if (held.isEmpty()) {
+            if (isLedBy(player)) {
+                ItemStack given = handOver();
+                if (given.isEmpty()) {
+                    player.displayClientMessage(Component.literal(getName().getString() + " has nothing to give."), true);
+                } else {
+                    player.displayClientMessage(Component.literal(getName().getString() + " hands you ")
+                            .append(given.getHoverName()).append("."), true);
+                    if (!player.getInventory().add(given)) {
+                        player.drop(given, false);
+                    }
+                }
+            }
+            return InteractionResult.CONSUME;
+        }
+        FoodProperties food = held.get(DataComponents.FOOD);
+        if (food != null) {
+            feedFromHand(player, held, food);
+        } else if (isLedBy(player)) {
+            addToInventory(held.copyWithCount(1));
+            playSound(SoundEvents.ITEM_PICKUP, 0.6F, 1.0F);
+            if (!player.getAbilities().instabuild) {
+                held.shrink(1);
+            }
+        }
+        return InteractionResult.CONSUME;
+    }
+
+    private void feedFromHand(Player player, ItemStack held, FoodProperties food) {
+        if (hunger >= MAX_HUNGER) {
+            player.displayClientMessage(Component.literal(getName().getString() + " is not hungry."), true);
+            return;
+        }
+        boolean recruiting = leader == null && bandId == null;
+        if (recruiting && !Band.hasRoomFor(player)) {
+            player.displayClientMessage(Component.literal("Your band is as big as the land can feed."), true);
+            return;
+        }
+        consume(food);
+        heal(2.0F);
+        if (!player.getAbilities().instabuild) {
+            held.shrink(1);
+        }
+        ((ServerLevel) level()).sendParticles(ParticleTypes.HEART, getX(), getEyeY() + 0.3D, getZ(),
+                3, 0.3D, 0.2D, 0.3D, 0.0D);
+        if (recruiting) {
+            leader = player.getUUID();
+            player.displayClientMessage(Component.literal(getName().getString()
+                    + " eats from your hand, and stays close."), true);
+            return;
+        }
+        if (!isBaby() && !isPregnant()) {
+            readyTicks = READY_TICKS;
+            Band.tryPair(this);
+        }
+    }
+
+    private void describeTo(Player player) {
+        StringBuilder text = new StringBuilder(getName().getString())
+                .append(isBaby() ? " (young " : " (").append(female ? "female)" : "male)")
+                .append(" - hunger ").append(hunger).append("/").append(MAX_HUNGER);
+        if (isPregnant()) {
+            text.append(" - pregnant, due in about ").append(Math.max(1, pregnancyTicks / 1000)).append(" hours");
+        }
+        if (fightSkill > 0) {
+            text.append(" - fighting ").append(fightSkill).append("/").append(MAX_FIGHT_SKILL);
+        }
+        player.displayClientMessage(Component.literal(text.toString()), true);
+    }
+
+    /** Ready to pair: fed recently, grown, and not already expecting. */
+    public boolean isReadyToPair() {
+        return readyTicks > 0 && !isBaby() && !isPregnant();
+    }
+
+    public void conceive() {
+        readyTicks = 0;
+        if (female) {
+            pregnancyTicks = PREGNANCY_TICKS;
+        }
+    }
+
+    public void clearReady() {
+        readyTicks = 0;
+    }
+
+    // ------------------------------------------------------------ wrestling
+
+    /**
+     * Play-fighting with the leader. No damage either way - but it is how young primates
+     * learn to fight, and every bout leaves this one a little better at it.
+     */
+    public void wrestle(Player player) {
+        if (wrestleCooldown > 0) {
+            return;
+        }
+        wrestleCooldown = 10;
+        ensureName();
+        double dx = getX() - player.getX();
+        double dz = getZ() - player.getZ();
+        knockback(0.25D, -dx, -dz);
+        playSound(SoundEvents.PLAYER_ATTACK_NODAMAGE, 0.8F, 1.2F);
+        // Now it is a game, and it wrestles back until one of you stops.
+        wrestlePartner = player.getUUID();
+        wrestleTicks = WRESTLE_TICKS;
+        if (fightSkill < MAX_FIGHT_SKILL && random.nextInt(3) == 0) {
+            fightSkill++;
+            applyFightSkill();
+        }
+        player.displayClientMessage(Component.literal("You wrestle with " + getName().getString() + "."), true);
+    }
+
+    /** How long a bout lasts after the last move in it. */
+    public static final int WRESTLE_TICKS = 300;
+
+    @Nullable
+    public Player wrestlePartner() {
+        return wrestleTicks > 0 && wrestlePartner != null ? level().getPlayerByUUID(wrestlePartner) : null;
+    }
+
+    public void stopWrestling() {
+        wrestleTicks = 0;
+        wrestlePartner = null;
+    }
+
+    /** Asked for food: bring some over, finding it first if need be. */
+    public void fetchFoodFor(Player player) {
+        deliverFoodTo = player.getUUID();
+        deliverTicks = 1200;
+        if (!hasFood()) {
+            forageAlongside(player.blockPosition());
+        }
+    }
+
+    /** Hands one piece of carried food straight to the player. Returns false if it had none. */
+    public boolean giveFoodTo(Player player) {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.has(DataComponents.FOOD)) {
+                ItemStack given = stack.split(1);
+                player.displayClientMessage(Component.literal(getName().getString() + " hands you ")
+                        .append(given.getHoverName()).append("."), true);
+                if (!player.getInventory().add(given)) {
+                    player.drop(given, false);
+                }
+                swing(InteractionHand.MAIN_HAND);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Hands over the most valuable thing it carries that is not food. Returns it, or empty. */
+    public ItemStack mostValuableTool() {
+        int bestSlot = -1;
+        int bestValue = 0;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            int value = Trading.valueOf(stack);
+            if (!stack.has(DataComponents.FOOD) && value > bestValue) {
+                bestValue = value;
+                bestSlot = slot;
+            }
+        }
+        ItemStack held = getMainHandItem();
+        if (Trading.valueOf(held) > bestValue) {
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            return held;
+        }
+        return bestSlot < 0 ? ItemStack.EMPTY : inventory.removeItem(bestSlot, 1);
+    }
+
+    public int valueOfBestTool() {
+        int best = Trading.valueOf(getMainHandItem());
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.has(DataComponents.FOOD)) {
+                best = Math.max(best, Trading.valueOf(stack));
+            }
+        }
+        return best;
+    }
+
+    private void applyFightSkill() {
+        AttributeInstance damage = getAttribute(Attributes.ATTACK_DAMAGE);
+        if (damage != null) {
+            damage.addOrUpdateTransientModifier(new AttributeModifier(FIGHT_SKILL_ID, fightSkill * 0.1D,
+                    AttributeModifier.Operation.ADD_VALUE));
+        }
+    }
+
+    // ------------------------------------------------------------ danger
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean hurt = super.hurt(source, amount);
+        if (hurt && !level().isClientSide() && source.getEntity() instanceof LivingEntity attacker
+                && !(attacker instanceof Player)) {
+            if (!hasWeapon() || isBaby()) {
+                if (!isBaby() && random.nextFloat() < ARM_INSTEAD_OF_FLEE) {
+                    armUrgencyTicks = 200;
+                } else {
+                    fleeTicks = 300;
+                }
+            }
+            if (!isBaby() && random.nextFloat() < DISPLAY_WHEN_HURT) {
+                Band.memberDisplay(this, 0);
+            }
+        }
+        return hurt;
+    }
+
+    /** Fight this, with or without a weapon: it went for the leader. */
+    public void defendAgainst(LivingEntity attacker) {
+        if (isBaby() || attacker == this || !attacker.isAlive()) {
+            return;
+        }
+        defendTicks = DEFEND_TICKS;
+        fleeTicks = 0;
+        setTarget(attacker);
+    }
+
+    public boolean isDefending() {
+        return defendTicks > 0 && getTarget() != null;
+    }
+
+    public boolean shouldFlee() {
+        return fleeTicks > 0 && (isBaby() || (!hasWeapon() && !isDefending()));
+    }
+
+    public boolean wantsWeaponUrgently() {
+        return armUrgencyTicks > 0;
+    }
+
+    public void setClimbingTree(boolean climbing) {
+        if (entityData.get(CLIMBING) && !climbing) {
+            safeLandingTicks = 60;
+        }
+        entityData.set(CLIMBING, climbing);
+    }
+
+    public boolean isClimbingTree() {
+        return entityData.get(CLIMBING);
+    }
+
+    /** Clinging to a trunk and off the ground: out of reach of anything that cannot climb. */
+    public boolean isUpATree() {
+        return isClimbingTree() && !onGround();
+    }
+
+    @Override
+    public boolean onClimbable() {
+        return (isClimbingTree() && horizontalCollision) || super.onClimbable();
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        return safeLandingTicks <= 0 && !isClimbingTree() && super.causeFallDamage(fallDistance, multiplier, source);
+    }
+
+    public void callToDisplay(int delay) {
+        displayDelay = delay;
+    }
+
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == DISPLAY_EVENT) {
+            clientDisplayStart = tickCount;
+        } else {
+            super.handleEntityEvent(id);
+        }
+    }
+
+    // ------------------------------------------------------------ ticking
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        if (tickCount == 1) {
+            ensureName();
+            applyFightSkill();
+        }
+        if (!isBaby() && ++hungerClock >= HUNGER_TICKS) {
+            hungerClock = 0;
+            hunger = Math.max(0, hunger - 1);
+        }
+        if (eatCooldown > 0) {
+            eatCooldown--;
+        } else if (hunger < EATS_BELOW) {
+            eatFromInventory();
+        }
+        if (tickCount % HEAL_TICKS == 0) {
+            if (hunger >= HUNGRY && getHealth() < getMaxHealth()) {
+                heal(1.0F);
+            } else if (hunger == 0 && getHealth() > 2.0F) {
+                hurt(damageSources().starve(), 1.0F);
+            }
+        }
+        if (tickCount % 20 == 0) {
+            complainIfHungry();
+        }
+        fleeTicks = Math.max(0, fleeTicks - 1);
+        armUrgencyTicks = Math.max(0, armUrgencyTicks - 1);
+        defendTicks = Math.max(0, defendTicks - 1);
+        readyTicks = Math.max(0, readyTicks - 1);
+        wrestleCooldown = Math.max(0, wrestleCooldown - 1);
+        if (wrestleTicks > 0 && --wrestleTicks == 0) {
+            wrestlePartner = null;
+        }
+        if (leaveTicks > 0 && --leaveTicks == 0) {
+            leavePos = null;
+        }
+        if (tickCount % 20 == 0) {
+            deliverFood();
+        }
+        if (tickCount % 100 == 0 && guestOf != null && isAlpha() && level().isNight()) {
+            Band.sendGuestsHome(this);
+        }
+        if (forageTogetherTicks > 0 && --forageTogetherTicks == 0) {
+            forageAnchor = null;
+        }
+        if (safeLandingTicks > 0) {
+            safeLandingTicks--;
+            resetFallDistance();
+        }
+        if (isClimbingTree()) {
+            resetFallDistance();
+        }
+        if (displayDelay > 0) {
+            displayDelay--;
+        } else if (displayDelay == 0) {
+            displayDelay = -1;
+            Band.performDisplay(this);
+        }
+        if (pregnancyTicks > 0 && --pregnancyTicks == 0) {
+            Band.giveBirth(this);
+        }
+        if (growUpTicks > 0 && --growUpTicks == 0) {
+            entityData.set(BABY, false);
+        }
+    }
+
+    private void deliverFood() {
+        if (deliverFoodTo == null) {
+            return;
+        }
+        Player player = level().getPlayerByUUID(deliverFoodTo);
+        if (player == null || --deliverTicks <= 0) {
+            deliverFoodTo = null;
+            return;
+        }
+        deliverTicks -= 19;
+        if (!hasFood()) {
+            return;
+        }
+        if (distanceToSqr(player) > 9.0D) {
+            getNavigation().moveTo(player, 1.2D);
+            return;
+        }
+        giveFoodTo(player);
+        deliverFoodTo = null;
+    }
+
+    private void complainIfHungry() {
+        if (hunger >= COMPLAINS_BELOW || isWild() || level().getGameTime() < nextTalk) {
+            return;
+        }
+        Player player = leaderPlayer();
+        if (player == null || distanceToSqr(player) > 32.0D * 32.0D) {
+            return;
+        }
+        nextTalk = level().getGameTime() + TALK_COOLDOWN;
+        ensureName();
+        player.sendSystemMessage(Component.literal("<" + getName().getString() + "> ")
+                .withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("I'm feeling hungry... maybe we should forage together.")
+                        .withStyle(ChatFormatting.WHITE)));
+    }
+
+    // ------------------------------------------------------------ saving
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        writeInventoryToTag(tag, registryAccess());
+        tag.putInt("Hunger", hunger);
+        tag.putString("Stage", entityData.get(STAGE));
+        tag.putBoolean("Female", female);
+        tag.putBoolean("Baby", isBaby());
+        tag.putInt("GrowUp", growUpTicks);
+        tag.putInt("Pregnancy", pregnancyTicks);
+        tag.putInt("FightSkill", fightSkill);
+        if (leader != null) {
+            tag.putUUID("Leader", leader);
+        }
+        if (bandId != null) {
+            tag.putUUID("Band", bandId);
+        }
+        if (alpha != null) {
+            tag.putUUID("Alpha", alpha);
+        }
+        if (guestOf != null) {
+            tag.putUUID("GuestOf", guestOf);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        readInventoryFromTag(tag, registryAccess());
+        if (tag.contains("Hunger")) {
+            hunger = tag.getInt("Hunger");
+        }
+        if (tag.contains("Stage")) {
+            entityData.set(STAGE, tag.getString("Stage"));
+        }
+        if (tag.contains("Female")) {
+            female = tag.getBoolean("Female");
+        }
+        entityData.set(BABY, tag.getBoolean("Baby"));
+        growUpTicks = tag.getInt("GrowUp");
+        pregnancyTicks = tag.getInt("Pregnancy");
+        fightSkill = tag.getInt("FightSkill");
+        leader = tag.hasUUID("Leader") ? tag.getUUID("Leader") : null;
+        bandId = tag.hasUUID("Band") ? tag.getUUID("Band") : null;
+        alpha = tag.hasUUID("Alpha") ? tag.getUUID("Alpha") : null;
+        guestOf = tag.hasUUID("GuestOf") ? tag.getUUID("GuestOf") : null;
+        entityData.set(WILD, isWild());
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        super.die(source);
+        if (!level().isClientSide() && leader != null) {
+            Band.onMemberDied(this);
+        }
+    }
+
+    /**
+     * Wild bands come and go with nobody near them - but not while they are
+     * travelling with someone, and never just at random the way ordinary mobs do.
+     */
+    @Override
+    public void checkDespawn() {
+        if (!isWild() || guestOf != null) {
+            setNoActionTime(0);
+            return;
+        }
+        Player nearest = level().getNearestPlayer(this, -1.0D);
+        if (nearest == null || nearest.distanceToSqr(this) > WILD_DESPAWN_DISTANCE * WILD_DESPAWN_DISTANCE) {
+            discard();
+        }
+    }
+
+    private static final double WILD_DESPAWN_DISTANCE = 220.0D;
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, source, recentlyHit);
+        for (ItemStack stack : inventory.removeAllItems()) {
+            spawnAtLocation(stack);
+        }
+    }
+
+    /** Everything this member carries, for whoever takes its place. Empties it. */
+    public List<ItemStack> takeEverything() {
+        List<ItemStack> all = new java.util.ArrayList<>(inventory.removeAllItems());
+        ItemStack held = getMainHandItem();
+        if (!held.isEmpty()) {
+            all.add(held);
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+        return all;
+    }
+
+    /** The player's band is kept forever. Wild bands come and go with nobody to see them. */
+    @Override
+    public boolean requiresCustomPersistence() {
+        return !isWild() || super.requiresCustomPersistence();
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return isWild();
+    }
+
+    @Override
+    public boolean isAlliedTo(Entity other) {
+        if (other instanceof BandMember member) {
+            return (leader != null && leader.equals(member.leader)) || (bandId != null && bandId.equals(member.bandId));
+        }
+        if (other instanceof Player player && isCompanionOf(player)) {
+            return true;
+        }
+        return super.isAlliedTo(other);
+    }
+}

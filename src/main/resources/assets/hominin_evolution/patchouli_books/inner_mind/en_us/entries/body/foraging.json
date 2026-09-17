@@ -1,0 +1,12 @@
+{
+  "name": "Looking Down",
+  "icon": "hominin_evolution:beetle",
+  "category": "hominin_evolution:body",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The ground is full of food. It is just very small, and it does not want to be found.$(br2)Get low. Search the soil more than once. Something with a point on it digs better than fingers do."
+    }
+  ]
+}

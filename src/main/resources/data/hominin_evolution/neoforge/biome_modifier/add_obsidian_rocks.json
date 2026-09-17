@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#hominin_evolution:has_obsidian_rock",
+  "features": "hominin_evolution:obsidian_rock_patch",
+  "step": "vegetal_decoration"
+}

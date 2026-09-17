@@ -1,0 +1,43 @@
+{
+  "display_name": "Ardipithecus",
+  "years_ago": 4400000,
+  "warning": "Consider making a new world",
+  "gate": {
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 10 days.",
+        "count": 10
+      },
+      {
+        "id": "think_times",
+        "description": "Think 12 times (hold K).",
+        "count": 12
+      },
+      {
+        "id": "climb_trees",
+        "description": "Climb 40 different trees.",
+        "count": 40
+      },
+      {
+        "id": "scavenge_bones",
+        "description": "Crack 20 bones for marrow.",
+        "count": 20
+      },
+      {
+        "id": "forage_biomes",
+        "description": "Forage food in 10 places.",
+        "count": 10
+      }
+    ],
+    "optional_pool": [],
+    "choose": 0
+  },
+  "milestone": {
+    "type": "hominin_evolution:walk_upright",
+    "description": "Hold K to think about walking upright."
+  },
+  "next_stage": "hominin_evolution:australopithecus",
+  "behaviors_gained": [],
+  "behaviors_lost": []
+}

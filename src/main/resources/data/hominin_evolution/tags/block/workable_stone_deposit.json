@@ -6,6 +6,9 @@
     "minecraft:granite",
     "minecraft:cobblestone",
     "minecraft:gravel",
-    "minecraft:tuff"
+    "minecraft:tuff",
+    "hominin_evolution:chert_deposit",
+    "hominin_evolution:quartzite_deposit",
+    "hominin_evolution:limestone_deposit"
   ]
 }

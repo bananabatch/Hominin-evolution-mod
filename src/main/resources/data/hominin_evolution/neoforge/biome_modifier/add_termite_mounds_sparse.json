@@ -1,0 +1,15 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": {
+    "type": "neoforge:and",
+    "values": [
+      "#minecraft:is_overworld",
+      {
+        "type": "neoforge:not",
+        "value": "#hominin_evolution:hominin_homeland"
+      }
+    ]
+  },
+  "features": "hominin_evolution:termite_mound_sparse",
+  "step": "local_modifications"
+}

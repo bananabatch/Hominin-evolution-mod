@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:rock"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.australopithecus.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.australopithecus.description"
+    },
+    "background": "minecraft:textures/block/coarse_dirt.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "requirements": [
+    [
+      "tick"
+    ]
+  ]
+}

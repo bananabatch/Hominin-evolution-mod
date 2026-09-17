@@ -1,0 +1,16 @@
+{
+  "name": "The Thing You Did Not Mean to Make",
+  "icon": "hominin_evolution:lomekwian_tool",
+  "category": "hominin_evolution:stone",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Reach for something too ambitious too early, and the stone will give you a crude lump with an edge on it instead.$(br2)Keep it. Use it. It is older than almost anything else anyone will ever make."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Hands that have made the crude thing remember where not to strike.$(br2)Hands that skipped it will learn the same lesson more expensively, one good stone at a time."
+    }
+  ]
+}

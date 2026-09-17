@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "hominin_evolution:decaying_log",
+    "hominin_evolution:decayed_log"
+  ]
+}

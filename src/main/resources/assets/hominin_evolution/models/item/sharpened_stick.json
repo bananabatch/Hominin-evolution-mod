@@ -1,6 +1,122 @@
 {
-  "parent": "minecraft:item/generated",
+  "credit": "Made with Blockbench",
   "textures": {
-    "layer0": "hominin_evolution:item/sharpened_stick"
+    "0": "hominin_evolution:item/sharpened_stick",
+    "particle": "hominin_evolution:item/sharpened_stick"
+  },
+  "elements": [
+    {
+      "name": "butt",
+      "from": [7.625, -4, 7.625],
+      "to": [8.375, -1, 8.375],
+      "faces": {
+        "north": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "east": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "south": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "west": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "up": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "down": {"uv": [8, 7, 9, 8], "texture": "#0"}
+      }
+    },
+    {
+      "name": "shaft",
+      "from": [7.5, -1, 7.5],
+      "to": [8.5, 10, 8.5],
+      "faces": {
+        "north": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "east": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "south": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "west": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "up": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "down": {"uv": [8, 7, 9, 8], "texture": "#0"}
+      }
+    },
+    {
+      "name": "taper",
+      "from": [7.625, 10, 7.625],
+      "to": [8.375, 13, 8.375],
+      "faces": {
+        "north": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "east": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "south": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "west": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "up": {"uv": [11, 4, 13, 5], "texture": "#0"},
+        "down": {"uv": [8, 7, 9, 8], "texture": "#0"}
+      }
+    },
+    {
+      "name": "point",
+      "from": [7.75, 13, 7.75],
+      "to": [8.25, 15.5, 8.25],
+      "faces": {
+        "north": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "east": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "south": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "west": {"uv": [12, 2, 14, 3], "texture": "#0"},
+        "up": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "down": {"uv": [11, 4, 13, 5], "texture": "#0"}
+      }
+    },
+    {
+      "name": "tip",
+      "from": [7.875, 15.5, 7.875],
+      "to": [8.125, 16.5, 8.125],
+      "faces": {
+        "north": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "east": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "south": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "west": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "up": {"uv": [12, 3, 14, 4], "texture": "#0"},
+        "down": {"uv": [12, 3, 14, 4], "texture": "#0"}
+      }
+    },
+    {
+      "name": "knot",
+      "from": [8.5, 4, 7.75],
+      "to": [8.9, 4.6, 8.25],
+      "faces": {
+        "north": {"uv": [8, 7, 9, 8], "texture": "#0"},
+        "east": {"uv": [8, 7, 9, 8], "texture": "#0"},
+        "south": {"uv": [8, 7, 9, 8], "texture": "#0"},
+        "west": {"uv": [8, 7, 9, 8], "texture": "#0"},
+        "up": {"uv": [8, 7, 9, 8], "texture": "#0"},
+        "down": {"uv": [8, 7, 9, 8], "texture": "#0"}
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [-120, -60, -30],
+      "translation": [0, -2, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [-120, -60, -30],
+      "translation": [0, -2, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "firstperson_righthand": {
+      "rotation": [55, 0, 0],
+      "translation": [1, 1.5, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "firstperson_lefthand": {
+      "rotation": [55, 0, 0],
+      "translation": [-1, 1.5, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "ground": {
+      "rotation": [90, 0, 0],
+      "translation": [0, 1, 0],
+      "scale": [0.8, 0.5, 0.8]
+    },
+    "gui": {
+      "rotation": [0, 0, -45],
+      "scale": [1.6, 0.8, 1.6]
+    },
+    "fixed": {
+      "rotation": [0, 180, -45],
+      "scale": [1.6, 0.75, 1.6]
+    }
   }
 }

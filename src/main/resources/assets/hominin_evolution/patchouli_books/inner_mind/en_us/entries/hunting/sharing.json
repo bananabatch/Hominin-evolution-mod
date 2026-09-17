@@ -1,0 +1,16 @@
+{
+  "name": "Portions",
+  "icon": "hominin_evolution:meat_chunk",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A whole cut of meat is a meal for one. Held against an edge, it becomes a meal for several.$(br2)Meat in one hand, an edge in the other, $(k:hominin_evolution.item_interact)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "You are not the only one who will ever be hungry.$(br2)$(l)Remember who fed whom.$() Others will."
+    }
+  ]
+}

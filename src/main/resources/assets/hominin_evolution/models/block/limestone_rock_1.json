@@ -1,0 +1,167 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "hominin_evolution:block/limestone_rock",
+    "particle": "hominin_evolution:block/limestone_rock"
+  },
+  "elements": [
+    {
+      "name": "lime_b",
+      "from": [
+        5.75,
+        0,
+        6.25
+      ],
+      "to": [
+        10.25,
+        1,
+        9.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            2,
+            12.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8,
+            2,
+            11.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8,
+            2,
+            12.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8,
+            2,
+            11.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8,
+            2,
+            12.5,
+            5.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            8,
+            2,
+            12.5,
+            5.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          8.0,
+          0,
+          8.0
+        ]
+      }
+    },
+    {
+      "name": "lime_b_cap",
+      "from": [
+        6.5,
+        1,
+        7.0
+      ],
+      "to": [
+        9.5,
+        1.75,
+        9.0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            1,
+            15,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12,
+            1,
+            14,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12,
+            1,
+            15,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12,
+            1,
+            14,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12,
+            1,
+            15,
+            3
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12,
+            1,
+            15,
+            3
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          8.0,
+          1,
+          8.0
+        ]
+      }
+    }
+  ]
+}

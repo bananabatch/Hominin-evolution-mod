@@ -1,0 +1,32 @@
+{
+  "pant_hoot": {
+    "subtitle": "subtitles.hominin_evolution.pant_hoot",
+    "sounds": [
+      {
+        "name": "hominin_evolution:pant_hoot_player",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "band_pant_hoot": {
+    "subtitle": "subtitles.hominin_evolution.band_pant_hoot",
+    "sounds": [
+      {
+        "name": "hominin_evolution:pant_hoot_band",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "branch_knock": {
+    "subtitle": "subtitles.hominin_evolution.branch_knock",
+    "sounds": [
+      "hominin_evolution:branch_knock"
+    ]
+  },
+  "band_call": {
+    "subtitle": "subtitles.hominin_evolution.band_call",
+    "sounds": [
+      "hominin_evolution:band_call"
+    ]
+  }
+}

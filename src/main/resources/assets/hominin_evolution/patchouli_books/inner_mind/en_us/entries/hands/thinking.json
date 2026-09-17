@@ -1,0 +1,20 @@
+{
+  "name": "Having an Idea",
+  "icon": "minecraft:enchanted_book",
+  "category": "hominin_evolution:hands",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Hands can hold the right two things and still do nothing useful. The missing piece is an $(thing)idea$().$(br2)Hold the things you are wondering about, and hold $(k:hominin_evolution.think). Do it with a full stomach and an unhurt body. A brain is hungry, and ideas are expensive."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Try to make something before you have thought of it, and your hands will fumble. Sometimes they will break what they are holding.$(br2)This is not punishment. It is how every idea anyone ever had was paid for."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Not every thought needs something to hold.$(br2)Empty your hands, fill your stomach, and let the mind wander to yesterday. It is a strange place to go. Go there anyway."
+    }
+  ]
+}

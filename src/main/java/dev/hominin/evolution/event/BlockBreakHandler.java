@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import dev.hominin.evolution.Attachments;
 import dev.hominin.evolution.ModItems;
 import dev.hominin.evolution.ModTags;
 import net.minecraft.core.BlockPos;
@@ -43,7 +44,16 @@ public final class BlockBreakHandler {
 
     private static final long BLOCKED_MESSAGE_COOLDOWN_TICKS = 60L;
 
-    private static final float LONG_BRANCH_LEAF_DROP_CHANCE = 0.06F;
+    /**
+     * Stripping foliage by hand almost never brings a usable branch down with it.
+     * A chopper is the tool for the job and gets a real rate; the bare-hand number
+     * is there so an early hominin is not hard-blocked, not as a supply.
+     */
+    private static final float LONG_BRANCH_LEAF_DROP_CHANCE = 0.015F;
+    private static final float LONG_BRANCH_LEAF_CHOPPER_CHANCE = 0.2F;
+
+    /** The rare fallen limb that is already heavy at one end. */
+    private static final float WOODEN_CLUB_LEAF_DROP_CHANCE = 0.005F;
 
     private static final Map<UUID, Long> lastBlockedMessageTick = new HashMap<>();
 
@@ -89,7 +99,7 @@ public final class BlockBreakHandler {
     }
 
     private static boolean canBreak(Player player, BlockState state) {
-        if (player.isCreative()) {
+        if (player.isCreative() || isDeveloperMode(player)) {
             return true;
         }
         ItemStack held = player.getMainHandItem();
@@ -97,7 +107,7 @@ public final class BlockBreakHandler {
             if (state.is(gate.blocks())) {
                 // A chopper cannot fell a tree, but it can hack a branch off one,
                 // so it has to be allowed to swing at logs. See choppedBranchOff.
-                if (state.is(ModTags.Blocks.REQUIRES_HAND_AXE) && held.is(ModItems.CHOPPER.get())) {
+                if (state.is(ModTags.Blocks.REQUIRES_HAND_AXE) && held.is(ModTags.Items.CHOPPERS)) {
                     return true;
                 }
                 return held.is(gate.tools());
@@ -116,7 +126,7 @@ public final class BlockBreakHandler {
             return false;
         }
         ItemStack held = player.getMainHandItem();
-        if (!held.is(ModItems.CHOPPER.get())) {
+        if (!held.is(ModTags.Items.CHOPPERS)) {
             return false;
         }
         Level level = player.level();
@@ -136,11 +146,26 @@ public final class BlockBreakHandler {
             return;
         }
         Level level = player.level();
-        if (level.getRandom().nextFloat() >= LONG_BRANCH_LEAF_DROP_CHANCE) {
+        // A club-shaped limb is rare enough that it does not undercut making one,
+        // and it is checked first so it cannot be crowded out by the branch roll.
+        if (level.getRandom().nextFloat() < WOODEN_CLUB_LEAF_DROP_CHANCE) {
+            dropAt(level, pos, ModItems.WOODEN_CLUB.get());
+            player.displayClientMessage(Component.literal(
+                    "A dead limb comes down with the leaves - heavy at one end."), true);
             return;
         }
+        float chance = player.getMainHandItem().is(ModTags.Items.CHOPPERS)
+                ? LONG_BRANCH_LEAF_CHOPPER_CHANCE
+                : LONG_BRANCH_LEAF_DROP_CHANCE;
+        if (level.getRandom().nextFloat() >= chance) {
+            return;
+        }
+        dropAt(level, pos, ModItems.LONG_BRANCH.get());
+    }
+
+    private static void dropAt(Level level, BlockPos pos, Item item) {
         level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
-                new ItemStack(ModItems.LONG_BRANCH.get())));
+                new ItemStack(item)));
     }
 
     private static void sendBlockedMessage(Player player, BlockState state) {
@@ -156,6 +181,14 @@ public final class BlockBreakHandler {
                 return;
             }
         }
+    }
+
+    /**
+     * Developer mode is stored per-player rather than globally, so one tester can
+     * wave through gates on a server without unlocking them for everyone else.
+     */
+    private static boolean isDeveloperMode(Player player) {
+        return player.getData(Attachments.PLAYER_EVOLUTION_DATA).isDeveloperMode();
     }
 
     static void forget(UUID playerId) {

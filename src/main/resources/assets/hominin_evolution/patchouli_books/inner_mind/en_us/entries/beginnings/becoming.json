@@ -1,0 +1,16 @@
+{
+  "name": "Becoming Something Else",
+  "icon": "minecraft:experience_bottle",
+  "category": "hominin_evolution:beginnings",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "You do not evolve by wanting to. You evolve by living a certain way for long enough that the next step becomes obvious.$(br2)Satisfy enough of the list and you will know. There is always one final act - something you have never done before - that turns readiness into change."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)A note on failure:$() you will make things you did not mean to make. Hold on to them. Most of human history is people doing something wrong in a way that turned out to be useful."
+    }
+  ]
+}

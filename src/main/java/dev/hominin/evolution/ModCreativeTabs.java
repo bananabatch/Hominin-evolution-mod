@@ -17,15 +17,34 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hominin_evolution"))
                     .icon(() -> new ItemStack(ModItems.FLAKE.get()))
                     .displayItems((parameters, output) -> {
+                        output.accept(ModItems.CHERT_ROCK.get());
+                        output.accept(ModItems.GRANITE_ROCK.get());
+                        output.accept(ModItems.LIMESTONE_ROCK.get());
+                        output.accept(ModItems.OBSIDIAN_ROCK.get());
+                        output.accept(ModItems.CHERT_DEPOSIT.get());
+                        output.accept(ModItems.QUARTZITE_DEPOSIT.get());
+                        output.accept(ModItems.LIMESTONE_DEPOSIT.get());
                         output.accept(ModItems.ROCK.get());
                         output.accept(ModItems.GRINDING_ROCK.get());
                         output.accept(ModItems.FLAKE.get());
                         output.accept(ModItems.CHOPPER.get());
                         output.accept(ModItems.HAMMERSTONE.get());
+                        output.accept(ModItems.CHERT_HAMMERSTONE.get());
+                        output.accept(ModItems.LOMEKWIAN_TOOL.get());
+                        output.accept(ModItems.OLDOWAN_MULTITOOL.get());
                         output.accept(ModItems.DIGGING_STICK.get());
                         output.accept(ModItems.LONG_BRANCH.get());
                         output.accept(ModItems.SHARPENED_STICK.get());
+                        output.accept(ModItems.POINTY_STICK.get());
                         output.accept(ModItems.SHARPENED_SPEAR.get());
+                        output.accept(ModItems.FIRE_HARDENED_SPEAR.get());
+                        output.accept(ModItems.WOODEN_CLUB.get());
+                        output.accept(ModItems.TERMITE_MOUND.get());
+                        output.accept(ModItems.DECAYING_LOG.get());
+                        output.accept(ModItems.DECAYED_LOG.get());
+                        output.accept(ModItems.TERMITE_STICK.get());
+                        output.accept(ModItems.BAND_MEMBER_SPAWN_EGG.get());
+                        output.accept(ModItems.MEAT_CHUNK.get());
                         output.accept(ModItems.GRUB.get());
                         output.accept(ModItems.BEETLE.get());
                         output.accept(ModItems.EARTHWORM.get());

@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "hominin_evolution:quartzite_deposit",
+    "hominin_evolution:limestone_deposit",
+    "hominin_evolution:chert_deposit"
+  ],
+  "step": "local_modifications"
+}

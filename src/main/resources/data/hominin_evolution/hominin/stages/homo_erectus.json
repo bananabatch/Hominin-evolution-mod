@@ -1,5 +1,6 @@
 {
   "display_name": "Homo erectus",
+  "years_ago": 1900000,
   "gate": {
     "required": {
       "id": "erectus_placeholder",
@@ -20,5 +21,19 @@
   ],
   "behaviors_lost": [
     "Obligate tree sleeping"
+  ],
+  "arrival_items": [
+    {
+      "id": "hominin_evolution:flake",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:hammerstone",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:sharpened_spear",
+      "count": 1
+    }
   ]
 }

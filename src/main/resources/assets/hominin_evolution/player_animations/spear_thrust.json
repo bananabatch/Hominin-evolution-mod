@@ -1,0 +1,87 @@
+{
+  "version": 3,
+  "name": "spear_thrust",
+  "description": "One-shot two-handed spear thrust. Starts and ends on the exact spear_hold pose. Ticks 0-3 coil (both arms pull back and down together, tip dips toward the crosshair), 3-6 drive (arms snap up and forward along the spear's own screen line), 6-8 hold full extension, 8-14 recover. Rotations only.",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 16,
+    "stopTick": 16,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -97.5,
+          "yaw": -30,
+          "roll": 20
+        },
+        "leftArm": {
+          "pitch": -100.0,
+          "yaw": 23.5,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeInCubic",
+        "rightArm": {
+          "pitch": -77.5,
+          "yaw": -38,
+          "roll": 22
+        },
+        "leftArm": {
+          "pitch": -74.5,
+          "yaw": 25.0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 7,
+        "easing": "easeOutCubic",
+        "rightArm": {
+          "pitch": -112,
+          "yaw": -22,
+          "roll": 16
+        },
+        "leftArm": {
+          "pitch": -84.5,
+          "yaw": 38.5,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 9,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -110,
+          "yaw": -23,
+          "roll": 17
+        },
+        "leftArm": {
+          "pitch": -82.0,
+          "yaw": 38.0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 16,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -97.5,
+          "yaw": -30,
+          "roll": 20
+        },
+        "leftArm": {
+          "pitch": -100.0,
+          "yaw": 23.5,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

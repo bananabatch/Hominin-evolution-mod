@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_forest",
+  "features": [
+    "hominin_evolution:decaying_oak"
+  ],
+  "step": "vegetal_decoration"
+}

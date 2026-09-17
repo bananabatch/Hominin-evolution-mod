@@ -1,0 +1,16 @@
+{
+  "name": "Where Stone Is",
+  "icon": "hominin_evolution:quartzite_deposit",
+  "category": "hominin_evolution:stone",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Loose stone lies where the ground is bare. In places, the bones of the land break through the grass entirely.$(br2)Bare hands do nothing to a rock face. Something heavy, round and fist-sized does a great deal."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Pay attention to what comes off a worked face. Now and then the stone gives up a piece that sits in the hand as if it had always meant to be held.$(br2)Some seams are rarer, and better, than others."
+    }
+  ]
+}

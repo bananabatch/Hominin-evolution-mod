@@ -1,30 +1,48 @@
 {
   "display_name": "Homo habilis",
+  "years_ago": 2400000,
   "gate": {
-    "required": {
-      "id": "notice_fire_source",
-      "description": "Locate a natural fire source (lightning strike, wildfire, lava) without using it.",
-      "count": 1
-    },
+    "required": [
+      {
+        "id": "notice_fire_source",
+        "description": "Sneak-use a natural fire source.",
+        "count": 1
+      },
+      {
+        "id": "survive_days",
+        "description": "Survive 3 days.",
+        "count": 3
+      },
+      {
+        "id": "think_times",
+        "description": "Think 4 times (hold K).",
+        "count": 4
+      }
+    ],
     "optional_pool": [
       {
         "id": "craft_oldowan_tools",
-        "description": "Craft and use at least 3 distinct Oldowan-tier stone tools.",
+        "description": "Craft 3 different Oldowan tools.",
         "count": 3
       },
       {
         "id": "scavenge_bones",
-        "description": "Crack open and extract the marrow from 5 scavenged long bones.",
+        "description": "Crack 5 long bones for marrow.",
         "count": 5
       },
       {
+        "id": "hunt_with_spear",
+        "description": "Hunt with a spear.",
+        "count": 3
+      },
+      {
         "id": "cold_biome_edge",
-        "description": "Find/reach a colder or more exposed biome edge and turn back once.",
+        "description": "Reach a cold biome and turn back.",
         "count": 1
       },
       {
         "id": "ground_night_survival",
-        "description": "Survive a night without tree cover at least once, relying on group vigilance.",
+        "description": "Survive a night with no tree cover.",
         "count": 1
       }
     ],
@@ -32,12 +50,26 @@
   },
   "milestone": {
     "type": "hominin_evolution:fire_transfer",
-    "description": "Successfully transfer/capture fire from a natural source into a sustainable form for the first time."
+    "description": "Carry fire from a natural source into a lasting form."
   },
   "next_stage": "hominin_evolution:homo_erectus",
   "behaviors_gained": [
     "Stone knapping unlocked (Oldowan tier)",
     "Scavenged meat now allowed"
   ],
-  "behaviors_lost": []
+  "behaviors_lost": [],
+  "arrival_items": [
+    {
+      "id": "minecraft:stick",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:flake",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:grub",
+      "count": 3
+    }
+  ]
 }

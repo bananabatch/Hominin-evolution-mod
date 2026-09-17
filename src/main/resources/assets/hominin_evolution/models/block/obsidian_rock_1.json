@@ -1,0 +1,167 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "hominin_evolution:block/obsidian_rock",
+    "particle": "hominin_evolution:block/obsidian_rock"
+  },
+  "elements": [
+    {
+      "name": "blade_a",
+      "from": [
+        6.5,
+        0,
+        7.5
+      ],
+      "to": [
+        10,
+        2.5,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.93,
+            1.93,
+            5.43,
+            4.43
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.15,
+            2.78,
+            11.15,
+            5.28
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.89,
+            1.25,
+            12.39,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.65,
+            0.64,
+            3.65,
+            3.14
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.12,
+            14.92,
+            9.62,
+            15.92
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1.0,
+            10.73,
+            4.5,
+            11.73
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          8.25,
+          0,
+          8
+        ]
+      }
+    },
+    {
+      "name": "chip_a",
+      "from": [
+        7.5,
+        0,
+        6.75
+      ],
+      "to": [
+        9,
+        0.75,
+        7.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.28,
+            4.98,
+            7.78,
+            5.98
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8.45,
+            0.09,
+            9.45,
+            1.09
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12.4,
+            0.32,
+            13.9,
+            1.32
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            1.43,
+            4.11,
+            2.43,
+            5.11
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            10.16,
+            14.19,
+            11.66,
+            15.19
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.57,
+            9.55,
+            5.07,
+            10.55
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8.25,
+          0,
+          7.1
+        ]
+      }
+    }
+  ]
+}

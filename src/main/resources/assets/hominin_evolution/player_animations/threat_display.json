@@ -1,0 +1,150 @@
+{
+  "version": 3,
+  "name": "threat_display",
+  "description": "Charging display: both arms thrown up and waved wide, body pitched forward into the scream.",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 30,
+    "stopTick": 32,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -10.0,
+          "yaw": 0,
+          "roll": -5.0
+        },
+        "leftArm": {
+          "pitch": -10.0,
+          "yaw": 0,
+          "roll": 5.0
+        },
+        "body": {
+          "pitch": 0.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 4,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -170.0,
+          "yaw": 0,
+          "roll": -25.0
+        },
+        "leftArm": {
+          "pitch": -170.0,
+          "yaw": 0,
+          "roll": 25.0
+        },
+        "body": {
+          "pitch": 12.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 8,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -135.0,
+          "yaw": 0,
+          "roll": -55.0
+        },
+        "leftArm": {
+          "pitch": -135.0,
+          "yaw": 0,
+          "roll": 55.0
+        },
+        "body": {
+          "pitch": 4.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 12,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -175.0,
+          "yaw": 0,
+          "roll": -15.0
+        },
+        "leftArm": {
+          "pitch": -175.0,
+          "yaw": 0,
+          "roll": 15.0
+        },
+        "body": {
+          "pitch": 12.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 16,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -135.0,
+          "yaw": 0,
+          "roll": -55.0
+        },
+        "leftArm": {
+          "pitch": -135.0,
+          "yaw": 0,
+          "roll": 55.0
+        },
+        "body": {
+          "pitch": 4.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -170.0,
+          "yaw": 0,
+          "roll": -25.0
+        },
+        "leftArm": {
+          "pitch": -170.0,
+          "yaw": 0,
+          "roll": 25.0
+        },
+        "body": {
+          "pitch": 12.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 30,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": 0.0,
+          "yaw": 0,
+          "roll": -0.0
+        },
+        "leftArm": {
+          "pitch": 0.0,
+          "yaw": 0,
+          "roll": 0.0
+        },
+        "body": {
+          "pitch": 0.0,
+          "yaw": 0,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

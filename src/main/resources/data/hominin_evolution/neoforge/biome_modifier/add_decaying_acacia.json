@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#hominin_evolution:hominin_homeland",
+  "features": [
+    "hominin_evolution:decaying_acacia"
+  ],
+  "step": "vegetal_decoration"
+}

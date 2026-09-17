@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:chopper"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.homo_habilis.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.homo_habilis.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

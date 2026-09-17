@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "rocks=1": {
+      "model": "hominin_evolution:block/granite_rock_1"
+    },
+    "rocks=2": {
+      "model": "hominin_evolution:block/granite_rock_2"
+    },
+    "rocks=3": {
+      "model": "hominin_evolution:block/granite_rock_3"
+    },
+    "rocks=4": {
+      "model": "hominin_evolution:block/granite_rock_4"
+    }
+  }
+}

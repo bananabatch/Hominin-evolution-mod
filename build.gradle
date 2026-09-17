@@ -28,7 +28,12 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // GeckoLib's own maven. Note this is the first dependency here that needs
+    // network on a cold build - everything else resolves from local files.
+    maven {
+        name = "GeckoLib"
+        url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+    }
 }
 
 base {
@@ -116,6 +121,18 @@ configurations {
 }
 
 dependencies {
+    // Player Animator (KosmX). Taken as a local file rather than through a maven
+    // so the build needs no network: the jar in libs/ is the same one sitting in
+    // run/mods, which is what provides it at runtime. compileOnly keeps it out of
+    // our published jar - players install the mod themselves.
+    compileOnly files("libs/player-animation-lib-forge-2.0.4+1.21.1.jar")
+
+    // GeckoLib, wired up ahead of need: it is the animation library for custom
+    // entities, which is what the planned rival hominin tribes will be. Nothing
+    // in the mod touches it yet, so it stays compileOnly and the jar belongs in
+    // the modpack rather than in our own.
+    compileOnly "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.9.2"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

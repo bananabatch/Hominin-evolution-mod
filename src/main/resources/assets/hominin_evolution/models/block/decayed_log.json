@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "hominin_evolution:block/decayed_log_top",
+    "side": "hominin_evolution:block/decayed_log"
+  }
+}

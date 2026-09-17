@@ -1,0 +1,36 @@
+{
+  "name": "Your Band",
+  "icon": "hominin_evolution:band_member_spawn_egg",
+  "category": "hominin_evolution:beginnings",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "You were never alone out here. The others keep close and look after themselves: they root for food, pick up what is worth having, and pull a branch from a tree when they feel unsafe."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When something goes for you, they go for it. When you go for something, so do they - so choose what you anger.$(br2)Hand them food, a weapon, anything. With empty hands, they hand you something back."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Call, and they call with you. One voice is a bluff; several is a reason to leave.$(br2)$(k:sneak) and $(k:use) on one to learn who they are. $(k:sneak) and $(k:attack) to wrestle - play fighting is how fighting is learned."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Feed a male and a female close together, and in a day there may be one more of you. Every kind of hominin lives in a band of its own size, and the land will only feed so many.$(br2)If you die, the band does not. Nor, quite, do you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "There are other bands. They will not follow you, but they carry things.$(br2)Hold out something of yours and offer it. If they have something worth as much, they will give it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Press $(k:hominin_evolution.social) near your band to talk to them: to forage, to ask for food or a tool, or to say you are hurt. Near another band, ask them to walk with you for the day. Sneak-use one member first to talk to just them."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Stragglers find their way back to you.$(br2)Lose a whole band and some of what you learned is lost with it. Lose three, and your line ends."
+    }
+  ]
+}

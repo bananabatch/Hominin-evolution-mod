@@ -1,0 +1,62 @@
+{
+  "version": 3,
+  "name": "flake_slash",
+  "description": "A sideways slash with the flake, left to right",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 12,
+    "stopTick": 12,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -90,
+          "yaw": -14,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 2,
+        "easing": "easeInQuart",
+        "rightArm": {
+          "pitch": -92,
+          "yaw": -34,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 4,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -88,
+          "yaw": 18,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -86,
+          "yaw": 24,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 12,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -90,
+          "yaw": -14,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

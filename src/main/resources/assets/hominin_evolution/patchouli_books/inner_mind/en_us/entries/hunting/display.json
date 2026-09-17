@@ -1,0 +1,16 @@
+{
+  "name": "Being Frightening",
+  "icon": "hominin_evolution:long_branch",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "You are small, and slow, and have no fangs worth showing. You can still be alarming.$(br2)With nothing in your hands, $(k:sneak) and $(k:use) at the air: scream, and leap, and look bigger than you are."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "With a branch or a stone in hand, the same gesture throws it. Something that hurts from a distance is a far better argument than noise.$(br2)Go and pick it up again afterwards. Good stones are not so easy to come by."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Using Both",
+  "icon": "minecraft:stick",
+  "category": "hominin_evolution:hands",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Hold one thing in each hand and press $(k:hominin_evolution.item_interact).$(br2)Most pairings mean nothing. Some mean everything. You will not know which until you try, and sometimes not even then."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Holding $(k:hominin_evolution.item_interact) down with a bare stick is its own kind of work. Your teeth were tools long before anything else was."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:pointy_stick",
+      "text": "What teeth can start, a sharp edge can finish better."
+    }
+  ]
+}

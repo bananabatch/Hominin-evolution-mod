@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/homo_habilis",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:fire_hardened_spear"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.homo_erectus.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.homo_erectus.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

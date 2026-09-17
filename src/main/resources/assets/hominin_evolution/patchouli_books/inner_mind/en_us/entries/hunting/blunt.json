@@ -1,0 +1,12 @@
+{
+  "name": "The Heavy End",
+  "icon": "hominin_evolution:long_branch",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A branch will not kill anything outright. It does not need to.$(br2)Heads do not enjoy being struck, and they enjoy it less each time. Falling onto something from a great height is, it turns out, also a way of striking it."
+    }
+  ]
+}

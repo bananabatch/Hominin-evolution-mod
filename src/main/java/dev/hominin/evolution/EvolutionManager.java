@@ -1,10 +1,14 @@
 package dev.hominin.evolution;
 
+import dev.hominin.evolution.advancement.HomininAdvancements;
+import dev.hominin.evolution.band.Band;
 import dev.hominin.evolution.data.PlayerEvolutionData;
 import dev.hominin.evolution.stage.GateCriterion;
 import dev.hominin.evolution.stage.MilestoneHandlers;
+import dev.hominin.evolution.stage.Arrival;
 import dev.hominin.evolution.stage.StageDefinition;
 import dev.hominin.evolution.stage.StageRegistry;
+import dev.hominin.evolution.stage.StageSync;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +17,13 @@ import net.minecraft.server.level.ServerPlayer;
 public final class EvolutionManager {
     private EvolutionManager() {
     }
+
+    /**
+     * Counters under this prefix are skills, not stage criteria: they measure what
+     * the hands have learned, so they survive evolving into the next stage while
+     * everything else is wiped.
+     */
+    public static final String SKILL_PREFIX = "skill_";
 
     public static void incrementCriterion(ServerPlayer player, String criterionId, int amount) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
@@ -39,7 +50,7 @@ public final class EvolutionManager {
     }
 
     public static boolean isRequiredSatisfied(PlayerEvolutionData data, StageDefinition stage) {
-        return isCriterionSatisfied(data, stage.gate().required());
+        return stage.gate().required().stream().allMatch(criterion -> isCriterionSatisfied(data, criterion));
     }
 
     public static int optionalSatisfiedCount(PlayerEvolutionData data, StageDefinition stage) {
@@ -47,6 +58,9 @@ public final class EvolutionManager {
     }
 
     public static boolean isGateReady(PlayerEvolutionData data, StageDefinition stage) {
+        if (data.isDeveloperMode()) {
+            return true;
+        }
         return isRequiredSatisfied(data, stage) && optionalSatisfiedCount(data, stage) >= stage.gate().chooseCount();
     }
 
@@ -92,10 +106,26 @@ public final class EvolutionManager {
             return;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        ResourceLocation previousStageId = data.getStage();
+        StageDefinition previousStage = StageRegistry.get(previousStageId);
         data.setStage(nextStageId);
-        data.getCriterionCounters().clear();
+        data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(SKILL_PREFIX));
         data.getNotifiedReadyStages().clear();
+        // Distance credit is per-stage, so the new stage starts measuring from here.
+        // Without this reset, ground covered as Australopithecus would immediately
+        // satisfy habilis criteria the player never actually went looking for.
+        data.setStageStartWalkDistance(player.walkDist);
+        data.setDistanceCredits(0);
         announceEvolution(player, nextStage);
+        StageSync.sync(player);
+        HomininAdvancements.awardStages(player);
+        Band.evolveWith(player, nextStageId);
+        if (previousStage != null && Band.ARDIPITHECUS.equals(previousStageId)) {
+            HomininAdvancements.award(player, "hominin/survivor");
+        }
+        if (previousStage != null) {
+            Arrival.begin(player, previousStage, nextStage);
+        }
     }
 
     private static void announceEvolution(ServerPlayer player, StageDefinition nextStage) {

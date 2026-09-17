@@ -1,0 +1,24 @@
+{
+  "name": "Up Is Safe",
+  "icon": "minecraft:acacia_log",
+  "category": "hominin_evolution:body",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Your ancestors lived in trees, and your arms remember.$(br2)When something large wants to eat you, height is an answer. When nothing does, height is still a good place to think. Get into the habit of climbing."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Walk into a trunk and hold $(k:jump) to climb. Hold $(k:sneak) to let yourself down, or hold nothing and simply cling.$(br2)Branches do not stop a climber. Come out through the top and you can rest on the leaves; look down and $(k:sneak) to climb back in."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Most things that hunt on the ground cannot follow you up. They will look, and circle, and leave.$(br2)Pale, soft wood is another matter. Rotten trees do not always hold a climber's weight, and the ground is a long way down."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Any wall will take your weight for a little way. Push into it with $(k:jump) held and you can haul yourself about four blocks up - out of a pit, or up a low bank. No further."
+    }
+  ]
+}

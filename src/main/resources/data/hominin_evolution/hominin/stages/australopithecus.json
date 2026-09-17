@@ -1,43 +1,51 @@
 {
   "display_name": "Australopithecus",
+  "years_ago": 3300000,
   "gate": {
-    "required": {
-      "id": "notice_stone_deposit",
-      "description": "Locate a stash of loose, fist-sized rocks — stand near a workable stone deposit without using it.",
-      "count": 1
-    },
-    "optional_pool": [
+    "required": [
+      {
+        "id": "notice_stone_deposit",
+        "description": "Sneak-use a workable stone deposit.",
+        "count": 1
+      },
       {
         "id": "survive_days",
-        "description": "Survive a set number of in-game days at this stage.",
-        "count": 5
+        "description": "Survive 2 days.",
+        "count": 2
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "climb_trees",
+        "description": "Climb 8 trees.",
+        "count": 8
       },
       {
         "id": "forage_biomes",
-        "description": "Successfully forage and eat from 3 different biomes/food sources.",
+        "description": "Forage food in 3 places.",
         "count": 3
       },
       {
-        "id": "predator_escape",
-        "description": "Survive a predator encounter using tree-climbing to escape, without fighting back.",
+        "id": "stun_predator",
+        "description": "Stun a predator with a long branch.",
         "count": 1
       },
       {
-        "id": "grassland_crossing",
-        "description": "Cross a stretch of open grassland using only tree-to-tree movement.",
-        "count": 1
+        "id": "hunt_with_stick",
+        "description": "Hunt with a sharpened stick.",
+        "count": 2
       },
       {
         "id": "water_sources",
-        "description": "Drink from at least 3 distinct natural water sources across your range.",
-        "count": 3
+        "description": "Sneak-drink water in 2 places.",
+        "count": 2
       }
     ],
     "choose": 3
   },
   "milestone": {
     "type": "hominin_evolution:strike_flake",
-    "description": "At the stone deposit, strike a rock against another rock to produce a sharp flake."
+    "description": "Hold a knappable rock with a hammerstone in your off hand, press P, and strike a flake."
   },
   "next_stage": "hominin_evolution:homo_habilis",
   "behaviors_gained": [],

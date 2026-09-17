@@ -1,0 +1,314 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "hominin_evolution:block/granite_rock",
+    "particle": "hominin_evolution:block/granite_rock"
+  },
+  "elements": [
+    {
+      "name": "granite_a",
+      "from": [
+        2.25,
+        0,
+        2.75
+      ],
+      "to": [
+        6.75,
+        2.5,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            4.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            4,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            4.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            4,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            4.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            4.5,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "granite_e",
+      "from": [
+        3.25,
+        2.5,
+        3.75
+      ],
+      "to": [
+        5.75,
+        3.5,
+        5.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            2.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            2,
+            5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            2.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            2,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            4,
+            2.5,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            4,
+            2.5,
+            6
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          4.5,
+          2.5,
+          4.75
+        ]
+      }
+    },
+    {
+      "name": "granite_b",
+      "from": [
+        9.0,
+        0,
+        2.75
+      ],
+      "to": [
+        13.5,
+        2,
+        6.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            3,
+            7.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            4,
+            3,
+            7.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            6.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            6.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          11.25,
+          0,
+          4.5
+        ]
+      }
+    },
+    {
+      "name": "granite_c",
+      "from": [
+        5.5,
+        0,
+        9.25
+      ],
+      "to": [
+        9.5,
+        2,
+        13.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            2,
+            12,
+            4
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8,
+            2,
+            12,
+            4
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8,
+            2,
+            12,
+            4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8,
+            2,
+            12,
+            4
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8,
+            2,
+            12,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            8,
+            2,
+            12,
+            6
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          7.5,
+          0,
+          11.25
+        ]
+      }
+    }
+  ]
+}

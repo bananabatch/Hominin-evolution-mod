@@ -1,0 +1,35 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:lomekwian_tool"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.lomekwian.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.lomekwian.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "has_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "hominin_evolution:lomekwian_tool"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_core"
+    ]
+  ]
+}

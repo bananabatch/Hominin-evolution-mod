@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#hominin_evolution:has_limestone_rock",
+  "features": "hominin_evolution:chert_rock_lakeshore",
+  "step": "vegetal_decoration"
+}

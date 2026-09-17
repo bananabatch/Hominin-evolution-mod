@@ -1,0 +1,89 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "hominin_evolution:block/granite_rock",
+    "particle": "hominin_evolution:block/granite_rock"
+  },
+  "elements": [
+    {
+      "name": "granite_b",
+      "from": [
+        5.75,
+        0,
+        6.25
+      ],
+      "to": [
+        10.25,
+        2,
+        9.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            3,
+            7.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            4,
+            3,
+            7.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            6.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4,
+            3,
+            8.5,
+            6.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          8.0,
+          0,
+          8.0
+        ]
+      }
+    }
+  ]
+}

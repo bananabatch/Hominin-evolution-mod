@@ -1,0 +1,107 @@
+{
+  "version": 3,
+  "name": "branch_swing",
+  "description": "A two-handed downward drive: hands lift, then drive forward and down",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 14,
+    "stopTick": 14,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutCubic",
+        "rightArm": {
+          "pitch": -78,
+          "yaw": -42,
+          "roll": -8
+        },
+        "leftArm": {
+          "pitch": -49.0,
+          "yaw": 21.0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeInCubic",
+        "rightArm": {
+          "pitch": -84,
+          "yaw": -28,
+          "roll": -20
+        },
+        "leftArm": {
+          "pitch": -69.0,
+          "yaw": 20.0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 4,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 5,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -35,
+          "yaw": -12,
+          "roll": -32
+        },
+        "leftArm": {
+          "pitch": -23.0,
+          "yaw": 56.0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 22,
+          "roll": 4
+        }
+      },
+      {
+        "tick": 8,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -42,
+          "yaw": -18,
+          "roll": -30
+        },
+        "leftArm": {
+          "pitch": -27.0,
+          "yaw": 43.0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 18,
+          "roll": 3
+        }
+      },
+      {
+        "tick": 14,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -78,
+          "yaw": -42,
+          "roll": -8
+        },
+        "leftArm": {
+          "pitch": -49.0,
+          "yaw": 21.0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}
