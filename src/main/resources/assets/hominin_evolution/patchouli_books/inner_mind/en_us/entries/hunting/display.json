@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "You are small, and slow, and have no fangs worth showing. You can still be alarming.$(br2)With nothing in your hands, $(k:sneak) and $(k:use) at the air: scream, and leap, and look bigger than you are."
+      "text": "You are small, and slow, and have no fangs worth showing. You can still be alarming.$(br2)Press $(k:hominin_evolution.threat_display) - or, with nothing in your hands, $(k:sneak) and $(k:use) at the air: call, and leap, and look bigger than you are."
     },
     {
       "type": "patchouli:text",

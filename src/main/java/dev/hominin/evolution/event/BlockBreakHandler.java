@@ -44,6 +44,8 @@ public final class BlockBreakHandler {
 
     private static final long BLOCKED_MESSAGE_COOLDOWN_TICKS = 60L;
 
+    private static final float NESTING_MATERIAL_CHANCE = 0.5F;
+
     /**
      * Stripping foliage by hand almost never brings a usable branch down with it.
      * A chopper is the tool for the job and gets a real rate; the bare-hand number
@@ -146,6 +148,10 @@ public final class BlockBreakHandler {
             return;
         }
         Level level = player.level();
+        // Leafy twigs come away with almost every handful - the stuff of a night's nest.
+        if (level.getRandom().nextFloat() < NESTING_MATERIAL_CHANCE) {
+            dropAt(level, pos, ModItems.NESTING_MATERIAL.get());
+        }
         // A club-shaped limb is rare enough that it does not undercut making one,
         // and it is checked first so it cannot be crowded out by the branch roll.
         if (level.getRandom().nextFloat() < WOODEN_CLUB_LEAF_DROP_CHANCE) {

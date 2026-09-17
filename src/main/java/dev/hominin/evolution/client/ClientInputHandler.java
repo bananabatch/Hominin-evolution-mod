@@ -45,6 +45,11 @@ public final class ClientInputHandler {
         if (mc.getConnection() == null || mc.player == null) {
             return;
         }
+        while (ModKeyMappings.THREAT_DISPLAY.consumeClick()) {
+            if (mc.screen == null) {
+                PacketDistributor.sendToServer(new ThreatDisplayPayload());
+            }
+        }
         while (ModKeyMappings.SOCIAL.consumeClick()) {
             if (mc.screen == null) {
                 SocialScreen.open();

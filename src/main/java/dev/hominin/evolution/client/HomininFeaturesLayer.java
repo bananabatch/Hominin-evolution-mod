@@ -33,6 +33,9 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
     private static final int TEXTURE_WIDTH = 32;
     private static final int TEXTURE_HEIGHT = 16;
 
+    private static final float BABY_HEAD_SCALE = 1.5F / 2.0F;
+    private static final float BABY_HEAD_Y_OFFSET = 16.0F / 16.0F;
+
     private final Map<ModelLayerLocation, ModelPart> parts = new HashMap<>();
     private final Function<T, HomininModels.Look> lookOf;
 
@@ -81,6 +84,11 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
             return;
         }
         poseStack.pushPose();
+        if (getParentModel().young) {
+            // Same numbers HumanoidModel hands AgeableListModel for its young head.
+            poseStack.scale(BABY_HEAD_SCALE, BABY_HEAD_SCALE, BABY_HEAD_SCALE);
+            poseStack.translate(0.0F, BABY_HEAD_Y_OFFSET, 0.0F);
+        }
         head.translateAndRotate(poseStack);
         features.render(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(look.features())),
                 packedLight, LivingEntityRenderer.getOverlayCoords(player, 0.0F));

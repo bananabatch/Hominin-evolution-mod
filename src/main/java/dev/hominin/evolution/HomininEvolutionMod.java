@@ -64,12 +64,19 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(GuideBook::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
+        NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
         // High, so a wrestle is cancelled before anything treats it as a real blow.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, Band::onAttackEntity);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerDeath);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerRespawn);
         modEventBus.addListener((EntityAttributeCreationEvent event) ->
-                event.put(ModEntities.BAND_MEMBER.get(), BandMember.createAttributes().build()));
+        {
+            event.put(ModEntities.BAND_MEMBER.get(), BandMember.createAttributes().build());
+            event.put(ModEntities.BABOON.get(), dev.hominin.evolution.entity.Baboon.createAttributes().build());
+            event.put(ModEntities.PACHYCROCUTA.get(), dev.hominin.evolution.entity.Pachycrocuta.createAttributes().build());
+            event.put(ModEntities.SABERTOOTH.get(), dev.hominin.evolution.entity.Sabertooth.createAttributes().build());
+        });
         NeoForge.EVENT_BUS.addListener(HomininAdvancements::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerRespawn);

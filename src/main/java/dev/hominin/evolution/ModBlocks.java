@@ -1,6 +1,7 @@
 package dev.hominin.evolution;
 
 import dev.hominin.evolution.block.LooseRockBlock;
+import dev.hominin.evolution.block.NestBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -85,6 +86,16 @@ public final class ModBlocks {
             RotatedPillarBlock::new, deadWood(MapColor.TERRACOTTA_BROWN, 0.8F));
 
     /** Softer than a live log, and softer again once the core has been eaten out. */
+    /** A night's bedding of leaves and twigs, flat on the ground. Pulled apart in a moment. */
+    public static final DeferredBlock<NestBlock> NEST = BLOCKS.registerBlock("nest", NestBlock::new,
+            BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BROWN)
+                    .strength(0.3F)
+                    .sound(SoundType.GRASS)
+                    .noOcclusion()
+                    .ignitedByLava()
+                    .pushReaction(PushReaction.DESTROY));
+
     private static BlockBehaviour.Properties deadWood(MapColor mapColor, float strength) {
         return BlockBehaviour.Properties.of()
                 .mapColor(mapColor)

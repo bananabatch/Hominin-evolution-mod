@@ -16,7 +16,7 @@ public class ArmedMeleeGoal extends MeleeAttackGoal {
     }
 
     private boolean mayFight() {
-        return !member.isBaby() && (member.hasWeapon() || member.isDefending());
+        return !member.isBaby() && (member.hasWeapon() || member.isDefending() || member.isHunting());
     }
 
     @Override

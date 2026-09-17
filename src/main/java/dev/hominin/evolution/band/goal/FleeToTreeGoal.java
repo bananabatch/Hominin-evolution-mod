@@ -36,16 +36,16 @@ public class FleeToTreeGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return member.shouldFlee();
+        return member.shouldFlee() || member.hasClimbOrder();
     }
 
     @Override
     public boolean canContinueToUse() {
         if (trunk != null && clingTicks > 0) {
             // Up the tree: stay while the attack is recent and the clinging not too long.
-            return member.shouldFlee() && clingTicks < MAX_CLING_TICKS;
+            return (member.shouldFlee() || member.hasClimbOrder()) && clingTicks < MAX_CLING_TICKS;
         }
-        return member.shouldFlee();
+        return member.shouldFlee() || member.hasClimbOrder();
     }
 
     @Override

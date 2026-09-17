@@ -88,6 +88,9 @@ public class ArmSelfGoal extends Goal {
         ticks = 0;
         breaking = 0;
         tries = 0;
+        dev.hominin.evolution.band.Band.announce(member, member.wantsWeaponUrgently()
+                ? " is tearing a branch off a tree to fight with!"
+                : " says they're going to find a good branch.");
         moveToLeaves();
     }
 

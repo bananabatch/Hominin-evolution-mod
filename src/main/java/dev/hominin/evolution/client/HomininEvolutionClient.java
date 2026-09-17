@@ -22,11 +22,20 @@ public class HomininEvolutionClient {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onRightClickEmpty);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClimbController::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(TradeTierTooltip::onTooltip);
         NeoForge.EVENT_BUS.addListener(ClientSync::onLoggingOut);
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, HomininModels.SPEC);
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         modEventBus.addListener(HomininModels::registerLayerDefinitions);
+        modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) -> {
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::pachycrocuta);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::sabertooth);
+        });
         modEventBus.addListener(HomininModels::addLayers);
         // Lowest, so nothing cancels the render after the pose has been pushed.
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, HomininModels::onRenderPre);
@@ -36,6 +45,15 @@ public class HomininEvolutionClient {
         {
             event.registerEntityRenderer(ModEntities.THROWN_OBJECT.get(), ThrownItemRenderer::new);
             event.registerEntityRenderer(ModEntities.BAND_MEMBER.get(), BandMemberRenderer::new);
+            event.registerEntityRenderer(ModEntities.BABOON.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
+                            "baboon", 1.0F, 0.4F));
+            event.registerEntityRenderer(ModEntities.PACHYCROCUTA.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
+                            "pachycrocuta", 1.15F, 0.7F));
+            event.registerEntityRenderer(ModEntities.SABERTOOTH.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
+                            "sabertooth", 1.2F, 0.8F));
         });
         modEventBus.addListener(ModKeyMappings::register);
         modEventBus.addListener(ChecklistOverlay::register);

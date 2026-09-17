@@ -42,12 +42,9 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -93,6 +90,8 @@ public final class EvolutionEventHandler {
     /** Breathing room after a forage resolves, so you cannot strip a patch by holding right-click. */
     private static final long FORAGE_COOLDOWN_TICKS = 60L;
     private static final long KNAP_COOLDOWN_TICKS = 40L;
+    /** How often striking plain stone, rather than a deposit, turns up nothing usable. */
+    private static final float PLAIN_STONE_EMPTY_CHANCE = 0.4F;
 
     /** A club to the head buys you five seconds to get away, or to hit it again. */
 
@@ -103,11 +102,8 @@ public final class EvolutionEventHandler {
     private static final double KNOCK_SCARE_RADIUS = 12.0D;
     private static final float KNOCK_SCARE_CHANCE = 0.6F;
 
-    /** Of the animals that react, this share bolts; the rest freeze in place. */
-    private static final float STARTLE_FLEE_SHARE = 0.4F;
+    /** How long a frightened animal keeps running, at least. */
     private static final int STARTLE_STUN_TICKS = 120;
-
-    private static final double FLEE_SPEED = 1.3D;
 
     private static final float LONG_BONE_DROP_CHANCE = 0.1F;
     /** Only animals with real limb bones in them; chickens and rabbits have nothing worth cracking. */
@@ -334,6 +330,15 @@ public final class EvolutionEventHandler {
         level.playSound(null, pos, SoundEvents.STONE_BREAK, SoundSource.PLAYERS, 0.8F, 1.1F);
         ToolUse.wear(player, hammer);
 
+        // Ordinary rock is mostly useless inside. A proper deposit is what always pays.
+        boolean deposit = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                .getKey(level.getBlockState(pos).getBlock()).getNamespace().equals(HomininEvolutionMod.MODID);
+        if (!deposit && level.getRandom().nextFloat() < PLAIN_STONE_EMPTY_CHANCE) {
+            player.displayClientMessage(Component.literal(
+                    "The stone breaks up into useless rubble. Nothing here worth knapping."), true);
+            return;
+        }
+
         ItemStack won = yieldOf(level.getBlockState(pos), level);
         boolean quartzite = won.is(ModItems.GRANITE_ROCK.get());
         boolean chert = won.is(ModItems.CHERT_ROCK.get());
@@ -441,28 +446,20 @@ public final class EvolutionEventHandler {
         AABB area = player.getBoundingBox().inflate(radius);
         int startled = 0;
         for (PathfinderMob mob : level.getEntitiesOfClass(PathfinderMob.class, area)) {
-            if (predatorsOnly && !mob.getType().is(ModTags.EntityTypes.PREDATORS)) {
+            // "Threats" are predators and anything hostile; a knock startles everything.
+            boolean threat = mob.getType().is(ModTags.EntityTypes.PREDATORS)
+                    || mob instanceof net.minecraft.world.entity.monster.Enemy;
+            if ((predatorsOnly && !threat) || !dev.hominin.evolution.combat.Scare.canBeScared(mob)
+                    || mob instanceof dev.hominin.evolution.band.BandMember) {
                 continue;
             }
             if (level.getRandom().nextFloat() >= chance) {
                 continue;
             }
-            // Drop us as a target either way, otherwise the mob's own attack goal
-            // just re-paths straight back the moment it can move again.
-            if (mob.getTarget() == player) {
-                mob.setTarget(null);
-            }
-            if (level.getRandom().nextFloat() < STARTLE_FLEE_SHARE) {
-                Vec3 away = DefaultRandomPos.getPosAway(mob, 16, 7, player.position());
-                if (away != null && mob.getNavigation().moveTo(away.x, away.y, away.z, FLEE_SPEED)) {
-                    startled++;
-                }
-            } else {
-                mob.getNavigation().stop();
-                mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STARTLE_STUN_TICKS, 6, false, false, false));
-                mob.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STARTLE_STUN_TICKS, 1, false, false, false));
-                startled++;
-            }
+            // A real fright: it runs, and cannot come straight back at anyone until it wears off.
+            dev.hominin.evolution.combat.Scare.scare(mob, player.position(),
+                    STARTLE_STUN_TICKS + level.getRandom().nextInt(STARTLE_STUN_TICKS / 2));
+            startled++;
         }
         return startled;
     }
@@ -756,6 +753,7 @@ public final class EvolutionEventHandler {
         ClimbingServer.tick(player);
         WildBands.tick(player);
         Band.tickPlayer(player);
+        dev.hominin.evolution.entity.WildAnimals.tick(player);
         // Climbing is checked far more often than the rest: a player is only up a
         // tree for a few seconds, so a once-a-second sweep would miss most climbs.
         if (player.tickCount % CLIMB_CHECK_INTERVAL_TICKS == 0) {

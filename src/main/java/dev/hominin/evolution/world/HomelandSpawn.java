@@ -37,14 +37,20 @@ public final class HomelandSpawn {
     /** Distance between candidates. Savanna regions are far larger than this. */
     private static final int SEARCH_STEP = 192;
 
-    /** Ring radius used to judge how much savanna surrounds a candidate. */
-    private static final int OPENNESS_RADIUS = 256;
+    /**
+     * Two rings judge how deep inside the savanna a candidate is. Every point of the near
+     * ring must be savanna, and nearly all of the far one, so the spawn sits at the heart
+     * of a big savanna rather than at the edge of a small one.
+     */
+    private static final int CORE_RADIUS = 160;
+    private static final int OPENNESS_RADIUS = 320;
+    private static final int MIN_CORE_NEIGHBOURS = 8;
 
     /** Ring radius used to judge how far the sea is. */
     private static final int COAST_RADIUS = 512;
 
     /** Of the 8 ring samples, how many must also be homeland for "large" to hold. */
-    private static final int MIN_OPEN_NEIGHBOURS = 5;
+    private static final int MIN_OPEN_NEIGHBOURS = 6;
 
     /** Sixteen compass points, as unit offsets scaled by whatever radius is in play. */
     private static final double[][] RING = buildRing(8);
@@ -105,13 +111,14 @@ public final class HomelandSpawn {
                     if (!isHomeland(biomeSource, sampler, x, quartY, z)) {
                         continue;
                     }
-                    int open = countOpenNeighbours(biomeSource, sampler, x, quartY, z);
+                    int core = countOpenNeighbours(biomeSource, sampler, x, quartY, z, CORE_RADIUS);
+                    int open = countOpenNeighbours(biomeSource, sampler, x, quartY, z, OPENNESS_RADIUS);
                     boolean inland = !seaWithin(biomeSource, sampler, x, quartY, z);
-                    if (open >= MIN_OPEN_NEIGHBOURS && inland) {
+                    if (core >= MIN_CORE_NEIGHBOURS && open >= MIN_OPEN_NEIGHBOURS && inland) {
                         return new BlockPos(x, seaLevel, z);
                     }
-                    // Openness matters more than distance from water, but both count.
-                    int score = open * 2 + (inland ? 3 : 0);
+                    // Being deep inside matters most, then how big the savanna is, then the sea.
+                    int score = core * 3 + open * 2 + (inland ? 3 : 0);
                     if (score > fallbackScore) {
                         fallbackScore = score;
                         fallback = new BlockPos(x, seaLevel, z);
@@ -129,11 +136,11 @@ public final class HomelandSpawn {
     }
 
     private static int countOpenNeighbours(BiomeSource biomeSource, Climate.Sampler sampler,
-            int x, int quartY, int z) {
+            int x, int quartY, int z, int radius) {
         int open = 0;
         for (double[] direction : RING) {
-            int sampleX = x + (int) (direction[0] * OPENNESS_RADIUS);
-            int sampleZ = z + (int) (direction[1] * OPENNESS_RADIUS);
+            int sampleX = x + (int) (direction[0] * radius);
+            int sampleZ = z + (int) (direction[1] * radius);
             if (isHomeland(biomeSource, sampler, sampleX, quartY, sampleZ)) {
                 open++;
             }

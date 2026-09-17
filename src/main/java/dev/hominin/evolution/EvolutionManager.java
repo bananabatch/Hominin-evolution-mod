@@ -120,8 +120,12 @@ public final class EvolutionManager {
         StageSync.sync(player);
         HomininAdvancements.awardStages(player);
         Band.evolveWith(player, nextStageId);
+        dev.hominin.evolution.band.WildBands.cullExtinct(player);
         if (previousStage != null && Band.ARDIPITHECUS.equals(previousStageId)) {
             HomininAdvancements.award(player, "hominin/survivor");
+        }
+        if (previousStage == null) {
+            Band.formNewBand(player);
         }
         if (previousStage != null) {
             Arrival.begin(player, previousStage, nextStage);

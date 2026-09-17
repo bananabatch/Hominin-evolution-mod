@@ -44,7 +44,7 @@ public class FollowLeaderGoal extends Goal {
             return false;
         }
         LivingEntity target = member.followTarget();
-        if (target == null || target.isSpectator() || member.isUpATree()) {
+        if (target == null || target.isSpectator() || member.isUpATree() || member.isOnExcursion()) {
             return false;
         }
         if (member.distanceToSqr(target) < startDistance * startDistance) {

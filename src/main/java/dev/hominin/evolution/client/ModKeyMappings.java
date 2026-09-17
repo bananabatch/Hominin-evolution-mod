@@ -39,7 +39,15 @@ public final class ModKeyMappings {
             InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_H),
             CATEGORY);
 
+    /** The empty-handed threat display, wherever you are looking. */
+    public static final KeyMapping THREAT_DISPLAY = new KeyMapping(
+            "key.hominin_evolution.threat_display",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_G),
+            CATEGORY);
+
     public static void register(RegisterKeyMappingsEvent event) {
+        event.register(THREAT_DISPLAY);
         event.register(SOCIAL);
         event.register(ITEM_INTERACT);
         event.register(THINK);

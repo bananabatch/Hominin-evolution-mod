@@ -29,6 +29,21 @@ public final class ModEntities {
                     .clientTrackingRange(10)
                     .build("band_member"));
 
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Baboon>> BABOON = ENTITY_TYPES.register(
+            "baboon", () -> EntityType.Builder.<dev.hominin.evolution.entity.Baboon>of(
+                    dev.hominin.evolution.entity.Baboon::new, MobCategory.CREATURE)
+                    .sized(0.7F, 1.0F).clientTrackingRange(10).build("baboon"));
+
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Pachycrocuta>> PACHYCROCUTA =
+            ENTITY_TYPES.register("pachycrocuta", () -> EntityType.Builder.<dev.hominin.evolution.entity.Pachycrocuta>of(
+                    dev.hominin.evolution.entity.Pachycrocuta::new, MobCategory.CREATURE)
+                    .sized(1.1F, 1.4F).clientTrackingRange(10).build("pachycrocuta"));
+
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Sabertooth>> SABERTOOTH =
+            ENTITY_TYPES.register("sabertooth", () -> EntityType.Builder.<dev.hominin.evolution.entity.Sabertooth>of(
+                    dev.hominin.evolution.entity.Sabertooth::new, MobCategory.CREATURE)
+                    .sized(1.3F, 1.4F).clientTrackingRange(10).build("sabertooth"));
+
     private ModEntities() {
     }
 }

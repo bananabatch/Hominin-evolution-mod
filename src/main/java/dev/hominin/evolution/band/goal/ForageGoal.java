@@ -84,6 +84,9 @@ public class ForageGoal extends Goal {
     public void start() {
         ticks = 0;
         working = 0;
+        if (!member.isForagingTogether()) {
+            dev.hominin.evolution.band.Band.announce(member, " says they're going to forage.");
+        }
         member.getNavigation().moveTo(spot.getX() + 0.5D, spot.getY() + 1, spot.getZ() + 0.5D, 1.0D);
     }
 

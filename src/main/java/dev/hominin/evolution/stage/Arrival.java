@@ -114,6 +114,9 @@ public final class Arrival {
                     player.getYRot(), player.getXRot());
             player.resetFallDistance();
             Band.bringAlong(player, from);
+            Band.formNewBand(player);
+            // A new species does not arrive alone in the world: other bands of it are nearby.
+            dev.hominin.evolution.band.WildBands.onArrival(player);
             // Home is where the band is now. Dying should not send a descendant back
             // to a camp nobody has lived in for a hundred thousand years.
             player.setRespawnPosition(level.dimension(), destination, player.getYRot(), true, false);
@@ -164,7 +167,7 @@ public final class Arrival {
     private static BlockPos findDestination(ServerLevel level, BlockPos from, RandomSource random) {
         for (int attempt = 0; attempt < RING_ATTEMPTS; attempt++) {
             BlockPos point = ringPoint(from, random);
-            if (isHomeland(level, point)) {
+            if (isHomelandCore(level, point)) {
                 BlockPos safe = safeSpotNear(level, point);
                 if (safe != null) {
                     return safe;
@@ -201,6 +204,21 @@ public final class Arrival {
         return new BlockPos(from.getX() + (int) Math.round(Math.cos(angle) * distance), from.getY(),
                 from.getZ() + (int) Math.round(Math.sin(angle) * distance));
     }
+
+    /** Savanna here and for a good way around, so the band arrives in the middle of it, not at its edge. */
+    private static boolean isHomelandCore(ServerLevel level, BlockPos point) {
+        if (!isHomeland(level, point)) {
+            return false;
+        }
+        for (var direction : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            if (!isHomeland(level, point.relative(direction, CORE_CHECK_DISTANCE))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static final int CORE_CHECK_DISTANCE = 96;
 
     private static boolean isHomeland(ServerLevel level, BlockPos point) {
         return noiseBiome(level, point).is(ModTags.Biomes.HOMININ_HOMELAND);

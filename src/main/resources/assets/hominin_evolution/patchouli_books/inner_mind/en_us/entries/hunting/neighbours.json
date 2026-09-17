@@ -1,0 +1,20 @@
+{
+  "name": "Neighbours",
+  "icon": "minecraft:bone",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Baboons$() move in troops of twenty. They will swap food with you from their cheeks.$(br2)A baboon alone runs. A baboon near its troop screams, and then there are twenty of them. Take the stragglers."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The big hyena$() follows. Quietly, at a distance, for as long as it takes someone to stop looking.$(br2)Look behind you. If you see it, face it and make noise - it would rather eat someone who never turned round."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The saber-tooth$() does not care about you, until you are close.$(br2)It will not be frightened off. Keep your distance, keep near a tree, and do not follow it into the grass."
+    }
+  ]
+}

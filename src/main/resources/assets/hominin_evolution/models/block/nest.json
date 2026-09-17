@@ -1,0 +1,208 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "leaves": "hominin_evolution:block/nest",
+    "branch": "hominin_evolution:block/nest_branch",
+    "particle": "hominin_evolution:block/nest"
+  },
+  "elements": [
+    {
+      "name": "branch_front",
+      "from": [
+        0,
+        0,
+        2
+      ],
+      "to": [
+        16,
+        1.5,
+        3.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#branch"
+        },
+        "east": {
+          "texture": "#branch"
+        },
+        "south": {
+          "texture": "#branch"
+        },
+        "west": {
+          "texture": "#branch"
+        },
+        "up": {
+          "texture": "#branch"
+        },
+        "down": {
+          "texture": "#branch"
+        }
+      }
+    },
+    {
+      "name": "branch_back",
+      "from": [
+        0,
+        0,
+        12.5
+      ],
+      "to": [
+        16,
+        1.5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#branch"
+        },
+        "east": {
+          "texture": "#branch"
+        },
+        "south": {
+          "texture": "#branch"
+        },
+        "west": {
+          "texture": "#branch"
+        },
+        "up": {
+          "texture": "#branch"
+        },
+        "down": {
+          "texture": "#branch"
+        }
+      }
+    },
+    {
+      "name": "branch_cross",
+      "from": [
+        6.5,
+        0.5,
+        0
+      ],
+      "to": [
+        8,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#branch"
+        },
+        "east": {
+          "texture": "#branch"
+        },
+        "south": {
+          "texture": "#branch"
+        },
+        "west": {
+          "texture": "#branch"
+        },
+        "up": {
+          "texture": "#branch"
+        },
+        "down": {
+          "texture": "#branch"
+        }
+      }
+    },
+    {
+      "name": "leaf_pile",
+      "from": [
+        0,
+        1.5,
+        0
+      ],
+      "to": [
+        16,
+        3,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leaves"
+        },
+        "east": {
+          "texture": "#leaves"
+        },
+        "south": {
+          "texture": "#leaves"
+        },
+        "west": {
+          "texture": "#leaves"
+        },
+        "up": {
+          "texture": "#leaves"
+        },
+        "down": {
+          "texture": "#leaves"
+        }
+      }
+    },
+    {
+      "name": "leaf_heap_a",
+      "from": [
+        2,
+        3,
+        3
+      ],
+      "to": [
+        8,
+        4,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leaves"
+        },
+        "east": {
+          "texture": "#leaves"
+        },
+        "south": {
+          "texture": "#leaves"
+        },
+        "west": {
+          "texture": "#leaves"
+        },
+        "up": {
+          "texture": "#leaves"
+        },
+        "down": {
+          "texture": "#leaves"
+        }
+      }
+    },
+    {
+      "name": "leaf_heap_b",
+      "from": [
+        9,
+        3,
+        8
+      ],
+      "to": [
+        14,
+        3.5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leaves"
+        },
+        "east": {
+          "texture": "#leaves"
+        },
+        "south": {
+          "texture": "#leaves"
+        },
+        "west": {
+          "texture": "#leaves"
+        },
+        "up": {
+          "texture": "#leaves"
+        },
+        "down": {
+          "texture": "#leaves"
+        }
+      }
+    }
+  ]
+}

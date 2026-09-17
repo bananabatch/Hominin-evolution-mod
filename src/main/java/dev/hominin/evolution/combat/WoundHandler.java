@@ -65,7 +65,10 @@ public final class WoundHandler {
         int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
         target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
 
-        if (target instanceof PathfinderMob mob && !(target instanceof Enemy)) {
+        // A saber-toothed cat does not run from a cut, and a baboon with its troop behind it attacks instead.
+        boolean standsGround = target.getType().is(ModTags.EntityTypes.FEARLESS)
+                || (target instanceof dev.hominin.evolution.entity.Baboon baboon && baboon.hasTroopBehindIt());
+        if (target instanceof PathfinderMob mob && !(target instanceof Enemy) && !standsGround) {
             fleeFrom(mob, player);
         }
     }

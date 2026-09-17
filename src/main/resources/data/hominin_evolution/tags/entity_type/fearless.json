@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "hominin_evolution:sabertooth",
+    "minecraft:warden",
+    "minecraft:wither",
+    "minecraft:ravager",
+    "minecraft:elder_guardian",
+    "minecraft:iron_golem"
+  ]
+}

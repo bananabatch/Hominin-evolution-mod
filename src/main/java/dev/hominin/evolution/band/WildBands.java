@@ -51,13 +51,23 @@ public final class WildBands {
 
     /** Spawns a band somewhere between the two distances. Returns how many came, 0 if nowhere fit. */
     public static int spawnNear(ServerPlayer player, int minDistance, int maxDistance) {
+        return spawnNear(player, minDistance, maxDistance, null, false);
+    }
+
+    /**
+     * @param forcedStage the species to spawn, or null to pick one for the player's era
+     * @param loadChunks  whether a site may load terrain - only on arrival, when nothing is loaded yet
+     */
+    public static int spawnNear(ServerPlayer player, int minDistance, int maxDistance,
+            @Nullable ResourceLocation forcedStage, boolean loadChunks) {
         ServerLevel level = player.serverLevel();
         RandomSource random = player.getRandom();
-        BlockPos site = findSite(level, player.blockPosition(), minDistance, maxDistance, random);
+        BlockPos site = findSite(level, player.blockPosition(), minDistance, maxDistance, random, loadChunks);
         if (site == null) {
             return 0;
         }
-        ResourceLocation stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        ResourceLocation stage = forcedStage != null ? forcedStage
+                : speciesFor(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage(), random);
         int start = BandSizes.of(stage).start();
         int size = MIN_SIZE + random.nextInt(Math.max(1, start - MIN_SIZE + 1));
         UUID bandId = UUID.randomUUID();
@@ -106,14 +116,16 @@ public final class WildBands {
 
     @Nullable
     private static BlockPos findSite(ServerLevel level, BlockPos around, int minDistance, int maxDistance,
-            RandomSource random) {
+            RandomSource random, boolean loadChunks) {
         for (int attempt = 0; attempt < 12; attempt++) {
             float angle = random.nextFloat() * Mth.TWO_PI;
             int distance = minDistance + random.nextInt(Math.max(1, maxDistance - minDistance + 1));
             int x = around.getX() + Math.round(Mth.cos(angle) * distance);
             int z = around.getZ() + Math.round(Mth.sin(angle) * distance);
             // Only in chunks already loaded: a spawn should never force the world to generate.
-            if (!level.hasChunk(x >> 4, z >> 4)) {
+            if (loadChunks) {
+                level.getChunk(x >> 4, z >> 4);
+            } else if (!level.hasChunk(x >> 4, z >> 4)) {
                 continue;
             }
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
@@ -124,6 +136,70 @@ public final class WildBands {
             }
         }
         return null;
+    }
+
+    // ------------------------------------------------------------ species through time
+
+    private static ResourceLocation stage(String path) {
+        return ResourceLocation.fromNamespaceAndPath(dev.hominin.evolution.HomininEvolutionMod.MODID, path);
+    }
+
+    /**
+     * Which species another band belongs to, given the player's era. Older species linger
+     * for a while as rarer neighbours, then die out: Australopithecus is gone by the time
+     * of erectus, habilis thins out under erectus, and erectus itself hangs on until
+     * behaviourally modern sapiens.
+     */
+    public static ResourceLocation speciesFor(ResourceLocation era, RandomSource random) {
+        return switch (era.getPath()) {
+            case "homo_habilis" -> random.nextFloat() < 0.25F ? stage("australopithecus") : era;
+            case "homo_erectus" -> random.nextFloat() < 0.2F ? stage("homo_habilis") : era;
+            case "homo_heidelbergensis", "homo_neanderthalensis" ->
+                    random.nextFloat() < 0.3F ? stage("homo_erectus") : era;
+            default -> era;
+        };
+    }
+
+    /** Whether a species has died out by this era. */
+    public static boolean isExtinctBy(ResourceLocation species, ResourceLocation era) {
+        int born = order(species);
+        int now = order(era);
+        return switch (species.getPath()) {
+            case "australopithecus" -> now >= order(stage("homo_erectus"));
+            case "homo_habilis" -> now >= order(stage("homo_heidelbergensis"));
+            case "homo_erectus" -> now >= order(stage("homo_sapiens"));
+            default -> born >= 0 && now >= 0 && now - born >= 3;
+        };
+    }
+
+    private static int order(ResourceLocation stage) {
+        return switch (stage.getPath()) {
+            case "ardipithecus" -> 0;
+            case "australopithecus" -> 1;
+            case "homo_habilis" -> 2;
+            case "homo_erectus" -> 3;
+            case "homo_heidelbergensis", "homo_neanderthalensis" -> 4;
+            case "homo_sapiens" -> 5;
+            default -> -1;
+        };
+    }
+
+    /** After evolving, the other bands of species that have now died out are gone. */
+    public static void cullExtinct(ServerPlayer player) {
+        ResourceLocation era = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        for (BandMember member : player.serverLevel().getEntities(ModEntities.BAND_MEMBER.get(),
+                m -> m.isWild() && isExtinctBy(m.getStage(), era))) {
+            member.discard();
+        }
+    }
+
+    /** A new species arrives among others of its kind: a few bands near where the player wakes. */
+    public static void onArrival(ServerPlayer player) {
+        ResourceLocation era = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        int bands = 2 + player.getRandom().nextInt(2);
+        for (int i = 0; i < bands; i++) {
+            spawnNear(player, 40, 110, era, true);
+        }
     }
 
     private WildBands() {

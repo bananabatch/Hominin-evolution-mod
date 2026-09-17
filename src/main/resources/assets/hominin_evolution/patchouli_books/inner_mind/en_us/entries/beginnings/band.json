@@ -31,6 +31,14 @@
     {
       "type": "patchouli:text",
       "text": "Stragglers find their way back to you.$(br2)Lose a whole band and some of what you learned is lost with it. Lose three, and your line ends."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Worth, to another band$()$(br)Everything falls into a tier. Trade for anything of the same tier or lower, never higher.$(br2)1 Common: food, sticks, rocks$(br)2 Useful: long branch, termite stick, quartzite$(br)3 Crafted: flake, Lomekwian core, chert$(br)4 Prized: chopper, spear"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Treasured$()$(br)Top of the tiers, and hard to part with: $(#b87333)obsidian$(), a $(#b87333)chert hammerstone$(), an $(#b87333)Oldowan multi tool$().$(br2)Hold one out to another band and they will give you their best.$(br2)Ask your own band to fetch things too. They go and look for real."
     }
   ]
 }

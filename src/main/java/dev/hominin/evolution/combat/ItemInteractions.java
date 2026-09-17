@@ -48,6 +48,8 @@ public final class ItemInteractions {
         return ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, path);
     }
 
+    private static final ResourceLocation ARDIPITHECUS = id("ardipithecus");
+    private static final ResourceLocation AUSTRALOPITHECUS = id("australopithecus");
     private static final ResourceLocation HABILIS = id("homo_habilis");
     private static final ResourceLocation ERECTUS = id("homo_erectus");
 
@@ -68,6 +70,11 @@ public final class ItemInteractions {
     private static final int FIRE_RADIUS = 3;
 
     private static final List<HandRecipe> RECIPES = List.of(
+            // Every stage: a nest is older than any of them. Great apes build one every night.
+            new HandRecipe(id("nest"), ModItems.NESTING_MATERIAL, ModItems.NESTING_MATERIAL, ModItems.NEST,
+                    List.of(ARDIPITHECUS, AUSTRALOPITHECUS, HABILIS, ERECTUS), false, true, false,
+                    "You bend and weave the twigs into a rough nest.",
+                    ""),
             // Habilis: finishing a gnawed point with a flake. No idea needed - it is
             // the same job the teeth were already doing, with a better tool.
             new HandRecipe(id("pointy_stick"), ModItems.SHARPENED_STICK, ModItems.FLAKE, ModItems.POINTY_STICK,

@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
+    "hominin_evolution:sabertooth",
+    "hominin_evolution:pachycrocuta",
     "minecraft:wolf",
     "minecraft:polar_bear",
     {

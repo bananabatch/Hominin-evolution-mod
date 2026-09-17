@@ -26,6 +26,7 @@ public class SocialScreen extends Screen {
 
     private final int targetId;
     private final boolean otherBand;
+    private final boolean otherBandNear;
 
     public static void open() {
         Minecraft mc = Minecraft.getInstance();
@@ -39,7 +40,8 @@ public class SocialScreen extends Screen {
         }
         SocialSelection.entityId = -1;
         if (target != null) {
-            mc.setScreen(new SocialScreen(target.getId(), target.getName(), target.isOtherBand()));
+            mc.setScreen(new SocialScreen(target.getId(), target.getName(), target.isOtherBand(),
+                    target.isOtherBand()));
             return;
         }
         BandMember nearest = nearest(mc.player);
@@ -48,7 +50,7 @@ public class SocialScreen extends Screen {
             return;
         }
         mc.setScreen(new SocialScreen(-1, Component.literal(nearest.isOtherBand() ? "the other band" : "your band"),
-                nearest.isOtherBand()));
+                nearest.isOtherBand(), otherBandNear(mc.player)));
     }
 
     @Nullable
@@ -66,10 +68,17 @@ public class SocialScreen extends Screen {
         return best;
     }
 
-    private SocialScreen(int targetId, Component name, boolean otherBand) {
+    private SocialScreen(int targetId, Component name, boolean otherBand, boolean otherBandNear) {
         super(Component.literal("Talk to ").append(name));
         this.targetId = targetId;
         this.otherBand = otherBand;
+        this.otherBandNear = otherBandNear;
+    }
+
+    /** Another band close enough to ask along - offered even while your own band is here too. */
+    private static boolean otherBandNear(LocalPlayer player) {
+        return !player.level().getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(16.0D),
+                BandMember::isOtherBand).isEmpty();
     }
 
     @Override
@@ -77,12 +86,14 @@ public class SocialScreen extends Screen {
         LocalPlayer player = Minecraft.getInstance().player;
         int buttonWidth = 200;
         int x = (width - buttonWidth) / 2;
-        int y = height / 2 - 60;
+        int y = height / 2 - 100;
         for (Social.Command command : Social.Command.values()) {
-            if (command == Social.Command.TRAVEL && !otherBand) {
+            if (command == Social.Command.TRAVEL && !otherBandNear) {
                 continue;
             }
-            if (command == Social.Command.ITEM && otherBand) {
+            boolean ownBandOnly = command == Social.Command.ITEM || command == Social.Command.HUNT
+                    || command == Social.Command.NO_HUNT || command == Social.Command.CLIMB;
+            if (ownBandOnly && otherBand) {
                 continue;
             }
             Button button = Button.builder(Component.literal(command.label()), b -> {
@@ -94,17 +105,28 @@ public class SocialScreen extends Screen {
                     button.active = player.getFoodData().needsFood();
                 } else if (command == Social.Command.HURT) {
                     button.active = player.getHealth() < player.getMaxHealth();
+                } else if (command == Social.Command.CLIMB) {
+                    var stage = ClientSync.stageOf(player.getUUID());
+                    String path = stage == null ? "" : stage.getPath();
+                    button.active = path.equals("ardipithecus") || path.equals("australopithecus")
+                            || path.equals("homo_habilis");
                 }
             }
             addRenderableWidget(button);
             y += 24;
+        }
+        if (!otherBand) {
+            addRenderableWidget(Button.builder(Component.literal("Get me..."), b -> ItemPickScreen.openFetch(
+                    targetId, targetId >= 0 ? Component.literal(title.getString().replaceFirst("^Talk to ", ""))
+                            : Component.literal("your band")))
+                    .bounds(x, y, buttonWidth, 20).build());
         }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, height / 2 - 84, 0xE9D8A6);
+        graphics.drawCenteredString(font, title, width / 2, height / 2 - 118, 0xE9D8A6);
     }
 
     @Override

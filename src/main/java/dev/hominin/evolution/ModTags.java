@@ -104,6 +104,9 @@ public final class ModTags {
          */
         public static final TagKey<EntityType<?>> PREDATORS = entityType("predators");
 
+        /** Predators no threat display will move. */
+        public static final TagKey<EntityType<?>> FEARLESS = entityType("fearless");
+
         private EntityTypes() {
         }
     }

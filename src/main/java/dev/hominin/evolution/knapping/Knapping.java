@@ -44,6 +44,8 @@ public final class Knapping {
     private static final ResourceLocation LOMEKWIAN_INSIGHT =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "lomekwian_knowledge");
 
+    private static final ResourceLocation ARDIPITHECUS =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "ardipithecus");
     private static final ResourceLocation AUSTRALOPITHECUS =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "australopithecus");
 
@@ -123,11 +125,13 @@ public final class Knapping {
             splitCore(player, main);
             return;
         }
-        // Before the flake exists as an idea, nothing shaped comes out of a rock.
-        // Aiming past it is the mistake that produces the Lomekwian core.
-        boolean overreaching = choice != KnappingChoice.FLAKE
-                && AUSTRALOPITHECUS.equals(data.getStage())
+        // Before the flake exists as an idea, nothing shaped comes out of a rock - not
+        // even a flake, until the band is ready for the one that changes everything.
+        // Every attempt until then is the mistake that produces the Lomekwian core.
+        boolean earlyStage = (AUSTRALOPITHECUS.equals(data.getStage()) || ARDIPITHECUS.equals(data.getStage()))
                 && !data.isDeveloperMode();
+        boolean overreaching = earlyStage && (choice != KnappingChoice.FLAKE
+                || !EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.STRIKE_FLAKE));
 
         if (choice == KnappingChoice.MULTITOOL && !overreaching) {
             makeMultitool(player, data, main);

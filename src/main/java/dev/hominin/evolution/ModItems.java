@@ -56,6 +56,16 @@ public final class ModItems {
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BAND_MEMBER,
                     0x6F4A2D, 0x9A6947, new Item.Properties()));
 
+    public static final DeferredItem<Item> BABOON_SPAWN_EGG = ITEMS.register("baboon_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BABOON,
+                    0x8A7A52, 0x4D4038, new Item.Properties()));
+    public static final DeferredItem<Item> PACHYCROCUTA_SPAWN_EGG = ITEMS.register("pachycrocuta_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PACHYCROCUTA,
+                    0x9C8058, 0x4E3A28, new Item.Properties()));
+    public static final DeferredItem<Item> SABERTOOTH_SPAWN_EGG = ITEMS.register("sabertooth_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.SABERTOOTH,
+                    0xB08A52, 0xEEE6CC, new Item.Properties()));
+
     public static final DeferredItem<Item> FLAKE = ITEMS.register("flake",
             () -> new StoneEdgeItem(new Item.Properties()
                     .durability(FLAKE_DURABILITY)
@@ -192,6 +202,13 @@ public final class ModItems {
             ModBlocks.QUARTZITE_DEPOSIT, new Item.Properties());
     public static final DeferredItem<BlockItem> LIMESTONE_DEPOSIT = ITEMS.registerSimpleBlockItem(
             ModBlocks.LIMESTONE_DEPOSIT, new Item.Properties());
+
+    public static final DeferredItem<Item> NEST = ITEMS.register("nest",
+            () -> new BlockItem(ModBlocks.NEST.get(), new Item.Properties()));
+
+    /** A handful of leafy twigs stripped from a tree. Two of them make a nest. */
+    public static final DeferredItem<Item> NESTING_MATERIAL = ITEMS.registerSimpleItem("nesting_material",
+            new Item.Properties());
 
     public static final DeferredItem<BlockItem> TERMITE_MOUND = ITEMS.registerSimpleBlockItem(
             ModBlocks.TERMITE_MOUND, new Item.Properties());

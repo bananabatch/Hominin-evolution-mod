@@ -28,5 +28,95 @@
     "sounds": [
       "hominin_evolution:band_call"
     ]
+  },
+  "baboon_ambient": {
+    "subtitle": "subtitles.hominin_evolution.baboon_ambient",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.ambient",
+        "type": "event",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "baboon_hurt": {
+    "subtitle": "subtitles.hominin_evolution.baboon_hurt",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.hurt",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "baboon_angry": {
+    "subtitle": "subtitles.hominin_evolution.baboon_angry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.screech",
+        "type": "event",
+        "pitch": 0.9
+      }
+    ]
+  },
+  "pachycrocuta_ambient": {
+    "subtitle": "subtitles.hominin_evolution.pachycrocuta_ambient",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf.ambient",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "pachycrocuta_hurt": {
+    "subtitle": "subtitles.hominin_evolution.pachycrocuta_hurt",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf.hurt",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "pachycrocuta_growl": {
+    "subtitle": "subtitles.hominin_evolution.pachycrocuta_growl",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf.growl",
+        "type": "event",
+        "pitch": 0.55
+      }
+    ]
+  },
+  "sabertooth_ambient": {
+    "subtitle": "subtitles.hominin_evolution.sabertooth_ambient",
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.ambient",
+        "type": "event",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "sabertooth_hurt": {
+    "subtitle": "subtitles.hominin_evolution.sabertooth_hurt",
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.hurt",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "sabertooth_roar": {
+    "subtitle": "subtitles.hominin_evolution.sabertooth_roar",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ravager.roar",
+        "type": "event",
+        "pitch": 1.3
+      }
+    ]
   }
 }

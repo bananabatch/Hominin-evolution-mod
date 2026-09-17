@@ -105,6 +105,7 @@ public final class ThreatDisplay {
                 player.getBoundingBox().inflate(radius),
                 mob -> mob.getType().is(ModTags.EntityTypes.PREDATORS)).isEmpty();
         int startled = EvolutionEventHandler.startleNearby(player, radius, Band.chanceWith(SCREAM_CHANCE, band), true);
+        startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
         countPointlessDisplays(player, threatNearby);
         if (startled > 0) {
             player.displayClientMessage(Component.literal(band > 0

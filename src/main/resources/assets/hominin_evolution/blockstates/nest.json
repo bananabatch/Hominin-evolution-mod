@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hominin_evolution:block/nest"
+    },
+    "facing=east": {
+      "model": "hominin_evolution:block/nest",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "hominin_evolution:block/nest",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hominin_evolution:block/nest",
+      "y": 270
+    }
+  }
+}

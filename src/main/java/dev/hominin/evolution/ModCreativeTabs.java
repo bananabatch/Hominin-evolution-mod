@@ -43,7 +43,12 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.DECAYING_LOG.get());
                         output.accept(ModItems.DECAYED_LOG.get());
                         output.accept(ModItems.TERMITE_STICK.get());
+                        output.accept(ModItems.NESTING_MATERIAL.get());
+                        output.accept(ModItems.NEST.get());
                         output.accept(ModItems.BAND_MEMBER_SPAWN_EGG.get());
+                        output.accept(ModItems.BABOON_SPAWN_EGG.get());
+                        output.accept(ModItems.PACHYCROCUTA_SPAWN_EGG.get());
+                        output.accept(ModItems.SABERTOOTH_SPAWN_EGG.get());
                         output.accept(ModItems.MEAT_CHUNK.get());
                         output.accept(ModItems.GRUB.get());
                         output.accept(ModItems.BEETLE.get());

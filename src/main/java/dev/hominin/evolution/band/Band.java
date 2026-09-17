@@ -194,6 +194,215 @@ public final class Band {
         }
     }
 
+    /** Joining in on whatever the leader attacks - unless told not to hunt with them. */
+    public static void assist(ServerPlayer player, LivingEntity target) {
+        for (BandMember member : companionsNear(player, DEFEND_RADIUS)) {
+            if (member.huntsWithLeader()) {
+                member.defendAgainst(target);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------ doing things on their own
+
+    private static final int EXCURSION_CHECK_TICKS = 1200;
+    private static final float EXCURSION_CHANCE = 0.3F;
+    private static final int ANNOUNCE_MEMBER_COOLDOWN = 1200;
+    private static final int ANNOUNCE_LEADER_COOLDOWN = 300;
+    private static final Map<UUID, Long> lastMemberAnnouncement = new HashMap<>();
+    private static final Map<UUID, Long> lastLeaderAnnouncement = new HashMap<>();
+
+    /**
+     * Tells the leader what a member is up to, so the band feels like it has a life of
+     * its own. Rate-limited per member and per leader, so it never becomes chat spam.
+     */
+    public static void announce(BandMember member, String rest) {
+        Player leader = member.leaderPlayer();
+        if (leader == null || member.distanceToSqr(leader) > 48.0D * 48.0D) {
+            return;
+        }
+        long now = member.level().getGameTime();
+        if (now - lastMemberAnnouncement.getOrDefault(member.getUUID(), -99999L) < ANNOUNCE_MEMBER_COOLDOWN
+                || now - lastLeaderAnnouncement.getOrDefault(leader.getUUID(), -99999L) < ANNOUNCE_LEADER_COOLDOWN) {
+            return;
+        }
+        lastMemberAnnouncement.put(member.getUUID(), now);
+        lastLeaderAnnouncement.put(leader.getUUID(), now);
+        member.ensureName();
+        leader.sendSystemMessage(Component.literal(member.getName().getString() + rest).withStyle(ChatFormatting.GRAY));
+    }
+
+    /** Something worth hearing about, whatever else was said lately. */
+    public static void announceDiscovery(BandMember member, String rest) {
+        Player leader = member.leaderPlayer();
+        if (leader == null || member.distanceToSqr(leader) > 64.0D * 64.0D) {
+            return;
+        }
+        member.ensureName();
+        leader.sendSystemMessage(Component.literal(member.getName().getString() + rest).withStyle(ChatFormatting.GOLD));
+    }
+
+    // ------------------------------------------------------------ alloparenting
+
+    private static final String STABILITY_LOSS = EvolutionManager.SKILL_PREFIX + "band_stability_loss";
+    private static final int CHILD_DEFENCE_TICKS = 20 * 20;
+
+    /** Every child in the band has an adult minding it: the nearest one not already minding another. */
+    private static void assignCaretakers(ServerPlayer player) {
+        List<BandMember> members = all(player);
+        ServerLevel level = player.serverLevel();
+        for (BandMember child : members) {
+            if (!child.isBaby()) {
+                continue;
+            }
+            UUID current = child.getCaretaker();
+            if (current != null && level.getEntity(current) instanceof BandMember minder && minder.isAlive()
+                    && child.getUUID().equals(minder.getWard())) {
+                continue;
+            }
+            BandMember best = null;
+            for (BandMember adult : members) {
+                if (adult.isBaby() || adult.getWard() != null || adult.isOnExcursion()) {
+                    continue;
+                }
+                if (best == null || adult.distanceToSqr(child) < best.distanceToSqr(child)) {
+                    best = adult;
+                }
+            }
+            if (best != null) {
+                best.mind(child);
+            }
+        }
+        for (BandMember adult : members) {
+            UUID ward = adult.getWard();
+            if (ward != null && !(level.getEntity(ward) instanceof BandMember child && child.isAlive() && child.isBaby())) {
+                adult.stopMinding();
+            }
+        }
+    }
+
+    /** A child attacked: every adult of its band nearby comes running, fired up, and the child is marked out. */
+    public static void childInDanger(BandMember child, LivingEntity attacker) {
+        child.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.GLOWING, 30 * 20, 0, false, false));
+        for (BandMember adult : near(child, DEFEND_RADIUS)) {
+            if (adult == child || adult.isBaby() || !adult.isAlliedTo(child)) {
+                continue;
+            }
+            adult.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, CHILD_DEFENCE_TICKS, 0));
+            adult.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, CHILD_DEFENCE_TICKS, 0));
+            adult.defendAgainst(attacker);
+        }
+        Player leader = child.leaderPlayer();
+        if (leader != null) {
+            child.ensureName();
+            leader.displayClientMessage(Component.literal(child.getName().getString()
+                    + " cries out - the band rushes to protect the child!").withStyle(ChatFormatting.RED), true);
+        }
+    }
+
+    /** Losing a child shakes the band. Group stability does nothing yet; it will from erectus on. */
+    public static void onChildDied(BandMember child) {
+        if (!(child.leaderPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+        player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().merge(STABILITY_LOSS, 1, Integer::sum);
+        player.sendSystemMessage(Component.literal("The band grieves for " + child.getName().getString()
+                + ". (Group stability has fallen.)").withStyle(ChatFormatting.DARK_RED));
+    }
+
+    /** Now and then, in daylight, one member of the band goes off exploring on its own. */
+    private static void maybeSendExploring(ServerPlayer player) {
+        if (!player.level().isDay() || player.getRandom().nextFloat() >= EXCURSION_CHANCE) {
+            return;
+        }
+        List<BandMember> members = all(player);
+        if (members.stream().anyMatch(BandMember::isOnExcursion)) {
+            return;
+        }
+        List<BandMember> ready = members.stream()
+                .filter(m -> !m.isBaby() && !m.isHungry() && m.getTarget() == null && !m.isUpATree()
+                        && m.distanceToSqr(player) < 32.0D * 32.0D)
+                .toList();
+        if (ready.isEmpty()) {
+            return;
+        }
+        BandMember explorer = ready.get(player.getRandom().nextInt(ready.size()));
+        ServerLevel level = player.serverLevel();
+        for (int attempt = 0; attempt < 8; attempt++) {
+            float angle = player.getRandom().nextFloat() * Mth.TWO_PI;
+            int distance = 30 + player.getRandom().nextInt(25);
+            int x = player.getBlockX() + Math.round(Mth.cos(angle) * distance);
+            int z = player.getBlockZ() + Math.round(Mth.sin(angle) * distance);
+            if (!level.hasChunk(x >> 4, z >> 4)) {
+                continue;
+            }
+            BlockPos target = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            if (!level.getFluidState(target.below()).isEmpty()) {
+                continue;
+            }
+            explorer.startExcursion(target, 1200 + player.getRandom().nextInt(1200));
+            explorer.ensureName();
+            player.sendSystemMessage(Component.literal(explorer.getName().getString()
+                    + " wanders off to explore.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
+    }
+
+    /** An explorer comes home - brought straight back to the leader, sometimes carrying a find. */
+    public static void returnFromExcursion(BandMember member, ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (member.level() == level) {
+            BlockPos pos = standingSpotNear(level, player.blockPosition(), member.getRandom().nextInt(3) + 2,
+                    member.getRandom().nextFloat() * Mth.TWO_PI);
+            member.getNavigation().stop();
+            member.setClimbingTree(false);
+            member.teleportTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+        }
+        ItemStack find = ItemStack.EMPTY;
+        float roll = member.getRandom().nextFloat();
+        if (roll < 0.15F) {
+            find = new ItemStack(dev.hominin.evolution.ModItems.LONG_BRANCH.get());
+        } else if (roll < 0.35F) {
+            find = new ItemStack(dev.hominin.evolution.ModItems.GRUB.get(), 2);
+        } else if (roll < 0.5F) {
+            find = new ItemStack(dev.hominin.evolution.ModItems.NESTING_MATERIAL.get(), 2);
+        } else if (roll < 0.6F) {
+            find = new ItemStack(dev.hominin.evolution.ModItems.ROCK.get());
+        }
+        String name = member.getName().getString();
+        if (find.isEmpty()) {
+            player.sendSystemMessage(Component.literal(name + " comes back.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
+        String found = find.getHoverName().getString();
+        member.addToInventory(find);
+        player.sendSystemMessage(Component.literal(name + " comes back carrying " + found + ".")
+                .withStyle(ChatFormatting.GRAY));
+    }
+
+    /**
+     * Blows from your own hand. With anything in it - a flake, a spear, a rock - they are
+     * pulled at the last moment and do no harm, so hunting alongside the band is safe. A
+     * bare-handed cuff still lands, but they shake it off fast.
+     */
+    public static void onMemberHurt(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof BandMember member)
+                || !(event.getSource().getEntity() instanceof ServerPlayer player)
+                || !member.isCompanionOf(player)) {
+            return;
+        }
+        boolean bareHanded = event.getSource().getDirectEntity() == player && player.getMainHandItem().isEmpty();
+        if (!bareHanded) {
+            event.setCanceled(true);
+            return;
+        }
+        member.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.REGENERATION, 100, 2, false, false));
+    }
+
     public static void defend(ServerPlayer player, LivingEntity attacker) {
         for (BandMember member : companionsNear(player, DEFEND_RADIUS)) {
             member.defendAgainst(attacker);
@@ -222,7 +431,7 @@ public final class Band {
             return;
         }
         if (!(target instanceof Player)) {
-            defend(player, target);
+            assist(player, target);
         }
     }
 
@@ -355,12 +564,25 @@ public final class Band {
         return new BlockPos(x, y, z);
     }
 
-    /** The band evolves with the player, and grows to the size the new species lives in. */
+    /**
+     * The old band belongs to the past. Evolving leaves it behind, and the player wakes
+     * among a new band of their new species, at the size that species lives in.
+     */
     public static void evolveWith(ServerPlayer player, ResourceLocation stage) {
-        for (BandMember member : all(player)) {
-            member.setStage(stage);
+        List<BandMember> old = all(player);
+        for (BandMember member : old) {
+            member.discard();
         }
-        topUp(player, stage);
+        if (!old.isEmpty()) {
+            player.sendSystemMessage(Component.literal("Your old band stays behind, in the deep past.")
+                    .withStyle(ChatFormatting.GRAY));
+        }
+    }
+
+    /** A fresh band of the player's current species, beside them. */
+    public static void formNewBand(ServerPlayer player) {
+        topUp(player, player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
+        player.sendSystemMessage(Component.literal("You wake among a new band.").withStyle(ChatFormatting.GREEN));
     }
 
     public static void bringAlong(ServerPlayer player, BlockPos from) {
@@ -444,13 +666,19 @@ public final class Band {
         if (player.tickCount % 40 == 0 && !player.isSpectator()) {
             keepTogether(player);
         }
+        if (player.tickCount % EXCURSION_CHECK_TICKS == 0 && !player.isSpectator()) {
+            maybeSendExploring(player);
+        }
+        if (player.tickCount % 100 == 0) {
+            assignCaretakers(player);
+        }
     }
 
     /** A band that has lost its leader walks to where they are - or, if too far, simply turns up. */
     private static void keepTogether(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         for (BandMember member : all(player)) {
-            if (member.distanceToSqr(player) > LOST_DISTANCE * LOST_DISTANCE) {
+            if (!member.isOnExcursion() && member.distanceToSqr(player) > LOST_DISTANCE * LOST_DISTANCE) {
                 BlockPos pos = standingSpotNear(level, player.blockPosition(), member.getRandom().nextInt(3) + 2,
                         member.getRandom().nextFloat() * Mth.TWO_PI);
                 member.getNavigation().stop();

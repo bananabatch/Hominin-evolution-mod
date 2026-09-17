@@ -19,6 +19,10 @@
     {
       "type": "patchouli:text",
       "text": "Any wall will take your weight for a little way. Push into it with $(k:jump) held and you can haul yourself about four blocks up - out of a pit, or up a low bank. No further."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Tear at a tree and handfuls of leafy twigs come away. One in each hand and $(k:hominin_evolution.item_interact) makes a piece of nest. Lay six of them, two wide and three long, and you can sleep the night away in it.$(br2)Old nests mean a band slept there."
     }
   ]
 }
