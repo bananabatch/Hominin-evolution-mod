@@ -72,13 +72,10 @@ public final class Band {
     private static final Map<UUID, Heir> heirs = new HashMap<>();
     /** Until when a player's blows on their band count as wrestling. */
     private static final Map<UUID, Long> wrestleWindow = new HashMap<>();
-    /** When a player who lost their band is found by a new one. */
-    private static final Map<UUID, Long> newBandDue = new HashMap<>();
 
     /** Losing this many bands ends the line. */
     private static final int BANDS_TO_EXTINCTION = 3;
     private static final String BANDS_LOST = EvolutionManager.SKILL_PREFIX + "bands_lost";
-    private static final long NEW_BAND_DELAY_TICKS = 2400L;
     /** Band members further than this from their leader are brought back to them. */
     private static final double LOST_DISTANCE = 48.0D;
     public static final ResourceLocation ARDIPITHECUS =
@@ -738,6 +735,9 @@ public final class Band {
         member.setStage(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
         member.ensureName();
         level.addFreshEntity(member);
+        // A band exists from the moment it is spawned: losing it within the first few
+        // seconds has to count, so the net does not have to notice it first.
+        hadBand.add(player.getUUID());
         return member;
     }
 
@@ -844,15 +844,11 @@ public final class Band {
         if (player.tickCount % 20 != 0) {
             return;
         }
-        Long due = newBandDue.get(player.getUUID());
-        if (due != null && player.level().getGameTime() >= due) {
-            newBandDue.remove(player.getUUID());
-            topUp(player, player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
-            player.sendSystemMessage(Component.literal("Wanderers find you, and stay. You have a band again.")
-                    .withStyle(ChatFormatting.GREEN));
-        }
         if (player.tickCount % 40 == 0 && !player.isSpectator()) {
             keepTogether(player);
+        }
+        if (player.tickCount % 100 == 20 && !player.isSpectator()) {
+            checkBandLost(player);
         }
         if (player.tickCount % EXCURSION_CHECK_TICKS == 0 && !player.isSpectator()) {
             maybeSendExploring(player);
@@ -864,6 +860,27 @@ public final class Band {
             organiseParties(player);
         }
     }
+
+    /**
+     * The net under the death hook. A band can vanish in ways an entity's own death never
+     * reports - killed in an unloaded chunk, removed by a command, lost to a world edit -
+     * and a player standing alone with no band and no panic is the thing that actually
+     * matters, however it happened.
+     */
+    private static void checkBandLost(ServerPlayer player) {
+        if (dev.hominin.evolution.band.Panic.isPanicking(player) || !all(player).isEmpty()) {
+            hadBand.add(player.getUUID());
+            return;
+        }
+        // Only for a player who had one a moment ago: a fresh world has no band yet either.
+        if (!hadBand.remove(player.getUUID())) {
+            return;
+        }
+        bandLost(player);
+    }
+
+    /** Players known to have had a living band, so an empty band reads as a loss. */
+    private static final java.util.Set<UUID> hadBand = new java.util.HashSet<>();
 
     /** A band that has lost its leader walks to where they are - or, if too far, simply turns up. */
     private static void keepTogether(ServerPlayer player) {
@@ -882,19 +899,49 @@ public final class Band {
     /** A member of a player's band died. If it was the last, the band is lost. */
     public static void onMemberDied(BandMember dead) {
         Player leader = dead.leaderPlayer();
-        if (!(leader instanceof ServerPlayer player) || !all(player).isEmpty() || newBandDue.containsKey(player.getUUID())) {
+        if (leader == null && dead.getLeader() != null && dead.level().getServer() != null) {
+            // The leader may be in another dimension, or simply out of this level's player list.
+            leader = dead.level().getServer().getPlayerList().getPlayer(dead.getLeader());
+        }
+        // One panic per band, however many of them go down together.
+        if (!(leader instanceof ServerPlayer player) || !all(player).isEmpty()
+                || dev.hominin.evolution.band.Panic.isPanicking(player)) {
+            return;
+        }
+        bandLost(player);
+    }
+
+    /**
+     * The band is gone, however it went.
+     *
+     * <p>Counted once per band rather than once per body: stragglers go on dying for a while
+     * after the rest, and each of those deaths finds an empty band too. A second loss only
+     * counts once there has been a second band to lose.
+     */
+    private static void bandLost(ServerPlayer player) {
+        if (!hadBand.remove(player.getUUID())) {
             return;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         int lost = data.getCriterionCounters().merge(BANDS_LOST, 1, Integer::sum);
-        if (lost >= BANDS_TO_EXTINCTION) {
-            goExtinct(player, data);
+        boolean onFallback = dev.hominin.evolution.stage.Fallbacks.isFallback(data.getStage());
+        int limit = onFallback ? dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK : BANDS_TO_EXTINCTION;
+        if (lost >= limit) {
+            ResourceLocation fallback = onFallback ? null
+                    : dev.hominin.evolution.stage.Fallbacks.of(data.getStage());
+            if (fallback != null && dev.hominin.evolution.stage.StageRegistry.get(fallback) != null) {
+                fallBack(player, data, fallback);
+            } else {
+                goExtinct(player, data);
+            }
             return;
         }
         loseKnowledge(player, data);
-        player.sendSystemMessage(Component.literal("Your whole band is gone. (" + lost + "/" + BANDS_TO_EXTINCTION
-                + " bands lost - lose " + BANDS_TO_EXTINCTION + " and your line ends.)").withStyle(ChatFormatting.RED));
-        newBandDue.put(player.getUUID(), player.level().getGameTime() + NEW_BAND_DELAY_TICKS);
+        dev.hominin.evolution.band.Panic.begin(player);
+        player.sendSystemMessage(Component.literal("Your whole band is gone. (" + lost + "/" + limit
+                + " bands lost - lose " + limit + (onFallback ? " and your line ends.)" : " and your kind dies out.)"))
+                .withStyle(ChatFormatting.RED));
+
     }
 
     /**
@@ -955,6 +1002,36 @@ public final class Band {
      * ever been - to Ardipithecus, a million years before Lucy, with requirements
      * nobody would call fair.
      */
+    /**
+     * The species fails, and what is left of it is an older, smaller form of the same thing.
+     * Time runs backwards, everything learned at the lost stage goes with it, and the road
+     * back up is shorter than the one that was lost.
+     */
+    private static void fallBack(ServerPlayer player, PlayerEvolutionData data, ResourceLocation fallback) {
+        var from = dev.hominin.evolution.stage.StageRegistry.get(data.getStage());
+        var to = dev.hominin.evolution.stage.StageRegistry.get(fallback);
+        if (to == null) {
+            goExtinct(player, data);
+            return;
+        }
+        int rewound = from == null ? 0 : Math.max(0, to.yearsAgo() - from.yearsAgo());
+        data.setStage(fallback);
+        data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(EvolutionManager.SKILL_PREFIX));
+        data.getCriterionCounters().remove(BANDS_LOST);
+        data.getNotifiedReadyStages().clear();
+        data.setStageStartWalkDistance(player.walkDist);
+        data.setDistanceCredits(0);
+        dev.hominin.evolution.stage.StageSync.sync(player);
+        dev.hominin.evolution.stage.CutsceneGuard.tryStart(player, 200);
+        PacketDistributor.sendToPlayer(player, new dev.hominin.evolution.network.CutsceneStartPayload(
+                "You died out as a species. You are not out yet.",
+                to.displayName() + "  -  " + dev.hominin.evolution.stage.StageAge.rewound(rewound)));
+        player.sendSystemMessage(Component.literal("What is left of your kind is older, fewer and hardier. "
+                + "Lose " + dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK
+                + " bands now and the line ends for good.").withStyle(ChatFormatting.GOLD));
+        topUp(player, fallback);
+    }
+
     private static void goExtinct(ServerPlayer player, PlayerEvolutionData data) {
         var ardipithecus = dev.hominin.evolution.stage.StageRegistry.get(ARDIPITHECUS);
         if (ardipithecus == null) {
@@ -967,6 +1044,7 @@ public final class Band {
         data.setStageStartWalkDistance(player.walkDist);
         data.setDistanceCredits(0);
         dev.hominin.evolution.stage.StageSync.sync(player);
+        dev.hominin.evolution.stage.CutsceneGuard.tryStart(player, 200);
         PacketDistributor.sendToPlayer(player, new dev.hominin.evolution.network.CutsceneStartPayload(
                 "Your line has ended.", ardipithecus.displayName() + "  "
                         + dev.hominin.evolution.stage.StageAge.ago(ardipithecus.yearsAgo())));
@@ -1000,6 +1078,7 @@ public final class Band {
 
     public static void forget(UUID player) {
         lastSplitDay.remove(player);
+        hadBand.remove(player);
         heirs.remove(player);
     }
 

@@ -70,6 +70,17 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
+    /** Erectus: the brow is still there, but the face under it has come nearly flat. */
+    public static LayerDefinition erectus() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -6.0F, -4.6F, 8, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-2.0F, -3.0F, -4.8F, 4, 2, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
     @Override
     public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T player,
             float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw,

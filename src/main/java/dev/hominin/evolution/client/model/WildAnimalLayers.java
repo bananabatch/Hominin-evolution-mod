@@ -101,6 +101,62 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
+    public static LayerDefinition homotherium() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 20)
+                .addBox(-4.5F, -5F, -9F, 9F, 9F, 18F), PartPose.offsetAndRotation(0F, 9F, 0F, 0.08F, 0F, 0F));
+        body.addOrReplaceChild("shoulders", CubeListBuilder.create().texOffs(0, 48)
+                .addBox(-5F, -6.5F, -8F, 10F, 4F, 8F), PartPose.offset(0F, 0F, 0F));
+        body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(30, 8)
+                .addBox(-1F, 0F, 0F, 2F, 2F, 4F), PartPose.offsetAndRotation(0F, -4F, 9F, -0.5F, 0F, 0F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4F, -4F, -7F, 8F, 7F, 7F), PartPose.offset(0F, 6F, -9F));
+        head.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(30, 0)
+                .addBox(-2.5F, -1F, -10F, 5F, 4F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_fang", CubeListBuilder.create().texOffs(46, 0)
+                .addBox(1F, 2.5F, -9.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_fang", CubeListBuilder.create().texOffs(46, 0)
+                .addBox(-2F, 2.5F, -9.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(50, 0)
+                .addBox(2F, -6F, -3F, 2F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(50, 0)
+                .addBox(-4F, -6F, -3F, 2F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(0, 50)
+                .addBox(-2F, 0F, -2F, 4F, 12F, 4F), PartPose.offset(-3F, 12F, -6F));
+        root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(0, 50)
+                .addBox(-2F, 0F, -2F, 4F, 12F, 4F), PartPose.offset(3F, 12F, -6F));
+        root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(0, 50)
+                .addBox(-2F, 0F, -2F, 4F, 11F, 4F), PartPose.offset(-3F, 13F, 7F));
+        root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(0, 50)
+                .addBox(-2F, 0F, -2F, 4F, 11F, 4F), PartPose.offset(3F, 13F, 7F));
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+
+    public static LayerDefinition crownedEagle() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 20)
+                .addBox(-3.5F, -3F, -5F, 7F, 7F, 11F), PartPose.offsetAndRotation(0F, 15F, 0F, 0.15F, 0F, 0F));
+        body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(30, 20)
+                .addBox(-3F, -1F, 0F, 6F, 1F, 9F), PartPose.offsetAndRotation(0F, 2F, 5.5F, 0.25F, 0F, 0F));
+        body.addOrReplaceChild("left_wing", CubeListBuilder.create().texOffs(0, 40)
+                .addBox(0F, -1F, -5F, 13F, 1F, 10F), PartPose.offset(3.5F, -2F, 0F));
+        body.addOrReplaceChild("right_wing", CubeListBuilder.create().texOffs(0, 40)
+                .addBox(-13F, -1F, -5F, 13F, 1F, 10F), PartPose.offset(-3.5F, -2F, 0F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-2.5F, -3F, -3F, 5F, 5F, 5F), PartPose.offset(0F, 12.5F, -4.5F));
+        head.addOrReplaceChild("crest", CubeListBuilder.create().texOffs(22, 0)
+                .addBox(-2.5F, -5.5F, -1F, 5F, 3F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("beak", CubeListBuilder.create().texOffs(40, 0)
+                .addBox(-1F, -0.5F, -6F, 2F, 2F, 3F), PartPose.offset(0F, 0F, 0F));
+        root.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(44, 10)
+                .addBox(-1F, 0F, -1F, 2F, 4F, 2F), PartPose.offset(2F, 18F, -1F));
+        root.addOrReplaceChild("right_leg", CubeListBuilder.create().texOffs(44, 10)
+                .addBox(-1F, 0F, -1F, 2F, 4F, 2F), PartPose.offset(-2F, 18F, -1F));
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+
     private WildAnimalLayers() {
     }
 }

@@ -50,6 +50,11 @@ public final class Thinking {
      */
     public static void think(ServerPlayer player) {
         long now = player.level().getGameTime();
+        // Thinking about the animal that just ran is not inventing anything, and costs nothing
+        // but what the chase itself costs.
+        if (dev.hominin.evolution.hunt.Quarry.trySeed(player)) {
+            return;
+        }
         Long last = lastThought.get(player.getUUID());
         if (last != null && now - last < COOLDOWN_TICKS) {
             int seconds = (int) ((COOLDOWN_TICKS - (now - last)) / 20L);

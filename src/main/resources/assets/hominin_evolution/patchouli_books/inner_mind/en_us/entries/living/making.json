@@ -1,0 +1,33 @@
+{
+  "name": "Everything You Can Make",
+  "icon": "hominin_evolution:oldowan_multitool",
+  "category": "hominin_evolution:living",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Nothing here is crafted at a bench. Everything is made by holding two things and pressing $(k:hominin_evolution.item_interact) - and most of it has to be $(l)thought of$() first, or your hands go through the motions and sometimes ruin the material."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Any stage$()$(li)Nesting material + nesting material = a nest$(br2)$(l)Habilis$()$(li)Stick or sharpened stick + flake = pointy stick$(li)Long branch + flake = sharpened spear$(li)Rock + flake = chopper$(li)Long branch + chopper = digging stick"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Erectus$()$(li)Long branch + rock = wooden club$(li)Sharpened spear, empty hand, beside a fire = fire-hardened spear$(br2)A grinding rock, held against a blunted edge, puts the edge back."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:hammerstone",
+      "text": "Two loose cobbles knock together into this. It is the tool that opens every other one."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Knapping$() is its own screen: hold a rock with a hammerstone in your off hand and press $(k:hominin_evolution.item_interact). It offers what you could try to strike off - a flake, a chopper, a multi tool - and good stone breaks better than bad."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)What the stone is worth$()$(li)Chert - the finest edge, the rarest find$(li)Quartzite - coarse, plentiful, dependable$(li)Obsidian - sharper than anything, and only up high$(li)Limestone - will not hold an edge. Good for grinding, nothing else."
+    }
+  ]
+}

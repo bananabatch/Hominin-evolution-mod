@@ -33,7 +33,8 @@ public class PlayerEvolutionData {
             ResourceLocation.CODEC.listOf().optionalFieldOf("water_source_biomes", List.of()).forGetter(d -> List.copyOf(d.waterSourceBiomes)),
             Codec.BOOL.optionalFieldOf("developer_mode", false).forGetter(PlayerEvolutionData::isDeveloperMode),
             Codec.FLOAT.optionalFieldOf("stage_start_walk_distance", 0.0F).forGetter(PlayerEvolutionData::getStageStartWalkDistance),
-            Codec.INT.optionalFieldOf("distance_credits", 0).forGetter(PlayerEvolutionData::getDistanceCredits)
+            Codec.INT.optionalFieldOf("distance_credits", 0).forGetter(PlayerEvolutionData::getDistanceCredits),
+            Codec.INT.optionalFieldOf("thirst", 20).forGetter(PlayerEvolutionData::getThirst)
     ).apply(instance, PlayerEvolutionData::fromCodec));
 
     private ResourceLocation stage;
@@ -60,16 +61,22 @@ public class PlayerEvolutionData {
     /** How many distance milestones have already paid out during this stage. */
     private int distanceCredits;
     private long lastCountedDay = -1;
+    /** Water left, out of {@link dev.hominin.evolution.survival.Thirst#MAX}. */
+    private int thirst = 20;
+    /** Fills up as the body spends water; each full clock costs a point. Not saved. */
+    private int thirstClock;
 
     public PlayerEvolutionData() {
         this(DEFAULT_STAGE, new HashMap<>(), new HashSet<>(), new HashSet<>(), 0, 0, 0, new HashSet<>(), null, new HashMap<>(), new HashSet<>(),
-                new HashSet<>(), false, 0.0F, 0);
+                new HashSet<>(), false, 0.0F, 0, 20);
     }
 
     private PlayerEvolutionData(ResourceLocation stage, Map<String, Integer> criterionCounters, Set<ResourceLocation> notifiedReadyStages,
             Set<ResourceLocation> foragedBiomes, int meatKilled, int meatScavenged, int foraged, Set<ResourceLocation> unlockedRecipes,
             @Nullable String clanId, Map<String, Float> learnedLanguages, Set<ResourceLocation> craftedOldowanTools,
-            Set<ResourceLocation> waterSourceBiomes, boolean developerMode, float stageStartWalkDistance, int distanceCredits) {
+            Set<ResourceLocation> waterSourceBiomes, boolean developerMode, float stageStartWalkDistance, int distanceCredits,
+            int thirst) {
+        this.thirst = thirst;
         this.stage = stage;
         this.criterionCounters = criterionCounters;
         this.notifiedReadyStages = notifiedReadyStages;
@@ -90,10 +97,12 @@ public class PlayerEvolutionData {
     private static PlayerEvolutionData fromCodec(ResourceLocation stage, Map<String, Integer> criterionCounters, List<ResourceLocation> notifiedReadyStages,
             List<ResourceLocation> foragedBiomes, int meatKilled, int meatScavenged, int foraged, List<ResourceLocation> unlockedRecipes,
             Optional<String> clanId, Map<String, Float> learnedLanguages, List<ResourceLocation> craftedOldowanTools,
-            List<ResourceLocation> waterSourceBiomes, boolean developerMode, float stageStartWalkDistance, int distanceCredits) {
+            List<ResourceLocation> waterSourceBiomes, boolean developerMode, float stageStartWalkDistance, int distanceCredits,
+            int thirst) {
         return new PlayerEvolutionData(stage, new HashMap<>(criterionCounters), new HashSet<>(notifiedReadyStages), new HashSet<>(foragedBiomes),
                 meatKilled, meatScavenged, foraged, new HashSet<>(unlockedRecipes), clanId.orElse(null), new HashMap<>(learnedLanguages),
-                new HashSet<>(craftedOldowanTools), new HashSet<>(waterSourceBiomes), developerMode, stageStartWalkDistance, distanceCredits);
+                new HashSet<>(craftedOldowanTools), new HashSet<>(waterSourceBiomes), developerMode, stageStartWalkDistance, distanceCredits,
+                thirst);
     }
 
     public ResourceLocation getStage() {
@@ -179,6 +188,29 @@ public class PlayerEvolutionData {
 
     public void setStageStartWalkDistance(float stageStartWalkDistance) {
         this.stageStartWalkDistance = stageStartWalkDistance;
+    }
+
+    public int getThirst() {
+        return thirst;
+    }
+
+    public void setThirst(int thirst) {
+        this.thirst = thirst;
+    }
+
+    /**
+     * Spends this tick's water. Returns how many points of thirst that cost, which is
+     * almost always zero - the clock has to fill first.
+     */
+    public int tickThirstClock(int cost) {
+        thirstClock += cost;
+        int points = 0;
+        int perPoint = dev.hominin.evolution.survival.Thirst.ticksPerPoint() * 100;
+        while (thirstClock >= perPoint) {
+            thirstClock -= perPoint;
+            points++;
+        }
+        return points;
     }
 
     public int getDistanceCredits() {

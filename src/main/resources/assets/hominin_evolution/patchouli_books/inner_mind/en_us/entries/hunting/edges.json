@@ -11,6 +11,14 @@
     {
       "type": "patchouli:text",
       "text": "You are not faster than it. You do not need to be.$(br2)Stay close. Keep following. An animal that cannot shake you will slow, and then stop.$(br2)This is the oldest hunting there is, and it is won by the one who does not give up."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Anything you strike bolts, unless it is the sort of thing that comes back at you. It gets a hard sprint you cannot follow, then settles into a longer run - and everything grazing beside it runs too.$(br2)You cannot win the sprint. You win the afternoon: it overheats and you sweat, and a wound that keeps opening will not close for three minutes."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From habilis, think ($(k:hominin_evolution.think)) once the animal has run, and you hold the shape of it and the ground it went over - it is marked for its first run.$(br2)Erectus can do this again whenever the mark fades, as often as it takes, but each time costs water. Carry some.$(br2)This is for animals big enough to outrun you. Before habilis, take what small things you can catch."
     }
   ]
 }

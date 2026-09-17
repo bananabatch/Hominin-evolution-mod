@@ -20,14 +20,17 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 public final class ClientInputHandler {
     public static void onRightClickEmpty(PlayerInteractEvent.RightClickEmpty event) {
-        // Fires once per hand; only report the main hand so the server sees one display.
-        if (event.getHand() != InteractionHand.MAIN_HAND || !event.getEntity().isShiftKeyDown()) {
+        // Fires once per hand; only report the main hand so the server sees one of anything.
+        if (event.getHand() != InteractionHand.MAIN_HAND || Minecraft.getInstance().getConnection() == null) {
             return;
         }
-        if (Minecraft.getInstance().getConnection() == null) {
+        if (event.getEntity().isShiftKeyDown()) {
+            PacketDistributor.sendToServer(new ThreatDisplayPayload());
             return;
         }
-        PacketDistributor.sendToServer(new ThreatDisplayPayload());
+        // Water is not something the crosshair can pick, so a click at a river looks like a
+        // click at nothing. The server traces the look again and decides whether it was water.
+        PacketDistributor.sendToServer(new dev.hominin.evolution.network.DrinkPayload());
     }
 
     /** How long the think key has been held, in client ticks. Reset on release. */

@@ -1,0 +1,28 @@
+{
+  "name": "Every Key",
+  "icon": "minecraft:oak_sign",
+  "category": "hominin_evolution:living",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(k:hominin_evolution.item_interact)$() - work what is in your hands. One thing in each, and this is where it is made. A rock with a hammerstone opens the knapping screen instead.$(br2)Hold it with a bare stick to gnaw the end to a point."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(k:hominin_evolution.think)$() (hold) - think. Full health and a full stomach, and it costs most of the stomach. It is how a recipe is worked out for the first time.$(br2)Once an animal has run from you, the same key holds the chase in your head instead."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(k:hominin_evolution.social)$() - talk to the band. Sneak-use one of them first and it speaks to just that one.$(br2)$(l)$(k:hominin_evolution.threat_display)$() - pant-hoot, leap and throw a fright into whatever is near. It works better the more of your band can hear you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Sneak and use$() does most of the rest:$(li)on the ground - forage$(li)on a stone deposit - take note of it$(li)on a rock or branch - throw it$(li)on one of your band - see who they are$(br)$(l)Use$() on water drinks from it. $(l)Use$() on a bone with a flake to hand cracks it open."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Climbing needs no key at all. Walk into a trunk and you go up it; look down and hold back to come down.$(br2)Sleep in a nest, not on the floor - and it has to be a finished one, six armfuls in a two-by-three."
+    }
+  ]
+}

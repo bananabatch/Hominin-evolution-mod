@@ -11,6 +11,18 @@
     {
       "type": "patchouli:text",
       "text": "$(l)A note on failure:$() you will make things you did not mean to make. Hold on to them. Most of human history is people doing something wrong in a way that turned out to be useful."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Losing every last one of your band is how a line ends - but rarely all at once. Lose three bands and your kind dies out, and what is left of it is an older, poorer form of the same animal: $(l)anamensis$() behind Australopithecus, $(l)rudolfensis$() beside habilis, $(l)ergaster$() behind erectus."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A fallback asks less of you - one hard requirement and two of four - and its road leads straight back to what you fell from.$(br2)Lose two bands there and there is nothing further to fall to. Your line is finished.$(br2)These cousins are out there in any case: you will meet bands of them whether or not you have ever been one."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Extra effort$() (a world setting, off by default) turns the fallbacks into rungs rather than a net. With it on, habilis reaches erectus only by way of ergaster - the long way, through every form your line actually passed through."
     }
   ]
 }

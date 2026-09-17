@@ -28,14 +28,18 @@ public final class BandSizes {
 
     private static final Size DEFAULT = new Size(4, 6);
 
-    private static final Map<String, Size> SIZES = Map.of(
-            "australopithecus", new Size(4, 6),
-            "ardipithecus", new Size(3, 5),
-            "homo_habilis", new Size(7, 12),
-            "homo_erectus", new Size(12, 17),
-            "homo_heidelbergensis", new Size(15, 19),
-            "homo_sapiens", new Size(25, 40),
-            "homo_neanderthalensis", new Size(18, 25));
+    private static final Map<String, Size> SIZES = Map.ofEntries(Map.entry(
+            "australopithecus", new Size(4, 6)),
+            Map.entry("ardipithecus", new Size(3, 5)),
+            Map.entry("homo_habilis", new Size(7, 12)),
+            Map.entry("homo_erectus", new Size(12, 17)),
+            Map.entry("homo_heidelbergensis", new Size(15, 19)),
+            Map.entry("homo_sapiens", new Size(25, 40)),
+            Map.entry("homo_neanderthalensis", new Size(18, 25)),
+            // The fallbacks: smaller, poorer bands than the species they stand behind.
+            Map.entry("australopithecus_anamensis", new Size(3, 5)),
+            Map.entry("homo_rudolfensis", new Size(5, 9)),
+            Map.entry("homo_ergaster", new Size(9, 14)));
 
     public static Size of(ResourceLocation stage) {
         return SIZES.getOrDefault(stage.getPath(), DEFAULT);

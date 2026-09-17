@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/homo_erectus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:rock"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.arms_race.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.arms_race.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

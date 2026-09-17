@@ -79,7 +79,7 @@
         },
         {
           "condition": "minecraft:random_chance",
-          "chance": 0.12
+          "chance": 0.25
         }
       ],
       "entries": [

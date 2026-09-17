@@ -30,6 +30,8 @@ import net.minecraft.world.level.Level;
 public class Sabertooth extends PathfinderMob {
     /** How close is too close. */
     private static final double TRIGGER_DISTANCE = 7.0D;
+    /** Baboons are hunted deliberately, from further off. */
+    private static final double BABOON_HUNT_DISTANCE = 16.0D;
 
     public Sabertooth(EntityType<? extends Sabertooth> type, Level level) {
         super(type, level);
@@ -57,7 +59,12 @@ public class Sabertooth extends PathfinderMob {
     }
 
     private boolean isTooClose(LivingEntity entity) {
-        boolean prey = (entity instanceof Player player && !player.isCreative() && !player.isSpectator())
+        // A baboon is worth crossing open ground for; everything else has to come to it.
+        if (entity instanceof Baboon) {
+            return entity.distanceToSqr(this) < BABOON_HUNT_DISTANCE * BABOON_HUNT_DISTANCE;
+        }
+        boolean prey = (entity instanceof Player player && !player.isCreative() && !player.isSpectator()
+                && dev.hominin.evolution.hunt.Predation.looksWorthAttacking(player))
                 || entity instanceof BandMember;
         return prey && entity.distanceToSqr(this) < TRIGGER_DISTANCE * TRIGGER_DISTANCE;
     }

@@ -1,0 +1,55 @@
+{
+  "display_name": "Homo ergaster",
+  "years_ago": 1950000,
+  "gate": {
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 4 days.",
+        "count": 4
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "craft_oldowan_tools",
+        "description": "Craft 2 different Oldowan tools.",
+        "count": 2
+      },
+      {
+        "id": "hunt_with_spear",
+        "description": "Hunt with a spear.",
+        "count": 2
+      },
+      {
+        "id": "scavenge_bones",
+        "description": "Crack 4 long bones for marrow.",
+        "count": 4
+      },
+      {
+        "id": "water_sources",
+        "description": "Sneak-drink water in 3 places.",
+        "count": 3
+      }
+    ],
+    "choose": 2
+  },
+  "milestone": {
+    "type": "hominin_evolution:fire_transfer",
+    "description": "Carry fire from a natural source into a lasting form."
+  },
+  "next_stage": "hominin_evolution:homo_erectus",
+  "behaviors_gained": [
+    "The long-legged body, built for walking all day"
+  ],
+  "behaviors_lost": [],
+  "arrival_items": [
+    {
+      "id": "hominin_evolution:hammerstone",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:flake",
+      "count": 1
+    }
+  ]
+}

@@ -58,6 +58,19 @@ public final class ModBlocks {
             deposit(MapColor.SAND));
 
     /**
+     * Ribs and hide, lying where something stopped. Everything that dies leaves one; old
+     * ones out in the country are picked cleaner but hold far more bone.
+     */
+    public static final DeferredBlock<dev.hominin.evolution.block.CarcassBlock> CARCASS = BLOCKS.registerBlock(
+            "carcass", dev.hominin.evolution.block.CarcassBlock::new,
+            BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_WHITE)
+                    .strength(0.6F)
+                    .noOcclusion()
+                    .randomTicks()
+                    .sound(SoundType.BONE_BLOCK));
+
+    /**
      * Baked earth, raised by insects and hard as fired clay. A termite mound is a
      * larder that never moves and never runs out, which is exactly the kind of food
      * a primate can build a routine around - chimps at Gombe fish them with stripped

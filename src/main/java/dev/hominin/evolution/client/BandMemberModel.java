@@ -21,6 +21,7 @@ public class BandMemberModel extends PlayerModel<BandMember> {
     }
 
     private static final ResourceLocation CLIMB = id("climb");
+    private static final ResourceLocation GRIEVE = id("grieve");
     private static final ResourceLocation DISPLAY = id("threat_display");
     private static final int DISPLAY_TICKS = 30;
 
@@ -29,6 +30,7 @@ public class BandMemberModel extends PlayerModel<BandMember> {
             new Held(ModItems.SHARPENED_SPEAR, id("spear_hold"), id("spear_thrust")),
             new Held(ModItems.FIRE_HARDENED_SPEAR, id("spear_hold"), id("spear_thrust")),
             new Held(ModItems.LONG_BRANCH, id("branch_hold"), id("branch_swing")),
+            new Held(ModItems.WOODEN_CLUB, id("club_hold"), id("club_swing")),
             new Held(ModItems.SHARPENED_STICK, null, id("stick_stab")),
             new Held(ModItems.POINTY_STICK, null, id("stick_stab")),
             new Held(ModItems.FLAKE, null, id("flake_slash")));
@@ -42,6 +44,15 @@ public class BandMemberModel extends PlayerModel<BandMember> {
             float headPitch) {
         super.setupAnim(member, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
         float partial = ageInTicks - member.tickCount;
+        if (member.isGrieving()) {
+            play(GRIEVE, ageInTicks);
+            leftPants.copyFrom(leftLeg);
+            rightPants.copyFrom(rightLeg);
+            leftSleeve.copyFrom(leftArm);
+            rightSleeve.copyFrom(rightArm);
+            jacket.copyFrom(body);
+            return;
+        }
         int sinceDisplay = member.tickCount - member.clientDisplayStart;
         if (sinceDisplay >= 0 && sinceDisplay < DISPLAY_TICKS) {
             play(DISPLAY, sinceDisplay + partial);

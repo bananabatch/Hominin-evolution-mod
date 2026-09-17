@@ -104,7 +104,8 @@ public final class ThreatDisplay {
         boolean threatNearby = !player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(radius),
                 mob -> mob.getType().is(ModTags.EntityTypes.PREDATORS)).isEmpty();
-        int startled = EvolutionEventHandler.startleNearby(player, radius, Band.chanceWith(SCREAM_CHANCE, band), true);
+        int startled = EvolutionEventHandler.startleNearby(player, radius,
+                Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
         startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
         countPointlessDisplays(player, threatNearby);
         if (startled > 0) {

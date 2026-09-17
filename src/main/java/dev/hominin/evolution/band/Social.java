@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -23,24 +24,50 @@ import net.minecraft.world.item.ItemStack;
  * <p>Said to everyone nearby, or to one member picked out first.
  */
 public final class Social {
-    public enum Command {
-        FORAGE("Let's forage"),
-        FOOD("I'm hungry, can you get me food?"),
-        ITEM("I need an item..."),
-        HURT("I'm hurt, look after me"),
-        TRAVEL("Let's stick together today"),
-        HUNT("Let's hunt together"),
-        NO_HUNT("Don't hunt with me"),
-        CLIMB("Let's climb a tree / All clear");
+    /** What a thing said is about, so the talk menu is a few short lists rather than one long one. */
+    public enum Topic {
+        FOOD("Food"),
+        THINGS("Tools and things"),
+        DANGER("Danger"),
+        TOGETHER("Each other");
 
         private final String label;
 
-        Command(String label) {
+        Topic(String label) {
             this.label = label;
         }
 
         public String label() {
             return label;
+        }
+    }
+
+    public enum Command {
+        FORAGE("Let's forage", Topic.FOOD),
+        FOOD("I'm hungry, can you get me food?", Topic.FOOD),
+        ITEM("I need an item...", Topic.THINGS),
+        HURT("I'm hurt, look after me", Topic.DANGER),
+        TRAVEL("Let's stick together today", Topic.TOGETHER),
+        HUNT("Let's hunt together", Topic.DANGER),
+        NO_HUNT("Don't hunt with me", Topic.DANGER),
+        CLIMB("Let's climb a tree / All clear", Topic.DANGER),
+        GROOM("Groom them", Topic.TOGETHER),
+        INFO("Info", Topic.TOGETHER);
+
+        private final String label;
+        private final Topic topic;
+
+        Command(String label, Topic topic) {
+            this.label = label;
+            this.topic = topic;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public Topic topic() {
+            return topic;
         }
 
         @Nullable
@@ -118,6 +145,18 @@ public final class Social {
                     member.setHuntWithLeader(false);
                 }
                 say(player, who + " will leave your prey alone. They will still defend you.");
+            }
+            case GROOM -> {
+                if (first.isWild() && !first.isGuestOf(player)) {
+                    say(player, "They will not let a stranger that close.");
+                    return;
+                }
+                Grooming.begin(player, first);
+            }
+            case INFO -> {
+                if (individual) {
+                    sendInfo(player, first);
+                }
             }
             case CLIMB -> {
                 if (!canClimbOrder(player)) {
@@ -392,6 +431,31 @@ public final class Social {
         return best;
     }
 
+    /** Everything worth knowing about one member, for the info screen. */
+    private static void sendInfo(ServerPlayer player, BandMember member) {
+        member.ensureName();
+        List<String> lines = new ArrayList<>();
+        lines.add((member.isBaby() ? "Young " : "") + (member.isFemale() ? "Female" : "Male"));
+        lines.add("Health: " + Math.round(member.getHealth()) + " / " + Math.round(member.getMaxHealth()));
+        lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
+        lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
+        lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
+        if (Wants.hasWants(member)) {
+            Item preferred = member.preferredStone();
+            lines.add("Prefers: " + (preferred == null ? "any good stone" : Wants.describeItem(preferred)));
+            if (member.isObsessedWithObsidian()) {
+                lines.add("Obsessed with obsidian");
+            }
+            lines.add("Wants: " + Wants.describeItem(member.getWant())
+                    + (member.getTradeOffer() != null ? " (offering " + Wants.describeItem(member.getTradeOffer()) + ")" : ""));
+        }
+        if (member.getParty() > 0) {
+            lines.add("Off with party " + member.getParty() + " today");
+        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.MemberInfoPayload(member.getName().getString(), lines));
+    }
+
     /** Sends the player the list of what one member carries, to pick from. */
     private static void showInventory(ServerPlayer player, BandMember member) {
         List<Integer> slots = new ArrayList<>();
@@ -417,6 +481,12 @@ public final class Social {
     public static void takeItem(ServerPlayer player, int entityId, int slot) {
         if (!(player.level().getEntity(entityId) instanceof BandMember member) || !member.isAlive()
                 || !member.isLedBy(player) || member.distanceToSqr(player) > INDIVIDUAL_RADIUS * INDIVIDUAL_RADIUS) {
+            return;
+        }
+        ItemStack peek = slot == -1 ? member.getMainHandItem()
+                : slot >= 0 && slot < member.getInventory().getContainerSize() ? member.getInventory().getItem(slot) : ItemStack.EMPTY;
+        if (member.refusesToPartWith(peek)) {
+            say(player, member.getName().getString() + " clutches the obsidian and won't let go of it.");
             return;
         }
         ItemStack item = member.takeFromSlot(slot);
@@ -522,6 +592,14 @@ public final class Social {
             say(player, "It is getting dark. They are staying where they are tonight.");
             return;
         }
+        if (!Territory.willTravelWith(member, player)) {
+            say(player, member.getName().getString() + "'s band keep their distance. You have been taking from their ground.");
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "(Trade them something worth having, and they will share it with you.)")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+            return;
+        }
+        Territory.grantAccess(member, player);
         UUID band = member.getBandId();
         BandMember alpha = member;
         for (BandMember other : Band.near(member, 32.0D)) {

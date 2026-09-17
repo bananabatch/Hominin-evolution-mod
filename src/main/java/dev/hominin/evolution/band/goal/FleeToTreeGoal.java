@@ -82,6 +82,11 @@ public class FleeToTreeGoal extends Goal {
         double dz = member.getZ() - (trunk.getZ() + 0.5D);
         boolean atTrunk = dx * dx + dz * dz < 2.25D;
         if (!atTrunk) {
+            // Knocked away from the trunk: let go, or the climb follows it across the ground.
+            if (clingTicks > 0) {
+                member.setClimbingTree(false);
+                clingTicks = 0;
+            }
             if (ticks % 20 == 0 && member.getNavigation().isDone()) {
                 member.getNavigation().moveTo(trunk.getX() + 0.5D, trunk.getY(), trunk.getZ() + 0.5D, RUN_SPEED);
             }

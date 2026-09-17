@@ -96,6 +96,15 @@ config="${mod_id}.mixins.json"
 
 # Player Animator supplies the rig every hominin animation plays on. Optional so
 # the mod still loads without it - the animations simply do not play.
+# Patchouli draws the in-game guide. Optional: without it the mod runs and the
+# book simply is not handed out.
+[[dependencies.${mod_id}]]
+modId="patchouli"
+type="optional"
+versionRange="[1.21-87,)"
+ordering="AFTER"
+side="CLIENT"
+
 [[dependencies.${mod_id}]]
 modId="playeranimator"
 type="optional"

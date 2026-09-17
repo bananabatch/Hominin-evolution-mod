@@ -95,5 +95,18 @@
   "subtitles.hominin_evolution.sabertooth_ambient": "Big cat breathes",
   "subtitles.hominin_evolution.sabertooth_hurt": "Big cat hurts",
   "subtitles.hominin_evolution.sabertooth_roar": "Big cat roars",
-  "key.hominin_evolution.threat_display": "Threat display"
+  "key.hominin_evolution.threat_display": "Threat display",
+  "item.hominin_evolution.empty_eggshell": "Empty Eggshell",
+  "item.hominin_evolution.water_eggshell": "Shell of Water",
+  "advancements.hominin_evolution.arms_race.title": "Ez arms race",
+  "advancements.hominin_evolution.arms_race.description": "Kill something with a thrown stone as Homo erectus. Sorry, but the evolutionary arms race ends here.",
+  "block.hominin_evolution.carcass": "Carcass",
+  "item.hominin_evolution.carcass": "Carcass",
+  "item.hominin_evolution.rib": "Rib",
+  "entity.hominin_evolution.homotherium": "Homotherium",
+  "entity.hominin_evolution.crowned_eagle": "Crowned Eagle",
+  "item.hominin_evolution.homotherium_spawn_egg": "Homotherium Spawn Egg",
+  "item.hominin_evolution.crowned_eagle_spawn_egg": "Crowned Eagle Spawn Egg",
+  "advancements.hominin_evolution.taung_child.title": "The Taung Child",
+  "advancements.hominin_evolution.taung_child.description": "Lose a child of your band to an eagle, the way the first australopithecine ever found was lost."
 }

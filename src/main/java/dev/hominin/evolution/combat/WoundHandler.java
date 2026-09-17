@@ -64,6 +64,7 @@ public final class WoundHandler {
         int severity = existing == null ? 0 : Math.min(edge.maxSeverity(), existing.getAmplifier() + 1);
         int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
         target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
+        dev.hominin.evolution.hunt.Quarry.wounded(target);
 
         // A saber-toothed cat does not run from a cut, and a baboon with its troop behind it attacks instead.
         boolean standsGround = target.getType().is(ModTags.EntityTypes.FEARLESS)
@@ -86,6 +87,7 @@ public final class WoundHandler {
         int severity = existing == null ? 0 : Math.min(edge.maxSeverity(), existing.getAmplifier() + 1);
         int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
         target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
+        dev.hominin.evolution.hunt.Quarry.wounded(target);
     }
 
     /**

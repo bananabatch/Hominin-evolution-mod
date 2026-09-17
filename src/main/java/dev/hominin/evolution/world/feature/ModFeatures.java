@@ -16,6 +16,10 @@ public final class ModFeatures {
     public static final DeferredHolder<Feature<?>, TermiteMoundFeature> TERMITE_MOUND =
             FEATURES.register("termite_mound", () -> new TermiteMoundFeature(NoneFeatureConfiguration.CODEC));
 
+    /** Old bones out in the country: rare, and worth finding. */
+    public static final java.util.function.Supplier<CarcassFeature> CARCASS =
+            FEATURES.register("carcass", () -> new CarcassFeature(NoneFeatureConfiguration.CODEC));
+
     public static final DeferredHolder<Feature<?>, OutcropFeature> OUTCROP =
             FEATURES.register("outcrop", () -> new OutcropFeature(BlockStateConfiguration.CODEC));
 

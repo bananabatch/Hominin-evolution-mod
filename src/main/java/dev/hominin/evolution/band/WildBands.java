@@ -39,6 +39,9 @@ public final class WildBands {
     private static final int MIN_SIZE = 3;
 
     public static void tick(ServerPlayer player) {
+        if (player.tickCount % 20 == 0) {
+            checkArrivals(player);
+        }
         if (player.tickCount % CHECK_INTERVAL_TICKS != 0 || player.isSpectator()) {
             return;
         }
@@ -90,10 +93,71 @@ public final class WildBands {
             }
         }
         if (alpha != null) {
+            Territory.settle(bandId, site);
             level.playSound(null, alpha.blockPosition(), ModSounds.BAND_PANT_HOOT.get(), SoundSource.NEUTRAL, 3.0F, 0.9F);
-            player.displayClientMessage(Component.literal("Somewhere nearby, another band is calling."), true);
+            // A call carries, and a call tells you which way to walk. The glow is no use from
+            // here - they are further off than anything renders - so it waits until you are close.
+            int distance = (int) Math.round(Math.sqrt(site.distSqr(player.blockPosition())));
+            player.sendSystemMessage(Component.literal("Another band is calling, " + bearingFrom(player, site)
+                    + ", about " + distance + " blocks off.").withStyle(net.minecraft.ChatFormatting.GOLD));
+            arrivals.put(player.getUUID(), new Arrival(bandId, site, level.getGameTime() + ARRIVAL_MEMORY_TICKS));
         }
         return size;
+    }
+
+    /** How long a call is worth following up before the band has moved on. */
+    private static final long ARRIVAL_MEMORY_TICKS = 12000L;
+    /** How close you have to get before you can pick them out of the country. */
+    private static final double SIGHTING_RANGE = 64.0D;
+    private static final int SIGHTING_GLOW_TICKS = 30 * 20;
+
+    private record Arrival(UUID band, BlockPos site, long expiresAt) {
+    }
+
+    private static final java.util.Map<UUID, Arrival> arrivals = new java.util.HashMap<>();
+
+    /** Walking towards a call: once they are in reach, they light up so you can actually find them. */
+    private static void checkArrivals(ServerPlayer player) {
+        Arrival arrival = arrivals.get(player.getUUID());
+        if (arrival == null) {
+            return;
+        }
+        if (player.level().getGameTime() > arrival.expiresAt()) {
+            arrivals.remove(player.getUUID());
+            return;
+        }
+        if (player.blockPosition().distSqr(arrival.site()) > SIGHTING_RANGE * SIGHTING_RANGE) {
+            return;
+        }
+        int seen = 0;
+        for (BandMember member : Band.near(player, SIGHTING_RANGE)) {
+            if (arrival.band().equals(member.getBandId())) {
+                member.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.GLOWING, SIGHTING_GLOW_TICKS, 0, false, false));
+                seen++;
+            }
+        }
+        if (seen == 0) {
+            return;
+        }
+        arrivals.remove(player.getUUID());
+        player.sendSystemMessage(Component.literal("You pick them out of the grass: " + seen
+                + (seen == 1 ? " of them." : " of them.")).withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
+
+    /** Which way to walk, in words. */
+    private static String bearingFrom(ServerPlayer player, BlockPos site) {
+        double dx = site.getX() - player.getX();
+        double dz = site.getZ() - player.getZ();
+        String northSouth = Math.abs(dz) < Math.abs(dx) / 2.0D ? "" : dz < 0 ? "north" : "south";
+        String eastWest = Math.abs(dx) < Math.abs(dz) / 2.0D ? "" : dx < 0 ? "west" : "east";
+        return "to the " + (northSouth + eastWest).replace("northeast", "north-east")
+                .replace("northwest", "north-west").replace("southeast", "south-east")
+                .replace("southwest", "south-west");
+    }
+
+    public static void forget(UUID player) {
+        arrivals.remove(player);
     }
 
     /** What a wild band carries: some of it worth trading for. */
@@ -114,10 +178,56 @@ public final class WildBands {
         }
     }
 
+    /**
+     * Where a band settles. Bands live where the water and the stone are, and best of all
+     * where both are - so sites are scored for what is around them, and the best of a
+     * dozen tries wins.
+     */
     @Nullable
     private static BlockPos findSite(ServerLevel level, BlockPos around, int minDistance, int maxDistance,
             RandomSource random, boolean loadChunks) {
+        BlockPos best = null;
+        int bestScore = -1;
         for (int attempt = 0; attempt < 12; attempt++) {
+            BlockPos candidate = trySite(level, around, minDistance, maxDistance, random, loadChunks);
+            if (candidate == null) {
+                continue;
+            }
+            int score = worthOf(level, candidate);
+            if (score > bestScore) {
+                bestScore = score;
+                best = candidate;
+            }
+            // Water and stone together is as good as it gets; stop looking.
+            if (score >= 3) {
+                break;
+            }
+        }
+        return best;
+    }
+
+    /** What a site is worth: water nearby, stone nearby, both together best of all. */
+    private static int worthOf(ServerLevel level, BlockPos site) {
+        boolean water = false;
+        boolean stone = false;
+        for (BlockPos pos : BlockPos.betweenClosed(site.offset(-12, -4, -12), site.offset(12, 4, 12))) {
+            if (!water && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                water = true;
+            } else if (!stone && (level.getBlockState(pos).is(dev.hominin.evolution.ModTags.Blocks.WORKABLE_STONE_DEPOSIT)
+                    || level.getBlockState(pos).getBlock() instanceof dev.hominin.evolution.block.LooseRockBlock)) {
+                stone = true;
+            }
+            if (water && stone) {
+                return 3;
+            }
+        }
+        return water ? 2 : stone ? 1 : 0;
+    }
+
+    @Nullable
+    private static BlockPos trySite(ServerLevel level, BlockPos around, int minDistance, int maxDistance,
+            RandomSource random, boolean loadChunks) {
+        for (int attempt = 0; attempt < 4; attempt++) {
             float angle = random.nextFloat() * Mth.TWO_PI;
             int distance = minDistance + random.nextInt(Math.max(1, maxDistance - minDistance + 1));
             int x = around.getX() + Math.round(Mth.cos(angle) * distance);
@@ -151,6 +261,26 @@ public final class WildBands {
      * behaviourally modern sapiens.
      */
     public static ResourceLocation speciesFor(ResourceLocation era, RandomSource random) {
+        // The marginal forms are out there whether or not you have ever been one: anamensis
+        // beside Australopithecus, rudolfensis beside habilis, ergaster beside erectus.
+        float roll = random.nextFloat();
+        ResourceLocation cousin = switch (era.getPath()) {
+            case "australopithecus", "australopithecus_anamensis" -> stage("australopithecus_anamensis");
+            case "homo_habilis", "homo_rudolfensis" -> stage("homo_rudolfensis");
+            case "homo_erectus", "homo_ergaster" -> stage("homo_ergaster");
+            default -> null;
+        };
+        if (cousin != null && roll < 0.25F) {
+            return cousin;
+        }
+        // A fallback's own era is otherwise the species it stands behind.
+        ResourceLocation standard = switch (era.getPath()) {
+            case "australopithecus_anamensis" -> stage("australopithecus");
+            case "homo_rudolfensis" -> stage("homo_habilis");
+            case "homo_ergaster" -> stage("homo_erectus");
+            default -> era;
+        };
+        era = standard;
         return switch (era.getPath()) {
             case "homo_habilis" -> random.nextFloat() < 0.25F ? stage("australopithecus") : era;
             case "homo_erectus" -> random.nextFloat() < 0.2F ? stage("homo_habilis") : era;
@@ -175,8 +305,11 @@ public final class WildBands {
     private static int order(ResourceLocation stage) {
         return switch (stage.getPath()) {
             case "ardipithecus" -> 0;
+            case "australopithecus_anamensis" -> 1;
             case "australopithecus" -> 1;
+            case "homo_rudolfensis" -> 2;
             case "homo_habilis" -> 2;
+            case "homo_ergaster" -> 3;
             case "homo_erectus" -> 3;
             case "homo_heidelbergensis", "homo_neanderthalensis" -> 4;
             case "homo_sapiens" -> 5;

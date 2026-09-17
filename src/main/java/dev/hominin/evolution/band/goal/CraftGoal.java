@@ -31,8 +31,8 @@ import net.minecraft.world.item.Items;
  */
 public class CraftGoal extends Goal {
     private static final int WORK_TICKS = 60;
-    private static final int MIN_COOLDOWN = 2400;
-    private static final int COOLDOWN_SPREAD = 3600;
+    private static final int MIN_COOLDOWN = 1200;
+    private static final int COOLDOWN_SPREAD = 1800;
     /** Grinding is worth doing once an edge has lost this share of its life. */
     private static final float WORN_FRACTION = 0.5F;
     private static final int GRIND_REPAIR = 16;
@@ -136,10 +136,12 @@ public class CraftGoal extends Goal {
                 return Plan.POINTY_STICK;
             }
         }
-        if (!flake && stones() >= 2) {
+        // Good stone gets knapped whenever there is some; limestone only rarely, and grudgingly.
+        boolean workable = goodStones() >= 2 || (stones() >= 2 && limestoneAnyway());
+        if (count(ModItems.FLAKE.get()) < 2 && workable) {
             return Plan.FLAKE;
         }
-        if (flake && !has(s -> s.is(ModItems.CHOPPER.get())) && !member.hasMadeChopper() && stones() >= 2) {
+        if (flake && !has(s -> s.is(ModItems.CHOPPER.get())) && !member.hasMadeChopper() && workable) {
             return Plan.CHOPPER;
         }
         if (member.hasMadeChopper() && !has(s -> s.is(ModItems.OLDOWAN_MULTITOOL.get()))
@@ -297,8 +299,31 @@ public class CraftGoal extends Goal {
         return count;
     }
 
-    /** Uses up one stone, keeping the last as the hammer. Soft limestone goes first. */
+    /** Uses up one stone: good stone first, limestone only if nothing else is left. */
     private boolean takeStone() {
-        return take(s -> s.is(ModItems.LIMESTONE_ROCK.get()) || s.is(ModItems.ROCK.get())) || take(CraftGoal::isStone);
+        return take(dev.hominin.evolution.band.Wants::isGoodStone) || take(CraftGoal::isStone);
+    }
+
+    private int goodStones() {
+        int count = 0;
+        SimpleContainer pack = member.getInventory();
+        for (int slot = 0; slot < pack.getContainerSize(); slot++) {
+            if (dev.hominin.evolution.band.Wants.isGoodStone(pack.getItem(slot))) {
+                count += pack.getItem(slot).getCount();
+            }
+        }
+        return count;
+    }
+
+    /** Only limestone to hand: one time in ten they use it anyway. Otherwise they complain and leave it. */
+    private boolean limestoneAnyway() {
+        if (count(ModItems.LIMESTONE_ROCK.get()) == 0) {
+            return false;
+        }
+        if (member.getRandom().nextInt(10) == 0) {
+            return true;
+        }
+        dev.hominin.evolution.band.Wants.complainAboutLimestone(member);
+        return false;
     }
 }

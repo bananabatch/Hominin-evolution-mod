@@ -42,6 +42,9 @@ public class WoundedFleeGoal extends Goal {
     /** Keeps running a while after the bleeding stops - it does not know it is safe. */
     private static final int AFTERSHOCK_TICKS = 100;
 
+    /** A struck animal runs for this long even with no wound to keep it going. */
+    private static final int STARTLED_TICKS = 300;
+
     /** Seconds of sustained pursuit before the animal starts to flag, then to fail. */
     private static final int TIRING_TICKS = 20 * 12;
     private static final int SPENT_TICKS = 20 * 25;
@@ -52,6 +55,28 @@ public class WoundedFleeGoal extends Goal {
     private int reroute;
     private int aftershock;
     private int pursuit;
+
+    /**
+     * Sets this mob running from a hunter, adding the goal if it has not fled before. The
+     * run outlasts the sprint that starts it: a struck animal keeps going long after it
+     * has stopped being fast.
+     */
+    public static void makeFlee(PathfinderMob mob, Player hunter) {
+        for (net.minecraft.world.entity.ai.goal.WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
+            if (wrapped.getGoal() instanceof WoundedFleeGoal flee) {
+                flee.woundedBy(hunter);
+                flee.aftershock = STARTLED_TICKS;
+                return;
+            }
+        }
+        WoundedFleeGoal flee = new WoundedFleeGoal(mob);
+        flee.woundedBy(hunter);
+        flee.aftershock = STARTLED_TICKS;
+        mob.goalSelector.addGoal(0, flee);
+        if (mob.getTarget() == hunter) {
+            mob.setTarget(null);
+        }
+    }
 
     public WoundedFleeGoal(PathfinderMob mob) {
         this.mob = mob;

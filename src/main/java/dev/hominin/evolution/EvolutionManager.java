@@ -101,6 +101,15 @@ public final class EvolutionManager {
     }
 
     public static void evolve(ServerPlayer player, ResourceLocation nextStageId) {
+        // Extra effort: you do not get to skip the species that stands behind the one you
+        // are reaching for. Only on the way up, and never when you are already it.
+        if (player.serverLevel().getGameRules().getBoolean(dev.hominin.evolution.ModGameRules.EXTRA_EFFORT)) {
+            ResourceLocation detour = dev.hominin.evolution.stage.Fallbacks.detourTo(nextStageId);
+            if (detour != null && !detour.equals(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())
+                    && StageRegistry.get(detour) != null) {
+                nextStageId = detour;
+            }
+        }
         StageDefinition nextStage = StageRegistry.get(nextStageId);
         if (nextStage == null) {
             return;

@@ -154,6 +154,15 @@ public final class Trading {
     public static void offer(BandMember member, Player player, ItemStack offered) {
         ResourceLocation era = member.getStage();
         int offerTier = tierOf(offered, era);
+        // In a dry spell nobody parts with anything unless they come out of the exchange ahead.
+        if (dev.hominin.evolution.survival.Drought.isActive(member.level())) {
+            offerTier--;
+            if (offerTier <= 0) {
+                player.displayClientMessage(Component.literal(member.getName().getString()
+                        + " shakes their head. Nobody is trading that cheaply while the land is this dry."), true);
+                return;
+            }
+        }
         if (offerTier <= 0) {
             player.displayClientMessage(Component.literal(
                     member.getName().getString() + " turns it over and hands it back. No use to them."), true);
@@ -191,6 +200,10 @@ public final class Trading {
             offered.shrink(1);
         }
         member.addToInventory(taken);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            // A fair exchange also buys the right to their water and their stone.
+            Territory.offered(member, serverPlayer, taken);
+        }
         Component givenName = given.getHoverName();
         if (!player.getInventory().add(given)) {
             player.drop(given, false);
@@ -204,6 +217,7 @@ public final class Trading {
 
     private static boolean isFairReturn(ItemStack candidate, ItemStack offered, int offerTier, ResourceLocation era) {
         int tier = tierOf(candidate, era);
+        // In a dry spell nobody parts with anything unless they come out of it ahead.
         return tier > 0 && tier <= offerTier && !candidate.is(offered.getItem());
     }
 

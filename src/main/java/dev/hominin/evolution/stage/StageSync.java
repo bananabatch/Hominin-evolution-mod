@@ -24,6 +24,7 @@ public final class StageSync {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             sync(player);
+            dev.hominin.evolution.survival.Thirst.sync(player);
         }
     }
 
@@ -31,6 +32,9 @@ public final class StageSync {
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             sync(player);
+            // A new body starts watered, whoever it belonged to before.
+            dev.hominin.evolution.survival.Thirst.set(player, dev.hominin.evolution.survival.Thirst.MAX);
+            dev.hominin.evolution.survival.Thirst.sync(player);
         }
     }
 

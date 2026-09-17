@@ -23,6 +23,18 @@ public final class StageAge {
         return Math.round(yearsAgo / (double) THOUSAND) + " KYA";
     }
 
+    /** "50,000 years back", "1.4 million years back" - the clock run the other way. */
+    public static String rewound(int years) {
+        if (years <= 0) {
+            return "the same ground, a poorer footing";
+        }
+        if (years >= MILLION) {
+            return trim(years / (double) MILLION) + " million years back";
+        }
+        return String.format(java.util.Locale.ROOT, "%,d", Math.round(years / (double) THOUSAND) * THOUSAND)
+                + " years back";
+    }
+
     /** "900,000 years later", "1.4 million years later". */
     public static String later(int fromYearsAgo, int toYearsAgo) {
         int elapsed = fromYearsAgo - toYearsAgo;

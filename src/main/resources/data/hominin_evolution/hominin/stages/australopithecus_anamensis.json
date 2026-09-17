@@ -1,0 +1,49 @@
+{
+  "display_name": "Australopithecus anamensis",
+  "years_ago": 4200000,
+  "gate": {
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 3 days.",
+        "count": 3
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "climb_trees",
+        "description": "Climb 6 trees.",
+        "count": 6
+      },
+      {
+        "id": "forage_biomes",
+        "description": "Forage food in 2 places.",
+        "count": 2
+      },
+      {
+        "id": "water_sources",
+        "description": "Sneak-drink water in 2 places.",
+        "count": 2
+      },
+      {
+        "id": "scavenge_bones",
+        "description": "Crack 2 long bones for marrow.",
+        "count": 2
+      }
+    ],
+    "choose": 2
+  },
+  "milestone": {
+    "type": "hominin_evolution:walk_upright",
+    "description": "Hold the think key with empty hands, and decide to walk on the ground."
+  },
+  "next_stage": "hominin_evolution:australopithecus",
+  "behaviors_gained": [],
+  "behaviors_lost": [],
+  "arrival_items": [
+    {
+      "id": "hominin_evolution:grub",
+      "count": 2
+    }
+  ]
+}

@@ -44,6 +44,18 @@ public final class ModEntities {
                     dev.hominin.evolution.entity.Sabertooth::new, MobCategory.CREATURE)
                     .sized(1.3F, 1.4F).clientTrackingRange(10).build("sabertooth"));
 
+    /** Scimitar cat: the daylight pursuit hunter of the open plain. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Homotherium>> HOMOTHERIUM =
+            ENTITY_TYPES.register("homotherium", () -> EntityType.Builder.<dev.hominin.evolution.entity.Homotherium>of(
+                    dev.hominin.evolution.entity.Homotherium::new, MobCategory.CREATURE)
+                    .sized(1.2F, 1.5F).clientTrackingRange(10).build("homotherium"));
+
+    /** The bird that takes children out of the open. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.CrownedEagle>> CROWNED_EAGLE =
+            ENTITY_TYPES.register("crowned_eagle", () -> EntityType.Builder.<dev.hominin.evolution.entity.CrownedEagle>of(
+                    dev.hominin.evolution.entity.CrownedEagle::new, MobCategory.CREATURE)
+                    .sized(1.0F, 0.9F).clientTrackingRange(12).build("crowned_eagle"));
+
     private ModEntities() {
     }
 }

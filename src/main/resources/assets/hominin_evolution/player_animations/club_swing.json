@@ -1,0 +1,193 @@
+{
+  "version": 3,
+  "name": "club_swing",
+  "description": "Club held up and away from the body: lifted on the right, held a beat, then swept across in front to the left",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 28,
+    "stopTick": 28,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -72,
+          "yaw": 8,
+          "roll": -18
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": 0,
+          "roll": 8
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "yaw": 0
+        }
+      },
+      {
+        "tick": 5,
+        "easing": "easeOutCubic",
+        "rightArm": {
+          "pitch": -100,
+          "yaw": 48,
+          "roll": -14
+        },
+        "leftArm": {
+          "pitch": -28,
+          "yaw": 22,
+          "roll": 12
+        },
+        "body": {
+          "pitch": -5,
+          "yaw": -16,
+          "roll": 3
+        },
+        "head": {
+          "yaw": 12
+        }
+      },
+      {
+        "tick": 7,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -102,
+          "yaw": 50,
+          "roll": -14
+        },
+        "leftArm": {
+          "pitch": -30,
+          "yaw": 24,
+          "roll": 12
+        },
+        "body": {
+          "pitch": -6,
+          "yaw": -18,
+          "roll": 4
+        },
+        "head": {
+          "yaw": 14
+        }
+      },
+      {
+        "tick": 13,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -92,
+          "yaw": -6,
+          "roll": -12
+        },
+        "leftArm": {
+          "pitch": -24,
+          "yaw": -8,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 2,
+          "yaw": 6,
+          "roll": -2
+        },
+        "head": {
+          "yaw": -4
+        }
+      },
+      {
+        "tick": 17,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -86,
+          "yaw": -58,
+          "roll": -10
+        },
+        "leftArm": {
+          "pitch": -20,
+          "yaw": -28,
+          "roll": -6
+        },
+        "body": {
+          "pitch": 6,
+          "yaw": 18,
+          "roll": -6
+        },
+        "head": {
+          "yaw": -14
+        }
+      },
+      {
+        "tick": 19,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -80,
+          "yaw": -72,
+          "roll": -8
+        },
+        "leftArm": {
+          "pitch": -16,
+          "yaw": -36,
+          "roll": -8
+        },
+        "body": {
+          "pitch": 8,
+          "yaw": 22,
+          "roll": -8
+        },
+        "head": {
+          "yaw": -18
+        }
+      },
+      {
+        "tick": 23,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -76,
+          "yaw": -34,
+          "roll": -14
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": -14,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 4,
+          "yaw": 10,
+          "roll": -4
+        },
+        "head": {
+          "yaw": -8
+        }
+      },
+      {
+        "tick": 28,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -72,
+          "yaw": 8,
+          "roll": -18
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": 0,
+          "roll": 8
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "yaw": 0
+        }
+      }
+    ]
+  }
+}

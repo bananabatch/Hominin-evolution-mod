@@ -126,7 +126,8 @@ public class ForageGoal extends Goal {
             level.playSound(null, spot, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.NEUTRAL, 1.0F, 1.0F);
             member.addToInventory(new ItemStack(Items.SWEET_BERRIES, 1 + member.getRandom().nextInt(2)));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
-        } else if (member.getRandom().nextFloat() < SUCCESS_CHANCE + member.foragingBonus()) {
+        } else if (member.getRandom().nextFloat() < (SUCCESS_CHANCE + member.foragingBonus())
+                * dev.hominin.evolution.survival.Drought.forageMultiplier(level)) {
             Item[] insects = {ModItems.GRUB.get(), ModItems.BEETLE.get(), ModItems.EARTHWORM.get()};
             member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)]));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");

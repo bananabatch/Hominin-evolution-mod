@@ -11,6 +11,18 @@
     {
       "type": "patchouli:text",
       "text": "You are not the only one who will ever be hungry.$(br2)$(l)Remember who fed whom.$() Others will."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Everything that dies leaves a carcass where it fell, and things die out here without anyone's help - worn out, sick, or carrying an old wound. Break one for a rib, a long bone or a plain bone, and whatever meat is left on it.$(br2)Eat a rib and the bone stays in your hand. Crack it for the marrow."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Older bones lie scattered out in the country, picked clean long ago. They are rare, and worth the walk: three to five bones, two or three long bones, and a rib or two.$(br2)Meat on the ground carries a long way. A giant hyena may reach a fresh kill before you do, and it will take the lot - get there first, or frighten it off."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "You are not the only one who lost a band. Now and then a carcass has somebody of your own kind sitting beside it, living off what they find - more often at old bone beds than fresh kills.$(br2)Nothing with a nose comes near a kill a hominin is sitting at. Walk up to them and they will get up and come with you."
     }
   ]
 }

@@ -81,6 +81,11 @@ public final class ItemInteractions {
                     List.of(HABILIS, ERECTUS), false, false, false,
                     "You pare the point down with the flake until it is fine and even.",
                     ""),
+            // A plain stick works just as well: the flake does both jobs at once.
+            new HandRecipe(id("pointy_stick"), () -> net.minecraft.world.item.Items.STICK, ModItems.FLAKE,
+                    ModItems.POINTY_STICK, List.of(HABILIS, ERECTUS), false, false, false,
+                    "You whittle the stick to a fine, even point with the flake.",
+                    ""),
             // Habilis: a flake is sharp enough to whittle a branch to a point.
             new HandRecipe(id("sharpened_spear"), ModItems.LONG_BRANCH, ModItems.FLAKE, ModItems.SHARPENED_SPEAR,
                     List.of(HABILIS, ERECTUS), false, false, true,

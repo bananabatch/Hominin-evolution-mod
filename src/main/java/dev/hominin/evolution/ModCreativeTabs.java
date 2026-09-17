@@ -29,6 +29,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLAKE.get());
                         output.accept(ModItems.CHOPPER.get());
                         output.accept(ModItems.HAMMERSTONE.get());
+                        output.accept(ModItems.RIB.get());
+                        output.accept(ModItems.CARCASS.get());
+                        output.accept(ModItems.EMPTY_EGGSHELL.get());
+                        output.accept(ModItems.WATER_EGGSHELL.get());
                         output.accept(ModItems.CHERT_HAMMERSTONE.get());
                         output.accept(ModItems.LOMEKWIAN_TOOL.get());
                         output.accept(ModItems.OLDOWAN_MULTITOOL.get());
@@ -49,6 +53,8 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.BABOON_SPAWN_EGG.get());
                         output.accept(ModItems.PACHYCROCUTA_SPAWN_EGG.get());
                         output.accept(ModItems.SABERTOOTH_SPAWN_EGG.get());
+                        output.accept(ModItems.HOMOTHERIUM_SPAWN_EGG.get());
+                        output.accept(ModItems.CROWNED_EAGLE_SPAWN_EGG.get());
                         output.accept(ModItems.MEAT_CHUNK.get());
                         output.accept(ModItems.GRUB.get());
                         output.accept(ModItems.BEETLE.get());

@@ -32,6 +32,14 @@ public final class ChecklistTracker {
     /** Players who have turned the overlay off with {@code /hominin checklist}. */
     private static final Set<UUID> hidden = new HashSet<>();
 
+    /** A fresh join has the list resent, whatever the last world left on screen. */
+    public static void onPlayerLoggedIn(
+            net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            lastSent.remove(player.getUUID());
+        }
+    }
+
     public static void refresh(ServerPlayer player) {
         if (hidden.contains(player.getUUID())) {
             return;

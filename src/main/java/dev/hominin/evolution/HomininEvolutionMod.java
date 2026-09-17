@@ -64,8 +64,13 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(GuideBook::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerHurt);
+        // Highest, so nothing lands on a player who cannot see or move during a cutscene.
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST,
+                dev.hominin.evolution.stage.CutsceneGuard::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
         NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHeal);
         // High, so a wrestle is cancelled before anything treats it as a real blow.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, Band::onAttackEntity);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerDeath);
@@ -77,9 +82,12 @@ public class HomininEvolutionMod {
             event.put(ModEntities.BABOON.get(), dev.hominin.evolution.entity.Baboon.createAttributes().build());
             event.put(ModEntities.PACHYCROCUTA.get(), dev.hominin.evolution.entity.Pachycrocuta.createAttributes().build());
             event.put(ModEntities.SABERTOOTH.get(), dev.hominin.evolution.entity.Sabertooth.createAttributes().build());
+            event.put(ModEntities.HOMOTHERIUM.get(), dev.hominin.evolution.entity.Homotherium.createAttributes().build());
+            event.put(ModEntities.CROWNED_EAGLE.get(), dev.hominin.evolution.entity.CrownedEagle.createAttributes().build());
         });
         NeoForge.EVENT_BUS.addListener(HomininAdvancements::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerLoggedIn);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.stage.ChecklistTracker::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerRespawn);
         NeoForge.EVENT_BUS.addListener(StageSync::onChangedDimension);
         NeoForge.EVENT_BUS.addListener(StageSync::onStartTracking);

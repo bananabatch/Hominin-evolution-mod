@@ -1,0 +1,161 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hominin_evolution:carcass",
+          "properties": {
+            "large": "false"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "hominin_evolution:rib",
+              "conditions": [
+                {
+                  "condition": "minecraft:random_chance",
+                  "chance": 0.25
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hominin_evolution:long_bone",
+              "conditions": [
+                {
+                  "condition": "minecraft:random_chance",
+                  "chance": 0.4
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:bone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hominin_evolution:carcass",
+          "properties": {
+            "large": "false"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hominin_evolution:meat_chunk",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hominin_evolution:carcass",
+          "properties": {
+            "large": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bone",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 3,
+                "max": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hominin_evolution:carcass",
+          "properties": {
+            "large": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hominin_evolution:long_bone",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2,
+                "max": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hominin_evolution:carcass",
+          "properties": {
+            "large": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hominin_evolution:rib",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "hominin_evolution:blocks/carcass"
+}

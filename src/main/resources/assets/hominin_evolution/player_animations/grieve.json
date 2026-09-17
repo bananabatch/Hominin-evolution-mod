@@ -1,0 +1,119 @@
+{
+  "version": 3,
+  "name": "grieve",
+  "description": "Sat on the ground, head in hands, rocking",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 80,
+    "stopTick": 80,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 24,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": 32,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -158,
+          "yaw": -12,
+          "roll": 14
+        },
+        "leftArm": {
+          "pitch": -158,
+          "yaw": 12,
+          "roll": -14
+        },
+        "rightLeg": {
+          "pitch": -96,
+          "yaw": 0,
+          "roll": -10
+        },
+        "leftLeg": {
+          "pitch": -96,
+          "yaw": 0,
+          "roll": 10
+        }
+      },
+      {
+        "tick": 40,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 30,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": 38,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -163,
+          "yaw": -12,
+          "roll": 16
+        },
+        "leftArm": {
+          "pitch": -163,
+          "yaw": 12,
+          "roll": -16
+        },
+        "rightLeg": {
+          "pitch": -98,
+          "yaw": 0,
+          "roll": -10
+        },
+        "leftLeg": {
+          "pitch": -98,
+          "yaw": 0,
+          "roll": 10
+        }
+      },
+      {
+        "tick": 80,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 24,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": 32,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -158,
+          "yaw": -12,
+          "roll": 14
+        },
+        "leftArm": {
+          "pitch": -158,
+          "yaw": 12,
+          "roll": -14
+        },
+        "rightLeg": {
+          "pitch": -96,
+          "yaw": 0,
+          "roll": -10
+        },
+        "leftLeg": {
+          "pitch": -96,
+          "yaw": 0,
+          "roll": 10
+        }
+      }
+    ]
+  }
+}

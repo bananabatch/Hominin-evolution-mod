@@ -1,5 +1,8 @@
 package dev.hominin.evolution.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import dev.hominin.evolution.band.BandMember;
@@ -18,15 +21,25 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /**
  * The talk menu. Opened with H near a band to speak to all of it, or within a few
  * seconds of sneak-using one member to speak to just them.
+ *
+ * <p>Said in two steps - what it is about, then what to say - so the list stays short
+ * however much there is to say.
  */
 public class SocialScreen extends Screen {
     /** How long after picking someone out the menu still talks to just them. */
     private static final long SELECTION_MS = 5_000L;
 
+    private static final int BUTTON_WIDTH = 210;
+    private static final int ROW = 24;
 
     private final int targetId;
     private final boolean otherBand;
     private final boolean otherBandNear;
+    private final Component who;
+
+    /** Which list is open, or null while the topics themselves are showing. */
+    @Nullable
+    private Social.Topic topic;
 
     public static void open() {
         Minecraft mc = Minecraft.getInstance();
@@ -73,6 +86,7 @@ public class SocialScreen extends Screen {
         this.targetId = targetId;
         this.otherBand = otherBand;
         this.otherBandNear = otherBandNear;
+        this.who = name;
     }
 
     /** Another band close enough to ask along - offered even while your own band is here too. */
@@ -81,25 +95,58 @@ public class SocialScreen extends Screen {
                 BandMember::isOtherBand).isEmpty();
     }
 
+    /** Whether this can be said at all, to whoever the menu is aimed at. */
+    private boolean offered(Social.Command command) {
+        if (command == Social.Command.TRAVEL) {
+            return otherBandNear;
+        }
+        if (command == Social.Command.INFO || command == Social.Command.GROOM) {
+            // Both are about one hominin, not a crowd - and only your own will let you that close.
+            return targetId >= 0 && (command == Social.Command.GROOM || !otherBand);
+        }
+        boolean ownBandOnly = command == Social.Command.ITEM || command == Social.Command.HUNT
+                || command == Social.Command.NO_HUNT || command == Social.Command.CLIMB;
+        return !(ownBandOnly && otherBand);
+    }
+
+    private List<Social.Command> commandsIn(Social.Topic wanted) {
+        List<Social.Command> commands = new ArrayList<>();
+        for (Social.Command command : Social.Command.values()) {
+            if (command.topic() == wanted && offered(command)) {
+                commands.add(command);
+            }
+        }
+        return commands;
+    }
+
+    /** The errand list is a screen of its own, and belongs with the other asking-for-things. */
+    private boolean hasFetch(Social.Topic wanted) {
+        return wanted == Social.Topic.THINGS && !otherBand;
+    }
+
     @Override
     protected void init() {
         LocalPlayer player = Minecraft.getInstance().player;
-        int buttonWidth = 200;
-        int x = (width - buttonWidth) / 2;
-        int y = height / 2 - 100;
-        for (Social.Command command : Social.Command.values()) {
-            if (command == Social.Command.TRAVEL && !otherBandNear) {
-                continue;
+        int x = (width - BUTTON_WIDTH) / 2;
+        int y = top();
+        if (topic == null) {
+            for (Social.Topic candidate : Social.Topic.values()) {
+                if (commandsIn(candidate).isEmpty() && !hasFetch(candidate)) {
+                    continue;
+                }
+                addRenderableWidget(Button.builder(Component.literal(candidate.label()), b -> {
+                    topic = candidate;
+                    rebuildWidgets();
+                }).bounds(x, y, BUTTON_WIDTH, 20).build());
+                y += ROW;
             }
-            boolean ownBandOnly = command == Social.Command.ITEM || command == Social.Command.HUNT
-                    || command == Social.Command.NO_HUNT || command == Social.Command.CLIMB;
-            if (ownBandOnly && otherBand) {
-                continue;
-            }
+            return;
+        }
+        for (Social.Command command : commandsIn(topic)) {
             Button button = Button.builder(Component.literal(command.label()), b -> {
                 PacketDistributor.sendToServer(new SocialCommandPayload(targetId, command.ordinal()));
                 onClose();
-            }).bounds(x, y, buttonWidth, 20).build();
+            }).bounds(x, y, BUTTON_WIDTH, 20).build();
             if (player != null) {
                 if (command == Social.Command.FOOD) {
                     button.active = player.getFoodData().needsFood();
@@ -113,20 +160,42 @@ public class SocialScreen extends Screen {
                 }
             }
             addRenderableWidget(button);
-            y += 24;
+            y += ROW;
         }
-        if (!otherBand) {
+        if (hasFetch(topic)) {
             addRenderableWidget(Button.builder(Component.literal("Get me..."), b -> ItemPickScreen.openFetch(
-                    targetId, targetId >= 0 ? Component.literal(title.getString().replaceFirst("^Talk to ", ""))
-                            : Component.literal("your band")))
-                    .bounds(x, y, buttonWidth, 20).build());
+                    targetId, targetId >= 0 ? who : Component.literal("your band")))
+                    .bounds(x, y, BUTTON_WIDTH, 20).build());
+            y += ROW;
         }
+        addRenderableWidget(Button.builder(Component.literal("Back"), b -> {
+            topic = null;
+            rebuildWidgets();
+        }).bounds(x, y + 6, BUTTON_WIDTH, 20).build());
+    }
+
+    private int top() {
+        return Math.max(40, height / 2 - 80);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, height / 2 - 118, 0xE9D8A6);
+        graphics.drawCenteredString(font, title, width / 2, top() - 30, 0xE9D8A6);
+        if (topic != null) {
+            graphics.drawCenteredString(font, Component.literal(topic.label()), width / 2, top() - 16, 0xBFBFBF);
+        }
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scanCode, int modifiers) {
+        // Backspace goes up a level rather than out of the menu entirely.
+        if (key == 259 && topic != null) {
+            topic = null;
+            rebuildWidgets();
+            return true;
+        }
+        return super.keyPressed(key, scanCode, modifiers);
     }
 
     @Override

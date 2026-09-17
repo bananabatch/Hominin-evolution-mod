@@ -1,0 +1,32 @@
+{
+  "name": "Asking the Band",
+  "icon": "hominin_evolution:band_member_spawn_egg",
+  "category": "hominin_evolution:living",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Sneak-use one of them beforehand and the whole menu speaks to that one alone - which is the only way to groom somebody, or to look them over."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Food$()$(li)Let's forage - they come and root beside you$(li)I'm hungry - they hand over what they have, and go looking if they have none$(br2)$(l)Tools and things$()$(li)I need an item - they work out what you are short of$(li)Get me... - one of them goes and fetches it"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Danger$()$(li)I'm hurt - they stay close and watchful$(li)Let's hunt together - they go for what you go for$(li)Don't hunt with me - they leave your prey alone$(li)Let's climb a tree - and again to call them down$(br2)$(l)Each other$()$(li)Groom them$(li)Info$(li)Let's stick together today, to another band"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Grooming$() is the oldest thing a primate does for another. Stand beside one for five seconds and they warm to you.$(br2)A member fond enough of you looks after you unasked: food when you are going hungry, a better weapon than the one you carry, a hammerstone when you have none."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They do a great deal without being asked. They forage, pull branches, make their own nests, carry nine things and drop the worst for something better, climb when frightened, and go off exploring and come back with what they found.$(br2)From habilis they have tastes of their own, break rocks on their own account, and will tell you what they want."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Feed one its favourite food and it remembers. Hand it what it asked for and it remembers that too.$(br2)Hit one while sneaking and it is wrestling, not fighting - and that is how both of you learn to fight."
+    }
+  ]
+}

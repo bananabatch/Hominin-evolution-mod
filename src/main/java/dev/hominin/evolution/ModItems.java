@@ -62,6 +62,12 @@ public final class ModItems {
     public static final DeferredItem<Item> PACHYCROCUTA_SPAWN_EGG = ITEMS.register("pachycrocuta_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PACHYCROCUTA,
                     0x9C8058, 0x4E3A28, new Item.Properties()));
+    public static final DeferredItem<Item> HOMOTHERIUM_SPAWN_EGG = ITEMS.register("homotherium_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.HOMOTHERIUM, 0xC8A05A, 0x3E3226, new Item.Properties()));
+
+    public static final DeferredItem<Item> CROWNED_EAGLE_SPAWN_EGG = ITEMS.register("crowned_eagle_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.CROWNED_EAGLE, 0x4A3A2E, 0xD8CBB0, new Item.Properties()));
+
     public static final DeferredItem<Item> SABERTOOTH_SPAWN_EGG = ITEMS.register("sabertooth_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.SABERTOOTH,
                     0xB08A52, 0xEEE6CC, new Item.Properties()));
@@ -232,6 +238,23 @@ public final class ModItems {
                     .usingConvertsTo(Items.STICK)
                     .build()));
 
+    /** The carcass itself, for anyone who wants to put one down. */
+    public static final DeferredItem<Item> CARCASS = ITEMS.register("carcass",
+            () -> new BlockItem(ModBlocks.CARCASS.get(), new Item.Properties()));
+
+    /**
+     * An egg pierced and drunk out, the shell left whole. Ostrich shells were still being
+     * carried as water flasks a hundred thousand years ago; this is the same idea, earlier.
+     */
+    public static final DeferredItem<Item> EMPTY_EGGSHELL = ITEMS.register("empty_eggshell",
+            () -> new dev.hominin.evolution.item.EggshellItem(new Item.Properties().stacksTo(8)));
+
+    /** A shell of water: a mouthful, carried. */
+    public static final DeferredItem<Item> WATER_EGGSHELL = ITEMS.register("water_eggshell",
+            () -> new dev.hominin.evolution.item.WaterEggshellItem(new Item.Properties().stacksTo(4)
+                    .food(new FoodProperties.Builder().nutrition(0).saturationModifier(0.0F).alwaysEdible()
+                            .usingConvertsTo(EMPTY_EGGSHELL.get()).build())));
+
     /**
      * A portion cut from a larger piece. The values here are only a fallback: a
      * chunk made by cutting carries its own food values, a quarter of its source.
@@ -249,6 +272,20 @@ public final class ModItems {
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
 
     public static final DeferredItem<Item> LONG_BONE = ITEMS.registerSimpleItem("long_bone", new Item.Properties());
+
+    /**
+     * A rib with the meat still on it: the best thing a carcass gives up. Eat the meat and
+     * the bone is still in your hand, and a bone can be cracked for what is inside it.
+     */
+    public static final DeferredItem<Item> RIB = ITEMS.register("rib",
+            // The properties are built inside the supplier: the long bone it leaves behind is
+            // another deferred item, and asking for it any earlier reads an unbound registry.
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(5)
+                    .saturationModifier(0.7F)
+                    .usingConvertsTo(LONG_BONE.get())
+                    .build())));
+
 
     // Marrow is fatty and calorie-dense - the whole reason cracking bones open
     // was worth the effort, so it feeds better than the insect forage items.

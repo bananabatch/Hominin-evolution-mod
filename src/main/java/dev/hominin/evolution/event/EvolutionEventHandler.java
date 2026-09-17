@@ -28,6 +28,7 @@ import dev.hominin.evolution.mind.Thinking;
 import dev.hominin.evolution.tool.ToolUse;
 import dev.hominin.evolution.stage.Arrival;
 import dev.hominin.evolution.stage.BuiltinMilestones;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -87,6 +88,8 @@ public final class EvolutionEventHandler {
      * a forage was quietly sharpening the stick it was being done with.
      */
     private static final float FORAGE_SUCCESS_CHANCE_WITH_STICK = 0.6F;
+    /** A digging stick is the real tool for this, and brings up more than one thing at a time. */
+    private static final float FORAGE_SUCCESS_CHANCE_DIGGING = 0.75F;
     /** Breathing room after a forage resolves, so you cannot strip a patch by holding right-click. */
     private static final long FORAGE_COOLDOWN_TICKS = 60L;
     private static final long KNAP_COOLDOWN_TICKS = 40L;
@@ -160,9 +163,7 @@ public final class EvolutionEventHandler {
                 forage(player, event.getLevel(), event.getPos());
             }
         } else if (state.getFluidState().is(FluidTags.WATER)) {
-            if (player.isShiftKeyDown()) {
-                drinkWater(player);
-            }
+            drinkWater(player, event.getPos());
         } else if (isFireSource(event.getLevel(), event.getPos())) {
             if (player.isShiftKeyDown()) {
                 EvolutionManager.incrementCriterion(player, "notice_fire_source", 1);
@@ -214,6 +215,25 @@ public final class EvolutionEventHandler {
                 Component.literal("You draw the stick out covered in soldiers."), true);
     }
 
+    /** The last day each player was told about the state of the land. */
+    private static final Map<UUID, Long> droughtTold = new HashMap<>();
+
+    /**
+     * Every second day the land may be strained. Foraging pays less, and other bands have
+     * nothing to spare for anyone.
+     */
+    private static void announceDrought(ServerPlayer player, long day) {
+        if (droughtTold.getOrDefault(player.getUUID(), -1L) == day) {
+            return;
+        }
+        droughtTold.put(player.getUUID(), day);
+        if (dev.hominin.evolution.survival.Drought.isActive(player.level())) {
+            player.sendSystemMessage(Component.literal(
+                    "The ground is cracked and the roots are dry. There will be little to find today, "
+                    + "and nobody will want to share.").withStyle(ChatFormatting.GOLD));
+        }
+    }
+
     /** A fire or lava block right here, or immediately adjacent - "wildfire, lava" without touching either. */
     private static boolean isFireSource(Level level, BlockPos pos) {
         if (isFireOrLava(level, pos)) {
@@ -237,7 +257,12 @@ public final class EvolutionEventHandler {
      * drunk in counts toward the criterion, same "variety of place" logic as
      * foraging - exact coordinates aren't tracked, only where.
      */
-    private static void drinkWater(ServerPlayer player) {
+    public static void drinkWater(ServerPlayer player, BlockPos where) {
+        dev.hominin.evolution.survival.Thirst.drink(player, dev.hominin.evolution.survival.Thirst.DRINK_FROM_SOURCE);
+        player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS,
+                0.6F, 1.0F + player.getRandom().nextFloat() * 0.2F);
+        player.swing(InteractionHand.MAIN_HAND, true);
+        dev.hominin.evolution.band.Territory.usedResource(player, where);
         ResourceKey<Biome> biomeKey = currentBiomeKey(player);
         if (biomeKey == null) {
             return;
@@ -274,8 +299,8 @@ public final class EvolutionEventHandler {
      * strike with. Loose surface quartzite carries the same chance in its loot
      * table, which is where a first hammerstone comes from.
      */
-    private static final float HAMMERSTONE_FIND_CHANCE = 0.12F;
-    private static final float CHERT_HAMMERSTONE_FIND_CHANCE = 0.1F;
+    private static final float HAMMERSTONE_FIND_CHANCE = 0.22F;
+    private static final float CHERT_HAMMERSTONE_FIND_CHANCE = 0.18F;
 
     /**
      * Rarer than a plain hammerstone: a chert nodule round enough to strike with.
@@ -329,6 +354,7 @@ public final class EvolutionEventHandler {
         }
         level.playSound(null, pos, SoundEvents.STONE_BREAK, SoundSource.PLAYERS, 0.8F, 1.1F);
         ToolUse.wear(player, hammer);
+        dev.hominin.evolution.band.Territory.usedResource(player, pos);
 
         // Ordinary rock is mostly useless inside. A proper deposit is what always pays.
         boolean deposit = net.minecraft.core.registries.BuiltInRegistries.BLOCK
@@ -385,23 +411,35 @@ public final class EvolutionEventHandler {
             return;
         }
 
+        boolean digging = player.getMainHandItem().is(ModItems.DIGGING_STICK.get())
+                || player.getOffhandItem().is(ModItems.DIGGING_STICK.get());
         boolean withStick = player.getMainHandItem().is(ModItems.SHARPENED_STICK.get())
                 || player.getOffhandItem().is(ModItems.SHARPENED_STICK.get());
-        float successChance = withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
+        float successChance = digging ? FORAGE_SUCCESS_CHANCE_DIGGING
+                : withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
+        successChance *= dev.hominin.evolution.survival.Drought.forageMultiplier(level);
+        dev.hominin.evolution.band.Territory.usedResource(player, pos);
         if (level.getRandom().nextFloat() >= successChance) {
-            player.displayClientMessage(Component.literal("You search the soil but find nothing."), true);
+            player.displayClientMessage(Component.literal(
+                    dev.hominin.evolution.survival.Drought.isActive(level)
+                            ? "You search the dry soil but find nothing."
+                            : "You search the soil but find nothing."), true);
             return;
         }
         Item[] insects = {ModItems.GRUB.get(), ModItems.BEETLE.get(), ModItems.EARTHWORM.get()};
-        Item insect = insects[level.getRandom().nextInt(insects.length)];
-        ItemStack insectStack = new ItemStack(insect);
-        Component insectName = insectStack.getHoverName();
-        if (!player.getInventory().add(insectStack)) {
-            player.drop(insectStack, false);
+        // A digging stick turns the ground over properly, and brings up a handful at a time.
+        int found = digging ? 1 + level.getRandom().nextInt(3) : 1;
+        StringBuilder names = new StringBuilder();
+        for (int i = 0; i < found; i++) {
+            ItemStack insectStack = new ItemStack(insects[level.getRandom().nextInt(insects.length)]);
+            names.append(i == 0 ? "" : ", ").append(insectStack.getHoverName().getString());
+            if (!player.getInventory().add(insectStack)) {
+                player.drop(insectStack, false);
+            }
         }
-        player.sendSystemMessage(Component.literal("You root through the soil and find a ")
-                .append(insectName)
-                .append(Component.literal(".")));
+        player.sendSystemMessage(Component.literal((digging
+                ? "You turn the ground over with the digging stick and find "
+                : "You root through the soil and find a ") + names + "."));
     }
 
     /**
@@ -483,11 +521,33 @@ public final class EvolutionEventHandler {
             event.setCancellationResult(InteractionResult.SUCCESS);
             return;
         }
+        if (held.is(Items.EGG) && (player.getOffhandItem().is(ModItems.SHARPENED_STICK.get())
+                || player.getOffhandItem().is(ModItems.POINTY_STICK.get()))) {
+            drainEgg(player, held);
+            return;
+        }
         if (held.is(ModItems.LONG_BONE.get())) {
             crackBone(player, held, 2);
         } else if (held.is(Items.BONE)) {
             crackBone(player, held, 1);
         }
+    }
+
+    /**
+     * Piercing an egg with a point and drinking it out, which leaves the shell whole. An
+     * empty shell is the oldest water bottle there is.
+     */
+    private static void drainEgg(ServerPlayer player, ItemStack egg) {
+        player.getFoodData().eat(2, 0.3F);
+        dev.hominin.evolution.survival.Thirst.drink(player, 2);
+        player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS, 0.7F, 1.1F);
+        ItemStack shell = new ItemStack(ModItems.EMPTY_EGGSHELL.get());
+        if (!player.getInventory().add(shell)) {
+            player.drop(shell, false);
+        }
+        egg.shrink(1);
+        player.displayClientMessage(Component.literal(
+                "You pierce the shell and drink it out, leaving it whole."), true);
     }
 
     /** Handles both our long bone and the vanilla bone, so bones from any mod's animals work. */
@@ -524,6 +584,13 @@ public final class EvolutionEventHandler {
     public static void sharpenHeldStick(ServerPlayer player) {
         ItemStack stick = player.getMainHandItem();
         if (!stick.is(Items.STICK)) {
+            return;
+        }
+        // A flake in the other hand, and a hominin who knows how to use one, makes a real point instead.
+        var recipe = dev.hominin.evolution.combat.ItemInteractions.match(stick, player.getOffhandItem());
+        if (recipe != null && recipe.result() == ModItems.POINTY_STICK && dev.hominin.evolution.combat.ItemInteractions
+                .isAvailable(player.getData(Attachments.PLAYER_EVOLUTION_DATA), recipe)) {
+            dev.hominin.evolution.combat.ItemInteractions.interact(player);
             return;
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 0.5F, 1.4F);
@@ -597,6 +664,13 @@ public final class EvolutionEventHandler {
         UUID playerId = event.getEntity().getUUID();
         if (event.getEntity() instanceof ServerPlayer leaving) {
             ChecklistTracker.forget(leaving);
+            dev.hominin.evolution.band.Grooming.forget(playerId);
+            dev.hominin.evolution.hunt.Quarry.forget(playerId);
+            dev.hominin.evolution.survival.Drinking.forget(playerId);
+            dev.hominin.evolution.hunt.Predation.forget(playerId);
+            dev.hominin.evolution.band.WildBands.forget(playerId);
+            dev.hominin.evolution.band.Panic.forget(playerId);
+            dev.hominin.evolution.stage.CutsceneGuard.forget(playerId);
             Thinking.forget(leaving);
             Arrival.forget(leaving);
         }
@@ -671,11 +745,55 @@ public final class EvolutionEventHandler {
             return;
         }
         creditHunt(event.getSource().getEntity(), entity);
+        checkArmsRace(event, entity);
+        dev.hominin.evolution.hunt.Carcasses.onDeath(entity);
+        checkTaungChild(event, entity);
         dropAt(entity, new ItemStack(Items.BONE));
         if (entity.getBbHeight() >= LONG_BONE_MIN_HEIGHT
                 && entity.level().getRandom().nextFloat() < LONG_BONE_DROP_CHANCE) {
             dropAt(entity, new ItemStack(ModItems.LONG_BONE.get()));
         }
+    }
+
+    /**
+     * A child of the band, taken by a bird. The Taung Child - the first australopithecine
+     * ever described - has talon punctures in its eye sockets; an eagle took it. This is
+     * the same thing happening to yours, and it is as old a way to lose a child as exists.
+     */
+    private static void checkTaungChild(LivingDeathEvent event, LivingEntity entity) {
+        if (!(entity instanceof dev.hominin.evolution.band.BandMember child) || !child.isBaby()) {
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof dev.hominin.evolution.entity.CrownedEagle)) {
+            return;
+        }
+        if (child.leaderPlayer() instanceof ServerPlayer leader) {
+            leader.sendSystemMessage(Component.literal(child.getName().getString()
+                    + " is carried off. There is nothing left of them but the marks of talons.")
+                    .withStyle(ChatFormatting.DARK_RED));
+            dev.hominin.evolution.advancement.HomininAdvancements.award(leader, "hominin/taung_child");
+        }
+    }
+
+    /**
+     * A stone, thrown, killing something outright. Every other animal alive has spent its
+     * whole history settling fights at arm's length; erectus is the first thing that can
+     * end one from thirty blocks away, and the shoulder that does it is why.
+     */
+    private static void checkArmsRace(LivingDeathEvent event, LivingEntity victim) {
+        if (!(event.getSource().getDirectEntity() instanceof dev.hominin.evolution.entity.ThrownObject thrown)
+                || !(thrown.getOwner() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (!thrown.getItem().is(ModItems.ROCK.get()) && !thrown.getItem().is(ModTags.Items.KNAPPABLE_STONE)) {
+            return;
+        }
+        if (!player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath().equals("homo_erectus")) {
+            return;
+        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.ArmsRacePayload());
+        dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/arms_race");
     }
 
     /**
@@ -713,6 +831,11 @@ public final class EvolutionEventHandler {
             return;
         }
         ItemStack stack = event.getItem();
+        if (stack.is(ModItems.WATER_EGGSHELL.get())) {
+            dev.hominin.evolution.survival.Thirst.drink(player,
+                    dev.hominin.evolution.survival.Thirst.DRINK_FROM_SHELL);
+            return;
+        }
         if (!stack.has(DataComponents.FOOD)) {
             return;
         }
@@ -762,6 +885,13 @@ public final class EvolutionEventHandler {
             return;
         }
         Arrival.tick(player);
+        dev.hominin.evolution.band.Panic.tick(player);
+        dev.hominin.evolution.survival.Thirst.tick(player);
+        dev.hominin.evolution.band.Grooming.tick(player);
+        dev.hominin.evolution.hunt.Carcasses.tickMortality(player);
+        dev.hominin.evolution.hunt.Carcasses.tickLoners(player);
+        dev.hominin.evolution.hunt.Predation.tick(player);
+        dev.hominin.evolution.hunt.Quarry.tick(player.serverLevel());
         ThreatDisplay.tick(player);
         ClimbingServer.tick(player);
         WildBands.tick(player);
@@ -779,6 +909,7 @@ public final class EvolutionEventHandler {
         // Rides the existing slow tick; it only sends a packet when a line changes.
         ChecklistTracker.refresh(player);
         long currentDay = player.level().getDayTime() / TICKS_PER_DAY;
+        announceDrought(player, currentDay);
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         if (data.getLastCountedDay() < 0) {
             data.setLastCountedDay(currentDay);

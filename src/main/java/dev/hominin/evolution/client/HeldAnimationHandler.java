@@ -73,6 +73,8 @@ public final class HeldAnimationHandler {
             // Same weapon, harder point - same grip and thrust.
             HeldAnims.of(ModItems.FIRE_HARDENED_SPEAR, "spear_hold", "spear_thrust", true),
             HeldAnims.of(ModItems.LONG_BRANCH, "branch_hold", "branch_swing", true),
+            // One-handed: the club's weight does the work, so the other hand stays free.
+            HeldAnims.of(ModItems.WOODEN_CLUB, "club_hold", "club_swing", false),
             HeldAnims.strikeOnly(ModItems.SHARPENED_STICK, "stick_stab"),
             HeldAnims.strikeOnly(ModItems.POINTY_STICK, "stick_stab"),
             HeldAnims.strikeOnly(ModItems.FLAKE, "flake_slash"));

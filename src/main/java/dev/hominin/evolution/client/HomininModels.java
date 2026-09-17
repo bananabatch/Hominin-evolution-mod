@@ -49,6 +49,7 @@ public final class HomininModels {
 
     public static final ModelLayerLocation AUSTRALOPITHECUS_LAYER = layer("australopithecus_features");
     public static final ModelLayerLocation HABILIS_LAYER = layer("homo_habilis_features");
+    public static final ModelLayerLocation ERECTUS_LAYER = layer("homo_erectus_features");
 
     /**
      * Lucy stood about 1.1 m; habilis perhaps 1.3. Scaled well short of that - a
@@ -58,7 +59,17 @@ public final class HomininModels {
             stage("australopithecus"), look("australopithecus", AUSTRALOPITHECUS_LAYER, 0.86F),
             // No model of its own: Ardipithecus is drawn as Australopithecus.
             stage("ardipithecus"), look("australopithecus", AUSTRALOPITHECUS_LAYER, 0.86F),
-            stage("homo_habilis"), look("homo_habilis", HABILIS_LAYER, 0.92F));
+            // The fallback species borrow the look of the stage they stand behind, a shade smaller.
+            stage("australopithecus_anamensis"), look("australopithecus", AUSTRALOPITHECUS_LAYER, 0.84F),
+            stage("homo_habilis"), look("homo_habilis", HABILIS_LAYER, 0.92F),
+            stage("homo_rudolfensis"), look("homo_habilis", HABILIS_LAYER, 0.90F),
+            // Erectus stands about as tall as we do, and carries almost no hair.
+            stage("homo_erectus"), look("homo_erectus", ERECTUS_LAYER, 1.0F),
+            stage("homo_ergaster"), look("homo_erectus", ERECTUS_LAYER, 0.98F),
+            // Not stages yet, but drawn as erectus the moment they are.
+            stage("homo_heidelbergensis"), look("homo_erectus", ERECTUS_LAYER, 1.0F),
+            stage("homo_sapiens"), look("homo_erectus", ERECTUS_LAYER, 1.0F),
+            stage("homo_neanderthalensis"), look("homo_erectus", ERECTUS_LAYER, 1.0F));
 
     private static Look look(String name, ModelLayerLocation layer, float scale) {
         return new Look(texture("textures/entity/hominin/" + name + ".png"),
@@ -92,6 +103,7 @@ public final class HomininModels {
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(AUSTRALOPITHECUS_LAYER, HomininFeaturesLayer::australopithecus);
         event.registerLayerDefinition(HABILIS_LAYER, HomininFeaturesLayer::habilis);
+        event.registerLayerDefinition(ERECTUS_LAYER, HomininFeaturesLayer::erectus);
     }
 
     public static void addLayers(EntityRenderersEvent.AddLayers event) {
@@ -113,7 +125,12 @@ public final class HomininModels {
      */
     public static Look lookForStage(ResourceLocation stage) {
         Look look = LOOKS.get(stage);
-        return look != null ? look : LOOKS.get(stage("homo_habilis"));
+        if (look != null) {
+            return look;
+        }
+        // An unknown stage is a later one, so draw it as the most recent kind there is -
+        // defaulting to habilis is how erectus ended up looking like its own ancestor.
+        return LOOKS.get(stage("homo_erectus"));
     }
 
     /**

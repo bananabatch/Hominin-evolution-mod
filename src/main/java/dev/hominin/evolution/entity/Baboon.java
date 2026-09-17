@@ -270,6 +270,20 @@ public class Baboon extends PathfinderMob {
         return true;
     }
 
+    /**
+     * A troop leaves only when nobody is anywhere near it. Vanilla's random despawn beyond
+     * 32 blocks would thin a troop out before anyone ever got close enough to see it.
+     */
+    @Override
+    public void checkDespawn() {
+        net.minecraft.world.entity.player.Player nearest = level().getNearestPlayer(this, -1.0D);
+        if (nearest == null || nearest.distanceToSqr(this) > 160.0D * 160.0D) {
+            discard();
+        } else {
+            setNoActionTime(0);
+        }
+    }
+
     // ------------------------------------------------------------ goals
 
     /** On its own, a hurt baboon runs. */

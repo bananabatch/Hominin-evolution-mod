@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,large=false": {
+      "model": "hominin_evolution:block/carcass"
+    },
+    "facing=east,large=false": {
+      "model": "hominin_evolution:block/carcass",
+      "y": 90
+    },
+    "facing=south,large=false": {
+      "model": "hominin_evolution:block/carcass",
+      "y": 180
+    },
+    "facing=west,large=false": {
+      "model": "hominin_evolution:block/carcass",
+      "y": 270
+    },
+    "facing=north,large=true": {
+      "model": "hominin_evolution:block/carcass_large"
+    },
+    "facing=east,large=true": {
+      "model": "hominin_evolution:block/carcass_large",
+      "y": 90
+    },
+    "facing=south,large=true": {
+      "model": "hominin_evolution:block/carcass_large",
+      "y": 180
+    },
+    "facing=west,large=true": {
+      "model": "hominin_evolution:block/carcass_large",
+      "y": 270
+    }
+  }
+}

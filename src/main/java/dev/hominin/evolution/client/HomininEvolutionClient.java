@@ -24,6 +24,7 @@ public class HomininEvolutionClient {
         NeoForge.EVENT_BUS.addListener(ClimbController::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(TradeTierTooltip::onTooltip);
         NeoForge.EVENT_BUS.addListener(ClientSync::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(ChecklistOverlay::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(LockedSlotOverlay::onRender);
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, HomininModels.SPEC);
@@ -36,6 +37,10 @@ public class HomininEvolutionClient {
                     dev.hominin.evolution.client.model.WildAnimalLayers::pachycrocuta);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::sabertooth);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("homotherium"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::homotherium);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crowned_eagle"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::crownedEagle);
         });
         modEventBus.addListener(HomininModels::addLayers);
         // Lowest, so nothing cancels the render after the pose has been pushed.
@@ -55,9 +60,17 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.SABERTOOTH.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
                             "sabertooth", 1.2F, 0.8F));
+            event.registerEntityRenderer(ModEntities.HOMOTHERIUM.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("homotherium"),
+                            "homotherium", 1.15F, 0.8F));
+            event.registerEntityRenderer(ModEntities.CROWNED_EAGLE.get(), ctx -> new dev.hominin.evolution.client.model
+                    .BirdRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crowned_eagle"),
+                            "crowned_eagle", 1.0F, 0.4F));
         });
         modEventBus.addListener(ModKeyMappings::register);
         modEventBus.addListener(ChecklistOverlay::register);
+        modEventBus.addListener(ThirstOverlay::register);
+        modEventBus.addListener(ArmsRaceFlash::register);
         modEventBus.addListener(EvolutionCutscene::register);
         modEventBus.addListener(RebirthCutscene::register);
         modEventBus.addListener(TiredApesFlash::register);

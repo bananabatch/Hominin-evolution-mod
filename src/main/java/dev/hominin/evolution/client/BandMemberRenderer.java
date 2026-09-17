@@ -13,6 +13,9 @@ import net.minecraft.resources.ResourceLocation;
  * its leader read as the same kind of animal.
  */
 public class BandMemberRenderer extends HumanoidMobRenderer<BandMember, BandMemberModel> {
+    /** How far a seated hominin drops, so the pose meets the ground. */
+    private static final float SEATED_DROP = 0.62F;
+
     public BandMemberRenderer(EntityRendererProvider.Context context) {
         super(context, new BandMemberModel(context.bakeLayer(ModelLayers.PLAYER)), 0.45F);
         addLayer(new HomininFeaturesLayer<>(this, context.getModelSet(), HomininModels.allLooks(),
@@ -28,5 +31,10 @@ public class BandMemberRenderer extends HumanoidMobRenderer<BandMember, BandMemb
     protected void scale(BandMember member, PoseStack poseStack, float partialTick) {
         float scale = HomininModels.lookForStage(member.getStage()).scale();
         poseStack.scale(scale, scale, scale);
+        if (member.isGrieving()) {
+            // This frame is mirrored by the entity renderer, so a positive Y is downwards:
+            // it sets a seated pose on the ground instead of hovering at standing height.
+            poseStack.translate(0.0F, SEATED_DROP / scale, 0.0F);
+        }
     }
 }

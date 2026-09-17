@@ -19,6 +19,7 @@ public final class ModNetworking {
         registrar.playToServer(ClimbPayload.TYPE, ClimbPayload.STREAM_CODEC, ClimbPayload::handle);
         registrar.playToServer(ItemInteractPayload.TYPE, ItemInteractPayload.STREAM_CODEC, ItemInteractPayload::handle);
         registrar.playToServer(ThinkPayload.TYPE, ThinkPayload.STREAM_CODEC, ThinkPayload::handle);
+        registrar.playToServer(DrinkPayload.TYPE, DrinkPayload.STREAM_CODEC, DrinkPayload::handle);
         registrar.playToServer(SharpenStickPayload.TYPE, SharpenStickPayload.STREAM_CODEC,
                 SharpenStickPayload::handle);
         registrar.playToServer(KnappingChoicePayload.TYPE, KnappingChoicePayload.STREAM_CODEC,
@@ -34,6 +35,9 @@ public final class ModNetworking {
         registrar.playToClient(RebirthPayload.TYPE, RebirthPayload.STREAM_CODEC, RebirthPayload::handle);
         registrar.playToClient(TiredApesPayload.TYPE, TiredApesPayload.STREAM_CODEC, TiredApesPayload::handle);
         registrar.playToClient(StagePayload.TYPE, StagePayload.STREAM_CODEC, StagePayload::handle);
+        registrar.playToClient(MemberInfoPayload.TYPE, MemberInfoPayload.STREAM_CODEC, MemberInfoPayload::handle);
+        registrar.playToClient(ThirstPayload.TYPE, ThirstPayload.STREAM_CODEC, ThirstPayload::handle);
+        registrar.playToClient(ArmsRacePayload.TYPE, ArmsRacePayload.STREAM_CODEC, ArmsRacePayload::handle);
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);
     }

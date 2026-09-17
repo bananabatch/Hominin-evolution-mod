@@ -50,6 +50,13 @@ public final class ChecklistOverlay {
         lines = List.copyOf(newLines);
     }
 
+    /** Leaving a world clears it: these fields are static, and the next world is not this one. */
+    public static void onLoggingOut(
+            net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+        title = "";
+        lines = List.of();
+    }
+
     public static void register(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.HOTBAR, ID, ChecklistOverlay::render);
     }

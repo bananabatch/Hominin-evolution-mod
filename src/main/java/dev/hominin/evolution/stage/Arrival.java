@@ -77,6 +77,7 @@ public final class Arrival {
 
     /** Starts the cutscene. The move itself happens on a later tick, once the screen is black. */
     public static void begin(ServerPlayer player, StageDefinition from, StageDefinition to) {
+        dev.hominin.evolution.stage.CutsceneGuard.tryStart(player, PROTECTED_TICKS);
         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, PROTECTED_TICKS, 4, false, false, false));
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PROTECTED_TICKS, 6, false, false, false));
         String age = StageAge.ago(to.yearsAgo());
@@ -145,7 +146,15 @@ public final class Arrival {
                 inventory.removeItemNoUpdate(slot);
             }
         }
-        for (ItemStack item : to.arrivalItems()) {
+        java.util.List<ItemStack> items = to.arrivalItems();
+        // Habilis sometimes arrives with stone instead: a hammerstone, and three chert or six quartzite.
+        if (player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath().equals("homo_habilis") && player.getRandom().nextFloat() < 0.5F) {
+            boolean chert = player.getRandom().nextBoolean();
+            items = java.util.List.of(new ItemStack(dev.hominin.evolution.ModItems.HAMMERSTONE.get()),
+                    chert ? new ItemStack(dev.hominin.evolution.ModItems.CHERT_ROCK.get(), 3)
+                            : new ItemStack(dev.hominin.evolution.ModItems.GRANITE_ROCK.get(), 6));
+        }
+        for (ItemStack item : items) {
             ItemStack copy = item.copy();
             if (!inventory.add(copy)) {
                 player.drop(copy, false);

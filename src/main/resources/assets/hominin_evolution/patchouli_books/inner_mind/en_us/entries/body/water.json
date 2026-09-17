@@ -7,6 +7,14 @@
     {
       "type": "patchouli:text",
       "text": "Water comes from the source. Get down to it.$(br2)The country is wide, and not all of it is wet. Knowing where water is - more than one place - is a kind of wealth nobody can steal."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Thirst has its own bar, above hunger. It empties faster in the heat, faster again while running, and faster still under an open sky at noon. Let it run out and you slow, weaken, and begin to fail.$(br2)$(k:sneak) and $(k:use) on water to drink."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Find an egg, hold a sharpened or pointy stick in your off hand, and use the egg: you pierce it, drink it out, and keep the shell.$(br2)An empty shell fills at any water and carries a mouthful with you. Ostrich shells were still being carried this way a hundred thousand years later."
     }
   ]
 }

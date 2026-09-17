@@ -15,6 +15,26 @@
     {
       "type": "patchouli:text",
       "text": "$(l)The saber-tooth$() does not care about you, until you are close.$(br2)It will not be frightened off. Keep your distance, keep near a tree, and do not follow it into the grass."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bands settle where the water and the stone are, and best of all where both are. That ground is theirs, and they count what you take from it.$(br2)Habilis will not say much - they simply keep away from you by day. Erectus comes and tells you, and if you keep at it, wants paying for it. Trade them something Crafted or better, or ask them to walk with you, and the water is shared."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Every second day the land may go dry. There is less to forage, and nobody trades a thing unless they come out of it ahead. Wait it out, or go somewhere else."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Stay in one place and the place learns you. Sleep in the same spot, leave bones and meat about it, and something works out where you are - first tracks you did not make, then a visit.$(br2)Moving camp is the answer. Walk far enough and whatever had been circling is left with the old ground."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Homotherium$() hunts by daylight in the open, in pairs, and it is faster than you over any distance you can sprint. Trees, or nothing.$(br2)A $(l)crowned eagle$() circles for a child left clear of the adults. Keep the young inside the band, and it has nothing to stoop on."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "What you are matters. An australopithecine is meat and every animal out here knows it. Habilis with a spear and a band behind it gives a cat pause.$(br2)Erectus is the other way about: armed, they walk up to a kill and take it off whatever got there first."
     }
   ]
 }

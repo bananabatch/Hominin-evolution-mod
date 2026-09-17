@@ -47,6 +47,22 @@
     {
       "type": "patchouli:text",
       "text": "Frightened, the body decides: fight, stronger and harder to hurt, or flight, fast - up a tree, or later, back to the band. Sometimes it decides nothing, and they freeze until the band comes for them. It takes five minutes to happen again."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From habilis, they are their own people. Each favours a stone - chert or quartzite - and a few cannot leave obsidian alone, and will not hand it over for anything. They go out and break rocks on their own account, and they will tell you what they think of limestone.$(br2)Now and then one wants something, and says so, or offers you a trade for something you carry. Give them what they asked for, or their favourite food, and they remember it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A member who is fond of you looks after you unasked: food when you are going hungry, a better weapon than the one you have, a hammerstone when you have none.$(br2)Sneak-use one and press $(k:hominin_evolution.social), then Info, to see who they are - sex, health, hunger, favourite foods, what they want, and how much they trust you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Grooming is what holds a band together, and it costs the one thing that means anything: time. Sneak-use one of them, press $(k:hominin_evolution.social), then Groom, and stay beside them while you pick through their hair.$(br2)They do it to each other too, and on a hot day they will wade into a river to wash. By erectus there is too little hair left to pick, so it becomes cleaning instead - and one day, for sapiens, it becomes talk."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "If the last of them dies, you do not simply carry on. Your chest closes, your eyes shut, and you come back to yourself ninety blocks away with a new band around you.$(br2)What you were stays where it happened, sitting with its head in its hands. Walk back and find it, and it will get up and come with you."
     }
   ]
 }
