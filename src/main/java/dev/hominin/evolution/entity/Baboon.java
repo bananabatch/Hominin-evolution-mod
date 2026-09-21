@@ -362,8 +362,13 @@ public class Baboon extends PathfinderMob {
         }
 
         @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
         public void tick() {
-            if (tickCount % 40 == 0) {
+            if (getNavigation().isDone()) {
                 getNavigation().moveTo(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, 1.1D);
             }
         }
@@ -392,10 +397,28 @@ public class Baboon extends PathfinderMob {
             return friend != null && !isAngry() && distanceTo(friend) > 3.0F;
         }
 
+        /**
+         * Every tick, and moving from the start. It used to re-path only on ticks divisible
+         * by ten - but goals only tick every other tick, offset by entity id, so half of
+         * all baboons never saw such a tick and never took a step.
+         */
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        private int repath;
+
+        @Override
+        public void start() {
+            repath = 0;
+        }
+
         @Override
         public void tick() {
             Player friend = friend();
-            if (friend != null && tickCount % 10 == 0) {
+            if (friend != null && --repath <= 0) {
+                repath = 10;
                 getNavigation().moveTo(friend, 1.15D);
             }
         }
@@ -411,6 +434,13 @@ public class Baboon extends PathfinderMob {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
+        // Sneak-use: where you stand with this troop, and what it will take.
+        if (player.isShiftKeyDown() && hand == InteractionHand.MAIN_HAND) {
+            if (!level().isClientSide()) {
+                player.displayClientMessage(TroopRelations.standing(player, troopId), false);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide());
+        }
         // Anything at all, offered while they stare, is an apology.
         if (hand == InteractionHand.MAIN_HAND && !held.isEmpty() && troopId != null
                 && troopId.equals(TroopRelations.pendingTroop(player))) {

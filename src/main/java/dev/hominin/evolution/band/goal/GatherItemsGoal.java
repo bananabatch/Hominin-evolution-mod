@@ -30,7 +30,9 @@ public class GatherItemsGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (member.tickCount % 10 != 0 || member.isUpATree()) {
+        // Not tickCount % 10: goals are only checked every other tick, offset by entity id,
+        // so for half the band that condition could never be true and they never gathered.
+        if (member.getRandom().nextInt(5) != 0 || member.isUpATree()) {
             return false;
         }
         LivingEntity leader = member.followTarget();

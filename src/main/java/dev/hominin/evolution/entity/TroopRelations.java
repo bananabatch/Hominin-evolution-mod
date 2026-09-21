@@ -66,6 +66,34 @@ public final class TroopRelations {
         return trust(player, troop) <= GRUDGE;
     }
 
+    /** Trust a gift of food buys. A trade buys half that. */
+    public static final int GIFT_WORTH = 2;
+
+    /** How many more gifts until the troop sends escorts. */
+    public static int giftsToTrust(int trust) {
+        return Math.max(0, (TRUSTED - trust + GIFT_WORTH - 1) / GIFT_WORTH);
+    }
+
+    /** Where you stand with a troop, in words and numbers. */
+    public static Component standing(Player player, @Nullable UUID troop) {
+        if (troop == null) {
+            return Component.literal("This one has no troop yet.").withStyle(ChatFormatting.GRAY);
+        }
+        int trust = trust(player, troop);
+        if (trust <= GRUDGE) {
+            return Component.literal("This troop remembers what you did. Gifts will win them back - slowly.")
+                    .withStyle(ChatFormatting.RED);
+        }
+        if (trust >= TRUSTED) {
+            return Component.literal("This troop trusts you. Up to " + MAX_ESCORTS
+                    + " will travel with you by day, and go home at night.").withStyle(ChatFormatting.GREEN);
+        }
+        int gifts = giftsToTrust(trust);
+        return Component.literal("Troop trust: " + trust + "/" + TRUSTED + " - about " + gifts
+                + (gifts == 1 ? " more gift" : " more gifts") + " of food before some will follow you.")
+                .withStyle(ChatFormatting.YELLOW);
+    }
+
     /** A trade, or a gift. Gifts count for more: nothing was asked back. */
     public static void goodwill(Player player, UUID troop, int amount) {
         int before = trust(player, troop);
@@ -83,8 +111,10 @@ public final class TroopRelations {
                     .withStyle(ChatFormatting.GOLD));
         } else if (after < TRUSTED) {
             // How far there is still to go, so it is clear why none of them follow yet.
+            int gifts = giftsToTrust(after);
             player.displayClientMessage(Component.literal(
-                    "The troop is warming to you. (" + after + "/" + TRUSTED + ")")
+                    "The troop is warming to you. (" + after + "/" + TRUSTED + " - " + gifts
+                            + (gifts == 1 ? " more gift)" : " more gifts)"))
                     .withStyle(ChatFormatting.YELLOW), true);
         }
     }
