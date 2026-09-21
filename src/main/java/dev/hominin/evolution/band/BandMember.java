@@ -318,10 +318,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SharpenStickGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TermiteFishGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.QuarryGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.ScavengeGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.GroomGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.BatheGoal(this));
         goalSelector.addGoal(5, new ForageGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
+        // Just above building one: once the nest exists, getting into it is the priority.
+        goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SleepInNestGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TinkerGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CraftGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ExcursionGoal(this));
@@ -537,6 +540,41 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         ensurePersonality();
         return obsidianObsession;
     }
+
+    /**
+     * An obsessive with obsidian in the pack, asked for something with an open hand.
+     * They will not trade it and they will not be talked out of it - but once in a
+     * while they want you to have it, and that is worth more than a trade precisely
+     * because it never happens. Mostly they just want to tell you about it again.
+     *
+     * @return true if the interaction is finished here.
+     */
+    private boolean shareObsidian(Player player) {
+        if (!isObsessedWithObsidian() || count(ModItems.OBSIDIAN_ROCK.get()) <= 0) {
+            return false;
+        }
+        if (getRandom().nextFloat() >= OBSIDIAN_GIFT_CHANCE) {
+            Band.announceDiscovery(this, getRandom().nextBoolean()
+                    ? ": \"Look at it. Nothing else breaks like this.\""
+                    : ": \"I am keeping this one. You understand.\"");
+            return true;
+        }
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if (inventory.getItem(slot).is(ModItems.OBSIDIAN_ROCK.get())) {
+                ItemStack gift = inventory.removeItem(slot, 1);
+                if (!player.getInventory().add(gift)) {
+                    player.drop(gift, false);
+                }
+                playSound(SoundEvents.ITEM_PICKUP, 0.6F, 1.2F);
+                Band.announceDiscovery(this, ": \"Here. You should have this one.\"");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** How often an obsessive will actually part with a piece. Rarely, and it should stay rare. */
+    private static final float OBSIDIAN_GIFT_CHANCE = 0.2F;
 
     /** An obsessive does not give up their obsidian - not to the player, not in trade. */
     public boolean refusesToPartWith(ItemStack stack) {
@@ -845,6 +883,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         boolean useful = stack.has(DataComponents.FOOD) || isWeapon(stack)
                 || (stack.is(net.minecraft.world.item.Items.STICK) && countCarried(s -> s.is(stack.getItem())) < 2)
                 || (stack.is(ModItems.OBSIDIAN_ROCK.get()) && isObsessedWithObsidian())
+                || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this)
+                        && (stack.is(ModItems.LONG_BONE.get()) || stack.is(ModItems.RIB.get())))
                 || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this) && wantsMaterial(stack));
         return useful && hasRoomFor(stack);
     }
@@ -1147,6 +1187,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             return InteractionResult.CONSUME;
         }
         if (held.isEmpty()) {
+            if (isLedBy(player) && shareObsidian(player)) {
+                return InteractionResult.CONSUME;
+            }
             if (isLedBy(player)) {
                 ItemStack given = handOver();
                 if (given.isEmpty()) {
@@ -1964,8 +2007,14 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (tickCount % 20 == 0) {
             deliverFood();
         }
-        if (tickCount % 100 == 0 && guestOf != null && isAlpha() && level().isNight()) {
-            Band.sendGuestsHome(this);
+        if (tickCount % 100 == 0 && guestOf != null && level().isNight()) {
+            // The alpha takes its band home at dusk - but only if there still is one.
+            // Hanging the whole departure on the alpha meant that a visiting band whose
+            // alpha had died, or wandered off, simply never left: they stood in your
+            // camp all night, every night, with nobody left to call them away.
+            if (isAlpha() || !Band.alphaNearby(this)) {
+                Band.sendGuestsHome(this);
+            }
         }
         if (forageTogetherTicks > 0 && --forageTogetherTicks == 0) {
             forageAnchor = null;

@@ -62,10 +62,18 @@ public final class ToolUse {
      * Resolved per call rather than cached in a static set: this class can be
      * loaded before the item registry is filled.
      */
+    /**
+     * The Oldowan kit. A hammerstone counted here but nothing ever credited one, because
+     * you do not craft a hammerstone - you pick it out of a seam - and the grinding stone
+     * was missing outright. Between them the "three different tools" gate could be met
+     * and still not register, which looked like the criterion was broken.
+     */
     private static boolean isOldowanTool(Item item) {
         return item == ModItems.FLAKE.get()
                 || item == ModItems.HAMMERSTONE.get()
+                || item == ModItems.CHERT_HAMMERSTONE.get()
                 || item == ModItems.CHOPPER.get()
+                || item == ModItems.GRINDING_ROCK.get()
                 || item == ModItems.DIGGING_STICK.get()
                 || item == ModItems.OLDOWAN_MULTITOOL.get();
     }

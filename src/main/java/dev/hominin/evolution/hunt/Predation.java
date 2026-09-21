@@ -36,6 +36,17 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * thing on the plain, taking kills off animals that once took them off us.
  */
 public final class Predation {
+    /**
+     * Ordinary game. A big cat does not live on hominins - it lives on whatever grazes
+     * near the water, and hominins are an occasional and badly-behaved substitute.
+     * Leaving them out made every predator a thing that only ever came for you.
+     */
+    public static boolean isGame(net.minecraft.world.entity.LivingEntity entity) {
+        return entity instanceof net.minecraft.world.entity.animal.Animal
+                && !(entity instanceof dev.hominin.evolution.band.BandMember)
+                && !entity.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS);
+    }
+
     /** How often camp pressure is weighed. */
     private static final int CHECK_TICKS = 200;
     /** How far you can drift and still count as camped in the same place. */

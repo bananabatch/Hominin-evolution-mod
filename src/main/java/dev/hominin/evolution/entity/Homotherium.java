@@ -43,7 +43,7 @@ public class Homotherium extends PathfinderMob {
                 .add(Attributes.MAX_HEALTH, 38.0D)
                 // Faster over open ground than anything on two legs. Trees are the answer.
                 .add(Attributes.MOVEMENT_SPEED, 0.36D)
-                .add(Attributes.ATTACK_DAMAGE, 7.0D)
+                .add(Attributes.ATTACK_DAMAGE, 9.0D)
                 .add(Attributes.FOLLOW_RANGE, 36.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D);
     }
@@ -70,6 +70,11 @@ public class Homotherium extends PathfinderMob {
             return true;
         }
         if (entity instanceof BandMember) {
+            return true;
+        }
+        // A scimitar cat is built to run down grazing animals in the open. That is the
+        // day job; hominins are the exception, not the diet.
+        if (Predation.isGame(entity)) {
             return true;
         }
         // A cat this size reads what it is looking at. Erectus with something in its hands

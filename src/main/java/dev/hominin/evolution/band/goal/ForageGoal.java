@@ -127,7 +127,8 @@ public class ForageGoal extends Goal {
             member.addToInventory(new ItemStack(Items.SWEET_BERRIES, 1 + member.getRandom().nextInt(2)));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
         } else if (member.getRandom().nextFloat() < (SUCCESS_CHANCE + member.foragingBonus())
-                * dev.hominin.evolution.survival.Drought.forageMultiplier(level)) {
+                * dev.hominin.evolution.survival.Drought.forageMultiplier(level)
+                * (CraftGoal.canCraft(member) ? 0.6F : 1.0F)) {
             Item[] insects = {ModItems.GRUB.get(), ModItems.BEETLE.get(), ModItems.EARTHWORM.get()};
             member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)]));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");

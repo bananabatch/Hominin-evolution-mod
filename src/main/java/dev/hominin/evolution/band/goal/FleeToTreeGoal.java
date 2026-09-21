@@ -19,7 +19,12 @@ import net.minecraft.world.phys.Vec3;
  * member out of reach the same way they give up on a player.
  */
 public class FleeToTreeGoal extends Goal {
-    private static final int TREE_SEARCH_RADIUS = 16;
+    /**
+     * Savannah is mostly not trees. At sixteen blocks a frightened Australopithecus
+     * regularly found nothing to climb and just ran instead, which read as the climb
+     * simply not working.
+     */
+    private static final int TREE_SEARCH_RADIUS = 28;
     private static final double RUN_SPEED = 1.4D;
     /** Longest a member will cling to a trunk before climbing down to see. */
     private static final int MAX_CLING_TICKS = 600;

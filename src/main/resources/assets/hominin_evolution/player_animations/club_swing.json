@@ -5,8 +5,8 @@
   "author": "Hominin Evolution",
   "emote": {
     "beginTick": 0,
-    "endTick": 28,
-    "stopTick": 28,
+    "endTick": 20,
+    "stopTick": 20,
     "isLoop": false,
     "returnTick": 0,
     "degrees": true,
@@ -35,7 +35,7 @@
         }
       },
       {
-        "tick": 5,
+        "tick": 4,
         "easing": "easeOutCubic",
         "rightArm": {
           "pitch": -100,
@@ -57,7 +57,7 @@
         }
       },
       {
-        "tick": 7,
+        "tick": 5,
         "easing": "easeInOutSine",
         "rightArm": {
           "pitch": -102,
@@ -79,7 +79,7 @@
         }
       },
       {
-        "tick": 13,
+        "tick": 9,
         "easing": "easeInOutSine",
         "rightArm": {
           "pitch": -92,
@@ -101,7 +101,7 @@
         }
       },
       {
-        "tick": 17,
+        "tick": 12,
         "easing": "easeInOutSine",
         "rightArm": {
           "pitch": -86,
@@ -123,7 +123,7 @@
         }
       },
       {
-        "tick": 19,
+        "tick": 13,
         "easing": "easeOutQuad",
         "rightArm": {
           "pitch": -80,
@@ -145,7 +145,7 @@
         }
       },
       {
-        "tick": 23,
+        "tick": 16,
         "easing": "easeInOutSine",
         "rightArm": {
           "pitch": -76,
@@ -167,7 +167,7 @@
         }
       },
       {
-        "tick": 28,
+        "tick": 20,
         "easing": "easeInOutSine",
         "rightArm": {
           "pitch": -72,

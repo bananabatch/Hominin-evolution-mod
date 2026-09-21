@@ -63,11 +63,13 @@ public final class InventoryLimits {
         return index >= ROW && index < MAIN_SLOTS && index >= unlockedSlots(player);
     }
 
-    /** Once a second: nothing may stay in a locked slot. */
+    /**
+     * Nothing may stay in a locked slot. This ran once a second, which left a whole
+     * second in which something could sit in a row you should not have - long enough to
+     * see it, and long enough to use it. The sweep is cheap (it walks at most the closed
+     * rows, and returns at once when none are closed), so it runs every tick instead.
+     */
     public static void tick(ServerPlayer player) {
-        if (player.tickCount % 20 != 0) {
-            return;
-        }
         int unlocked = unlockedSlots(player);
         if (unlocked >= MAIN_SLOTS) {
             return;

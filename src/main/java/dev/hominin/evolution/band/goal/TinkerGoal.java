@@ -149,7 +149,7 @@ public class TinkerGoal extends Goal {
         consumeStone();
         var random = member.getRandom();
         ResourceLocation stage = member.getStage();
-        boolean early = ARDIPITHECUS.equals(stage) || AUSTRALOPITHECUS.equals(stage);
+        boolean early = CraftGoal.isPreOldowan(stage);
         Item made;
         if (early) {
             if (random.nextFloat() >= EARLY_SUCCESS) {

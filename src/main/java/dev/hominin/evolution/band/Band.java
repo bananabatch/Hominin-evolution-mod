@@ -192,6 +192,20 @@ public final class Band {
     }
 
     /**
+     * Something has turned to leave. Every reason to hit it went with it: a band that
+     * chases a wounded animal into cover is a band that comes back smaller. So anyone
+     * still holding it as a target lets go.
+     */
+    public static void standDown(LivingEntity leaving) {
+        for (BandMember member : near(leaving, 32.0D)) {
+            if (member.getTarget() == leaving) {
+                member.setTarget(null);
+                member.getNavigation().stop();
+            }
+        }
+    }
+
+    /**
      * Joining in on whatever the leader attacks - unless told not to hunt with them, and
      * never against another hominin. A stray swing at somebody else's band used to start a
      * war between two groups of people who have no reason to fight.
@@ -200,9 +214,17 @@ public final class Band {
         if (target instanceof BandMember) {
             return;
         }
-        for (BandMember member : defendersOf(player)) {
-            if (member.huntsWithLeader()) {
+        // A predator going for the band is everyone's business. Anything else you swing at
+        // gets the one or two nearest - unless you have called a hunt, when they all come.
+        List<BandMember> willing = new java.util.ArrayList<>(defendersOf(player).stream()
+                .filter(m -> m.huntsWithLeader() && !m.isBaby()).toList());
+        willing.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(player)));
+        int helpers = 0;
+        int limit = 1 + player.getRandom().nextInt(2);
+        for (BandMember member : willing) {
+            if (member.isHunting() || helpers < limit) {
                 member.defendAgainst(target);
+                helpers++;
             }
         }
     }
@@ -548,7 +570,9 @@ public final class Band {
         boolean canSplit = splitsUp(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())
                 && player.level().isDay();
         List<BandMember> adults = members.stream().filter(m -> !m.isBaby()).toList();
-        if (!canSplit || adults.size() <= 6) {
+        // Seven adults was more than a habilis band ever actually fields, so the split
+        // never fired for anybody. Five is a band with enough people to be in two places.
+        if (!canSplit || adults.size() <= 4) {
             if (split) {
                 members.forEach(m -> m.joinParty(0, null));
                 if (!player.level().isDay()) {
@@ -857,6 +881,9 @@ public final class Band {
         if (player.tickCount % 100 == 20 && !player.isSpectator()) {
             checkBandLost(player);
         }
+        if (player.tickCount % 40 == 0) {
+            highlightWhenMixed(player);
+        }
         if (player.tickCount % EXCURSION_CHECK_TICKS == 0 && !player.isSpectator()) {
             maybeSendExploring(player);
         }
@@ -884,6 +911,21 @@ public final class Band {
             return;
         }
         bandLost(player);
+    }
+
+    /**
+     * Another band walking with you doubles the crowd. Your own glow while they are here,
+     * so you can always tell which of all these hominins are yours.
+     */
+    private static void highlightWhenMixed(ServerPlayer player) {
+        boolean mixed = near(player, 32.0D).stream().anyMatch(m -> m.isGuestOf(player));
+        if (!mixed) {
+            return;
+        }
+        for (BandMember member : all(player)) {
+            member.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.GLOWING, 60, 0, false, false));
+        }
     }
 
     /** Players known to have had a living band, so an empty band reads as a loss. */
@@ -1061,6 +1103,18 @@ public final class Band {
     }
 
     /** Nightfall: a band travelling with a player heads off on its own. */
+    /** Whether this member's own band still has its alpha somewhere in reach to follow. */
+    public static boolean alphaNearby(BandMember member) {
+        UUID band = member.getBandId();
+        if (band == null) {
+            return false;
+        }
+        return member.level().getEntitiesOfClass(BandMember.class,
+                member.getBoundingBox().inflate(64.0D),
+                other -> other != member && band.equals(other.getBandId()) && other.isAlpha())
+                .stream().findAny().isPresent();
+    }
+
     public static void sendGuestsHome(BandMember alpha) {
         Player player = alpha.companionPlayer();
         UUID band = alpha.getBandId();

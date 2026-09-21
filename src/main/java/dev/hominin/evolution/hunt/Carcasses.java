@@ -37,6 +37,26 @@ public final class Carcasses {
     private static final float HYENA_CHANCE = 0.25F;
     private static final double HYENA_CROWDING = 48.0D;
 
+    /**
+     * Whether this death was somebody's doing. A kill you made is a kill you were
+     * standing at - there was nobody else there first, and treating it as an abandoned
+     * carcass let a player farm band members by killing cows.
+     */
+    private static boolean killedByHand(LivingEntity dead) {
+        var source = dead.getLastDamageSource();
+        if (source == null) {
+            return false;
+        }
+        return source.getEntity() instanceof Player || source.getEntity() instanceof BandMember;
+    }
+
+    /** Whether this player's band already has everybody it can hold. */
+    private static boolean bandIsFull(ServerPlayer player) {
+        var stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        return dev.hominin.evolution.band.Band.all(player).size()
+                >= dev.hominin.evolution.band.BandSizes.of(stage).maxMembers();
+    }
+
     /** Leaves a carcass where something died, and sometimes tells a hyena about it. */
     public static void onDeath(LivingEntity dead) {
         if (dead instanceof Player || dead instanceof BandMember || !(dead.level() instanceof ServerLevel level)) {
@@ -52,7 +72,8 @@ public final class Carcasses {
         }
         // Somebody else got here first, and they are not an animal. A hominin at a kill
         // keeps the scavengers off it, which is most of the reason to be at one.
-        if (level.random.nextFloat() < LONER_AT_KILL_CHANCE && leaveLoner(level, pos)) {
+        if (!killedByHand(dead) && level.random.nextFloat() < LONER_AT_KILL_CHANCE
+                && leaveLoner(level, pos)) {
             return;
         }
         if (level.random.nextFloat() < HYENA_CHANCE) {
@@ -96,6 +117,11 @@ public final class Carcasses {
     private static boolean leaveLoner(ServerLevel level, BlockPos carcass) {
         if (!(level.getNearestPlayer(carcass.getX(), carcass.getY(), carcass.getZ(), 160.0D, false)
                 instanceof ServerPlayer nearest)) {
+            return false;
+        }
+        // Nobody joins a band that is already as big as it gets. A stranger at a kill
+        // is a chance at a recruit, and a chance you cannot take is not worth spawning.
+        if (bandIsFull(nearest)) {
             return false;
         }
         BandMember loner = ModEntities.BAND_MEMBER.get().create(level);

@@ -27,6 +27,14 @@ public final class ModTags {
         /** Soil you can root through for insects. */
         public static final TagKey<Block> FORAGING_GROUND = block("foraging_ground");
 
+        /**
+         * What bare hands may pull up: leaves, grass, fruit, mushrooms, a nest, a
+         * carcass, a loose rock. Everything outside this - and outside the tool gates
+         * below - simply cannot be broken, because a hominin cannot punch through stone
+         * and never could. This is the allowance; the rest of the world is not.
+         */
+        public static final TagKey<Block> TAKEABLE_BY_HAND = block("takeable_by_hand");
+
         public static final TagKey<Block> REQUIRES_DIGGING_STICK = block("requires_digging_stick");
         public static final TagKey<Block> REQUIRES_STONE_TOOL = block("requires_stone_tool");
         public static final TagKey<Block> REQUIRES_HAND_AXE = block("requires_hand_axe");

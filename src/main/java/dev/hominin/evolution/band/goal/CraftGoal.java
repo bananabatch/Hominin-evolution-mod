@@ -39,6 +39,16 @@ public class CraftGoal extends Goal {
 
     private static final ResourceLocation ARDIPITHECUS = id("ardipithecus");
     private static final ResourceLocation AUSTRALOPITHECUS = id("australopithecus");
+    private static final ResourceLocation ANAMENSIS = id("australopithecus_anamensis");
+
+    /**
+     * Before the Oldowan. Naming stages one at a time let the cousin species through:
+     * an anamensis in a wild band was striking flakes centuries early because nobody
+     * had thought to write its name in the list. Everything pre-habilis belongs here.
+     */
+    public static boolean isPreOldowan(ResourceLocation stage) {
+        return ARDIPITHECUS.equals(stage) || AUSTRALOPITHECUS.equals(stage) || ANAMENSIS.equals(stage);
+    }
 
     private enum Plan {
         GRIND, GRINDING_STONE, SPEAR, POINTY_STICK, FLAKE, CHOPPER, MULTITOOL
@@ -62,7 +72,7 @@ public class CraftGoal extends Goal {
     /** Only from habilis on: before that, hitting stones together is as far as it goes. */
     public static boolean canCraft(BandMember member) {
         ResourceLocation stage = member.getStage();
-        return !member.isBaby() && !ARDIPITHECUS.equals(stage) && !AUSTRALOPITHECUS.equals(stage);
+        return !member.isBaby() && !isPreOldowan(stage);
     }
 
     @Override

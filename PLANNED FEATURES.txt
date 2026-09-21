@@ -1,0 +1,196 @@
+Australopithecus, habilis, and general content
+
+
+MOBS
+
+Dinopithecus, or a giant baboon can sometimes rarely on Hominins (often early ons but stop after erectus) or other animals Spawn in groups of 2-3 on their own they dont seek hominins (after erectus) How ever if you forage near them or get to close to them they Will attack you, if you attempt to scare them (by threat display) they WILL attack you getting you the "Nice try genius" achievement They die out and cannot spawn after Erectus evolves they sometimes will Hunt mega fauna
+
+Mammuthus subplanifrons, or a Giant elephant Is a Megafauna that ranges in Africa that can be Hunted at H erectus and above for ALL megafauna hunting them can be very risky but Very rewarding they deal heavy damage but Attack slowly and are signs they may be attacking how ever sometimes they may not give a Sign of them attacking you making it overall risky regardless if you play everything right (maybe a wind up animation or particles that appear before they do) you Cant deal damage to them unless you have a fire hardened spear or above any megafauna CANNOT be concussed at all though clubs can break their bones When they Die they drop up to 5+ megafauna meat and a giant carcass giving multiple rips and Long bones plus More megafauna meat how ever require a stone tool to break (say a hammerstone) as well as this giant Hyenas or other scavangers or sometimes other bands (usally desperate ones) often are attracted meaning you have to defend  your Kill. when Low ALL megafauna will run putting the player to a persistence hunt 
+
+African Giant Buffalo, same general Megafauna rules apply how ever their attacks are different then often will run away 10 blocks and then Charge at the Players band overall they behave similiar to other Megafauna and are sometimes hunted by giant hyenas or other Hypercarnivores 
+
+Rusingtoryx, Similar rules apply how ever they often Flee than attack unless very close encouraging persistence hunting
+
+Megalotragus Is similiar to the African Giant Buffalo how ever are faster runners than the African Giant Buffalo. 
+
+All Megafauna are realitvely uncommon spawning in groups of 1-3 they can be found near water sources they often graze on grass or plants
+
+
+Baboon relations (not giant Baboons)
+
+Baboons can be useful for you, hanging near them can help deter predators as well as this if you trade with them often or give them food with nothing in return the troop will trust you if you trade or give enough up to 3 baboons will follow your band to help you as a mututal friendship during the day and leave to their troop at night. if you accidently hit one instead of them immediately mobbing you your camera zooms into them slighty and you get 5 seconds to give them something to singal a mistake or if you press K to think for once you low yourself and look passive making them go away you can do this again by pressing P. if you dont they will NOT run after you if you run far away enough from their troop but they will attack you on sight if you get close meaning they can make or break your game they can also once allied groom you or or band to
+
+Other primates
+
+You can meet your branched off relatives near a Jungle edge or past erectus rarely in the savannah Chimpanzees they act similar to Baboons but are more terrortial and can be risky to hang around without reason How ever if you trade with them or give you food they can be habituated or become allys to your band they will groom you at times or protect you if your running from a preadator and go into their terrorty, how ever regardless of how  you interact with them they will sometimes Status check you an Alpha might head up to you and let off a warning you can press K again and do the same things as baboons or give them something detecting these sometimes will be hard as chimpanzees give off stuble warnings. they can be useful if you do a threat display they also will attack you but you do get the 5 second desclation window (because misclicks happen)
+
+Sometimes rarely you can find the other member of the Pan genus, Bonobos they will spawn near the edge of savannahs and jungles were chimpanzees are found near jungles of Savannah forests or sometimes near rivers (relating to how they got split off due to a river will be replaced with a region Feature for spawning (different regions have different Places Should affect world gen but this is later down the line) Bonobos are often friendly and extremely useful Ingame upon meeting them they might give Gifts of food to keep the peace or start positive relationships with your band they can be useful and will groom you and give gifts and forage with you as long as you help them, as well as this because bonobos have no natural preadators, preadators will NOT spawn near them at all and are a Safe zone, unless the troop dies of course. they can also be hunted and do less damage than chimpanzees and often flee and only fight to get away leaving the player to choose what to do with them though hunting them they will no long give gifts to any bands or be catious and will behave similiar to chimpanzees and act slightly terrorital (though pefering to move) the Safe zone affect goes away for the player. they Spawn ONLY when you reach H erectus
+
+Grooming overhaul
+
+right now grooming is a social thing but it should matter for hygine over time you get dirty and get Ticks which will limit how much you and other band members can regenerate health if you groom other members or other primates you can get a Tick item which acts as a Small food source rewarding grooming others other for social situations you can also ask others to groom you if your Infested as well as this once you groom someone or someone grooms you they will ask to be groomed this is obligated so you cant opt out 
+
+
+Personal Stats and Skills
+
+if you Press J it will show your Stats and skills Stats will show your gender, How infested you are (grooming stat), your social standing with members and the Band  itself how many bands you have left until extinction. with Skills it should work like how H does showing skills and stats clicking one shows what you have independently it shows you what Skills you know which you can get by thinking either randomly or in certain situations Some skills can be useful in your next evolution. For example making a Lomewikan core is a skill that carrys over and makes you better at knapping as an example or pressing K during a 5 second wind gives primate desclation once you have a Skill (if applicable) it tells you how to do it again, and shows you what it does
+
+
+Social Tab
+
+ when pressing H you along with the other tabs now have a  Social tab were you can interact with your your band for things that are Misc in it there are a Few Buttons "Play" you and your band when safe and haven't been attacked might wrestle or play children will do this on their own how ever can serve to be valuable for survival situations if "tag" or "wrestle" is playen at the end you will either be able to run a Little faster during dangerous situations (longer adrenaline boost if flight is triggered) or if wrestle is played a longer fight adrenaline boost is given this Only stacks 3 times per species. then they the "Share" button is pressed Hominins will Share eachothers favorite foods with eachother boosts social bonding and group cohesion (hominins should naturally develop their favorite foods if not given sending a chat message "Hmm i like this food a lot" or something among these lines or Sometimes a favorite option this can only be done every 8 minutes. Trading will be Put in the social tab  and replaces the current system (not raritys) you HAVE to now click (no longer a shift click just a right click) then press H on a hominin to trade with them it will Show everything in their inventory at what rarity to trade with them you will put something in your hot bar or inventory in a Slot next in the hotbar then click what you want to trade for. Teach button if you have A skill you learn your tribe doesn't automatically learn it you must show your tribe what to do so for making a Wooden spear you must press "Teach" then peform the action. if you Cannot peform it psychicall you can verbally say primate desclation. Hominins Will natural pass on taught information to children as well (showing in chat) verbally
+
+
+
+"get me a..."
+
+this will be expanded to include More items for each stage, for example you can now click Oldowan tools or other tool tiers the more you evolve nice Qaulity of life move though. For erectus Group standing will matter more here the less Standing the less expensive tools you can get access to the more standing the more access this only matters until erectus
+
+
+Erectus Fire Requirement
+
+to get fire to evovle, Habilis must Either obverse a Fire source (lava works fine), be around during a thunderstorm (thats it you dont have to see the fire) and get 2 sticks 1 in your off hand 1 in your hotbar how ever you can bypass seeing a fire by putting them in your hot bar and off hand and  press k then P to make a Friction fire starter which bypasses the see a fire requirement you can then make a fire which lets you a evolve when you start one (the fire gets put out btw after the cutscene)
+
+THATCH AND TWINE
+
+These will be useful at erectus if you cut Grass with anything with a Edge such as a Oldowan flake or a Cleavers you can get Thatch which if you put one thatch if in your hot bar and your off hand you can get twine which can be useful for multiple things such as tools or building blocks.  
+
+
+Bleeding Tiers
+
+T1 External bleeding can be afflicted by baboon bites, being stabbed, etc. anything with sharp teeth, or a Sharp edge can do this
+
+T2 Internal bleeding can be inflicted by  Heavy duty tools like Acheulean tools and Sharpened spears as well as giant hyenas and other preadators
+
+T3 Catastrophic bleeding can be inflicted by High quality Hand axes, Brain bleeds from repeated concussions or fire hardened/stone spears, it WILL kill what ever got inflicted by it Dinopithecus has a chance to inflict it along with saber tooth cats can inflict it if you Manage to survive it (intensive fluid intake so copious amounts of water) you get a lacerations affect which goes away the next day but you can get infected if damaged again or eat raw meat causing your health to not be able to regenerate for 2 days fully and drains hunger more or can inflict nausea So getting inflicted from this by preadators is Rarer but can still happen so it isn't annoying
+
+
+/HOMININ DEVOLPER UPDATE
+
+right now it just allows for more stuff but you should be able to edit social standing, skill levels, or anything with a vaule or can be triggered by pressing H and going to "Devolper" so you can set your tribe to like or dislike you as an example just ingame vaule editing 
+
+
+
+HOMO ERECTUS CONTENT 
+
+KNAPPING OVERHAUL: KNAPPING STATION
+
+Once you reach Homo erectus, a Hammer stone and a rock in your hand isn't enough Anymore. you now need to craft a Knapping station to get it you must collect Hide from either A cow or a Horse. or Megafauna (they drop a lot) Hide will also be useful later. Once you Collect 4 Sticks you can make one, a Knapping station you will neeed a hammer stone and a Bopper which you can use a bone for the Acheulean industry allowing you to craft Acheulean  hand axes, Acheulean Multi tools (does all purposes but is expensive to be fair hand axes WERE multi tools so make it a tier 0 hand axe will such) Acheulean Cleavers which can Act as all purpose knifes which can be used to cut meat, crack bones, and get thatch and is MUCH more durable than a Flake and Deals higher bleeding tiers (T2 bleeding) as well as this as you evolve to homo heidelbergensis  you get the Acheulean: Levallois technique an upgraded version of the Acheulean industry when You get to Early Sapiens and Neanderthals you unlock  the Mousterian industry Later  Behavioral modernity Neanderthals get the Enhanced Mousterian industry (allowing for them to build their super weapon, the Neanderthal thrusting spear) and Sapiens get the Aurignacian industry allowing for Sapiens to Build their Super weapons, the atlatl (see Later content)
+
+As well as this there are qauility Tiers 4 through 0 for a Acheulean (and other industry) tools 
+
+Tier 4 is the least durable and weakest tier 
+ 
+it can only inflict T1 bleeding and has weak durability
+
+Tier 3 is the second weakest tier 
+
+it can still only inflict T1 bleeding but has decent durability
+
+Tier 2 is the 3d a Very durable tier and is Strong tier
+
+and can trigger T2 bleeding and has good durability
+
+Tier 1 is one of the strongest and most durable tier
+
+it always Triggers T2 bleeding and has a chance for T3 bleeding
+
+Tier 0 is the flawless tier
+
+it can only be made with a high Skill and High quality material and can Serve ever purpose Depending on the tool (only some tools can be tier 0) you also get the "last tool you will ever need" achievement
+
+
+How to reach tiers?
+
+1 MATERIAL QAUILITY
+
+Limestone can only make tier 4 tools
+
+Quartzite can  make tier 2 tools *with* top tier skill without it tier 3 is the most you can make with it
+
+Chert can Make Tier 0 tools with Top tier skill but often can make tier 2 and Tier 1 tools
+
+Obsidian can Only make tier 2 and Below tools and is GREAT for making tier 1 and Tier 0 tools it is EXTREMELY vaulable
+
+
+2 SKILL
+
+how do you get Skill?
+
+Make stuff! or achivements. if you Made the Lomekiwan core back in Australopithecus you Start with Level 3 Skill for knapping
+
+SKILL LEVELS
+
+they go through 4-1
+
+SKILL LEVEL 4
+
+you can only make tier 4 Tools to progress you must make 1 singular item. (obsidian still gets you a tier 2 item)
+
+Skill level 3
+to progress you must make 2 items You can Now make Tier 3 or Rarely (20% chance) tier 2 tools. (obsidian still gets you a tier 2 item regardless this is a bypass)
+
+Skill Level 2 
+to progress you must make 3 items You can now make tier 2 tools and rarely (25% chance) a tier one tool if you use Obsidian you have a 40% chance
+
+Skill level 1 
+you can now make Tier 1 tools and a 15% chance to make a tier 0 tool with Chert and a 45% chance with obsidian
+
+You can also get skill by holding High tier Rocks, high qauility items, or sometimes any item at all and pressing K to think about it
+
+Knapping non oldowan tools requires 2 workable stones rather than 1 so knapping costs Something.
+
+also band members will naturally make knapping stations and will have randomized skills the most common being 3-2 with 1 and 4 being the rarest. children start with level 4 skills but depending on their taught can get the exact skill level they have or one behind them. you can view this by checking their information
+
+
+
+Building, crafting and Advance tools
+
+To make more advance tools you must make have 2 hide in your hotbar and 4 Rocks of any kind in your off hand and you can make a primitive work station which acts as a crafting table now you have the standard crafting menu how ever you Will need tools to use it for example if you cut down a Tree with a hand axe you Wont be able to make Wooden planks nor place down wooden logs (not until agriculutural sapiens/Neanderthals) how ever you can split into Building branchs which are similiar to long branchs but can be used for building. how ever you MUST have a tool to do some things for.  
+
+What You can craft
+
+BRANCHS 
+
+workable branchs
+
+1 Log Splits into 2 Workable branchs (Hand axe on the tool slot is required) which can be used for multiple things! you can turn long branches into them as well
+
+Workable branchs can be Used for many things or turned into Building branchs or Clubs
+
+To make a Club out workable branchs you can use a Hammer stone in the tool slot and put the branchs in the middle to make a Club
+
+You can also Use a workable branch to get a More durable spear (will be required to make heidelbergensis early super weapon Schöningen spears which is a introduction to how Species Super weapons work) if a Spear with a Workable branh breaks you get the Workable branch itself back making it renewable (unless its a wooden spear of course) 
+
+Building branchs can be made by collecting 3 of any Rock type  and using a workable branch you use the primtive crafting station put the workable branch in the center and putting the rocks around it allows you to make a Building branch which be useful for thatch structures. it will be a 3d item being thin (not a full block like a End rock thin for example) and having rocks around them if placed on top of itself rocks wont appear
+
+
+Thatch blocks
+
+Thatch blocks can be crafted in the Primitive crafting station with at least 4 twine in the Tool section and filling the Crafting station with thatch Which can get a Thatch which can be used for building. if you leave your settlement it will Degrade so putting Hide on it will give it a new texture and prevent it from degrading (until you evolve of course) allowing you to make bases you can circle to because staying in 1 place to long can attract preadators
+
+BUILDING BLUEPRINTS
+
+you cannot build structures on your own there will be preset blue prints until agricultural sapiens/Neanderthals such as a Thatch tent or Thatch Hunt (Slightly larger than a thatch tent) will be active blueprints if you try to place down any building blocks (not a work Station or knapping station or nesting or what not) 
+
+
+BEDS
+
+Now a nest is not enough for sleeping and is too uncomfortable you can Make A nest still how ever you are more likely to get more ticks on you building to your infestation you Must match a Hide bed to make it you must use the work Station put 10 twine in the Tool slot  Put a Layer of thatch (not Thatch blocks) and above put 3 hide above it you Will get 2 Thatch bedding blocks you must put then next to each other to Sleep
+
+
+Digging stick
+
+to create a Digging stick you Must put a Workable branch and a Hammer stone next to eachother and Use 10 Twine in the Tool Slot it allows you to dig 2 blocks Deep and fowards it can also be useful for foraging bring out multiple forgable items like Grubs earth worm or beetles
+
+
+
+
+ 
+
+
+
+
+
+
+

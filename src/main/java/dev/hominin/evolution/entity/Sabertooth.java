@@ -41,7 +41,7 @@ public class Sabertooth extends PathfinderMob {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 50.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.ATTACK_DAMAGE, 10.0D)
+                .add(Attributes.ATTACK_DAMAGE, 12.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D);
     }
@@ -61,6 +61,9 @@ public class Sabertooth extends PathfinderMob {
     private boolean isTooClose(LivingEntity entity) {
         // A baboon is worth crossing open ground for; everything else has to come to it.
         if (entity instanceof Baboon) {
+            return entity.distanceToSqr(this) < BABOON_HUNT_DISTANCE * BABOON_HUNT_DISTANCE;
+        }
+        if (dev.hominin.evolution.hunt.Predation.isGame(entity)) {
             return entity.distanceToSqr(this) < BABOON_HUNT_DISTANCE * BABOON_HUNT_DISTANCE;
         }
         boolean prey = (entity instanceof Player player && !player.isCreative() && !player.isSpectator()

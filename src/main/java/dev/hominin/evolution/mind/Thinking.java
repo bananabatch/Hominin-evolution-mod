@@ -36,7 +36,14 @@ public final class Thinking {
     private static final int COOLDOWN_TICKS = 3 * 60 * 20;
 
     /** Vanilla's full hunger bar. Thinking demands the whole thing, not most of it. */
-    private static final int FULL_FOOD = 20;
+    /**
+     * Thinking is expensive, not impossible. Demanding a full bar of each meant that on
+     * a bad day - and most days out here are bad ones - you simply could not think, and
+     * a stage that needs four thoughts became a wall. It still costs; it no longer
+     * requires you to be perfectly fed and unhurt first.
+     */
+    private static final int FULL_FOOD = 14;
+    private static final float THINKING_HEALTH_FRACTION = 0.6F;
 
     /** Hunger the effort costs - most of a meal, taken off a full bar. */
     private static final int FOOD_COST = 6;
@@ -62,7 +69,7 @@ public final class Thinking {
                     "Your head is still thick from the last of it. (" + seconds + "s)"), true);
             return;
         }
-        if (player.getHealth() < player.getMaxHealth()) {
+        if (player.getHealth() < player.getMaxHealth() * THINKING_HEALTH_FRACTION) {
             player.displayClientMessage(
                     Component.literal("You hurt too much to hold a thought."), true);
             return;
@@ -89,8 +96,8 @@ public final class Thinking {
                 reflect(player, now);
                 return;
             }
-            player.displayClientMessage(
-                    Component.literal("Nothing you are holding suggests anything."), true);
+            // Holding something that suggests nothing is still a mind at work: it wanders.
+            reflect(player, now);
             return;
         }
         if (!recipe.needsThought()) {
@@ -132,10 +139,35 @@ public final class Thinking {
         EvolutionManager.incrementCriterion(player, "think_times", 1);
         player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME,
                 SoundSource.PLAYERS, 0.8F, 0.7F);
-        player.sendSystemMessage(Component.literal(
-                "You think about the day, and the days before it. The past is a foreign concept, "
-                        + "and a new one - but you feel more capable than before.")
-                .withStyle(ChatFormatting.YELLOW));
+        player.sendSystemMessage(Component.literal(reflection(player)).withStyle(ChatFormatting.YELLOW));
+    }
+
+    /** Where a mind goes when there is nothing in the hands to think about. */
+    private static String reflection(ServerPlayer player) {
+        java.util.List<String> thoughts = new java.util.ArrayList<>();
+        thoughts.add("You think about the day, and the days before it. The past is a foreign concept, "
+                + "and a new one - but you feel more capable than before.");
+        thoughts.add("You remember a place - and then realise you could walk back to it.");
+        thoughts.add("You turn a stone over in your mind the way you would turn one in your hand.");
+        thoughts.add("Two things, struck the right way, make a third. What else is two things waiting to be one?");
+        thoughts.add("Somebody who was here is not here any more. You notice the space where they were.");
+        if (player.level().isNight()) {
+            thoughts.add("You look up. The lights up there do not move the way anything down here does.");
+        }
+        if (player.getFoodData().getFoodLevel() < 16) {
+            thoughts.add("Your stomach talks over everything. Tomorrow's food is a thought you have never had before.");
+        }
+        if (player.isInWater() || dev.hominin.evolution.survival.Thirst.get(player) < 12) {
+            thoughts.add("You watch water move and wonder where it goes, and whether it ever comes back.");
+        }
+        if (dev.hominin.evolution.band.Band.ownNear(player, 16.0D).size() >= 3) {
+            thoughts.add("You count the others without any numbers to count with: enough, or not enough.");
+        }
+        if (player.getInventory().hasAnyOf(java.util.Set.of(dev.hominin.evolution.ModItems.LONG_BONE.get(),
+                dev.hominin.evolution.ModItems.BONE_MARROW.get()))) {
+            thoughts.add("There was more inside the bone than anyone had thought to look for.");
+        }
+        return thoughts.get(player.getRandom().nextInt(thoughts.size()));
     }
 
     private static void spend(ServerPlayer player, long now) {

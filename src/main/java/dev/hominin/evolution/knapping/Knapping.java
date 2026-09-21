@@ -169,6 +169,42 @@ public final class Knapping {
         strike(player, main, 1);
     }
 
+    /** How much of this stone the player has altogether, hand and pack together. */
+    private static int carriedStone(ServerPlayer player, ItemStack like) {
+        int total = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(like.getItem())) {
+                total += stack.getCount();
+            }
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            if (stack.is(like.getItem())) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    /** Spends the held stack first, then takes the rest of the cost out of the pack. */
+    private static void strikeFromPack(ServerPlayer player, ItemStack main, int cost) {
+        int owed = Math.min(cost, main.getCount());
+        main.shrink(owed);
+        owed = cost - owed;
+        for (ItemStack stack : player.getInventory().items) {
+            if (owed <= 0) {
+                break;
+            }
+            if (stack != main && stack.is(main.getItem())) {
+                int taken = Math.min(owed, stack.getCount());
+                stack.shrink(taken);
+                owed -= taken;
+            }
+        }
+        ToolUse.wear(player, InteractionHand.OFF_HAND);
+        player.level().playSound(null, player.blockPosition(), SoundEvents.STONE_BREAK,
+                SoundSource.PLAYERS, 0.9F, 1.0F);
+    }
+
     private static void strike(ServerPlayer player, ItemStack main, int stoneUsed) {
         main.shrink(stoneUsed);
         ToolUse.wear(player, InteractionHand.OFF_HAND);
@@ -188,12 +224,16 @@ public final class Knapping {
                     "This stone will not take an edge like that. It needs chert or obsidian."), true);
             return;
         }
-        if (main.getCount() < cost) {
+        // Chert stacks to four, and a multi tool takes eight. Demanding it all in one
+        // stack asked for something the item could not physically do - so the whole
+        // pack counts, and the whole pack pays.
+        int carried = carriedStone(player, main);
+        if (carried < cost) {
             player.displayClientMessage(Component.literal(
-                    "Not enough stone to work - you need " + cost + " in hand."), true);
+                    "Not enough stone to work - you need " + cost + " and you have " + carried + "."), true);
             return;
         }
-        strike(player, main, cost);
+        strikeFromPack(player, main, cost);
 
         boolean practised = data.isDeveloperMode() || data.getUnlockedRecipes().contains(LOMEKWIAN_INSIGHT);
         if (!practised && player.getRandom().nextFloat() < UNPRACTISED_MULTITOOL_FAIL) {

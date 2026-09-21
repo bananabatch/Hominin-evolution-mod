@@ -63,6 +63,24 @@ public final class BlockBreakHandler {
     }
 
     /**
+     * A deposit is a place, not a possession. They exist as items so worldgen and the
+     * creative tab can place them, but a survival player holding one could put a quarry
+     * down wherever they stood and work it forever - the seam was supposed to be the
+     * thing you had to go and find.
+     */
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getEntity() instanceof Player player) || player.isCreative()
+                || isDeveloperMode(player)) {
+            return;
+        }
+        if (isWorkedNotMined(event.getPlacedBlock())) {
+            event.setCanceled(true);
+            player.sendSystemMessage(Component.literal(
+                    "Stone like this is not something you set down. You find it where it lies."));
+        }
+    }
+
+    /**
      * Authoritative server-side enforcement: even if something bypasses the mining
      * speed check, the block still refuses to actually break.
      */
@@ -113,6 +131,21 @@ public final class BlockBreakHandler {
                 || state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get());
     }
 
+    /**
+     * The stages that have finally worked out how to take the world apart on purpose.
+     * Until then the landscape is scenery you live in, not material you mine - which is
+     * the whole point of the early game, and was being given away by a default that let
+     * anything not explicitly gated be punched out with bare hands.
+     */
+    private static boolean mayMineFreely(Player player) {
+        if (player.level().isClientSide()) {
+            return false;
+        }
+        String stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA)
+                .getStage().getPath();
+        return stage.equals("homo_sapiens") || stage.equals("homo_neanderthalensis");
+    }
+
     private static boolean canBreak(Player player, BlockState state) {
         if (player.isCreative() || isDeveloperMode(player)) {
             return true;
@@ -131,7 +164,9 @@ public final class BlockBreakHandler {
                 return held.is(gate.tools());
             }
         }
-        return true;
+        // Anything the tool gates do not name has to earn its way out by being soft
+        // enough to pull up by hand. Stone, ore and worked wood are not.
+        return mayMineFreely(player) || state.is(ModTags.Blocks.TAKEABLE_BY_HAND);
     }
 
     /**
@@ -210,6 +245,8 @@ public final class BlockBreakHandler {
                 return;
             }
         }
+        player.sendSystemMessage(Component.literal(
+                "Your hands are not for this. Nothing you know how to make would get through it."));
     }
 
     /**

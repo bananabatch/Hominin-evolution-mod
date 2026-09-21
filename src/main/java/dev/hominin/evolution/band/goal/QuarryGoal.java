@@ -124,7 +124,11 @@ public class QuarryGoal extends Goal {
     }
 
     private void walk() {
-        member.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, 1.0D);
+        // An obsessive does not stroll towards obsidian.
+        boolean obsidian = member.level().getBlockState(target).is(ModBlocks.OBSIDIAN_ROCK.get())
+                && member.isObsessedWithObsidian();
+        member.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D,
+                obsidian ? 1.4D : 1.0D);
     }
 
     private void pickUp(BlockState state) {

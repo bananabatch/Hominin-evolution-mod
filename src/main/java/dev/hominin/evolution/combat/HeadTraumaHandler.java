@@ -36,6 +36,15 @@ public final class HeadTraumaHandler {
     /** How many blows a bare branch needs before the skull gives. */
     private static final int BRANCH_BLOWS_TO_CONCUSS = 3;
 
+    /**
+     * How many blows with a branch before the animal simply decides this is not worth
+     * it. A branch is not a killing weapon and never was - it is a thing you wave to
+     * make something else go somewhere else, and that is what it does here. It will not
+     * move anything fearless, which is exactly why the club matters.
+     */
+    private static final int BRANCH_BLOWS_TO_ROUT = 4;
+    private static final int ROUT_TICKS = 600;
+
     private static final int STUN_TICKS = 100;
 
     /** Chance a concussion leaves the animal too addled to keep fighting. */
@@ -100,11 +109,16 @@ public final class HeadTraumaHandler {
         HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
         trauma.addBlow();
 
+        // A club puts an animal on the floor; a branch stings it. Dazing everything on
+        // every swing made the branch a stunlock, so the stun is the club's alone.
+        //
         // Slowness VII takes movement speed to zero outright. The 6-arg constructor
         // separates `visible` from `showIcon`; particles key off `visible` alone, so
         // this is the only way to daze something without swirling particles round it.
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 6, false, false, true));
-        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_TICKS, 1, false, false, true));
+        if (profile.club()) {
+            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 6, false, false, true));
+            target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_TICKS, 1, false, false, true));
+        }
 
         if (player instanceof ServerPlayer serverPlayer && isPredator(player, target)) {
             EvolutionManager.incrementCriterion(serverPlayer, "stun_predator", 1);
@@ -112,6 +126,14 @@ public final class HeadTraumaHandler {
 
         if (profile.club() && target.level().getRandom().nextFloat() < CLUB_FRACTURE_CHANCE) {
             fracture(target);
+        }
+        // Hit often enough with a branch and it gives up the ground rather than the fight.
+        if (!profile.club() && rout(player, target, trauma)) {
+            return true;
+        }
+        // A branch stings a big cat. It does not crack its skull - only a club does that.
+        if (!profile.club() && dev.hominin.evolution.hunt.PredatorAppetite.isPredator(target)) {
+            return true;
         }
 
         if (!trauma.isConcussed()) {
@@ -133,6 +155,30 @@ public final class HeadTraumaHandler {
         return true;
     }
 
+    /**
+     * Battered off. Returns true once the animal has turned and gone, which ends the
+     * blow there - nothing further happens to a thing that is already leaving.
+     *
+     * <p>A predator routed this way is handed to {@link dev.hominin.evolution.hunt.PredatorAppetite}
+     * so the band stands down and sees it off properly instead of running after it.
+     */
+    private static boolean rout(LivingEntity attacker, LivingEntity target, HeadTrauma trauma) {
+        if (trauma.getBlows() < BRANCH_BLOWS_TO_ROUT || !(target instanceof PathfinderMob mob)
+                || !Scare.canBeScared(mob) || Scare.isScared(mob)) {
+            return false;
+        }
+        if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(target)) {
+            dev.hominin.evolution.hunt.PredatorAppetite.drivenOff(mob, attacker);
+            return true;
+        }
+        Scare.scare(mob, attacker.position(), ROUT_TICKS);
+        if (attacker instanceof Player player) {
+            player.displayClientMessage(Component.literal(
+                    "It has had enough of the stick and breaks away."), true);
+        }
+        return true;
+    }
+
     /** Base odds, per blow from a band member, of a concussion and - after one - a bleed. */
     private static final float MEMBER_BRANCH_CONCUSS = 0.15F;
 
@@ -149,14 +195,29 @@ public final class HeadTraumaHandler {
         var random = target.level().getRandom();
         HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
         trauma.addBlow();
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS / 2, 6, false, false, true));
+        if (profile.club()) {
+            target.addEffect(new MobEffectInstance(
+                    MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS / 2, 6, false, false, true));
+        }
         if (profile.club() && random.nextFloat() < CLUB_FRACTURE_CHANCE / 2.0F + bonus) {
             fracture(target);
+        }
+        // The band wears things down with branches the same way you do.
+        if (!profile.club() && rout(attacker, target, trauma)) {
+            return;
+        }
+        boolean predator = dev.hominin.evolution.hunt.PredatorAppetite.isPredator(target);
+        if (predator && !profile.club()) {
+            return;
         }
         if (!trauma.isConcussed()) {
             float chance = (profile.club() ? CLUB_CONCUSS_CHANCE : MEMBER_BRANCH_CONCUSS) + bonus;
             if (random.nextFloat() < chance) {
                 trauma.setConcussed(true);
+                if (predator && target instanceof Mob mob) {
+                    dev.hominin.evolution.hunt.PredatorAppetite.drivenOff(mob, attacker);
+                    return;
+                }
                 if (target instanceof PathfinderMob mob) {
                     mob.goalSelector.addGoal(0, new ConcussedGoal(mob, 1.0D));
                 }
@@ -188,6 +249,10 @@ public final class HeadTraumaHandler {
         }
         if (target.level().getRandom().nextFloat() < PACIFY_CHANCE) {
             pacify(target, trauma);
+        }
+        if (target instanceof Mob mob && dev.hominin.evolution.hunt.PredatorAppetite.isPredator(target)) {
+            dev.hominin.evolution.hunt.PredatorAppetite.drivenOff(mob, player);
+            return;
         }
         player.displayClientMessage(
                 Component.literal("The blow lands square - it stops tracking you and starts staggering."), true);

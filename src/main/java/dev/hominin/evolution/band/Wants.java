@@ -36,14 +36,14 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class Wants {
     /** Between wants, per member. */
-    private static final int WANT_MIN_TICKS = 4 * 60 * 20;
-    private static final int WANT_SPREAD_TICKS = 4 * 60 * 20;
+    private static final int WANT_MIN_TICKS = 2 * 60 * 20;
+    private static final int WANT_SPREAD_TICKS = 2 * 60 * 20;
     /** How long a want lasts before it is forgotten. */
     private static final int WANT_LASTS_TICKS = 5 * 60 * 20;
-    private static final int THOUGHT_MIN_TICKS = 3 * 60 * 20;
-    private static final int THOUGHT_SPREAD_TICKS = 4 * 60 * 20;
+    private static final int THOUGHT_MIN_TICKS = 90 * 20;
+    private static final int THOUGHT_SPREAD_TICKS = 2 * 60 * 20;
     /** At most one thought in chat per leader this often. */
-    private static final int THOUGHT_LEADER_GAP = 60 * 20;
+    private static final int THOUGHT_LEADER_GAP = 30 * 20;
     private static final int GIFT_COOLDOWN_TICKS = 5 * 60 * 20;
     /** Bond needed before a member starts looking out for you. */
     public static final int GIFT_BOND = 3;
@@ -77,7 +77,11 @@ public final class Wants {
         }
         if (member.getWant() == null && now >= member.getNextWant()) {
             member.setNextWant(now + WANT_MIN_TICKS + member.getRandom().nextInt(WANT_SPREAD_TICKS));
-            chooseWant(member, leader, now);
+            // Two people asking you for things is a band. Six is a queue, and you stop
+            // listening to a queue - so the rest hold their tongue until one is settled.
+            if (asking(leader) < MAX_OPEN_WANTS) {
+                chooseWant(member, leader, now);
+            }
         }
         if (now >= member.getNextThought()) {
             member.setNextThought(now + THOUGHT_MIN_TICKS + member.getRandom().nextInt(THOUGHT_SPREAD_TICKS));
@@ -89,6 +93,20 @@ public final class Wants {
                 member.setNextGift(now + GIFT_COOLDOWN_TICKS);
             }
         }
+    }
+
+    /** How many of the band may have an open request at once. */
+    private static final int MAX_OPEN_WANTS = 2;
+
+    /** How many of this leader's band are currently waiting on something. */
+    private static int asking(Player leader) {
+        int open = 0;
+        for (BandMember other : Band.near(leader, 64.0D)) {
+            if (other.getWant() != null && other.leaderPlayer() == leader) {
+                open++;
+            }
+        }
+        return open;
     }
 
     // ------------------------------------------------------------ wants
@@ -262,9 +280,20 @@ public final class Wants {
                     + " would be good.");
         }
         if (member.isObsessedWithObsidian()) {
-            thoughts.add(member.count(ModItems.OBSIDIAN_ROCK.get()) > 0
-                    ? "The black glass is sharper than anything. Nobody touches it but me."
+            // An obsession fills the head: several lines, so it comes up often.
+            boolean has = member.count(ModItems.OBSIDIAN_ROCK.get()) > 0;
+            thoughts.add(has ? "The black glass is sharper than anything. Nobody touches it but me."
                     : "There's black glass somewhere. There has to be.");
+            thoughts.add(has ? "I keep turning it over. It catches the light like water that set hard."
+                    : "Up where the ground smokes, the stone goes black and shines. I've heard.");
+            thoughts.add(has ? "If I struck it, it would be the sharpest thing anyone has ever held."
+                    : "Every dark rock I pass, I look twice. It's never the right one.");
+        }
+        if (member.count(ModItems.LONG_BONE.get()) > 0 || member.count(ModItems.BONE_MARROW.get()) > 0) {
+            thoughts.add("The best part of anything is inside the bone.");
+        }
+        if (member.count(ModItems.RIB.get()) > 0) {
+            thoughts.add("Somebody left good meat on this. Their mistake.");
         }
         if (preferred == ModItems.GRANITE_ROCK.get()) {
             thoughts.add("Chert is pretty, but quartzite doesn't snap on you.");

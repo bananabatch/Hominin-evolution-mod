@@ -60,6 +60,7 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onPlayerLoggedOut);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockBreak);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBreakSpeed);
+        NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockPlace);
         NeoForge.EVENT_BUS.addListener(HomelandSpawn::onCreateSpawnPosition);
         NeoForge.EVENT_BUS.addListener(GuideBook::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerLoggedIn);

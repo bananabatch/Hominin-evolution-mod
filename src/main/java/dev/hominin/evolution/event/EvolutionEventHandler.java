@@ -90,6 +90,8 @@ public final class EvolutionEventHandler {
     private static final float FORAGE_SUCCESS_CHANCE_WITH_STICK = 0.6F;
     /** A digging stick is the real tool for this, and brings up more than one thing at a time. */
     private static final float FORAGE_SUCCESS_CHANCE_DIGGING = 0.75F;
+    /** From habilis, meat and marrow are the diet; the ground is a poorer fallback. */
+    private static final float HABILIS_FORAGE_MULTIPLIER = 0.6F;
     /** Breathing room after a forage resolves, so you cannot strip a patch by holding right-click. */
     private static final long FORAGE_COOLDOWN_TICKS = 60L;
     private static final long KNAP_COOLDOWN_TICKS = 40L;
@@ -306,7 +308,10 @@ public final class EvolutionEventHandler {
      * Rarer than a plain hammerstone: a chert nodule round enough to strike with.
      * Rolled first, so a chert face gives up one or the other, never both.
      */
-    private static final float CHERT_NODULE_FIND_CHANCE = 0.06F;
+    // A chert seam is the only place a hammerstone of chert comes from, and chert seams
+    // are scarce by design. At six percent you could work one out entirely and never see
+    // a nodule, which put the multi tool out of reach for reasons nobody could see.
+    private static final float CHERT_NODULE_FIND_CHANCE = 0.22F;
 
     /**
      * What a face comes off as. A named outcrop gives up its own stone, which is
@@ -374,17 +379,28 @@ public final class EvolutionEventHandler {
                     "Chalky stuff comes away in slabs. It will not hold an edge."), true);
             return;
         }
-        if (chert && level.getRandom().nextFloat() < CHERT_NODULE_FIND_CHANCE) {
+        if (chert && level.getRandom().nextFloat() < CHERT_NODULE_FIND_CHANCE
+                && dev.hominin.evolution.hunt.Seams.takeCobble(level, pos)) {
             giveOrDrop(player, new ItemStack(ModItems.CHERT_HAMMERSTONE.get()));
+            ToolUse.creditOldowanTool(player, ModItems.CHERT_HAMMERSTONE.get());
             player.displayClientMessage(Component.literal(
                     "A whole nodule of chert drops free - round, dense, and just the size of a fist."), true);
             return;
         }
         float hammerChance = chert ? CHERT_HAMMERSTONE_FIND_CHANCE : HAMMERSTONE_FIND_CHANCE;
-        if ((quartzite || chert) && level.getRandom().nextFloat() < hammerChance) {
+        if ((quartzite || chert) && level.getRandom().nextFloat() < hammerChance
+                && dev.hominin.evolution.hunt.Seams.takeCobble(level, pos)) {
             giveOrDrop(player, new ItemStack(ModItems.HAMMERSTONE.get()));
+            // Picking the one usable cobble out of a face of rubble is the whole skill.
+            ToolUse.creditOldowanTool(player, ModItems.HAMMERSTONE.get());
             player.displayClientMessage(Component.literal(
                     "One piece comes away round and heavy. It sits in the hand like it was meant to."), true);
+            return;
+        }
+        if (dev.hominin.evolution.hunt.Seams.isWorkedOut(level, pos)) {
+            player.displayClientMessage(Component.literal(quartzite
+                    ? "Nothing but flat rubble now. Whatever was round in this face is out of it."
+                    : "The good stone in this seam is gone. There will be another somewhere."), true);
             return;
         }
         player.displayClientMessage(Component.literal(quartzite
@@ -418,6 +434,10 @@ public final class EvolutionEventHandler {
         float successChance = digging ? FORAGE_SUCCESS_CHANCE_DIGGING
                 : withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
         successChance *= dev.hominin.evolution.survival.Drought.forageMultiplier(level);
+        if (dev.hominin.evolution.hunt.Predation.standing(player) >= 2) {
+            // Habilis and after live off carcasses and marrow; rooting in the dirt pays less.
+            successChance *= HABILIS_FORAGE_MULTIPLIER;
+        }
         dev.hominin.evolution.band.Territory.usedResource(player, pos);
         if (level.getRandom().nextFloat() >= successChance) {
             player.displayClientMessage(Component.literal(
@@ -748,6 +768,13 @@ public final class EvolutionEventHandler {
         checkArmsRace(event, entity);
         dev.hominin.evolution.hunt.Carcasses.onDeath(entity);
         checkTaungChild(event, entity);
+        if (entity instanceof dev.hominin.evolution.band.BandMember member
+                && event.getSource().getEntity() instanceof LivingEntity killer) {
+            dev.hominin.evolution.hunt.PredatorAppetite.onBandMemberKilled(member, killer);
+        }
+        if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(entity)) {
+            dev.hominin.evolution.hunt.PredatorAppetite.forget(entity.getUUID());
+        }
         dropAt(entity, new ItemStack(Items.BONE));
         if (entity.getBbHeight() >= LONG_BONE_MIN_HEIGHT
                 && entity.level().getRandom().nextFloat() < LONG_BONE_DROP_CHANCE) {

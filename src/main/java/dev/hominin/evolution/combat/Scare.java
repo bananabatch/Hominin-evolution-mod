@@ -24,10 +24,13 @@ import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
  */
 public final class Scare {
     private static final double RUN_SPEED = 1.5D;
+    /** A satisfied animal does not bolt. It turns and goes, which is somehow worse to watch. */
+    private static final double WALK_SPEED = 1.0D;
 
     /** Game time each scared mob stays scared until. Weak, so unloaded mobs are not held. */
     private static final Map<Mob, Long> SCARED_UNTIL = new WeakHashMap<>();
     private static final Map<Mob, Vec3> SCARED_OF = new WeakHashMap<>();
+    private static final Map<Mob, Double> LEAVING_AT = new WeakHashMap<>();
 
     /** Whether a threat display can frighten this at all. */
     public static boolean canBeScared(PathfinderMob mob) {
@@ -35,6 +38,28 @@ public final class Scare {
     }
 
     public static void scare(PathfinderMob mob, Vec3 from, int ticks) {
+        leave(mob, from, ticks, RUN_SPEED);
+    }
+
+    /**
+     * Going, but not in fear. A predator that has eaten, or one whose skull a club has
+     * just cracked, leaves whether or not anything could ever frighten it - so this
+     * deliberately ignores the fearless tag. That tag means a threat display will not
+     * move it, and it still will not: a sabertooth walks away from a full belly, not
+     * from shouting.
+     */
+    public static void depart(PathfinderMob mob, Vec3 from, int ticks) {
+        leave(mob, from, ticks, WALK_SPEED);
+    }
+
+    private static void leave(PathfinderMob mob, Vec3 from, int ticks, double speed) {
+        LEAVING_AT.put(mob, speed);
+        // Its own targeting goals live in the target selector, where a goal flag cannot
+        // reach them. Dropping the target it is chasing as well as the one it holds is
+        // what stops it simply turning round and picking the next hominin along.
+        mob.setLastHurtByMob(null);
+        // Anyone still swinging at it has no reason to follow it into the grass.
+        dev.hominin.evolution.band.Band.standDown(mob);
         SCARED_UNTIL.put(mob, mob.level().getGameTime() + ticks);
         SCARED_OF.put(mob, from);
         mob.setTarget(null);
@@ -90,7 +115,7 @@ public final class Scare {
             Vec3 from = SCARED_OF.getOrDefault(mob, mob.position());
             Vec3 away = DefaultRandomPos.getPosAway(mob, 20, 7, from);
             if (away != null) {
-                mob.getNavigation().moveTo(away.x, away.y, away.z, RUN_SPEED);
+                mob.getNavigation().moveTo(away.x, away.y, away.z, LEAVING_AT.getOrDefault(mob, RUN_SPEED));
             }
         }
     }
