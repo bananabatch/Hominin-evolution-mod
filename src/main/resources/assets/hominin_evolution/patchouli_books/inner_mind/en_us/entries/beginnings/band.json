@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "When something goes for you, they go for it. When you go for something, so do they - so choose what you anger.$(br2)Hand them food, a weapon, anything. With empty hands, they hand you something back."
+      "text": "When something goes for you, they go for it. When you go for something, so do they - so choose what you anger.$(br2)Hold food, a weapon, anything, right-click one, press $(k:hominin_evolution.social) and choose $(l)Here, take this$(). Everything you say to a hominin goes through that menu now."
     },
     {
       "type": "patchouli:text",
@@ -26,7 +26,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Press $(k:hominin_evolution.social) near your band to talk to them: to forage, to ask for food or a tool, or to say you are hurt. Near another band, ask them to walk with you for the day. Sneak-use one member first to talk to just them."
+      "text": "Press $(k:hominin_evolution.social) near your band to talk to them: to forage, to ask for food or a tool, or to say you are hurt. Near another band, ask them to walk with you for the day. Right-click one member first to talk to just them."
     },
     {
       "type": "patchouli:text",
@@ -54,11 +54,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "A member who is fond of you looks after you unasked: food when you are going hungry, a better weapon than the one you have, a hammerstone when you have none.$(br2)Sneak-use one and press $(k:hominin_evolution.social), then Info, to see who they are - sex, health, hunger, favourite foods, what they want, and how much they trust you."
+      "text": "A member who is fond of you looks after you unasked: food when you are going hungry, a better weapon than the one you have, a hammerstone when you have none.$(br2)Right-click one and press $(k:hominin_evolution.social), then Info, to see who they are - sex, health, hunger, favourite foods, what they want, and how much they trust you."
     },
     {
       "type": "patchouli:text",
-      "text": "Grooming is what holds a band together, and it costs the one thing that means anything: time. Sneak-use one of them, press $(k:hominin_evolution.social), then Groom, and stay beside them while you pick through their hair.$(br2)They do it to each other too, and on a hot day they will wade into a river to wash. By erectus there is too little hair left to pick, so it becomes cleaning instead - and one day, for sapiens, it becomes talk."
+      "text": "Grooming is what holds a band together, and it costs the one thing that means anything: time. Right-click one of them, press $(k:hominin_evolution.social), then Groom, and stay beside them while you pick through their hair.$(br2)They do it to each other too, and on a hot day they will wade into a river to wash. By erectus there is too little hair left to pick, so it becomes cleaning instead - and one day, for sapiens, it becomes talk."
     },
     {
       "type": "patchouli:text",

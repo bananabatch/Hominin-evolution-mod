@@ -64,7 +64,7 @@ You play a hominin, not a person, and you earn your way up the line.
 - **Throwing:** sneak-use a rock or branch. Before erectus it is a wild heave; erectus throws straight and hard.
 - **Thinking (hold K):** needs 7 shanks of food and 60% health, on a 3-minute cooldown. It is how every recipe is first worked out — and, once something has run from you, how you keep hold of the chase instead. With empty hands it wanders instead: the day, the night, hunger, thirst, the size of the band, the bones you are carrying.
 - **Bleeding, in three tiers.** *External* (teeth, flakes) bleeds and stops. *Internal* (spears, hyenas, the big cats) bleeds harder and stops you healing while it runs. *Catastrophic* is a clock: 60 seconds, and the only way out is 24 water — four drinks, or three full eggshells. Survive and you are lacerated until dawn; get hurt again or eat raw meat before then and it goes bad — an infection that blocks healing for two days, drains hunger and makes you sick.
-- **Ticks.** You pick one up every two minutes. Past six, nothing heals until somebody grooms them off you.
+- **Ticks.** At most two a day. Past six, nothing heals until somebody grooms them off you.
 - **Healing:** exactly one thing can ever stop you mending — blood loss, infection, lacerations or ticks. A worse affliction replaces a lesser one and wipes it; a lesser one arriving while something worse runs changes nothing. One cause, one timer, and it always tells you which.
 
 ---
@@ -132,24 +132,28 @@ Band members are hominins of your own species who follow you and look after them
 - They **sleep in the nests they build**, one body to a nest, and get up when the light or the danger changes.
 - They swim rather than walk around water, and bathe in rivers on hot days.
 
-**Talking (H)** — grouped by topic, and sneak-use one first to speak to just them.
+**Talking (H)** — grouped by topic; right-click one first to speak to just them. **Everything goes through this menu**: right-clicking a hominin only picks them out, and handing things over is *Here, take this* under Tools and things.
 - **Food:** Let's forage · I'm hungry
-- **Tools and things:** I need an item · Get me… (sticks, branches, nesting material, any of the four stones — and, as they come to think more of you, a flake, hammerstone, pointy stick, digging stick, chopper, spear, club or multi tool. They can only hand over one they actually have.)
+- **Tools and things:** Here, take this (whatever you hold — food, what they asked for, anything for their pack; feeding a stray this way is how you win it over) · Trade · I need an item · Get me… (sticks, branches, nesting material, any of the four stones — and, as they come to think more of you, a flake, hammerstone, pointy stick, digging stick, chopper, spear, club or multi tool. They can only hand over one they actually have.)
 - **Danger:** I'm hurt · Let's hunt together · Don't hunt with me · Let's climb a tree / All clear
 - **Each other:** Let's stick together today · Groom them · Get these off me · Let's play · Let's share food · Info
 
 **Bonding**
-- **Picking somebody out stops them.** Sneak-use a member and they stop, turn to face you and wait while you talk.
-- **Grooming pays.** Two ticks come off per session and you keep them as food. Being groomed puts that member in debt, and they come back and groom you in return — nobody can reach their own back. Ask for it with *Get these off me*.
+- **Picking somebody out stops them.** Right-click any hominin and they stop, turn to face you and wait; press H within five seconds to talk to just them.
+- **Trading** is done face to face: pick someone out, press H, choose *Trade*. You see everything they carry and what each thing is worth to them; choose what to offer from your hotbar, then what you want. Worth is measured in their era, droughts cost a tier, and obsidian obsessives will not part with obsidian.
+- **Teach** (under H): pick a skill you know and your band watches you — then do it, and everyone watching learns it. Skills that cannot be shown are told instead, and words only get through to some. Children learn what their minder knows as they grow up. Taught members fish termites far more often, crack extra marrow, and groom you better.
+- **Grooming pays.** Two ticks come off per session and you keep them as food. Being groomed puts that member in debt, and they come back and groom you in return — nobody can reach their own back. Ask for it with *Get these off me*; anyone in your band will do it. A member with ticks on them can always be groomed again; bond only rises once per ten minutes.
 - **Play:** tag or wrestling, only when nothing has attacked recently. Each round of tag gives an extra second of flight the next time adrenaline hits; each round of wrestling gives an extra five seconds of fight. Up to three rounds per species, and it counts for you too. Children play on their own.
 - **Share:** everyone puts food in and it goes to whoever likes it best — bond for all, cohesion for the band, once every 8 minutes. Tastes change: eat something often enough and it may become a favourite, and they will say so.
 - **Grooming:** stand beside one for 5 seconds — bond, a little healing, band cohesion, once per member per 10 minutes. Hair is picked through up to habilis; erectus and later clean skin and grit instead. They groom each other unprompted.
+- Feeding raises bond: a favourite always does, sometimes by two; anything else about one time in four.
+- **Deaths are announced** in chat, like a named pet's, and each one costs the band 3 cohesion.
 - Favourite foods raise bond. At bond 3 they look after you unasked: food when you are hungry, a better weapon than yours, a hammerstone if you have none, a flake if you have nothing to cut with.
 
 **Habilis and later**
 - Each member prefers chert or quartzite, or neither; one in five is obsessed with obsidian and will not part with it.
 - They break rocks on their own account, avoid limestone, and complain about it when it is all there is.
-- They make their own tools, want things and ask you for them, offer trades, and say what they are thinking. No more than **two** of the band have an open request at once — six people asking you for things is a queue, and you stop listening to a queue.
+- They make their own tools, want things and ask you for them, offer trades, and say what they are thinking. No more than **two** of the band have an open request at once — six people asking you for things is a queue, and you stop listening to a queue. From erectus on, a want left to run out costs a point of that member's bond — by then they expect to be heard.
 - Obsidian obsessives rush any obsidian they see and talk about it. They will not trade it and cannot be talked out of it, but ask with an open hand and about one time in five they want you to have it anyway.
 
 **Fear and fighting**
@@ -174,6 +178,7 @@ Band members are hominins of your own species who follow you and look after them
 - They will not join you, but they trade. Value is era-relative: a Lomekwian core is Treasured to Australopithecus and Common to erectus.
 - **Territory:** foraging, drinking or knapping within 28 blocks of their site is noticed. Habilis keeps away from you by day; erectus tells you to stop and then demands payment. Trade them something Crafted or better, or get them to travel with you, and the ground is shared.
 - Species come and go: Australopithecus is gone by erectus, habilis thins out, erectus lasts until sapiens.
+- **Paranthropus boisei**, from Australopithecus until antecessor: troops of 3–6, dark and heavy-built, with a crest along the skull, a broad flat face and flared cheekbones. Not a stage you can play. They carry long branches and sharpened sticks, forage constantly, and **strip the ground for 60 blocks** — foraging near them works about a third as often, and in a drought barely at all. A threat display sends them off 100 blocks, taking their foraging with them. They are also good neighbours: when a predator comes into the country within 128 blocks of a troop, they shriek, and you are told which way it is coming from. Under H they only understand three things: *Trade*, where about 40% of lowball offers up to two tiers short get through (*"You got the better of that one"*); *Show me good stone*, where one walks you to the nearest chert or quartzite, waiting when you fall behind; and *Show me obsidian*. They guide once a day per troop. Make an Oldowan tool in front of them and the ones watching learn it, and knap now and then from then on; the rest only rarely pick it up once Homo habilis is about.
 - While another band is travelling with you, **your own** band glows, so you can tell yours from the guests.
 - Guests go home at dusk — and now go on their own if their alpha is dead or gone, rather than standing in your camp all night.
 
@@ -182,8 +187,14 @@ Band members are hominins of your own species who follow you and look after them
 ## 7. Animals
 
 - **Papio angusticeps:** troops of 14–20. They trade, mob whatever attacks one of them, and their bites bleed.
+- **Baboons climb:** up a trunk to sleep in the branches at night, up when frightened, and now and then by day for the view. Chimpanzees and bonobos do the same, and chimps go up when a predator comes within 10 blocks.
+- **Other primates compete for food:** foraging within 35 blocks of baboons, chimpanzees, bonobos or Dinopithecus works about a third as often, and says why.
+- **Baboon alarm calls.** A troop leader that spots a predator within 28 blocks barks the alarm, and the whole troop turns to look. Anyone within 48 blocks hears which animal it is and which way to look (*"The baboons are barking alarm: Saber-toothed Cat, to the north-east."*). Once every 45 seconds at most.
+- **Chimpanzees** live in communities of 4–7: often in jungle, fairly often in savanna within 90 blocks of a jungle, and rarely further out from erectus on. They hold a range. The alpha status-checks anyone inside it — walks up, stands too close, bristles and grunts, with no other warning — and you have five seconds to hand it something or hold K. Pass and trust rises; fail and the alpha makes its point, and trust falls. Hitting one, or displaying at them, opens the same window as a baboon troop. Feed them (sneak-use shows trust) and a community that trusts you grooms your ticks and mobs any predator chasing you through its range. A grudge means attack on sight inside the range.
 - **Baboon trust.** Trades and gifts build it; gifts count double. Once a troop trusts you, up to three travel with your band by day, mob any predator that comes near you, and go home at night.
 - **The five-second window.** Hit a baboon near its troop and the whole troop goes still and stares while your view narrows. Hand one anything, or hold K to make yourself small, and they let it go. Do nothing — or hit one again — and the troop erupts and holds a grudge: they won't chase you past 24 blocks, but they attack whenever you come within 9. A grudge can be worn down, slowly, with gifts.
+- **Bonobos**, from erectus on, in troops of 6–10 by rivers and at forest edges. **Nothing hunts within 64 blocks of a peaceful troop**: no predators spawn, no visitors come to camp, and camp pressure drains away. It's the only safe ground in the game. They give food to anyone nearby who is hungry, groom anyone with ticks without needing trust first, drift along beside you while you forage, and share out whatever food you hand them. Sneak-use tells you where you stand. **Hurt one** (you, or one of your band), and that troop is no refuge any more. Nor is any troop you meet afterwards, for the rest of your line: they keep away from you. There is no apology.
+- **Crocodiles** lie in warm water at least two blocks deep: savanna pools, rivers, jungle, swamp. They're twice as likely during a drought. Come within about 7 blocks of the water and one lunges. If it connects, it grabs you and rolls: you're dragged toward deep water, slowed right down, and bitten every second, and the first bite bleeds. One hit of 3 damage or more makes it let go, and so does a band member hitting it. A miss sends it back under to wait. It never chases far up the bank, a threat display does nothing to it, and it drops 2–4 meat.
 - **Dinopithecus**, the giant baboon: groups of 2–3, never hunting you, but deadly if you come within 5 blocks. It pauses between bites and never backs off. A threat display does not frighten it — it charges you and earns *Nice Try, Genius*. Its bites cause internal bleeding, sometimes catastrophic. Gone by erectus.
 - **Pachycrocuta:** the giant hyena. Stalks you while you are not looking; a display drives it off.
 - **Sabertooth:** attacks anything within 7 blocks, hunts baboons from 16, and is afraid of nothing — no threat display will move it.
@@ -215,7 +226,10 @@ Band members are hominins of your own species who follow you and look after them
 - Trade tier on the tooltip of anything worth trading, valued for your own stage.
 - Patchouli guidebook, *The Inner Mind*, including a section on every key, everything you can make, and everything you can ask the band.
 - Achievements: Lucy, Lomekwian, Survivor, tired apes, Ez arms race, The Taung Child, and one per stage.
-- Keys: **P** work held items · **K** (hold) think · **H** talk to band · **G** threat display.
+- Keys: **P** work held items · **K** (hold) think · **H** talk to band · **G** threat display · **J** journal.
+- **Journal (J).** *Stats*: species, sex (drawn fresh for each descendant), health and water, ticks, what is stopping you healing, band size and cohesion, your standing with the band and each member's bond, how many bands you can still lose, and your play training. *Skills*: everything you know by name and everything you don't as `???`; pick one to see what it is, how to do it again, what it gives you, and whether it survives evolving.
+- **Skills**, learned by doing: Lomekwian knapping (multi tools never shatter), termite fishing (bonus grubs), marrow (extra marrow), firemaking (drills often survive), tracking (trails last longer), grooming (an extra tick off everyone), primate de-escalation (3 more seconds in the baboon window), and the long view — earned by thinking empty-handed — which shortens the wait between thoughts. Knowledge carries over when you evolve; tracking and grooming belong to the body and must be relearned.
+- **Developer tab** (H, in developer mode only): bond up or down, band cohesion, the nearest troop's trust or grudge, ticks, clear afflictions, fill water, learn or forget every skill, max play training, teach the band everything.
 - Commands: `/hominin status`, `checklist`, `guide`, `start`, `band`, `wildband`, `become`, `unlockadvancements`, `bypass`, `dev`.
 - Gamerules: `homininSuperHardMode`, `homininExtraEffort`.
 
@@ -227,16 +241,15 @@ Everything below is written down and not yet built. Roughly in the order it is b
 
 ### 1. Foundations
 
-- **Skills and stats (J).** Gender, infestation, standing with each member and with the band, bands left before extinction — and a skill list you fill by thinking, in general or in the right moment. Skills carry across evolutions: a Lomekwian core made back in Australopithecus makes you a better knapper forever. Each one tells you how to do it again and what it gets you.
+- **More skills**, and knapping skill levels from erectus on — the Lomekwian skill already carries forward to give you a head start there.
 
 ### 2. Screens and society
 
-- **The rest of the social tab.** *Trade*, moved in full into the H menu. *Teach* — your band does not learn your skills by watching; you press Teach and then do the thing, or say it aloud if it cannot be shown. What they learn, they pass to their children.
+- **More for the band to learn**, as more skills arrive.
 
 ### 3. Primate relations
 
-- **Chimpanzees** at the jungle edge: territorial, risky, habituated the same way, and given to status checks an alpha will walk over to deliver. Their warnings are subtler than a baboon's.
-- **Bonobos**, erectus onward, near rivers and forest edges. They give food to keep the peace, groom, forage alongside you — and **no predator will spawn near a bonobo troop**, which makes them the only safe ground in the game. Hunt them and all of that ends, for good.
+- Bonobos reacting to your band's standing, not only yours.
 
 ### 4. Megafauna
 
@@ -262,12 +275,9 @@ Dialogue to be written when the rest of it exists.
 ### 7. Elsewhere
 
 - **Small talk as grooming** — the hypothesis that language replaced grooming once groups grew too large to touch. Rare at heidelbergensis, the main way a sapiens band bonds.
-- Consequences from erectus for ignoring what your band wants. Today, ignoring a want costs nothing.
 - Group stability doing something: children dying already counts against it, but nothing reads it yet.
 - Language learning between bands (tracked, unused).
-- Crocodiles at the water, to make drinking and droughts dangerous.
-- Hyena clans contesting carcasses in numbers; Dinofelis as a night ambusher; a rock python in long grass; baboon alarm calls warning of big cats.
+- Hyena clans contesting carcasses in numbers; Dinofelis as a night ambusher; a rock python in long grass; bonobos answering baboon alarm calls.
 - Custom recorded cries for the new predators, which use vanilla sounds as placeholders.
 - Fire as a lasting, carried thing rather than a one-off milestone.
-- **Developer mode as a proper editor:** standing, skill levels and anything else with a number, editable from a Developer tab under H.
 - Region-based world generation, so different parts of the world hold different species.

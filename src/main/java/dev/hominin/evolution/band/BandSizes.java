@@ -39,7 +39,9 @@ public final class BandSizes {
             // The fallbacks: smaller, poorer bands than the species they stand behind.
             Map.entry("australopithecus_anamensis", new Size(3, 5)),
             Map.entry("homo_rudolfensis", new Size(5, 9)),
-            Map.entry("homo_ergaster", new Size(9, 14)));
+            Map.entry("homo_ergaster", new Size(9, 14)),
+            // Not a stage you can play: the robust neighbours, in small troops.
+            Map.entry("paranthropus_boisei", new Size(6, 9)));
 
     public static Size of(ResourceLocation stage) {
         return SIZES.getOrDefault(stage.getPath(), DEFAULT);

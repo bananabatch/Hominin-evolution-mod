@@ -74,7 +74,8 @@ public final class Territory {
     public static void usedResource(ServerPlayer player, BlockPos where) {
         for (BandMember member : Band.near(player, HOME_RADIUS)) {
             UUID band = member.getBandId();
-            if (!member.isWild() || band == null || member.isGuestOf(player)) {
+            // Paranthropus do not claim ground by word - they just strip it (see Paranthropus.forageShare).
+            if (!member.isWild() || band == null || member.isGuestOf(player) || Paranthropus.is(member)) {
                 continue;
             }
             Claim claim = claims.get(band);

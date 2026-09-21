@@ -84,6 +84,11 @@ public class CraftGoal extends Goal {
                 || member.getRandom().nextInt(20) != 0) {
             return false;
         }
+        if (dev.hominin.evolution.band.Paranthropus.is(member) && !dev.hominin.evolution.band.Paranthropus.mayCraft(member)) {
+            // Rarely, and mostly once they have watched you do it.
+            nextTry = member.tickCount + MIN_COOLDOWN;
+            return false;
+        }
         plan = choosePlan();
         if (plan == null) {
             nextTry = member.tickCount + MIN_COOLDOWN / 2;

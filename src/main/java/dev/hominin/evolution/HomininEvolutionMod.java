@@ -83,6 +83,9 @@ public class HomininEvolutionMod {
             event.put(ModEntities.BAND_MEMBER.get(), BandMember.createAttributes().build());
             event.put(ModEntities.BABOON.get(), dev.hominin.evolution.entity.Baboon.createAttributes().build());
             event.put(ModEntities.DINOPITHECUS.get(), dev.hominin.evolution.entity.Dinopithecus.attributes().build());
+            event.put(ModEntities.CHIMPANZEE.get(), dev.hominin.evolution.entity.Chimpanzee.createAttributes().build());
+            event.put(ModEntities.BONOBO.get(), dev.hominin.evolution.entity.Bonobo.createAttributes().build());
+            event.put(ModEntities.CROCODILE.get(), dev.hominin.evolution.entity.Crocodile.createAttributes().build());
             event.put(ModEntities.PACHYCROCUTA.get(), dev.hominin.evolution.entity.Pachycrocuta.createAttributes().build());
             event.put(ModEntities.SABERTOOTH.get(), dev.hominin.evolution.entity.Sabertooth.createAttributes().build());
             event.put(ModEntities.HOMOTHERIUM.get(), dev.hominin.evolution.entity.Homotherium.createAttributes().build());

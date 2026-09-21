@@ -70,6 +70,27 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
+    /**
+     * Paranthropus boisei, "Nutcracker Man": a ridge of bone along the top of the skull for
+     * the chewing muscles to anchor on, cheekbones flaring out to the sides, and a broad,
+     * flat, deep face with a jaw built for grinding.
+     */
+    public static LayerDefinition paranthropus() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -6.0F, -5.0F, 8, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-3.5F, -4.0F, -5.8F, 7, 4, 2), PartPose.ZERO);
+        root.addOrReplaceChild("crest", CubeListBuilder.create().texOffs(18, 0)
+                .addBox(-0.5F, -9.0F, -4.0F, 1, 1, 6), PartPose.ZERO);
+        root.addOrReplaceChild("right_cheek", CubeListBuilder.create().texOffs(0, 8)
+                .addBox(-5.0F, -4.5F, -4.5F, 1, 2, 2), PartPose.ZERO);
+        root.addOrReplaceChild("left_cheek", CubeListBuilder.create().texOffs(0, 8)
+                .addBox(4.0F, -4.5F, -4.5F, 1, 2, 2), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
     /** Erectus: the brow is still there, but the face under it has come nearly flat. */
     public static LayerDefinition erectus() {
         MeshDefinition mesh = new MeshDefinition();

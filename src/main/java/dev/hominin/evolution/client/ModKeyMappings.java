@@ -46,7 +46,15 @@ public final class ModKeyMappings {
             InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_G),
             CATEGORY);
 
+    /** Your journal: who you are, and what you know. */
+    public static final KeyMapping JOURNAL = new KeyMapping(
+            "key.hominin_evolution.journal",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_J),
+            CATEGORY);
+
     public static void register(RegisterKeyMappingsEvent event) {
+        event.register(JOURNAL);
         event.register(THREAT_DISPLAY);
         event.register(SOCIAL);
         event.register(ITEM_INTERACT);

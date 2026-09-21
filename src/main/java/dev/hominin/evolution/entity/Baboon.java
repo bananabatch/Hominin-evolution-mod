@@ -46,7 +46,7 @@ import net.minecraft.world.phys.Vec3;
  * mauls it - screaming, surrounding, biting, and the bites bleed. Hunt the stragglers,
  * or better, trade. A troop will even mob a predator that wanders too close.
  */
-public class Baboon extends PathfinderMob {
+public class Baboon extends PathfinderMob implements TroopAnimal, TreeClimber {
     /** A baboon with at least this many troop-mates nearby fights instead of running. */
     private static final int SWARM_TROOP_SIZE = 4;
     private static final double TROOP_RADIUS = 28.0D;
@@ -65,6 +65,8 @@ public class Baboon extends PathfinderMob {
     private UUID troopLeader;
     private int angerTicks;
     private int panicTicks;
+    /** When the leader may next raise the alarm - once is a warning, every second is noise. */
+    private int nextAlarm;
     /** Food it has foraged, carried in its cheek pouches - which is what it trades. */
     private final SimpleContainer pouch = new SimpleContainer(POUCH_SIZE);
 
@@ -111,6 +113,11 @@ public class Baboon extends PathfinderMob {
         player.displayClientMessage(Component.literal("A baboon falls in beside you."), true);
     }
 
+    /** The troop's leader: it has nobody above it to follow. */
+    public boolean isLeader() {
+        return troopId != null && troopLeader == null;
+    }
+
     public boolean isEscorting(Player player) {
         return player.getUUID().equals(escortOf);
     }
@@ -142,6 +149,8 @@ public class Baboon extends PathfinderMob {
         });
         goalSelector.addGoal(2, new EscortGoal());
         goalSelector.addGoal(2, new GoHomeGoal());
+        goalSelector.addGoal(3, new ClimbTreeGoal<>(this,
+                () -> isAngry() || escortOf != null || isBaby() || isInWater(), () -> panicTicks > 0));
         goalSelector.addGoal(3, new ForageGoal());
         goalSelector.addGoal(4, new KeepWithTroopGoal());
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
@@ -242,7 +251,49 @@ public class Baboon extends PathfinderMob {
             if (!predators.isEmpty() && troopNearby().size() + 1 >= SWARM_TROOP_SIZE) {
                 mob(predators.get(0));
             }
+            if (tickCount >= nextAlarm) {
+                alarm();
+            }
         }
+    }
+
+    private static final double ALARM_SPOT = 28.0D;
+    private static final double ALARM_HEARD = 48.0D;
+
+    /**
+     * The troop sees a cat long before you do, and says so. Anyone within earshot hears the
+     * barking and - if they know what it means - which way to look.
+     */
+    private void alarm() {
+        List<net.minecraft.world.entity.Mob> cats = level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                getBoundingBox().inflate(ALARM_SPOT),
+                m -> m.isAlive() && m.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)
+                        && !(m instanceof CrownedEagle));
+        if (cats.isEmpty()) {
+            return;
+        }
+        net.minecraft.world.entity.Mob cat = cats.get(0);
+        nextAlarm = tickCount + 20 * 45;
+        for (Baboon mate : troopNearby()) {
+            mate.playSound(ModSounds.BABOON_ANGRY.get(), 1.6F, 1.3F + getRandom().nextFloat() * 0.2F);
+            mate.getLookControl().setLookAt(cat, 30.0F, 30.0F);
+        }
+        playSound(ModSounds.BABOON_ANGRY.get(), 2.4F, 1.3F);
+        for (Player player : level().players()) {
+            if (player.isSpectator() || player.distanceTo(this) > ALARM_HEARD) {
+                continue;
+            }
+            player.displayClientMessage(Component.literal("The baboons are barking alarm: ")
+                    .append(cat.getType().getDescription())
+                    .append(", to the " + compass(player, cat) + ".").withStyle(net.minecraft.ChatFormatting.GOLD), true);
+        }
+    }
+
+    /** Which way to look from where you stand, as the eight points. */
+    private static String compass(Player from, net.minecraft.world.entity.Entity to) {
+        double angle = Math.toDegrees(Math.atan2(to.getX() - from.getX(), -(to.getZ() - from.getZ())));
+        String[] points = {"north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"};
+        return points[Math.floorMod((int) Math.round(angle / 45.0D), 8)];
     }
 
     /**
@@ -372,6 +423,30 @@ public class Baboon extends PathfinderMob {
                 getNavigation().moveTo(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, 1.1D);
             }
         }
+    }
+
+    // ------------------------------------------------------------ trees
+
+    /** Up a trunk right now: this is what lets it climb, and lets it through the leaves. */
+    private boolean climbing;
+
+    public boolean isClimbing() {
+        return climbing;
+    }
+
+    @Override
+    public void setClimbing(boolean climbing) {
+        this.climbing = climbing;
+    }
+
+    @Override
+    public boolean onClimbable() {
+        return (climbing && horizontalCollision) || super.onClimbable();
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        return !climbing && super.causeFallDamage(distance, multiplier, source);
     }
 
     /** Keeping company with a friend: close, but not underfoot. */
@@ -635,6 +710,9 @@ public class Baboon extends PathfinderMob {
                 return false;
             }
             if (!(server.getEntity(troopLeader) instanceof Baboon found) || !found.isAlive()) {
+                return false;
+            }
+            if (found.escortOf != null) {
                 return false;
             }
             leader = found;

@@ -97,6 +97,100 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 128, 128);
     }
 
+    /**
+     * A chimpanzee, knuckle-walking: long arms planted on the knuckles in front, short legs
+     * behind, so the body rides high at a shaggy shoulder hump and slopes to the hips.
+     *
+     * <p>The face is built in pieces because that is where a chimp is recognisable: a bare
+     * skin mask under a heavy jutting brow, a long muzzle with a big mobile upper lip and a
+     * short chin with grey whiskers painted on, and wide round ears set low on the sides of the head.
+     * The hair is long at the shoulders and elbows; the hands and feet are bare.
+     */
+    public static LayerDefinition chimpanzee() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 18)
+                .addBox(-5F, -4.5F, -7F, 10F, 9F, 14F), PartPose.offsetAndRotation(0F, 11.5F, 0F, -0.4F, 0F, 0F));
+        body.addOrReplaceChild("hump", CubeListBuilder.create().texOffs(48, 18)
+                .addBox(-5.5F, -5.8F, -7.5F, 11F, 6F, 7F), PartPose.offset(0F, 0F, 0F));
+
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4F, -4F, -6F, 8F, 8F, 7F), PartPose.offset(0F, 6F, -8F));
+        head.addOrReplaceChild("face", CubeListBuilder.create().texOffs(32, 0)
+                .addBox(-3.5F, -3.5F, -6.5F, 7F, 5F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(50, 0)
+                .addBox(-4F, -4.5F, -8F, 8F, 2F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(74, 0)
+                .addBox(-3F, -0.5F, -9F, 6F, 5F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("upper_lip", CubeListBuilder.create().texOffs(96, 0)
+                .addBox(-2.5F, 1.5F, -10F, 5F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("chin", CubeListBuilder.create().texOffs(96, 6)
+                .addBox(-2F, 3.5F, -8.5F, 4F, 2F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(32, 8)
+                .addBox(4F, -3F, -4F, 1F, 5F, 4F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(32, 8)
+                .addBox(-5F, -3F, -4F, 1F, 5F, 4F), PartPose.offset(0F, 0F, 0F));
+
+        for (String side : new String[] {"right", "left"}) {
+            float x = side.equals("right") ? -4.5F : 4.5F;
+            PartDefinition arm = root.addOrReplaceChild(side + "_front_leg", CubeListBuilder.create().texOffs(0, 42)
+                    .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(x, 11F, -5.5F));
+            arm.addOrReplaceChild(side + "_hand", CubeListBuilder.create().texOffs(18, 42)
+                    .addBox(-1.5F, 10F, -2.5F, 3F, 3F, 4F), PartPose.offset(0F, 0F, 0F));
+            arm.addOrReplaceChild(side + "_elbow_hair", CubeListBuilder.create().texOffs(34, 42)
+                    .addBox(-2.5F, 0F, -2.5F, 5F, 4F, 5F), PartPose.offset(0F, 0F, 0F));
+            float legX = side.equals("right") ? -3.2F : 3.2F;
+            PartDefinition leg = root.addOrReplaceChild(side + "_hind_leg", CubeListBuilder.create().texOffs(56, 42)
+                    .addBox(-2F, 0F, -2F, 4F, 6F, 4F), PartPose.offset(legX, 16F, 5.5F));
+            leg.addOrReplaceChild(side + "_foot", CubeListBuilder.create().texOffs(74, 42)
+                    .addBox(-2F, 6F, -3F, 4F, 2F, 5F), PartPose.offset(0F, 0F, 0F));
+        }
+        return LayerDefinition.create(mesh, 128, 128);
+    }
+
+    /**
+     * A crocodile: long and low, belly almost on the ground, legs splayed out to the sides.
+     * The snout is a separate long wedge with its own lower jaw, the eyes sit up on bumps so
+     * they clear the water, and a ridge of armour runs down the back into a three-part tail.
+     */
+    public static LayerDefinition crocodile() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4F, -2F, -8F, 8F, 4F, 16F), PartPose.offset(0F, 20F, 0F));
+        body.addOrReplaceChild("ridge", CubeListBuilder.create().texOffs(0, 20)
+                .addBox(-2F, -3F, -7F, 4F, 1F, 14F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(36, 20)
+                .addBox(-3F, -1.5F, 0F, 6F, 3F, 8F), PartPose.offset(0F, -0.5F, 8F));
+        PartDefinition tailMid = tail.addOrReplaceChild("tail_mid", CubeListBuilder.create().texOffs(64, 20)
+                .addBox(-2F, -1F, 0F, 4F, 2F, 8F), PartPose.offsetAndRotation(0F, 0F, 8F, 0F, 0.12F, 0F));
+        tailMid.addOrReplaceChild("tail_tip", CubeListBuilder.create().texOffs(88, 20)
+                .addBox(-1F, -0.5F, 0F, 2F, 1F, 6F), PartPose.offsetAndRotation(0F, 0F, 8F, 0F, 0.18F, 0F));
+
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(48, 0)
+                .addBox(-3F, -2F, -6F, 6F, 4F, 6F), PartPose.offset(0F, 20F, -8F));
+        head.addOrReplaceChild("snout", CubeListBuilder.create().texOffs(72, 0)
+                .addBox(-2F, -1F, -14F, 4F, 2F, 8F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(96, 0)
+                .addBox(-2F, 1F, -13F, 4F, 1F, 7F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_eye", CubeListBuilder.create().texOffs(48, 10)
+                .addBox(-2.5F, -3F, -4F, 2F, 1F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_eye", CubeListBuilder.create().texOffs(48, 10)
+                .addBox(0.5F, -3F, -4F, 2F, 1F, 2F), PartPose.offset(0F, 0F, 0F));
+
+        for (String side : new String[] {"right", "left"}) {
+            float x = side.equals("right") ? -4.5F : 4.5F;
+            for (String end : new String[] {"front", "hind"}) {
+                float z = end.equals("front") ? -5F : 5F;
+                PartDefinition leg = root.addOrReplaceChild(side + "_" + end + "_leg", CubeListBuilder.create()
+                        .texOffs(0, 36).addBox(-1.5F, 0F, -1.5F, 3F, 3F, 3F), PartPose.offset(x, 21F, z));
+                leg.addOrReplaceChild(side + "_" + end + "_foot", CubeListBuilder.create().texOffs(12, 36)
+                        .addBox(-2F, 2F, -3F, 4F, 1F, 4F), PartPose.offset(0F, 0F, 0F));
+            }
+        }
+        return LayerDefinition.create(mesh, 128, 64);
+    }
+
     public static LayerDefinition pachycrocuta() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();

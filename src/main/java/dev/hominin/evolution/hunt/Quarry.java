@@ -166,7 +166,10 @@ public final class Quarry {
             player.sendSystemMessage(Component.literal("You pick the tracks up again, and sweat for it.")
                     .withStyle(ChatFormatting.GRAY));
         } else {
-            quarry.addEffect(new MobEffectInstance(MobEffects.GLOWING, FIRST_RUN_TICKS, 0, false, false));
+            boolean tracker = dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.TRACKING);
+            quarry.addEffect(new MobEffectInstance(MobEffects.GLOWING,
+                    tracker ? FIRST_RUN_TICKS * 3 / 2 : FIRST_RUN_TICKS, 0, false, false));
+            dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.TRACKING);
             player.sendSystemMessage(Component.literal(
                     "You hold the shape of the one that ran, and the ground it went over. It cannot lose you yet.")
                     .withStyle(ChatFormatting.GRAY));

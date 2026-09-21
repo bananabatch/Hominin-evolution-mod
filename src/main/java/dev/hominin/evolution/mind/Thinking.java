@@ -62,6 +62,7 @@ public final class Thinking {
             player.setShiftKeyDown(true);
             dev.hominin.evolution.entity.TroopRelations.forgive(player,
                     "You drop low and look away. After a long moment, the troop goes back to foraging.");
+            dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.DEESCALATION);
             return;
         }
         long now = player.level().getGameTime();
@@ -71,8 +72,9 @@ public final class Thinking {
             return;
         }
         Long last = lastThought.get(player.getUUID());
-        if (last != null && now - last < COOLDOWN_TICKS) {
-            int seconds = (int) ((COOLDOWN_TICKS - (now - last)) / 20L);
+        int cooldown = COOLDOWN_TICKS - (dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.LONG_VIEW) ? 1200 : 0);
+        if (last != null && now - last < cooldown) {
+            int seconds = (int) ((cooldown - (now - last)) / 20L);
             player.displayClientMessage(Component.literal(
                     "Your head is still thick from the last of it. (" + seconds + "s)"), true);
             return;
@@ -144,6 +146,12 @@ public final class Thinking {
      */
     private static void reflect(ServerPlayer player, long now) {
         spend(player, now);
+        // A second time sitting with nothing but the day in your head, and it takes.
+        int reflections = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA)
+                .getCriterionCounters().merge("reflections", 1, Integer::sum);
+        if (reflections >= 2) {
+            dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.LONG_VIEW);
+        }
         EvolutionManager.incrementCriterion(player, "think_times", 1);
         player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME,
                 SoundSource.PLAYERS, 0.8F, 0.7F);

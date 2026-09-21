@@ -29,7 +29,8 @@ public final class Social {
         FOOD("Food"),
         THINGS("Tools and things"),
         DANGER("Danger"),
-        TOGETHER("Each other");
+        TOGETHER("Each other"),
+        DEVELOPER("Developer");
 
         private final String label;
 
@@ -46,6 +47,10 @@ public final class Social {
         FORAGE("Let's forage", Topic.FOOD),
         FOOD("I'm hungry, can you get me food?", Topic.FOOD),
         ITEM("I need an item...", Topic.THINGS),
+        TRADE("Trade...", Topic.THINGS),
+        GIVE("Here, take this (what I'm holding)", Topic.THINGS),
+        LEAD_STONE("Show me good stone", Topic.THINGS),
+        LEAD_OBSIDIAN("Show me obsidian", Topic.THINGS),
         HURT("I'm hurt, look after me", Topic.DANGER),
         TRAVEL("Let's stick together today", Topic.TOGETHER),
         HUNT("Let's hunt together", Topic.DANGER),
@@ -54,8 +59,21 @@ public final class Social {
         GROOM("Groom them", Topic.TOGETHER),
         GROOM_ME("Get these off me", Topic.TOGETHER),
         PLAY("Let's play", Topic.TOGETHER),
+        TEACH("Teach...", Topic.TOGETHER),
         SHARE("Let's share food", Topic.TOGETHER),
-        INFO("Info", Topic.TOGETHER);
+        INFO("Info", Topic.TOGETHER),
+        DEV_BOND_UP("Bond +5 (whoever's listening)", Topic.DEVELOPER),
+        DEV_BOND_DOWN("Bond -5 (whoever's listening)", Topic.DEVELOPER),
+        DEV_COHESION("Band cohesion +10", Topic.DEVELOPER),
+        DEV_TROOP_TRUST("Nearest troop: trusts you", Topic.DEVELOPER),
+        DEV_TROOP_GRUDGE("Nearest troop: grudge", Topic.DEVELOPER),
+        DEV_TICKS_UP("Ticks +3", Topic.DEVELOPER),
+        DEV_HEAL_CLEAR("Clear ticks and afflictions", Topic.DEVELOPER),
+        DEV_WATER("Fill water", Topic.DEVELOPER),
+        DEV_SKILLS_ALL("Learn every skill", Topic.DEVELOPER),
+        DEV_SKILLS_NONE("Forget every skill", Topic.DEVELOPER),
+        DEV_TRAINING("Max play training", Topic.DEVELOPER),
+        DEV_TEACH_BAND("Teach the band every skill", Topic.DEVELOPER);
 
         private final String label;
         private final Topic topic;
@@ -105,6 +123,10 @@ public final class Social {
 
     /** Runs a command, said to one member (by entity id) or, with -1, to whoever is nearby. */
     public static void perform(ServerPlayer player, int entityId, Command command) {
+        if (command.topic() == Topic.DEVELOPER) {
+            Developer.run(player, entityId, command);
+            return;
+        }
         if (command == Command.TRAVEL && entityId < 0) {
             List<BandMember> other = nearestOtherBand(player);
             if (other.isEmpty()) {
@@ -126,7 +148,21 @@ public final class Social {
         }
         BandMember first = listeners.get(0);
         String who = individual ? first.getName().getString() : first.isWild() ? "The other band" : "Your band";
+        // Paranthropus: no shared language worth the name. Trade, and being shown the way.
+        if (Paranthropus.is(first) && command != Command.TRADE && command != Command.LEAD_STONE
+                && command != Command.LEAD_OBSIDIAN) {
+            say(player, "The Paranthropus stare at you. Whatever you meant, it did not get across.");
+            return;
+        }
         switch (command) {
+            case GIVE -> nearestOf(player, listeners).receiveFromHand(player);
+            case LEAD_STONE, LEAD_OBSIDIAN -> {
+                if (!Paranthropus.is(first)) {
+                    say(player, who + (individual ? " has" : " have") + " no better idea where to find it than you do.");
+                    return;
+                }
+                Paranthropus.guide(player, nearestOf(player, listeners), command == Command.LEAD_OBSIDIAN);
+            }
             case FORAGE -> {
                 for (BandMember member : listeners) {
                     member.forageAlongside(player.blockPosition());
@@ -135,6 +171,7 @@ public final class Social {
             }
             case FOOD -> askForFood(player, listeners, individual, who);
             case ITEM -> askForItem(player, listeners, who, individual);
+            case TRADE -> Trading.openTrade(player, nearestOf(player, listeners));
             case HURT -> askForCare(player, listeners, who);
             case TRAVEL -> askToTravel(player, first);
             case HUNT -> {
@@ -162,6 +199,7 @@ public final class Social {
             }
             case GROOM_ME -> askToBeGroomed(player, listeners, who);
             case PLAY -> play(player, listeners);
+            case TEACH -> dev.hominin.evolution.mind.Teaching.open(player, individual ? first.getId() : -1);
             case SHARE -> share(player, listeners);
             case INFO -> {
                 if (individual) {
@@ -607,12 +645,21 @@ public final class Social {
             say(player, "Nobody here is free to do it.");
             return;
         }
-        if (willing.getBond() < 1 && !willing.owesGroomingTo(player)) {
-            say(player, willing.getName().getString() + " does not know you well enough to get that close.");
-            return;
-        }
+        // Your own band will always do it. Going through each other's hair is what a band
+        // is; nobody in it has to earn that first.
         willing.oweGrooming(player);
         say(player, willing.getName().getString() + " comes over to see to you.");
+    }
+
+    /** Whoever of these is closest - the one you are actually facing, most likely. */
+    private static BandMember nearestOf(ServerPlayer player, List<BandMember> listeners) {
+        BandMember nearest = listeners.get(0);
+        for (BandMember member : listeners) {
+            if (member.distanceToSqr(player) < nearest.distanceToSqr(player)) {
+                nearest = member;
+            }
+        }
+        return nearest;
     }
 
     private static void sendInfo(ServerPlayer player, BandMember member) {
@@ -623,6 +670,8 @@ public final class Social {
         lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
         lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
         lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
+        List<String> knows = member.knownSkillTitles();
+        lines.add("Knows: " + (knows.isEmpty() ? "nothing they were taught" : String.join(", ", knows)));
         lines.add("Ticks on them: " + (member.getTicksOnMe() == 0 ? "none" : String.valueOf(member.getTicksOnMe()))
                 + (member.owesGroomingTo(player) ? " - owes you a turn" : ""));
         if (Wants.hasWants(member)) {
@@ -786,6 +835,10 @@ public final class Social {
     }
 
     private static void askToTravel(ServerPlayer player, BandMember member) {
+        if (Paranthropus.is(member)) {
+            say(player, "Paranthropus go their own way. They will show you the way somewhere, but not walk with you.");
+            return;
+        }
         if (!member.isWild()) {
             say(player, "They already go where you go.");
             return;

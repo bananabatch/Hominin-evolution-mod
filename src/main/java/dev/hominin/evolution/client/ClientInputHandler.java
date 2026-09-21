@@ -53,6 +53,12 @@ public final class ClientInputHandler {
                 PacketDistributor.sendToServer(new ThreatDisplayPayload());
             }
         }
+        while (ModKeyMappings.JOURNAL.consumeClick()) {
+            if (mc.screen == null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        dev.hominin.evolution.network.OpenJournalPayload.INSTANCE);
+            }
+        }
         while (ModKeyMappings.SOCIAL.consumeClick()) {
             if (mc.screen == null) {
                 SocialScreen.open();

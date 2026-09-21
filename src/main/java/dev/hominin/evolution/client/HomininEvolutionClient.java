@@ -34,6 +34,10 @@ public class HomininEvolutionClient {
         modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) -> {
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::chimpanzee);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crocodile"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::crocodile);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("dinopithecus"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::dinopithecus);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
@@ -57,6 +61,16 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.BABOON.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                             "baboon", 1.0F, 0.4F));
+            event.registerEntityRenderer(ModEntities.CHIMPANZEE.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
+                            "chimpanzee", 1.0F, 0.5F));
+            // A bonobo is a slighter chimpanzee: the same build, smaller, with a black face.
+            event.registerEntityRenderer(ModEntities.BONOBO.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
+                            "bonobo", 0.88F, 0.45F));
+            event.registerEntityRenderer(ModEntities.CROCODILE.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crocodile"),
+                            "crocodile", 1.0F, 0.7F));
             event.registerEntityRenderer(ModEntities.DINOPITHECUS.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("dinopithecus"),
                             "dinopithecus", 1.45F, 0.7F));

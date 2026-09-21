@@ -78,7 +78,7 @@ public final class Trading {
 
     private static int stageOrder(ResourceLocation stage) {
         return switch (stage.getPath()) {
-            case "ardipithecus", "australopithecus" -> 1;
+            case "ardipithecus", "australopithecus", "australopithecus_anamensis", "paranthropus_boisei" -> 1;
             case "homo_habilis" -> 2;
             case "homo_erectus" -> 3;
             default -> 4;
@@ -213,6 +213,105 @@ public final class Trading {
                 member.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
         player.displayClientMessage(Component.literal(member.getName().getString() + " takes it, and hands you ")
                 .append(givenName).append("."), true);
+    }
+
+    /**
+     * A trade the player set up by hand: this from my hotbar, for that from your pack.
+     *
+     * <p>The same rules as ever - worth is measured in their era, a drought costs a tier,
+     * and nobody hands over something ranked above what they are given - but now the
+     * player chooses what they want instead of being handed the best thing that fits.
+     *
+     * @param offerSlot  a hotbar slot, 0 to 8
+     * @param wantedSlot a pack slot, or -1 for what is in their hand
+     */
+    public static void trade(net.minecraft.server.level.ServerPlayer player, BandMember member, int offerSlot,
+            int wantedSlot) {
+        ItemStack offered = offerSlot >= 0 && offerSlot < 9 ? player.getInventory().getItem(offerSlot) : ItemStack.EMPTY;
+        ItemStack wanted = wantedSlot == -1 ? member.getMainHandItem()
+                : wantedSlot >= 0 && wantedSlot < member.getInventory().getContainerSize()
+                        ? member.getInventory().getItem(wantedSlot) : ItemStack.EMPTY;
+        String name = member.getName().getString();
+        if (offered.isEmpty()) {
+            say(player, "Pick something from your hotbar to offer first.");
+            return;
+        }
+        if (wanted.isEmpty()) {
+            return;
+        }
+        if (member.refusesToPartWith(wanted)) {
+            say(player, name + " closes a hand round it. That one is not for trading.");
+            return;
+        }
+        ResourceLocation era = member.getStage();
+        int offerTier = tierOf(offered, era);
+        boolean dry = dev.hominin.evolution.survival.Drought.isActive(member.level());
+        if (dry) {
+            offerTier--;
+        }
+        int wantedTier = tierOf(wanted, era);
+        if (offerTier <= 0) {
+            say(player, dry ? name + " shakes their head. Nobody trades that cheaply while the land is this dry."
+                    : name + " turns it over and hands it back. No use to them.");
+            return;
+        }
+        if (wanted.is(offered.getItem())) {
+            say(player, "That is the same thing you are offering.");
+            return;
+        }
+        boolean lowball = wantedTier > offerTier && Paranthropus.fallsForLowball(member, offerTier, wantedTier);
+        if (wantedTier > offerTier && !lowball) {
+            say(player, name + " looks at what you offer, and at what you want, and keeps it. (Offer a "
+                    + TIER_NAMES[Math.min(MAX_TIER, wantedTier + (dry ? 1 : 0))] + " thing or better.)");
+            return;
+        }
+        ItemStack given = wanted.split(1);
+        if (wantedSlot == -1 && member.getMainHandItem().isEmpty()) {
+            member.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+        ItemStack taken = offered.copyWithCount(1);
+        if (!player.getAbilities().instabuild) {
+            offered.shrink(1);
+        }
+        member.addToInventory(taken);
+        Territory.offered(member, player, taken);
+        Component givenName = given.getHoverName();
+        if (!player.getInventory().add(given)) {
+            player.drop(given, false);
+        }
+        member.playSound(SoundEvents.ITEM_PICKUP, 0.7F, 0.9F);
+        ((ServerLevel) member.level()).sendParticles(ParticleTypes.HAPPY_VILLAGER, member.getX(), member.getEyeY(),
+                member.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+        player.displayClientMessage(lowball
+                ? Component.literal(name + " turns it over, pleased, and hands you ").append(givenName)
+                        .append(". You got the better of that one.").withStyle(net.minecraft.ChatFormatting.GOLD)
+                : Component.literal(name + " takes it, and hands you ").append(givenName).append("."), true);
+    }
+
+    private static void say(Player player, String text) {
+        player.displayClientMessage(Component.literal(text), true);
+    }
+
+    /** What a member carries, sent to the player's trade screen. */
+    public static void openTrade(net.minecraft.server.level.ServerPlayer player, BandMember member) {
+        java.util.List<Integer> slots = new java.util.ArrayList<>();
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>();
+        if (!member.getMainHandItem().isEmpty()) {
+            slots.add(-1);
+            stacks.add(member.getMainHandItem().copy());
+        }
+        for (int slot = 0; slot < member.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = member.getInventory().getItem(slot);
+            if (!stack.isEmpty()) {
+                slots.add(slot);
+                stacks.add(stack.copy());
+            }
+        }
+        member.ensureName();
+        member.attendTo(player, BandMember.ATTEND_TICKS);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.TradeOpenPayload(member.getId(), member.getName().getString(),
+                        member.getStage().toString(), slots, stacks));
     }
 
     private static boolean isFairReturn(ItemStack candidate, ItemStack offered, int offerTier, ResourceLocation era) {

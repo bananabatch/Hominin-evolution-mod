@@ -59,6 +59,15 @@ public final class ModItems {
     public static final DeferredItem<Item> BABOON_SPAWN_EGG = ITEMS.register("baboon_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BABOON,
                     0x8A7A52, 0x4D4038, new Item.Properties()));
+    public static final DeferredItem<Item> CHIMPANZEE_SPAWN_EGG = ITEMS.register("chimpanzee_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.CHIMPANZEE,
+                    0x2E2622, 0xB8977A, new Item.Properties()));
+    public static final DeferredItem<Item> BONOBO_SPAWN_EGG = ITEMS.register("bonobo_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BONOBO,
+                    0x1E1A19, 0xC98A86, new Item.Properties()));
+    public static final DeferredItem<Item> CROCODILE_SPAWN_EGG = ITEMS.register("crocodile_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.CROCODILE,
+                    0x4A5236, 0xB8A878, new Item.Properties()));
     public static final DeferredItem<Item> DINOPITHECUS_SPAWN_EGG = ITEMS.register("dinopithecus_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.DINOPITHECUS,
                     0x55504A, 0x8C6A3F, new Item.Properties()));

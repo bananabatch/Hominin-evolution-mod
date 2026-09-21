@@ -24,8 +24,8 @@ import net.minecraft.world.item.ItemStack;
  * somebody a favour.
  */
 public final class Infestation {
-    /** How long it takes to pick up one more. */
-    private static final int TICKS_PER_BITE = 2400;
+    /** Two a day at most. Six takes three days of nobody touching you. */
+    private static final int TICKS_PER_BITE = 12000;
 
     /** Past this many, nothing you do heals. */
     public static final int CRIPPLING = 6;

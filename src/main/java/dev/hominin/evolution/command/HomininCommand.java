@@ -150,6 +150,8 @@ public final class HomininCommand {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         boolean enabled = !data.isDeveloperMode();
         data.setDeveloperMode(enabled);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.DevFlagPayload(enabled));
 
         String name = player.getGameProfile().getName();
         ctx.getSource().sendSuccess(() -> Component.literal(

@@ -54,7 +54,8 @@ public class SocialScreen extends Screen {
         SocialSelection.entityId = -1;
         if (target != null) {
             mc.setScreen(new SocialScreen(target.getId(), target.getName(), target.isOtherBand(),
-                    target.isOtherBand()));
+                    target.isOtherBand() && !dev.hominin.evolution.band.Paranthropus.is(target),
+                    dev.hominin.evolution.band.Paranthropus.is(target)));
             return;
         }
         BandMember nearest = nearest(mc.player);
@@ -62,8 +63,10 @@ public class SocialScreen extends Screen {
             mc.player.displayClientMessage(Component.literal("There is nobody near enough to talk to."), true);
             return;
         }
-        mc.setScreen(new SocialScreen(-1, Component.literal(nearest.isOtherBand() ? "the other band" : "your band"),
-                nearest.isOtherBand(), otherBandNear(mc.player)));
+        boolean paranthropus = dev.hominin.evolution.band.Paranthropus.is(nearest);
+        mc.setScreen(new SocialScreen(-1, Component.literal(paranthropus ? "the Paranthropus"
+                : nearest.isOtherBand() ? "the other band" : "your band"),
+                nearest.isOtherBand(), otherBandNear(mc.player), paranthropus));
     }
 
     @Nullable
@@ -81,8 +84,11 @@ public class SocialScreen extends Screen {
         return best;
     }
 
-    private SocialScreen(int targetId, Component name, boolean otherBand, boolean otherBandNear) {
+    private final boolean paranthropus;
+
+    private SocialScreen(int targetId, Component name, boolean otherBand, boolean otherBandNear, boolean paranthropus) {
         super(Component.literal("Talk to ").append(name));
+        this.paranthropus = paranthropus;
         this.targetId = targetId;
         this.otherBand = otherBand;
         this.otherBandNear = otherBandNear;
@@ -92,17 +98,42 @@ public class SocialScreen extends Screen {
     /** Another band close enough to ask along - offered even while your own band is here too. */
     private static boolean otherBandNear(LocalPlayer player) {
         return !player.level().getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(16.0D),
-                BandMember::isOtherBand).isEmpty();
+                m -> m.isOtherBand() && !dev.hominin.evolution.band.Paranthropus.is(m)).isEmpty();
     }
 
     /** Whether this can be said at all, to whoever the menu is aimed at. */
     private boolean offered(Social.Command command) {
+        if (command.topic() == Social.Topic.DEVELOPER) {
+            return ClientSync.devMode;
+        }
+        boolean guiding = command == Social.Command.LEAD_STONE || command == Social.Command.LEAD_OBSIDIAN;
+        if (paranthropus) {
+            // Not much in common to talk about: a trade, or being shown the way.
+            return command == Social.Command.TRADE || guiding;
+        }
+        if (guiding) {
+            return false;
+        }
+        if (command == Social.Command.GIVE) {
+            // To one you picked out - a stray you are winning over, a guest - or to your own band.
+            return targetId >= 0 || !otherBand;
+        }
         if (command == Social.Command.TRAVEL) {
             return otherBandNear;
         }
         if (command == Social.Command.INFO || command == Social.Command.GROOM) {
             // Both are about one hominin, not a crowd - and only your own will let you that close.
             return targetId >= 0 && (command == Social.Command.GROOM || !otherBand);
+        }
+        if (command.topic() == Social.Topic.DEVELOPER) {
+            return ClientSync.devMode;
+        }
+        if (command == Social.Command.TEACH) {
+            return !otherBand;
+        }
+        if (command == Social.Command.TRADE) {
+            // One hominin at a time: the one you picked out, or the nearest of another band.
+            return targetId >= 0 || otherBand;
         }
         boolean ownBandOnly = command == Social.Command.ITEM || command == Social.Command.HUNT
                 || command == Social.Command.NO_HUNT || command == Social.Command.CLIMB;
@@ -121,7 +152,7 @@ public class SocialScreen extends Screen {
 
     /** The errand list is a screen of its own, and belongs with the other asking-for-things. */
     private boolean hasFetch(Social.Topic wanted) {
-        return wanted == Social.Topic.THINGS && !otherBand;
+        return wanted == Social.Topic.THINGS && !otherBand && !paranthropus;
     }
 
     @Override

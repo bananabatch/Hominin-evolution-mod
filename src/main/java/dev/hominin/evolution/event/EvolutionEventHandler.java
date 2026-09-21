@@ -205,7 +205,11 @@ public final class EvolutionEventHandler {
         }
         level.setBlock(above, net.minecraft.world.level.block.Blocks.FIRE.defaultBlockState(), 11);
         level.playSound(null, above, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
-        player.getMainHandItem().shrink(1);
+        // Somebody who has done this before does not wreck the drill doing it.
+        if (!dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.FIRE) || player.getRandom().nextBoolean()) {
+            player.getMainHandItem().shrink(1);
+        }
+        dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.FIRE);
         player.sendSystemMessage(Component.literal(
                 "The smoke thickens, catches, and goes up. You made that.")
                 .withStyle(ChatFormatting.GOLD));
@@ -249,9 +253,19 @@ public final class EvolutionEventHandler {
         if (!player.getInventory().add(loaded)) {
             player.drop(loaded, false);
         }
-        stick.shrink(1);
+        // The first time, the trick is the reward: you keep the bare stick as well as the
+        // loaded one, so learning it never costs you the thing you learned it with.
+        boolean first = !dev.hominin.evolution.mind.Skills.knows(player,
+                dev.hominin.evolution.mind.Skills.Skill.TERMITE_FISHING);
+        if (!first) {
+            stick.shrink(1);
+        }
         player.displayClientMessage(
                 Component.literal("You draw the stick out covered in soldiers."), true);
+        if (!dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.TERMITE_FISHING)
+                && player.getRandom().nextInt(4) == 0) {
+            giveOrDrop(player, new ItemStack(ModItems.GRUB.get()));
+        }
     }
 
     /** The last day each player was told about the state of the land. */
@@ -471,14 +485,17 @@ public final class EvolutionEventHandler {
         float successChance = digging ? FORAGE_SUCCESS_CHANCE_DIGGING
                 : withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
         successChance *= dev.hominin.evolution.survival.Drought.forageMultiplier(level);
+        // Paranthropus and the other primates were here first.
+        successChance *= dev.hominin.evolution.band.Paranthropus.forageShare(player);
         if (dev.hominin.evolution.hunt.Predation.standing(player) >= 2) {
             // Habilis and after live off carcasses and marrow; rooting in the dirt pays less.
             successChance *= HABILIS_FORAGE_MULTIPLIER;
         }
         dev.hominin.evolution.band.Territory.usedResource(player, pos);
         if (level.getRandom().nextFloat() >= successChance) {
-            player.displayClientMessage(Component.literal(
-                    dev.hominin.evolution.survival.Drought.isActive(level)
+            String blame = dev.hominin.evolution.band.Paranthropus.whyEmpty(player);
+            player.displayClientMessage(Component.literal(blame != null ? blame
+                    : dev.hominin.evolution.survival.Drought.isActive(level)
                             ? "You search the dry soil but find nothing."
                             : "You search the soil but find nothing."), true);
             return;
@@ -618,7 +635,9 @@ public final class EvolutionEventHandler {
         // the held slot, Inventory#getFreeSlot cannot hand that same slot back to us
         // - and vanilla clears the held slot outright once the stack empties, which
         // would otherwise delete the marrow the instant it was created.
-        ItemStack marrow = new ItemStack(ModItems.BONE_MARROW.get(), marrowYield);
+        boolean skilled = dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.MARROW);
+        ItemStack marrow = new ItemStack(ModItems.BONE_MARROW.get(),
+                marrowYield + (skilled && player.getRandom().nextInt(3) == 0 ? 1 : 0));
         if (!player.getInventory().add(marrow) && !marrow.isEmpty()) {
             player.drop(marrow, false);
         }
@@ -626,6 +645,7 @@ public final class EvolutionEventHandler {
         dullFlake(player);
 
         EvolutionManager.incrementCriterion(player, "scavenge_bones", 1);
+        dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.MARROW);
         player.getData(Attachments.PLAYER_EVOLUTION_DATA).addMeatScavenged(1);
         player.sendSystemMessage(Component.literal("You crack the bone open and scrape out the marrow."));
     }
@@ -731,6 +751,7 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.combat.Bleeding.forget(playerId);
             dev.hominin.evolution.survival.Infestation.forget(playerId);
             dev.hominin.evolution.entity.TroopRelations.forget(playerId);
+            dev.hominin.evolution.mind.Teaching.forget(playerId);
             dev.hominin.evolution.survival.Afflictions.forget(playerId);
             Thinking.forget(leaving);
             Arrival.forget(leaving);
@@ -996,6 +1017,7 @@ public final class EvolutionEventHandler {
         noticeStorm(player);
         ClimbingServer.tick(player);
         WildBands.tick(player);
+        dev.hominin.evolution.band.Paranthropus.tick(player);
         Band.tickPlayer(player);
         dev.hominin.evolution.inventory.InventoryLimits.tick(player);
         dev.hominin.evolution.entity.WildAnimals.tick(player);

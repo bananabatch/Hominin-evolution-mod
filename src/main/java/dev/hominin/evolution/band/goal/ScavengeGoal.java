@@ -150,7 +150,8 @@ public class ScavengeGoal extends Goal {
         }
         boolean longBone = pack.getItem(boneSlot).is(ModItems.LONG_BONE.get());
         pack.getItem(boneSlot).shrink(1);
-        member.addToInventory(new ItemStack(ModItems.BONE_MARROW.get(), longBone ? 2 : 1));
+        int extra = member.knowsSkill(dev.hominin.evolution.mind.Skills.Skill.MARROW) && member.getRandom().nextInt(3) == 0 ? 1 : 0;
+        member.addToInventory(new ItemStack(ModItems.BONE_MARROW.get(), (longBone ? 2 : 1) + extra));
         member.swing(InteractionHand.MAIN_HAND);
         member.level().playSound(null, member.blockPosition(), SoundEvents.BONE_BLOCK_BREAK, SoundSource.NEUTRAL,
                 0.8F, 1.1F);

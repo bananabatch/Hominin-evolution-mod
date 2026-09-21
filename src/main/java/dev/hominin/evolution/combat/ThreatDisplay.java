@@ -107,6 +107,9 @@ public final class ThreatDisplay {
         int startled = EvolutionEventHandler.startleNearby(player, radius,
                 Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
         startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
+        startled += dev.hominin.evolution.band.Paranthropus.scareNear(player, radius + 8.0D);
+        // Chimpanzees take it as a challenge too - but they give you the chance to take it back.
+        dev.hominin.evolution.entity.Chimpanzee.answerDisplay(player, radius);
         // One thing out here does not back down, and finding that out is the lesson.
         if (dev.hominin.evolution.entity.Dinopithecus.answerDisplay(player, radius)) {
             dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/nice_try_genius");

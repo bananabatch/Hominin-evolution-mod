@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:fortress",
+    "minecraft:bastion_remnant",
+    "minecraft:nether_fossil",
+    "minecraft:end_city"
+  ]
+}

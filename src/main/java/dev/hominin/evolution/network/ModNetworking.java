@@ -14,6 +14,9 @@ public final class ModNetworking {
                 SocialCommandPayload::handle);
         registrar.playToServer(FetchRequestPayload.TYPE, FetchRequestPayload.STREAM_CODEC, FetchRequestPayload::handle);
         registrar.playToServer(TakeItemPayload.TYPE, TakeItemPayload.STREAM_CODEC, TakeItemPayload::handle);
+        registrar.playToServer(ChoosePayload.TYPE, ChoosePayload.STREAM_CODEC, ChoosePayload::handle);
+        registrar.playToServer(TradeRequestPayload.TYPE, TradeRequestPayload.STREAM_CODEC, TradeRequestPayload::handle);
+        registrar.playToServer(OpenJournalPayload.TYPE, OpenJournalPayload.STREAM_CODEC, OpenJournalPayload::handle);
         registrar.playToServer(ViewInventoryPayload.TYPE, ViewInventoryPayload.STREAM_CODEC,
                 ViewInventoryPayload::handle);
         registrar.playToClient(MemberInventoryPayload.TYPE, MemberInventoryPayload.STREAM_CODEC,
@@ -40,6 +43,10 @@ public final class ModNetworking {
         registrar.playToClient(MemberInfoPayload.TYPE, MemberInfoPayload.STREAM_CODEC, MemberInfoPayload::handle);
         registrar.playToClient(ThirstPayload.TYPE, ThirstPayload.STREAM_CODEC, ThirstPayload::handle);
         registrar.playToClient(FocusPayload.TYPE, FocusPayload.STREAM_CODEC, FocusPayload::handle);
+        registrar.playToClient(ChoicesPayload.TYPE, ChoicesPayload.STREAM_CODEC, ChoicesPayload::handle);
+        registrar.playToClient(DevFlagPayload.TYPE, DevFlagPayload.STREAM_CODEC, DevFlagPayload::handle);
+        registrar.playToClient(TradeOpenPayload.TYPE, TradeOpenPayload.STREAM_CODEC, TradeOpenPayload::handle);
+        registrar.playToClient(JournalPayload.TYPE, JournalPayload.STREAM_CODEC, JournalPayload::handle);
         registrar.playToClient(ArmsRacePayload.TYPE, ArmsRacePayload.STREAM_CODEC, ArmsRacePayload::handle);
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);

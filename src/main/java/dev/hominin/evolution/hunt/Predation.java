@@ -135,6 +135,11 @@ public final class Predation {
             camps.put(player.getUUID(), new Camp(camp.anchor(), Math.max(0.0F, camp.pressure() - 1.0F), camp.warned()));
             return;
         }
+        if (dev.hominin.evolution.entity.Bonobo.sanctuary(level, player.blockPosition())) {
+            // Camped among bonobos: nothing out there is learning this place.
+            camps.put(player.getUUID(), new Camp(camp.anchor(), Math.max(0.0F, camp.pressure() - 3.0F), camp.warned()));
+            return;
+        }
         float gain = 3.0F;
         if (level.isNight()) {
             gain += 2.0F;
@@ -173,7 +178,7 @@ public final class Predation {
     private static boolean sendVisitor(ServerPlayer player, ServerLevel level) {
         EntityType<? extends Mob> type = chooseVisitor(player, level);
         BlockPos site = siteNear(level, player.blockPosition(), 18, 30);
-        if (site == null) {
+        if (site == null || dev.hominin.evolution.entity.Bonobo.sanctuary(level, site)) {
             return false;
         }
         Mob visitor = type.create(level);
@@ -183,6 +188,7 @@ public final class Predation {
         visitor.moveTo(site.getX() + 0.5D, site.getY(), site.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
         visitor.finalizeSpawn(level, level.getCurrentDifficultyAt(site), MobSpawnType.EVENT, null);
         level.addFreshEntity(visitor);
+        dev.hominin.evolution.band.Paranthropus.warn(player, site);
         // A pair, for the animals that hunt in pairs.
         if (type == ModEntities.HOMOTHERIUM.get() && level.random.nextBoolean()) {
             Mob mate = type.create(level);

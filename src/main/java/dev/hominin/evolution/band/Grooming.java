@@ -47,9 +47,12 @@ public final class Grooming {
             return;
         }
         long now = player.level().getGameTime();
-        if (now - lastGroomed.getOrDefault(member.getUUID(), -99999L) < COOLDOWN_TICKS) {
+        // The cooldown is for the bond, not the ticks: somebody still crawling can always
+        // be seen to again. Only a clean coat that was just done gets turned away.
+        if (member.getTicksOnMe() == 0
+                && now - lastGroomed.getOrDefault(member.getUUID(), -99999L) < COOLDOWN_TICKS) {
             player.displayClientMessage(Component.literal(member.getName().getString()
-                    + " has been seen to already."), true);
+                    + " has been seen to already, and there is nothing left on them."), true);
             return;
         }
         sessions.put(player.getUUID(), new Session(member.getUUID(), 0));
@@ -92,11 +95,18 @@ public final class Grooming {
     private static final int PICKED_PER_SESSION = 2;
 
     private static void finish(ServerPlayer player, BandMember member) {
-        lastGroomed.put(member.getUUID(), player.level().getGameTime());
-        member.addBond(1);
+        long now = player.level().getGameTime();
+        // Bond only counts once per cooldown, so grooming the same member twice to clear
+        // their ticks does not also farm their affection.
+        if (now - lastGroomed.getOrDefault(member.getUUID(), -99999L) >= COOLDOWN_TICKS) {
+            member.addBond(1);
+        }
+        lastGroomed.put(member.getUUID(), now);
         member.heal(1.0F);
         // What you actually get out of it, on top of the trust.
-        int found = member.pickTicks(PICKED_PER_SESSION);
+        boolean practised = dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.GROOMING);
+        int found = member.pickTicks(PICKED_PER_SESSION + (practised ? 1 : 0));
+        dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.GROOMING);
         if (found > 0) {
             ItemStack ticks = dev.hominin.evolution.survival.Infestation.pickedOff(found);
             if (!player.getInventory().add(ticks)) {

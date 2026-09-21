@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Sneak-use one of them beforehand and the whole menu speaks to that one alone - which is the only way to groom somebody, or to look them over."
+      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Right-click one of them beforehand and the whole menu speaks to that one alone - which is the only way to groom somebody, or to look them over."
     },
     {
       "type": "patchouli:text",

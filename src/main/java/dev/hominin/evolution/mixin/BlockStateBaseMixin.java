@@ -44,6 +44,9 @@ public abstract class BlockStateBaseMixin {
                     && member.phasesThroughLeaves()) {
                 // Band members go through the canopy the same way, while climbing and dropping out of it.
                 cir.setReturnValue(Shapes.empty());
+            } else if (entity instanceof dev.hominin.evolution.entity.Baboon baboon
+                    && ((BlockBehaviour.BlockStateBase) (Object) this).is(BlockTags.LEAVES) && baboon.isClimbing()) {
+                cir.setReturnValue(Shapes.empty());
             }
         }
     }

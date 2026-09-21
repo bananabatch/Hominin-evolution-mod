@@ -31,8 +31,8 @@ import net.minecraft.world.item.ItemStack;
  *
  * <p>Give a member what it asked for, or its favourite food, and it warms to you. A
  * member that likes you looks out for you: food when you are going hungry, a better
- * weapon than the one you have, a hammerstone when you have none. Ignoring a want costs
- * nothing yet.
+ * weapon than the one you have, a hammerstone when you have none. From erectus on, a
+ * want left to run out costs a little of the member's bond: by then they expect to be heard.
  */
 public final class Wants {
     /** Between wants, per member. */
@@ -70,7 +70,15 @@ public final class Wants {
         long now = member.level().getGameTime();
         member.ensurePersonality();
         if (member.getWant() != null && now > member.getWantUntil()) {
+            Item ignored = member.getWant();
             member.clearWant();
+            if (dev.hominin.evolution.entity.WildAnimals.erectusOrLater(leader)) {
+                member.addBond(-1);
+                member.ensureName();
+                leader.displayClientMessage(Component.literal(member.getName().getString()
+                        + " stops waiting for " + describeItem(ignored) + ", and remembers that you never brought it.")
+                        .withStyle(ChatFormatting.GRAY), false);
+            }
         }
         if (member.distanceToSqr(leader) > TALK_RANGE * TALK_RANGE || member.inDanger()) {
             return;

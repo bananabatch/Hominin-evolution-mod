@@ -34,6 +34,24 @@ public final class ModEntities {
                     dev.hominin.evolution.entity.Baboon::new, MobCategory.CREATURE)
                     .sized(0.7F, 1.0F).clientTrackingRange(10).build("baboon"));
 
+    /** The relatives who stayed in the trees. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Chimpanzee>> CHIMPANZEE =
+            ENTITY_TYPES.register("chimpanzee", () -> EntityType.Builder.<dev.hominin.evolution.entity.Chimpanzee>of(
+                    dev.hominin.evolution.entity.Chimpanzee::new, MobCategory.CREATURE)
+                    .sized(0.8F, 1.3F).clientTrackingRange(10).build("chimpanzee"));
+
+    /** The peaceable ape: where a troop lives, nothing hunts. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Bonobo>> BONOBO =
+            ENTITY_TYPES.register("bonobo", () -> EntityType.Builder.<dev.hominin.evolution.entity.Bonobo>of(
+                    dev.hominin.evolution.entity.Bonobo::new, MobCategory.CREATURE)
+                    .sized(0.7F, 1.15F).clientTrackingRange(10).build("bonobo"));
+
+    /** What waits at the water. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Crocodile>> CROCODILE =
+            ENTITY_TYPES.register("crocodile", () -> EntityType.Builder.<dev.hominin.evolution.entity.Crocodile>of(
+                    dev.hominin.evolution.entity.Crocodile::new, MobCategory.CREATURE)
+                    .sized(1.4F, 0.6F).clientTrackingRange(10).build("crocodile"));
+
     /** The giant baboon: the one animal out here that answers a threat display. */
     public static final Supplier<EntityType<dev.hominin.evolution.entity.Dinopithecus>> DINOPITHECUS =
             ENTITY_TYPES.register("dinopithecus", () -> EntityType.Builder.<dev.hominin.evolution.entity.Dinopithecus>of(

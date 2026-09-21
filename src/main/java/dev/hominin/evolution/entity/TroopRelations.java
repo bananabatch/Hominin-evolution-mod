@@ -36,7 +36,11 @@ public final class TroopRelations {
     /** A grudge is recorded as trust below zero. */
     private static final int GRUDGE = -1;
 
-    private record Mistake(UUID troop, long deadline) {
+    /**
+     * An open window. A mistake is something you did; a status check is something an
+     * alpha is doing to you - quieter, and cheaper to fail.
+     */
+    private record Mistake(UUID troop, long deadline, boolean statusCheck, @Nullable UUID checker) {
     }
 
     private static final Map<UUID, Mistake> pending = new HashMap<>();
@@ -52,6 +56,11 @@ public final class TroopRelations {
     public static int trust(Player player, UUID troop) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters()
                 .getOrDefault(key(troop), 0);
+    }
+
+    /** Developer tools: set trust outright. */
+    public static void setTrustFor(Player player, UUID troop, int value) {
+        setTrust(player, troop, value);
     }
 
     private static void setTrust(Player player, UUID troop, int value) {
@@ -126,7 +135,8 @@ public final class TroopRelations {
      * you do next - false if it is going for you now, because this was the second blow,
      * or because they already know what you are.
      */
-    public static boolean mistake(ServerPlayer player, Baboon struck) {
+    public static <T extends net.minecraft.world.entity.Mob & TroopAnimal> boolean mistake(ServerPlayer player,
+            T struck) {
         UUID troop = struck.getTroop();
         if (troop == null || holdsGrudge(player, troop)) {
             return false;
@@ -138,9 +148,11 @@ public final class TroopRelations {
             fail(player, troop);
             return false;
         }
-        pending.put(player.getUUID(), new Mistake(troop, player.level().getGameTime() + WINDOW_TICKS));
+        // Somebody who has made themselves small before gets a little longer to do it.
+        int window = WINDOW_TICKS + (dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.DEESCALATION) ? 60 : 0);
+        pending.put(player.getUUID(), new Mistake(troop, player.level().getGameTime() + window, false, null));
         dev.hominin.evolution.band.Band.standDown(struck);
-        PacketDistributor.sendToPlayer(player, new dev.hominin.evolution.network.FocusPayload(WINDOW_TICKS));
+        PacketDistributor.sendToPlayer(player, new dev.hominin.evolution.network.FocusPayload(window));
         player.sendSystemMessage(Component.literal(
                 "The whole troop goes still and stares at you. Give it something, or hold K and make yourself small.")
                 .withStyle(ChatFormatting.RED));
@@ -157,10 +169,32 @@ public final class TroopRelations {
         return open == null ? null : open.troop();
     }
 
+    /**
+     * A chimpanzee alpha, standing too close and looking at you. There is no message and
+     * no narrowing of the view: the only signs are what it is doing. Answer it the same
+     * way - something in your hand, or K to make yourself small - and you pass. Miss it
+     * and the alpha makes the point physically, though a failed check is not a grudge.
+     */
+    public static void statusCheck(ServerPlayer player, UUID troop, UUID alpha) {
+        if (pending.containsKey(player.getUUID())) {
+            return;
+        }
+        int window = WINDOW_TICKS + (dev.hominin.evolution.mind.Skills.knows(player,
+                dev.hominin.evolution.mind.Skills.Skill.DEESCALATION) ? 60 : 0);
+        pending.put(player.getUUID(), new Mistake(troop, player.level().getGameTime() + window, true, alpha));
+    }
+
     /** Put right in time: a gift, or a show of submission. */
     public static void forgive(ServerPlayer player, String how) {
         Mistake open = pending.remove(player.getUUID());
         if (open == null) {
+            return;
+        }
+        if (open.statusCheck()) {
+            goodwill(player, open.troop(), 1);
+            player.sendSystemMessage(Component.literal(
+                    "The alpha holds your eye a moment longer, then turns away. You passed.")
+                    .withStyle(ChatFormatting.GREEN));
             return;
         }
         // They let it go. They do not forget it entirely.
@@ -170,10 +204,11 @@ public final class TroopRelations {
 
     private static void fail(ServerPlayer player, UUID troop) {
         setTrust(player, troop, GRUDGE);
-        List<Baboon> near = player.level().getEntitiesOfClass(Baboon.class,
-                player.getBoundingBox().inflate(28.0D), b -> troop.equals(b.getTroop()));
-        for (Baboon baboon : near) {
-            baboon.turnOn(player);
+        List<net.minecraft.world.entity.Mob> near = player.level().getEntitiesOfClass(
+                net.minecraft.world.entity.Mob.class, player.getBoundingBox().inflate(28.0D),
+                m -> m instanceof TroopAnimal animal && troop.equals(animal.getTroop()));
+        for (net.minecraft.world.entity.Mob animal : near) {
+            ((TroopAnimal) animal).turnOn(player);
         }
         player.sendSystemMessage(Component.literal(
                 "The troop erupts. They will remember you.").withStyle(ChatFormatting.DARK_RED));
@@ -184,7 +219,11 @@ public final class TroopRelations {
         Mistake open = pending.get(player.getUUID());
         if (open != null && player.level().getGameTime() >= open.deadline()) {
             pending.remove(player.getUUID());
-            fail(player, open.troop());
+            if (open.statusCheck()) {
+                failCheck(player, open);
+            } else {
+                fail(player, open.troop());
+            }
         }
         if (player.tickCount % 100 == 0) {
             organiseEscorts(player);
@@ -222,10 +261,19 @@ public final class TroopRelations {
             }
             UUID troop = baboon.getTroop();
             if (troop != null && !baboon.isEscorting(player) && !baboon.isAngry() && !baboon.isBaby()
+                    && !baboon.isLeader()
                     && isTrusted(player, troop) && baboon.distanceTo(player) < 32.0F) {
                 baboon.escort(player);
                 escorting++;
             }
+        }
+    }
+
+    /** A failed status check: one hard lesson from the alpha, and less trust. Not a feud. */
+    private static void failCheck(ServerPlayer player, Mistake open) {
+        setTrust(player, open.troop(), Math.max(0, trust(player, open.troop()) - 2));
+        if (open.checker() != null && player.serverLevel().getEntity(open.checker()) instanceof Chimpanzee alpha) {
+            alpha.putInPlace(player);
         }
     }
 

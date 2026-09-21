@@ -18,6 +18,8 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 /** What the server has told this client about other players, and where it goes. */
 public final class ClientSync {
     private static final Map<UUID, ResourceLocation> STAGES = new HashMap<>();
+    /** Whether the server says this player is in developer mode. */
+    public static boolean devMode;
 
     @Nullable
     public static ResourceLocation stageOf(UUID player) {

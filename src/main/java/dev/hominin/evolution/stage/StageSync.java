@@ -15,6 +15,8 @@ public final class StageSync {
     /** To the player and to everyone currently watching them. Call whenever the stage changes. */
     public static void sync(ServerPlayer player) {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, payloadFor(player));
+        PacketDistributor.sendToPlayer(player, new dev.hominin.evolution.network.DevFlagPayload(
+                player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).isDeveloperMode()));
     }
 
     private static StagePayload payloadFor(ServerPlayer player) {

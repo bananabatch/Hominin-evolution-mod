@@ -86,7 +86,11 @@ public final class WildBands {
             member.setStage(stage);
             member.joinWildBand(bandId, alpha == null ? null : alpha.getUUID());
             member.ensureName();
-            equip(member, random);
+            if (Paranthropus.STAGE.equals(stage)) {
+                equipParanthropus(member, random);
+            } else {
+                equip(member, random);
+            }
             level.addFreshEntity(member);
             if (alpha == null) {
                 alpha = member;
@@ -98,7 +102,8 @@ public final class WildBands {
             // A call carries, and a call tells you which way to walk. The glow is no use from
             // here - they are further off than anything renders - so it waits until you are close.
             int distance = (int) Math.round(Math.sqrt(site.distSqr(player.blockPosition())));
-            player.sendSystemMessage(Component.literal("Another band is calling, " + bearingFrom(player, site)
+            player.sendSystemMessage(Component.literal((Paranthropus.STAGE.equals(stage)
+                    ? "A troop of Paranthropus is calling, " : "Another band is calling, ") + bearingFrom(player, site)
                     + ", about " + distance + " blocks off.").withStyle(net.minecraft.ChatFormatting.GOLD));
             arrivals.put(player.getUUID(), new Arrival(bandId, site, level.getGameTime() + ARRIVAL_MEMORY_TICKS));
         }
@@ -146,7 +151,7 @@ public final class WildBands {
     }
 
     /** Which way to walk, in words. */
-    private static String bearingFrom(ServerPlayer player, BlockPos site) {
+    static String bearingFrom(ServerPlayer player, BlockPos site) {
         double dx = site.getX() - player.getX();
         double dz = site.getZ() - player.getZ();
         String northSouth = Math.abs(dz) < Math.abs(dx) / 2.0D ? "" : dz < 0 ? "north" : "south";
@@ -161,6 +166,21 @@ public final class WildBands {
     }
 
     /** What a wild band carries: some of it worth trading for. */
+    /** Sharpened sticks, long branches, and food: never stone, unless they have learned it. */
+    private static void equipParanthropus(BandMember member, RandomSource random) {
+        if (random.nextFloat() < 0.5F) {
+            member.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ModItems.LONG_BRANCH.get()));
+        } else if (random.nextFloat() < 0.6F) {
+            member.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ModItems.SHARPENED_STICK.get()));
+        }
+        if (random.nextFloat() < 0.5F) {
+            member.getInventory().addItem(new ItemStack(ModItems.SHARPENED_STICK.get()));
+        }
+        member.getInventory().addItem(random.nextBoolean()
+                ? new ItemStack(ModItems.GRUB.get(), 2 + random.nextInt(3))
+                : new ItemStack(Items.SWEET_BERRIES, 3 + random.nextInt(3)));
+    }
+
     private static void equip(BandMember member, RandomSource random) {
         if (random.nextFloat() < 0.3F) {
             member.getInventory().addItem(new ItemStack(ModItems.LOMEKWIAN_TOOL.get()));
@@ -296,6 +316,8 @@ public final class WildBands {
         int now = order(era);
         return switch (species.getPath()) {
             case "australopithecus" -> now >= order(stage("homo_erectus"));
+            // Paranthropus outlasted the other early forms, and was gone by antecessor.
+            case "paranthropus_boisei" -> now >= order(stage("homo_heidelbergensis"));
             case "homo_habilis" -> now >= order(stage("homo_heidelbergensis"));
             case "homo_erectus" -> now >= order(stage("homo_sapiens"));
             default -> born >= 0 && now >= 0 && now - born >= 3;

@@ -1005,6 +1005,14 @@ public final class Band {
      * after the rest, and each of those deaths finds an empty band too. A second loss only
      * counts once there has been a second band to lose.
      */
+    /** How many more bands this species can lose before it dies out. */
+    public static int bandsLeft(ServerPlayer player) {
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        boolean onFallback = dev.hominin.evolution.stage.Fallbacks.isFallback(data.getStage());
+        int limit = onFallback ? dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK : BANDS_TO_EXTINCTION;
+        return Math.max(0, limit - data.getCriterionCounters().getOrDefault(BANDS_LOST, 0));
+    }
+
     private static void bandLost(ServerPlayer player) {
         if (!hadBand.remove(player.getUUID())) {
             return;

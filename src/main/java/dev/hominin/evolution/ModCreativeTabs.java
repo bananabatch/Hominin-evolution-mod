@@ -56,6 +56,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.BAND_MEMBER_SPAWN_EGG.get());
                         output.accept(ModItems.BABOON_SPAWN_EGG.get());
                         output.accept(ModItems.DINOPITHECUS_SPAWN_EGG.get());
+                        output.accept(ModItems.CHIMPANZEE_SPAWN_EGG.get());
+                        output.accept(ModItems.BONOBO_SPAWN_EGG.get());
+                        output.accept(ModItems.CROCODILE_SPAWN_EGG.get());
                         output.accept(ModItems.PACHYCROCUTA_SPAWN_EGG.get());
                         output.accept(ModItems.SABERTOOTH_SPAWN_EGG.get());
                         output.accept(ModItems.HOMOTHERIUM_SPAWN_EGG.get());

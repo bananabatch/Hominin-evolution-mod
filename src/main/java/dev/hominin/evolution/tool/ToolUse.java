@@ -52,6 +52,7 @@ public final class ToolUse {
         if (!isOldowanTool(made)) {
             return;
         }
+        dev.hominin.evolution.band.Paranthropus.watched(player);
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         if (data.getCraftedOldowanTools().add(BuiltInRegistries.ITEM.getKey(made))) {
             EvolutionManager.incrementCriterion(player, "craft_oldowan_tools", 1);

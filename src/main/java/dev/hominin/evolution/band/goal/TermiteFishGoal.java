@@ -48,8 +48,10 @@ public class TermiteFishGoal extends Goal {
             return false;
         }
         // Hungry, or just peckish and passing a mound.
-        boolean wants = member.isHungry() ? member.getRandom().nextInt(20) == 0
-                : member.getHunger() < BandMember.MAX_HUNGER - 2 && member.getRandom().nextInt(400) == 0;
+        // Somebody who has been shown how goes and does it whenever they are near a mound.
+        int odds = member.knowsSkill(dev.hominin.evolution.mind.Skills.Skill.TERMITE_FISHING) ? 4 : 1;
+        boolean wants = member.isHungry() ? member.getRandom().nextInt(20 / odds) == 0
+                : member.getHunger() < BandMember.MAX_HUNGER - 2 && member.getRandom().nextInt(400 / odds) == 0;
         if (!wants) {
             return false;
         }

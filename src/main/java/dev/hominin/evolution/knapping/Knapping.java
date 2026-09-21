@@ -235,7 +235,8 @@ public final class Knapping {
         }
         strikeFromPack(player, main, cost);
 
-        boolean practised = data.isDeveloperMode() || data.getUnlockedRecipes().contains(LOMEKWIAN_INSIGHT);
+        boolean practised = data.isDeveloperMode() || data.getUnlockedRecipes().contains(LOMEKWIAN_INSIGHT)
+                || dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.LOMEKWIAN);
         if (!practised && player.getRandom().nextFloat() < UNPRACTISED_MULTITOOL_FAIL) {
             player.displayClientMessage(Component.literal(
                     "It shatters under the blow. You struck it like you knew how, and you did not."), true);
@@ -287,6 +288,7 @@ public final class Knapping {
                     "A mistake, and still a tool. Your hands have learned something from it.")
                     .withStyle(ChatFormatting.YELLOW));
         }
+        dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.LOMEKWIAN);
     }
 
     private static void give(ServerPlayer player, ItemStack stack) {

@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)$(k:hominin_evolution.social)$() - talk to the band. Sneak-use one of them first and it speaks to just that one.$(br2)$(l)$(k:hominin_evolution.threat_display)$() - pant-hoot, leap and throw a fright into whatever is near. It works better the more of your band can hear you."
+      "text": "$(l)$(k:hominin_evolution.social)$() - talk to the band. Right-click one of them first and it speaks to just that one.$(br2)$(l)$(k:hominin_evolution.threat_display)$() - pant-hoot, leap and throw a fright into whatever is near. It works better the more of your band can hear you."
     },
     {
       "type": "patchouli:text",

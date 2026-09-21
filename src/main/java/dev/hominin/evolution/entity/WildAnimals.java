@@ -40,6 +40,16 @@ public final class WildAnimals {
     private static final float HOMOTHERIUM_CHANCE = 0.14F;
     /** Rare on purpose: meeting one should be an event, not a feature of the landscape. */
     private static final float DINOPITHECUS_CHANCE = 0.09F;
+    /** Common where the forest starts; a rare sight out on the grass, and only later on. */
+    private static final float CHIMP_JUNGLE_CHANCE = 0.6F;
+    /** Out of the trees but within reach of them: savanna woodland near a jungle. */
+    private static final float CHIMP_EDGE_CHANCE = 0.3F;
+    private static final int CHIMP_EDGE_DISTANCE = 90;
+    private static final float CHIMP_SAVANNA_CHANCE = 0.03F;
+    /** Bonobos: erectus onward, by rivers and at forest edges. */
+    private static final float BONOBO_CHANCE = 0.3F;
+    /** A crocodile in any warm water worth drinking from - and twice as likely in a drought. */
+    private static final float CROCODILE_CHANCE = 0.3F;
 
     public static void tick(ServerPlayer player) {
         if (player.tickCount % TROOP_CHECK_TICKS == 300 && !player.isSpectator()
@@ -66,6 +76,17 @@ public final class WildAnimals {
                 && random.nextFloat() < HOMOTHERIUM_CHANCE) {
             spawnGroup(player, ModEntities.HOMOTHERIUM.get(), random.nextBoolean() ? 2 : 1, 45, 80);
         }
+        if (none(player, dev.hominin.evolution.entity.Chimpanzee.class, 128.0D)) {
+            spawnCommunity(player, random);
+        }
+        if (!stillAround(player) && none(player, Bonobo.class, 160.0D) && random.nextFloat() < BONOBO_CHANCE) {
+            spawnBonobos(player, random);
+        }
+        float crocodile = dev.hominin.evolution.survival.Drought.isActive(player.level())
+                ? CROCODILE_CHANCE * 2.0F : CROCODILE_CHANCE;
+        if (none(player, Crocodile.class, 96.0D) && random.nextFloat() < crocodile) {
+            spawnCrocodile(player, random);
+        }
         // They did not last as long as the hominins did. Once you are erectus they are
         // simply no longer out there, which is the only monument they get.
         if (stillAround(player) && none(player, dev.hominin.evolution.entity.Dinopithecus.class, 150.0D)
@@ -74,8 +95,134 @@ public final class WildAnimals {
         }
     }
 
+    /**
+     * A community settles where the trees are: the edge of a jungle. Out in the open savanna
+     * they are a rare find, and only once erectus is walking far enough to meet them.
+     */
+    private static void spawnCommunity(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos site = findSite(level, player.blockPosition(), 40, 80, random, false);
+        if (site == null) {
+            return;
+        }
+        boolean jungle = level.getBiome(site).is(net.minecraft.tags.BiomeTags.IS_JUNGLE);
+        boolean late = !stillAround(player);
+        float chance = jungle ? CHIMP_JUNGLE_CHANCE
+                : jungleWithin(level, site, CHIMP_EDGE_DISTANCE) ? CHIMP_EDGE_CHANCE
+                : late ? CHIMP_SAVANNA_CHANCE : 0.0F;
+        if (random.nextFloat() >= chance) {
+            return;
+        }
+        UUID community = UUID.randomUUID();
+        UUID alpha = null;
+        int size = 4 + random.nextInt(4);
+        for (int i = 0; i < size; i++) {
+            dev.hominin.evolution.entity.Chimpanzee chimp = place(level, ModEntities.CHIMPANZEE.get(), site,
+                    random.nextInt(5));
+            if (chimp != null) {
+                chimp.joinCommunity(community, alpha);
+                if (alpha == null) {
+                    alpha = chimp.getUUID();
+                }
+            }
+        }
+    }
+
+    /** Erectus or anything after it: the era when the world opens up. */
+    public static boolean erectusOrLater(net.minecraft.world.entity.player.Player player) {
+        return !stillAround(player);
+    }
+
+    /**
+     * A bonobo troop settles by a river or at the forest's edge. A troop met by someone whose
+     * people have hunted bonobos already knows it, and is no refuge.
+     */
+    private static void spawnBonobos(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos site = findSite(level, player.blockPosition(), 40, 80, random, false);
+        if (site == null) {
+            return;
+        }
+        var biome = level.getBiome(site);
+        boolean suits = biome.is(net.minecraft.tags.BiomeTags.IS_JUNGLE) || biome.is(net.minecraft.tags.BiomeTags.IS_FOREST)
+                || biome.is(net.minecraft.tags.BiomeTags.IS_RIVER) || waterNear(level, site, 10);
+        if (!suits) {
+            return;
+        }
+        UUID troop = UUID.randomUUID();
+        boolean hunted = Bonobo.isBetrayer(player);
+        int size = 6 + random.nextInt(5);
+        for (int i = 0; i < size; i++) {
+            Bonobo bonobo = place(level, ModEntities.BONOBO.get(), site, random.nextInt(6));
+            if (bonobo != null) {
+                bonobo.joinTroop(troop, hunted);
+            }
+        }
+    }
+
+    /** Whether there is jungle within this many blocks - sampled in rings, not searched block by block. */
+    private static boolean jungleWithin(ServerLevel level, BlockPos site, int distance) {
+        for (int ring = 15; ring <= distance; ring += 15) {
+            for (int point = 0; point < 16; point++) {
+                float angle = point * Mth.TWO_PI / 16.0F;
+                BlockPos pos = site.offset(Math.round(Mth.cos(angle) * ring), 0, Math.round(Mth.sin(angle) * ring));
+                if (level.getBiome(pos).is(net.minecraft.tags.BiomeTags.IS_JUNGLE)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean waterNear(ServerLevel level, BlockPos at, int radius) {
+        for (int attempt = 0; attempt < 40; attempt++) {
+            BlockPos pos = at.offset(level.random.nextInt(radius * 2 + 1) - radius, -1,
+                    level.random.nextInt(radius * 2 + 1) - radius);
+            if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** One crocodile, lying in water at least two deep, somewhere warm. */
+    private static void spawnCrocodile(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos around = player.blockPosition();
+        for (int attempt = 0; attempt < 32; attempt++) {
+            float angle = random.nextFloat() * Mth.TWO_PI;
+            int distance = 24 + random.nextInt(33);
+            int x = around.getX() + Math.round(Mth.cos(angle) * distance);
+            int z = around.getZ() + Math.round(Mth.sin(angle) * distance);
+            if (!level.hasChunk(x >> 4, z >> 4)) {
+                continue;
+            }
+            BlockPos surface = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1, z);
+            if (!level.getFluidState(surface).is(net.minecraft.tags.FluidTags.WATER)
+                    || !level.getFluidState(surface.below()).is(net.minecraft.tags.FluidTags.WATER)) {
+                continue;
+            }
+            var biome = level.getBiome(surface);
+            boolean warm = biome.is(ModTags.Biomes.HOMININ_HOMELAND) || biome.is(net.minecraft.tags.BiomeTags.IS_RIVER)
+                    || biome.is(net.minecraft.tags.BiomeTags.IS_JUNGLE)
+                    || biome.is(net.minecraft.world.level.biome.Biomes.SWAMP)
+                    || biome.is(net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP);
+            if (!warm || biome.value().getBaseTemperature() < 0.5F || Bonobo.sanctuary(level, surface)) {
+                continue;
+            }
+            Crocodile crocodile = ModEntities.CROCODILE.get().create(level);
+            if (crocodile == null) {
+                return;
+            }
+            crocodile.moveTo(x + 0.5D, surface.getY() - 0.4D, z + 0.5D, random.nextFloat() * 360.0F, 0.0F);
+            crocodile.finalizeSpawn(level, level.getCurrentDifficultyAt(surface), MobSpawnType.EVENT, null);
+            level.addFreshEntity(crocodile);
+            return;
+        }
+    }
+
     /** Whether Dinopithecus is still a living animal in this player's era. */
-    private static boolean stillAround(ServerPlayer player) {
+    private static boolean stillAround(net.minecraft.world.entity.player.Player player) {
         String stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA)
                 .getStage().getPath();
         return !stage.equals("homo_erectus") && !stage.equals("homo_ergaster")
@@ -113,11 +260,15 @@ public final class WildAnimals {
     public static <T extends Mob> int spawnGroup(ServerPlayer player, EntityType<T> type, int count, int min, int max) {
         ServerLevel level = player.serverLevel();
         BlockPos site = findSite(level, player.blockPosition(), min, max, player.getRandom(), false);
-        if (site == null) {
+        // Nothing that hunts comes into bonobo country.
+        if (site == null || Bonobo.sanctuary(level, site)) {
             return 0;
         }
         for (int i = 0; i < count; i++) {
             place(level, type, site, i * 2);
+        }
+        if (type.is(ModTags.EntityTypes.PREDATORS) || type == ModEntities.DINOPITHECUS.get()) {
+            dev.hominin.evolution.band.Paranthropus.warn(player, site);
         }
         return count;
     }
