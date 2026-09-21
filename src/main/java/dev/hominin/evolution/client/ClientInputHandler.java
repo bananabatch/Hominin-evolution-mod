@@ -19,6 +19,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * explicitly.
  */
 public final class ClientInputHandler {
+    /** How quickly the second press has to follow the first. */
+    private static final long DOUBLE_TAP_MS = 500L;
+    private static long lastDisplayTap;
+
     public static void onRightClickEmpty(PlayerInteractEvent.RightClickEmpty event) {
         // Fires once per hand; only report the main hand so the server sees one of anything.
         if (event.getHand() != InteractionHand.MAIN_HAND || Minecraft.getInstance().getConnection() == null) {
@@ -49,8 +53,19 @@ public final class ClientInputHandler {
             return;
         }
         while (ModKeyMappings.THREAT_DISPLAY.consumeClick()) {
-            if (mc.screen == null) {
+            if (mc.screen != null) {
+                continue;
+            }
+            // Twice in quick succession, so a stray brush of the key does not set one off.
+            long now = net.minecraft.Util.getMillis();
+            if (now - lastDisplayTap <= DOUBLE_TAP_MS) {
+                lastDisplayTap = 0L;
                 PacketDistributor.sendToServer(new ThreatDisplayPayload());
+            } else {
+                lastDisplayTap = now;
+                mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        "Press " + ModKeyMappings.THREAT_DISPLAY.getTranslatedKeyMessage().getString()
+                                + " again to display.").withStyle(net.minecraft.ChatFormatting.GRAY), true);
             }
         }
         while (ModKeyMappings.JOURNAL.consumeClick()) {
