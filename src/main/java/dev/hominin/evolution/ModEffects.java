@@ -20,6 +20,10 @@ public final class ModEffects {
     public static final Holder<MobEffect> BRAIN_BLEED =
             MOB_EFFECTS.register("brain_bleed", BrainBleedEffect::new);
 
+    /** Prion disease from eating a brain. Incurable; see survival.Kuru. */
+    public static final Holder<MobEffect> KURU =
+            MOB_EFFECTS.register("kuru", dev.hominin.evolution.effect.KuruEffect::new);
+
     private ModEffects() {
     }
 }

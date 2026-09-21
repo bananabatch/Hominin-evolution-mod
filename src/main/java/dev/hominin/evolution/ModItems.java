@@ -52,10 +52,15 @@ public final class ModItems {
      */
     private static final int FLAKE_DURABILITY = 32;
 
+    /** A band of your own species - a wild one, the way you would meet it out in the country. */
     public static final DeferredItem<Item> BAND_MEMBER_SPAWN_EGG = ITEMS.register("band_member_spawn_egg",
-            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BAND_MEMBER,
+            () -> new dev.hominin.evolution.item.TroopSpawnEggItem(null, 0,
                     0x6F4A2D, 0x9A6947, new Item.Properties()));
 
+    /** Paranthropus only exists as a wild troop, so its egg puts down a troop of four. */
+    public static final DeferredItem<Item> PARANTHROPUS_SPAWN_EGG = ITEMS.register("paranthropus_spawn_egg",
+            () -> new dev.hominin.evolution.item.TroopSpawnEggItem(dev.hominin.evolution.band.Paranthropus.STAGE, 4,
+                    0x3A3330, 0x6E625C, new Item.Properties()));
     public static final DeferredItem<Item> BABOON_SPAWN_EGG = ITEMS.register("baboon_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BABOON,
                     0x8A7A52, 0x4D4038, new Item.Properties()));
@@ -271,6 +276,22 @@ public final class ModItems {
                     .saturationModifier(0.7F)
                     .usingConvertsTo(Items.STICK)
                     .build()));
+
+    public static final DeferredItem<Item> HOMININ_CARCASS = ITEMS.register("hominin_carcass",
+            () -> new BlockItem(ModBlocks.HOMININ_CARCASS.get(), new Item.Properties()));
+
+    /** Meat from one of our own kind. Food like any other - and not like any other. */
+    public static final DeferredItem<Item> HOMININ_MEAT = ITEMS.registerSimpleItem("hominin_meat",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.5F).build()));
+
+    /** Rich, and a gamble: about one brain in three carries kuru. */
+    public static final DeferredItem<Item> HOMININ_BRAIN = ITEMS.registerSimpleItem("hominin_brain",
+            new Item.Properties().stacksTo(4).food(new FoodProperties.Builder().nutrition(6).saturationModifier(0.8F)
+                    .build()));
+
+    /** Somebody's skull, to hold up and make a promise to. */
+    public static final DeferredItem<Item> HOMININ_SKULL = ITEMS.register("hominin_skull",
+            () -> new dev.hominin.evolution.item.HomininSkullItem(new Item.Properties().stacksTo(1)));
 
     /** The carcass itself, for anyone who wants to put one down. */
     public static final DeferredItem<Item> CARCASS = ITEMS.register("carcass",

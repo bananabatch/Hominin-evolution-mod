@@ -114,6 +114,14 @@ public class SocialScreen extends Screen {
         if (guiding) {
             return false;
         }
+        if (command == Social.Command.NORM_DEAD) {
+            // A rule for your own band, and only for a mind that can hold one: erectus on.
+            net.minecraft.resources.ResourceLocation stage = Minecraft.getInstance().player == null ? null
+                    : ClientSync.stageOf(Minecraft.getInstance().player.getUUID());
+            String era = stage == null ? "" : stage.getPath();
+            return !otherBand && !era.isEmpty() && !era.startsWith("australopithecus") && !era.equals("ardipithecus")
+                    && !era.equals("homo_habilis") && !era.equals("homo_rudolfensis");
+        }
         if (command == Social.Command.GIVE) {
             // To one you picked out - a stray you are winning over, a guest - or to your own band.
             return targetId >= 0 || !otherBand;

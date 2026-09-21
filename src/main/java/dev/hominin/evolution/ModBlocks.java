@@ -61,6 +61,15 @@ public final class ModBlocks {
      * Ribs and hide, lying where something stopped. Everything that dies leaves one; old
      * ones out in the country are picked cleaner but hold far more bone.
      */
+    /** A hominin, chimpanzee or bonobo, dead. Butchers to hominin meat, ribs, a brain, maybe the skull. */
+    public static final DeferredBlock<dev.hominin.evolution.block.HomininCarcassBlock> HOMININ_CARCASS =
+            BLOCKS.registerBlock("hominin_carcass", dev.hominin.evolution.block.HomininCarcassBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.TERRACOTTA_BROWN)
+                            .strength(0.6F)
+                            .noOcclusion()
+                            .randomTicks());
+
     public static final DeferredBlock<dev.hominin.evolution.block.CarcassBlock> CARCASS = BLOCKS.registerBlock(
             "carcass", dev.hominin.evolution.block.CarcassBlock::new,
             BlockBehaviour.Properties.of()

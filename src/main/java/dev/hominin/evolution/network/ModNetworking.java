@@ -48,6 +48,7 @@ public final class ModNetworking {
         registrar.playToClient(TradeOpenPayload.TYPE, TradeOpenPayload.STREAM_CODEC, TradeOpenPayload::handle);
         registrar.playToClient(JournalPayload.TYPE, JournalPayload.STREAM_CODEC, JournalPayload::handle);
         registrar.playToClient(ArmsRacePayload.TYPE, ArmsRacePayload.STREAM_CODEC, ArmsRacePayload::handle);
+        registrar.playToClient(SkullPosePayload.TYPE, SkullPosePayload.STREAM_CODEC, SkullPosePayload::handle);
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);
     }

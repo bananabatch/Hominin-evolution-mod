@@ -141,6 +141,10 @@ public final class Predation {
             return;
         }
         float gain = 3.0F;
+        if (dev.hominin.evolution.survival.Kuru.has(player)) {
+            // Stumbling, shaking, easy: everything out there can tell.
+            gain += 8.0F;
+        }
         if (level.isNight()) {
             gain += 2.0F;
         }

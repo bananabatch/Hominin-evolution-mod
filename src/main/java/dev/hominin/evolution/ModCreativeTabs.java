@@ -35,6 +35,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.HAMMERSTONE.get());
                         output.accept(ModItems.RIB.get());
                         output.accept(ModItems.CARCASS.get());
+                        output.accept(ModItems.HOMININ_CARCASS.get());
+                        output.accept(ModItems.HOMININ_MEAT.get());
+                        output.accept(ModItems.HOMININ_BRAIN.get());
+                        output.accept(ModItems.HOMININ_SKULL.get());
                         output.accept(ModItems.EMPTY_EGGSHELL.get());
                         output.accept(ModItems.WATER_EGGSHELL.get());
                         output.accept(ModItems.CHERT_HAMMERSTONE.get());
@@ -54,6 +58,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.NESTING_MATERIAL.get());
                         output.accept(ModItems.NEST.get());
                         output.accept(ModItems.BAND_MEMBER_SPAWN_EGG.get());
+                        output.accept(ModItems.PARANTHROPUS_SPAWN_EGG.get());
                         output.accept(ModItems.BABOON_SPAWN_EGG.get());
                         output.accept(ModItems.DINOPITHECUS_SPAWN_EGG.get());
                         output.accept(ModItems.CHIMPANZEE_SPAWN_EGG.get());

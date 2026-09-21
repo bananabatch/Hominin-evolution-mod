@@ -1,0 +1,153 @@
+{
+  "version": 3,
+  "name": "skull_pose",
+  "description": "A skull held out at arm's length, looked in the eye",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 60,
+    "stopTick": 66,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 12,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -4,
+          "yaw": -8,
+          "roll": 0
+        },
+        "head": {
+          "pitch": -4,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -92,
+          "yaw": 14,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 6,
+          "yaw": 0,
+          "roll": -6
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": -6,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 52,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -4,
+          "yaw": -8,
+          "roll": 0
+        },
+        "head": {
+          "pitch": -4,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -92,
+          "yaw": 14,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 6,
+          "yaw": 0,
+          "roll": -6
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": -6,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 60,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -4,
+          "yaw": -8,
+          "roll": 0
+        },
+        "head": {
+          "pitch": -4,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -92,
+          "yaw": 14,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 6,
+          "yaw": 0,
+          "roll": -6
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": -6,
+          "yaw": 0,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

@@ -74,28 +74,7 @@ public final class WildBands {
         int start = BandSizes.of(stage).start();
         int size = MIN_SIZE + random.nextInt(Math.max(1, start - MIN_SIZE + 1));
         UUID bandId = UUID.randomUUID();
-        BandMember alpha = null;
-        for (int i = 0; i < size; i++) {
-            BlockPos pos = Band.standingSpotNear(level, site, random.nextInt(3), random.nextFloat() * Mth.TWO_PI);
-            BandMember member = ModEntities.BAND_MEMBER.get().create(level);
-            if (member == null) {
-                continue;
-            }
-            member.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, random.nextFloat() * 360.0F, 0.0F);
-            member.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
-            member.setStage(stage);
-            member.joinWildBand(bandId, alpha == null ? null : alpha.getUUID());
-            member.ensureName();
-            if (Paranthropus.STAGE.equals(stage)) {
-                equipParanthropus(member, random);
-            } else {
-                equip(member, random);
-            }
-            level.addFreshEntity(member);
-            if (alpha == null) {
-                alpha = member;
-            }
-        }
+        BandMember alpha = placeBand(level, site, stage, size, bandId, random);
         if (alpha != null) {
             Territory.settle(bandId, site);
             level.playSound(null, alpha.blockPosition(), ModSounds.BAND_PANT_HOOT.get(), SoundSource.NEUTRAL, 3.0F, 0.9F);
@@ -166,6 +145,43 @@ public final class WildBands {
     }
 
     /** What a wild band carries: some of it worth trading for. */
+    /**
+     * Puts a whole band of this species down around a spot, alpha first. Used by the
+     * spawner and by the spawn eggs for species that only exist as other bands.
+     *
+     * @return the alpha, or null if nobody could be made
+     */
+    @Nullable
+    public static BandMember placeBand(ServerLevel level, BlockPos site, ResourceLocation stage, int size, UUID bandId,
+            RandomSource random) {
+        BandMember alpha = null;
+        for (int i = 0; i < size; i++) {
+            BlockPos pos = Band.standingSpotNear(level, site, random.nextInt(3), random.nextFloat() * Mth.TWO_PI);
+            BandMember member = ModEntities.BAND_MEMBER.get().create(level);
+            if (member == null) {
+                continue;
+            }
+            member.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, random.nextFloat() * 360.0F, 0.0F);
+            member.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+            member.setStage(stage);
+            member.joinWildBand(bandId, alpha == null ? null : alpha.getUUID());
+            member.ensureName();
+            if (Paranthropus.STAGE.equals(stage)) {
+                equipParanthropus(member, random);
+            } else {
+                equip(member, random);
+            }
+            level.addFreshEntity(member);
+            if (alpha == null) {
+                alpha = member;
+            }
+        }
+        if (alpha != null) {
+            Territory.settle(bandId, site);
+        }
+        return alpha;
+    }
+
     /** Sharpened sticks, long branches, and food: never stone, unless they have learned it. */
     private static void equipParanthropus(BandMember member, RandomSource random) {
         if (random.nextFloat() < 0.5F) {

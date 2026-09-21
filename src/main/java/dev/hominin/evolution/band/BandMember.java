@@ -418,6 +418,39 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         leaveTicks = 0;
     }
 
+    // ------------------------------------------------------------ kuru
+
+    /** Game time this one caught kuru at a funeral feast, or -1. It dies of it in two and a half days. */
+    private long kuruSince = -1L;
+    private static final long KURU_TICKS = 60000L;
+
+    public void contractKuru() {
+        if (kuruSince < 0L) {
+            kuruSince = level().getGameTime();
+        }
+    }
+
+    private void tickKuru() {
+        if (kuruSince < 0L || tickCount % 40 != 0 || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        long sick = level().getGameTime() - kuruSince;
+        if (random.nextInt(4) == 0) {
+            // The trembling, where anyone can see it.
+            server.sendParticles(ParticleTypes.SMOKE, getX(), getEyeY(), getZ(), 3, 0.2D, 0.2D, 0.2D, 0.0D);
+            setYRot(getYRot() + (random.nextFloat() - 0.5F) * 30.0F);
+        }
+        if (sick > KURU_TICKS / 2 && random.nextInt(6) == 0 && leaderPlayer() instanceof Player leader
+                && distanceToSqr(leader) < 24.0D * 24.0D) {
+            ensureName();
+            leader.displayClientMessage(Component.literal(getName().getString() + " cannot stop shaking.")
+                    .withStyle(ChatFormatting.GRAY), true);
+        }
+        if (sick > KURU_TICKS) {
+            hurt(level().damageSources().source(dev.hominin.evolution.survival.Kuru.DAMAGE), Float.MAX_VALUE);
+        }
+    }
+
     // ------------------------------------------------------------ guiding
 
     /** Where this one is walking somebody to, and who. Not saved: a walk ends with the session. */
@@ -1640,6 +1673,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean hurt = super.hurt(source, amount);
+        if (hurt && !level().isClientSide() && source.getEntity() instanceof net.minecraft.server.level.ServerPlayer by) {
+            Paranthropus.struck(this, by);
+        }
         if (hurt && !level().isClientSide() && isBaby() && source.getEntity() instanceof net.minecraft.world.entity.Mob attacker
                 && !(attacker instanceof BandMember)) {
             Band.childInDanger(this, attacker);
@@ -2408,6 +2444,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             deliverFood();
         }
         tickInfestation();
+        tickKuru();
         repayGrooming();
         if (tickCount % 100 == 0 && guestOf != null && level().isNight()) {
             // The alpha takes its band home at dusk - but only if there still is one.
@@ -2488,6 +2525,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        if (kuruSince >= 0L) {
+            tag.putLong("KuruSince", kuruSince);
+        }
         writeInventoryToTag(tag, registryAccess());
         tag.putInt("Hunger", hunger);
         tag.putString("Stage", entityData.get(STAGE));
@@ -2554,6 +2594,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        kuruSince = tag.contains("KuruSince") ? tag.getLong("KuruSince") : -1L;
         readInventoryFromTag(tag, registryAccess());
         if (tag.contains("Hunger")) {
             hunger = tag.getInt("Hunger");
@@ -2627,6 +2668,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             counters.put(Band.COHESION, Math.max(0, cohesion - 3));
             mourner.sendSystemMessage(Component.literal("(Band cohesion falls: " + Math.max(0, cohesion - 3) + ")")
                     .withStyle(ChatFormatting.DARK_GRAY));
+            Mortuary.memberDied(mourner);
         }
         super.die(source);
         if (!level().isClientSide() && isBaby()) {

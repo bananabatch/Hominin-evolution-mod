@@ -823,6 +823,10 @@ public final class EvolutionEventHandler {
 
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
+        if (entity instanceof ServerPlayer dead) {
+            // However you died, the disease died with you.
+            dev.hominin.evolution.survival.Kuru.clear(dead);
+        }
         if (entity.level().isClientSide() || entity instanceof Player) {
             return;
         }
@@ -928,6 +932,9 @@ public final class EvolutionEventHandler {
                 || stack.is(net.minecraft.world.item.Items.RABBIT)) {
             dev.hominin.evolution.combat.Bleeding.maybeInfect(player, "Raw, and you were already torn open.");
         }
+        if (dev.hominin.evolution.band.Mortuary.isHomininFlesh(stack)) {
+            dev.hominin.evolution.band.Mortuary.ate(player, stack);
+        }
         if (stack.is(ModItems.WATER_EGGSHELL.get())) {
             dev.hominin.evolution.survival.Thirst.drink(player,
                     dev.hominin.evolution.survival.Thirst.DRINK_FROM_SHELL);
@@ -1018,6 +1025,8 @@ public final class EvolutionEventHandler {
         ClimbingServer.tick(player);
         WildBands.tick(player);
         dev.hominin.evolution.band.Paranthropus.tick(player);
+        dev.hominin.evolution.survival.Kuru.tick(player);
+        dev.hominin.evolution.band.Mortuary.tick(player);
         Band.tickPlayer(player);
         dev.hominin.evolution.inventory.InventoryLimits.tick(player);
         dev.hominin.evolution.entity.WildAnimals.tick(player);

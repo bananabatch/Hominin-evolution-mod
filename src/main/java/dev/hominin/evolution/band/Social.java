@@ -62,6 +62,7 @@ public final class Social {
         TEACH("Teach...", Topic.TOGETHER),
         SHARE("Let's share food", Topic.TOGETHER),
         INFO("Info", Topic.TOGETHER),
+        NORM_DEAD("Our dead stay with us (make it the norm)", Topic.TOGETHER),
         DEV_BOND_UP("Bond +5 (whoever's listening)", Topic.DEVELOPER),
         DEV_BOND_DOWN("Bond -5 (whoever's listening)", Topic.DEVELOPER),
         DEV_COHESION("Band cohesion +10", Topic.DEVELOPER),
@@ -156,6 +157,7 @@ public final class Social {
         }
         switch (command) {
             case GIVE -> nearestOf(player, listeners).receiveFromHand(player);
+            case NORM_DEAD -> Mortuary.adopt(player);
             case LEAD_STONE, LEAD_OBSIDIAN -> {
                 if (!Paranthropus.is(first)) {
                     say(player, who + (individual ? " has" : " have") + " no better idea where to find it than you do.");

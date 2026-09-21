@@ -88,7 +88,13 @@ public final class Carcasses {
 
     /** Leaves a carcass where something died, and sometimes tells a hyena about it. */
     public static void onDeath(LivingEntity dead) {
-        if (dead instanceof Player || dead instanceof BandMember || !(dead.level() instanceof ServerLevel level)) {
+        if (dead instanceof Player || !(dead.level() instanceof ServerLevel level)) {
+            return;
+        }
+        // One of us, or a cousin close enough: what is left is a hominin carcass.
+        if (dead instanceof BandMember || dead instanceof dev.hominin.evolution.entity.Chimpanzee
+                || dead instanceof dev.hominin.evolution.entity.Bonobo) {
+            placeCarcass(level, dead.blockPosition(), ModBlocks.HOMININ_CARCASS.get().defaultBlockState());
             return;
         }
         if (dead.getBbHeight() < 0.5F && dead.getMaxHealth() < 6.0F) {
@@ -112,14 +118,17 @@ public final class Carcasses {
 
     /** Puts a carcass down at or beside a spot, if there is anywhere for it to lie. */
     public static BlockPos placeCarcass(ServerLevel level, BlockPos around, boolean large) {
+        return placeCarcass(level, around, ModBlocks.CARCASS.get().defaultBlockState().setValue(CarcassBlock.LARGE, large));
+    }
+
+    /** Puts this carcass down at or beside a spot, facing any way. */
+    public static BlockPos placeCarcass(ServerLevel level, BlockPos around, BlockState carcass) {
         for (BlockPos pos : BlockPos.betweenClosed(around.offset(-1, -1, -1), around.offset(1, 1, 1))) {
             if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.below()).isSolid()) {
                 continue;
             }
             Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(level.random);
-            BlockState state = ModBlocks.CARCASS.get().defaultBlockState()
-                    .setValue(HorizontalDirectionalBlock.FACING, facing)
-                    .setValue(CarcassBlock.LARGE, large);
+            BlockState state = carcass.setValue(HorizontalDirectionalBlock.FACING, facing);
             if (state.canSurvive(level, pos)) {
                 level.setBlock(pos, state, 3);
                 return pos.immutable();

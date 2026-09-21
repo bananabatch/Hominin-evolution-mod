@@ -1,0 +1,6 @@
+{
+  "parent": "hominin_evolution:block/carcass",
+  "textures": {
+    "flesh": "hominin_evolution:block/hominin_carcass_flesh"
+  }
+}

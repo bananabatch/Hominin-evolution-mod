@@ -91,6 +91,7 @@ public class HomininEvolutionClient {
         modEventBus.addListener(ChecklistOverlay::register);
         modEventBus.addListener(ThirstOverlay::register);
         modEventBus.addListener(ArmsRaceFlash::register);
+        modEventBus.addListener(SkullPoseFlash::register);
         modEventBus.addListener(EvolutionCutscene::register);
         modEventBus.addListener(RebirthCutscene::register);
         modEventBus.addListener(TiredApesFlash::register);

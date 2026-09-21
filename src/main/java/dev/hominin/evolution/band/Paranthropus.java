@@ -55,6 +55,9 @@ public final class Paranthropus {
     private static final float LOWBALL_CHANCE = 0.4F;
 
     private static final Map<UUID, Long> lastGuided = new HashMap<>();
+    /** One alarm per player per minute: a pair of cats is one alarm, not two. */
+    private static final Map<UUID, Long> lastWarned = new HashMap<>();
+    private static final long WARN_GAP = 1200L;
 
     public static boolean is(BandMember member) {
         return STAGE.equals(member.getStage());
@@ -122,12 +125,33 @@ public final class Paranthropus {
         return forageShare(player) < 1.0F ? "Other primates have already picked this ground over." : null;
     }
 
+    /**
+     * One of them hit by a player - a branch, a thrown stone. Paranthropus do not fight Homo
+     * over it; the troop scatters, and goes to forage somewhere you are not.
+     */
+    public static void struck(BandMember member, ServerPlayer by) {
+        if (!is(member) || !member.isAlive()) {
+            return;
+        }
+        List<BandMember> troop = member.level().getEntitiesOfClass(BandMember.class,
+                member.getBoundingBox().inflate(24.0D), m -> m.isAlive() && is(m)
+                        && m.getBandId() != null && m.getBandId().equals(member.getBandId()));
+        if (!troop.contains(member)) {
+            troop.add(member);
+        }
+        driveOff(by, troop);
+    }
+
     /** Anything that makes a display at them - and they are no match for it. */
     public static int scareNear(ServerPlayer player, double radius) {
         List<BandMember> troop = near(player, radius);
         if (troop.isEmpty()) {
             return 0;
         }
+        return driveOff(player, troop);
+    }
+
+    private static int driveOff(ServerPlayer player, List<BandMember> troop) {
         // Driven off: they take their foraging somewhere well away from you.
         BlockPos from = troop.get(0).blockPosition();
         double dx = from.getX() - player.getX();
@@ -155,10 +179,15 @@ public final class Paranthropus {
         if (troop.isEmpty()) {
             return;
         }
+        long now = player.level().getGameTime();
+        if (now - lastWarned.getOrDefault(player.getUUID(), -WARN_GAP) < WARN_GAP) {
+            return;
+        }
+        lastWarned.put(player.getUUID(), now);
         BandMember caller = troop.get(0);
         player.serverLevel().playSound(null, caller.blockPosition(), ModSounds.BAND_CALL.get(), SoundSource.NEUTRAL,
                 3.0F, 1.4F);
-        player.sendSystemMessage(Component.literal("Paranthropus are shrieking alarm calls. Something is coming in from the "
+        player.sendSystemMessage(Component.literal("Paranthropus are shrieking alarm calls. Something is coming in, "
                 + WildBands.bearingFrom(player, danger) + ".").withStyle(ChatFormatting.GOLD));
     }
 
