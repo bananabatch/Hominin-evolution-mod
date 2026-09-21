@@ -27,15 +27,26 @@ public class ItemPickScreen extends Screen {
 
     private final List<Choice> choices;
     private final Component emptyMessage;
+    /** The band to page through, and where this member sits in it. Empty for the fetch list. */
+    private final List<Integer> band;
+    private final int current;
 
     private ItemPickScreen(Component title, List<Choice> choices, Component emptyMessage) {
+        this(title, choices, emptyMessage, List.of(), -1);
+    }
+
+    private ItemPickScreen(Component title, List<Choice> choices, Component emptyMessage,
+            List<Integer> band, int current) {
         super(title);
         this.choices = choices;
         this.emptyMessage = emptyMessage;
+        this.band = band;
+        this.current = current;
     }
 
     /** What one member carries, sent from the server. */
-    public static void open(int entityId, String name, List<Integer> slots, List<ItemStack> stacks) {
+    public static void open(int entityId, String name, List<Integer> slots, List<ItemStack> stacks,
+            List<Integer> band) {
         List<Choice> choices = new java.util.ArrayList<>();
         for (int i = 0; i < stacks.size(); i++) {
             ItemStack stack = stacks.get(i);
@@ -48,8 +59,10 @@ public class ItemPickScreen extends Screen {
             choices.add(new Choice(stack, label,
                     () -> PacketDistributor.sendToServer(new TakeItemPayload(entityId, slot))));
         }
-        Minecraft.getInstance().setScreen(new ItemPickScreen(Component.literal("Ask " + name + " for..."), choices,
-                Component.literal(name + " isn't carrying anything.")));
+        int index = band.indexOf(entityId);
+        String position = band.size() > 1 && index >= 0 ? "  (" + (index + 1) + "/" + band.size() + ")" : "";
+        Minecraft.getInstance().setScreen(new ItemPickScreen(Component.literal("Ask " + name + " for..." + position),
+                choices, Component.literal(name + " isn't carrying anything."), band, index));
     }
 
     /** Things that can be fetched, for one member (entity id) or the band (-1). */
@@ -79,6 +92,19 @@ public class ItemPickScreen extends Screen {
                 onClose();
             }).bounds(x + 20, y, BUTTON_WIDTH - 20, 20).build());
         }
+        // Walking round the band: previous and next, wrapping at the ends.
+        if (band.size() > 1 && current >= 0) {
+            int y = Math.min(height - 28, top + Math.max(rows, 1) * ROW + 10);
+            addRenderableWidget(Button.builder(Component.literal("< Previous"), b -> page(-1))
+                    .bounds(width / 2 - 104, y, 100, 20).build());
+            addRenderableWidget(Button.builder(Component.literal("Next >"), b -> page(1))
+                    .bounds(width / 2 + 4, y, 100, 20).build());
+        }
+    }
+
+    private void page(int step) {
+        int next = Math.floorMod(current + step, band.size());
+        PacketDistributor.sendToServer(new dev.hominin.evolution.network.ViewInventoryPayload(band.get(next)));
     }
 
     @Override

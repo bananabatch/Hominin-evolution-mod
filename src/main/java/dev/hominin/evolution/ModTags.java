@@ -35,6 +35,9 @@ public final class ModTags {
          */
         public static final TagKey<Block> TAKEABLE_BY_HAND = block("takeable_by_hand");
 
+        /** Grass and reeds: cut low with an edge, these give usable stalks. */
+        public static final TagKey<Block> THATCH_SOURCE = block("thatch_source");
+
         public static final TagKey<Block> REQUIRES_DIGGING_STICK = block("requires_digging_stick");
         public static final TagKey<Block> REQUIRES_STONE_TOOL = block("requires_stone_tool");
         public static final TagKey<Block> REQUIRES_HAND_AXE = block("requires_hand_axe");
@@ -76,6 +79,9 @@ public final class ModTags {
 
         /** Anything with a fine cutting edge: whittling, and cracking bones. */
         public static final TagKey<Item> FLAKES = item("flakes");
+
+        /** Anything with a worked edge that will cut rather than crush. */
+        public static final TagKey<Item> CUTTING_EDGE = item("cutting_edge");
 
         /** Meat a flake can portion. Vanilla's meat, plus the common tags other mods use. */
         public static final TagKey<Item> SPLITTABLE_MEAT = item("splittable_meat");

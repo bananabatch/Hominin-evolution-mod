@@ -34,6 +34,12 @@ public final class ModEntities {
                     dev.hominin.evolution.entity.Baboon::new, MobCategory.CREATURE)
                     .sized(0.7F, 1.0F).clientTrackingRange(10).build("baboon"));
 
+    /** The giant baboon: the one animal out here that answers a threat display. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Dinopithecus>> DINOPITHECUS =
+            ENTITY_TYPES.register("dinopithecus", () -> EntityType.Builder.<dev.hominin.evolution.entity.Dinopithecus>of(
+                    dev.hominin.evolution.entity.Dinopithecus::new, MobCategory.CREATURE)
+                    .sized(1.0F, 1.7F).clientTrackingRange(10).build("dinopithecus"));
+
     public static final Supplier<EntityType<dev.hominin.evolution.entity.Pachycrocuta>> PACHYCROCUTA =
             ENTITY_TYPES.register("pachycrocuta", () -> EntityType.Builder.<dev.hominin.evolution.entity.Pachycrocuta>of(
                     dev.hominin.evolution.entity.Pachycrocuta::new, MobCategory.CREATURE)

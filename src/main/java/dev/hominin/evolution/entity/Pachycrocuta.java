@@ -19,7 +19,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
@@ -38,6 +37,17 @@ import net.minecraft.world.phys.Vec3;
  * drive it off. Ignore it, and it gets to choose when.
  */
 public class Pachycrocuta extends PathfinderMob {
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        // Bone-cracking jaws. Whatever they close on does not stop bleeding by itself.
+        if (hit && target instanceof net.minecraft.world.entity.LivingEntity bitten) {
+            dev.hominin.evolution.combat.Bleeding.inflict(bitten,
+                    dev.hominin.evolution.combat.Bleeding.Tier.INTERNAL);
+        }
+        return hit;
+    }
+
     /** How long it must go unwatched before it commits to an attack. */
     private static final int UNWATCHED_TICKS_TO_ATTACK = 100;
     private static final double STALK_DISTANCE = 16.0D;
@@ -72,7 +82,7 @@ public class Pachycrocuta extends PathfinderMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new FleeGoal());
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.45D, true));
+        goalSelector.addGoal(2, new PredatorAttackGoal(this, 1.45D, 45, 18));
         goalSelector.addGoal(3, new StalkGoal());
         goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.7D));
         goalSelector.addGoal(5, new RandomLookAroundGoal(this));

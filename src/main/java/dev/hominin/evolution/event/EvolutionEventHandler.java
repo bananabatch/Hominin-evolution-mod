@@ -142,6 +142,12 @@ public final class EvolutionEventHandler {
             }
             return;
         }
+        // The drill works anywhere there is dry ground to work against, so like the
+        // branch it is checked before any block's own interaction.
+        if (event.getItemStack().is(ModItems.FIRE_DRILL.get())) {
+            workTheDrill(player, event.getLevel(), event.getPos(), event.getFace());
+            return;
+        }
         BlockState state = event.getLevel().getBlockState(event.getPos());
         // Fishing comes before the block's own interaction: the stick is what makes
         // it termite fishing rather than whatever else the block would have done.
@@ -176,6 +182,37 @@ public final class EvolutionEventHandler {
         }
     }
 
+
+    /**
+     * Making fire rather than finding it.
+     *
+     * <p>A fire you lit yourself counts for the milestone exactly as a fire you carried
+     * off a lightning strike does - it is the same flame, and the point was always that
+     * you can keep it. The drill is spent doing it: it is a worn spindle and a charred
+     * board afterwards, and the next one is another two sticks.
+     */
+    private static void workTheDrill(ServerPlayer player, Level level, BlockPos pos, @Nullable Direction face) {
+        BlockPos above = face != null ? pos.relative(face) : pos.above();
+        if (!level.getBlockState(above).canBeReplaced() || !level.getBlockState(pos).isSolid()) {
+            player.displayClientMessage(Component.literal(
+                    "You need dry ground under it and room above it."), true);
+            return;
+        }
+        if (level.isRainingAt(above)) {
+            player.displayClientMessage(Component.literal(
+                    "The dust will not catch in this wet. Get under something."), true);
+            return;
+        }
+        level.setBlock(above, net.minecraft.world.level.block.Blocks.FIRE.defaultBlockState(), 11);
+        level.playSound(null, above, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
+        player.getMainHandItem().shrink(1);
+        player.sendSystemMessage(Component.literal(
+                "The smoke thickens, catches, and goes up. You made that.")
+                .withStyle(ChatFormatting.GOLD));
+        if (EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.FIRE_TRANSFER)) {
+            EvolutionManager.attemptMilestone(player, BuiltinMilestones.FIRE_TRANSFER);
+        }
+    }
 
     private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
         if (!player.getInventory().add(stack)) {
@@ -691,6 +728,10 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.band.WildBands.forget(playerId);
             dev.hominin.evolution.band.Panic.forget(playerId);
             dev.hominin.evolution.stage.CutsceneGuard.forget(playerId);
+            dev.hominin.evolution.combat.Bleeding.forget(playerId);
+            dev.hominin.evolution.survival.Infestation.forget(playerId);
+            dev.hominin.evolution.entity.TroopRelations.forget(playerId);
+            dev.hominin.evolution.survival.Afflictions.forget(playerId);
             Thinking.forget(leaving);
             Arrival.forget(leaving);
         }
@@ -858,6 +899,14 @@ public final class EvolutionEventHandler {
             return;
         }
         ItemStack stack = event.getItem();
+        // Raw meat on a wound that has only just closed is how an infection starts.
+        if (stack.is(ModItems.MEAT_CHUNK.get()) || stack.is(net.minecraft.world.item.Items.BEEF)
+                || stack.is(net.minecraft.world.item.Items.PORKCHOP)
+                || stack.is(net.minecraft.world.item.Items.MUTTON)
+                || stack.is(net.minecraft.world.item.Items.CHICKEN)
+                || stack.is(net.minecraft.world.item.Items.RABBIT)) {
+            dev.hominin.evolution.combat.Bleeding.maybeInfect(player, "Raw, and you were already torn open.");
+        }
         if (stack.is(ModItems.WATER_EGGSHELL.get())) {
             dev.hominin.evolution.survival.Thirst.drink(player,
                     dev.hominin.evolution.survival.Thirst.DRINK_FROM_SHELL);
@@ -882,6 +931,26 @@ public final class EvolutionEventHandler {
         if (event.getEntity() instanceof ServerPlayer player) {
             ToolUse.creditOldowanTool(player, event.getCrafting().getItem());
         }
+    }
+
+    /**
+     * Weather you cannot miss. You do not have to see a tree take a strike - being out
+     * under a storm at all is how the idea arrives, and it gives a habilis a second
+     * route to fire that does not depend on stumbling across lava.
+     */
+    private static void noticeStorm(ServerPlayer player) {
+        if (player.tickCount % 100 != 0 || !player.serverLevel().isThundering()
+                || !player.serverLevel().canSeeSky(player.blockPosition())) {
+            return;
+        }
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        if (data.getCriterionCounters().getOrDefault("notice_fire_source", 0) > 0) {
+            return;
+        }
+        EvolutionManager.incrementCriterion(player, "notice_fire_source", 1);
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "The sky cracks open and something out there catches. So that is where it comes from.")
+                .withStyle(net.minecraft.ChatFormatting.YELLOW));
     }
 
     /** How far out to look for tree cover when judging where a player slept. */
@@ -915,11 +984,16 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.band.Panic.tick(player);
         dev.hominin.evolution.survival.Thirst.tick(player);
         dev.hominin.evolution.band.Grooming.tick(player);
+        dev.hominin.evolution.survival.Infestation.tick(player);
+        dev.hominin.evolution.entity.TroopRelations.tick(player);
         dev.hominin.evolution.hunt.Carcasses.tickMortality(player);
         dev.hominin.evolution.hunt.Carcasses.tickLoners(player);
         dev.hominin.evolution.hunt.Predation.tick(player);
         dev.hominin.evolution.hunt.Quarry.tick(player.serverLevel());
         ThreatDisplay.tick(player);
+        dev.hominin.evolution.combat.Bleeding.tick(player);
+        dev.hominin.evolution.combat.Bleeding.tickInfection(player);
+        noticeStorm(player);
         ClimbingServer.tick(player);
         WildBands.tick(player);
         Band.tickPlayer(player);

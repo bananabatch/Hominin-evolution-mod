@@ -14,6 +14,8 @@ public final class ModNetworking {
                 SocialCommandPayload::handle);
         registrar.playToServer(FetchRequestPayload.TYPE, FetchRequestPayload.STREAM_CODEC, FetchRequestPayload::handle);
         registrar.playToServer(TakeItemPayload.TYPE, TakeItemPayload.STREAM_CODEC, TakeItemPayload::handle);
+        registrar.playToServer(ViewInventoryPayload.TYPE, ViewInventoryPayload.STREAM_CODEC,
+                ViewInventoryPayload::handle);
         registrar.playToClient(MemberInventoryPayload.TYPE, MemberInventoryPayload.STREAM_CODEC,
                 MemberInventoryPayload::handle);
         registrar.playToServer(ClimbPayload.TYPE, ClimbPayload.STREAM_CODEC, ClimbPayload::handle);
@@ -37,6 +39,7 @@ public final class ModNetworking {
         registrar.playToClient(StagePayload.TYPE, StagePayload.STREAM_CODEC, StagePayload::handle);
         registrar.playToClient(MemberInfoPayload.TYPE, MemberInfoPayload.STREAM_CODEC, MemberInfoPayload::handle);
         registrar.playToClient(ThirstPayload.TYPE, ThirstPayload.STREAM_CODEC, ThirstPayload::handle);
+        registrar.playToClient(FocusPayload.TYPE, FocusPayload.STREAM_CODEC, FocusPayload::handle);
         registrar.playToClient(ArmsRacePayload.TYPE, ArmsRacePayload.STREAM_CODEC, ArmsRacePayload::handle);
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);

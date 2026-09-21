@@ -1,5 +1,9 @@
 package dev.hominin.evolution.hunt;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import dev.hominin.evolution.ModBlocks;
 import dev.hominin.evolution.ModEntities;
 import dev.hominin.evolution.band.BandMember;
@@ -43,11 +47,36 @@ public final class Carcasses {
      * carcass let a player farm band members by killing cows.
      */
     private static boolean killedByHand(LivingEntity dead) {
-        var source = dead.getLastDamageSource();
-        if (source == null) {
-            return false;
+        Long when = handled.remove(dead.getUUID());
+        if (when != null && dead.level().getGameTime() - when < HANDLED_MEMORY) {
+            return true;
         }
-        return source.getEntity() instanceof Player || source.getEntity() instanceof BandMember;
+        var source = dead.getLastDamageSource();
+        return source != null
+                && (source.getEntity() instanceof Player || source.getEntity() instanceof BandMember);
+    }
+
+    /**
+     * Everything a player or the band has drawn blood from, and when. The last hit is
+     * not enough to go on: an animal you speared bleeds out a minute later from magic
+     * damage with no attacker on it at all, and that is exactly the persistence hunt -
+     * your kill, arriving late. Five minutes covers any wound this mod can open.
+     */
+    private static final Map<UUID, Long> handled = new HashMap<>();
+    private static final long HANDLED_MEMORY = 6000L;
+
+    public static void onHurt(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        LivingEntity hurt = event.getEntity();
+        if (hurt.level().isClientSide() || hurt instanceof Player || hurt instanceof BandMember) {
+            return;
+        }
+        var attacker = event.getSource().getEntity();
+        if (attacker instanceof Player || attacker instanceof BandMember) {
+            if (handled.size() > 4096) {
+                handled.clear();
+            }
+            handled.put(hurt.getUUID(), hurt.level().getGameTime());
+        }
     }
 
     /** Whether this player's band already has everybody it can hold. */

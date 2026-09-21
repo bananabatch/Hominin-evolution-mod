@@ -177,6 +177,9 @@ public final class Band {
 
     /** Whatever hurts the leader, the band goes for. */
     public static void onPlayerHurt(LivingIncomingDamageEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer hurt) {
+            dev.hominin.evolution.combat.Bleeding.maybeInfect(hurt, "It opens again.");
+        }
         if (event.getEntity() instanceof ServerPlayer player
                 && event.getSource().getEntity() instanceof LivingEntity attacker
                 && attacker != player
@@ -188,7 +191,42 @@ public final class Band {
             }
             Social.onLeaderHit(player);
             defend(player, attacker);
+            if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(attacker)) {
+                playerAdrenaline(player);
+            }
         }
+    }
+
+    /** Once in five minutes, like the band's own. */
+    private static final long PLAYER_ADRENALINE_COOLDOWN = 6000L;
+    private static final Map<UUID, Long> playerAdrenalineReady = new HashMap<>();
+
+    /**
+     * What all that play was for. With nothing practised the body gives you nothing
+     * extra; every round of chase is a little more speed when it counts, and every round
+     * of wrestling a little more strength.
+     */
+    private static void playerAdrenaline(ServerPlayer player) {
+        var counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        int tag = Math.min(BandMember.MAX_TRAINING, counters.getOrDefault("play_tag", 0));
+        int wrestle = Math.min(BandMember.MAX_TRAINING, counters.getOrDefault("play_wrestle", 0));
+        long now = player.level().getGameTime();
+        if ((tag == 0 && wrestle == 0) || now < playerAdrenalineReady.getOrDefault(player.getUUID(), 0L)) {
+            return;
+        }
+        playerAdrenalineReady.put(player.getUUID(), now + PLAYER_ADRENALINE_COOLDOWN);
+        if (tag > 0) {
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 40 + tag * 20, 0));
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 20 + tag * 10, 1));
+        }
+        if (wrestle > 0) {
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, wrestle * 100, 0));
+        }
+        player.displayClientMessage(Component.literal("Your heart hammers. Your body knows what to do.")
+                .withStyle(ChatFormatting.GOLD), true);
     }
 
     /**

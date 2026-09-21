@@ -38,6 +38,8 @@ public final class WildAnimals {
     private static final float EAGLE_CHANCE = 0.12F;
     /** The scimitar cat hunts in the open, in daylight, usually in pairs. */
     private static final float HOMOTHERIUM_CHANCE = 0.14F;
+    /** Rare on purpose: meeting one should be an event, not a feature of the landscape. */
+    private static final float DINOPITHECUS_CHANCE = 0.09F;
 
     public static void tick(ServerPlayer player) {
         if (player.tickCount % TROOP_CHECK_TICKS == 300 && !player.isSpectator()
@@ -64,6 +66,21 @@ public final class WildAnimals {
                 && random.nextFloat() < HOMOTHERIUM_CHANCE) {
             spawnGroup(player, ModEntities.HOMOTHERIUM.get(), random.nextBoolean() ? 2 : 1, 45, 80);
         }
+        // They did not last as long as the hominins did. Once you are erectus they are
+        // simply no longer out there, which is the only monument they get.
+        if (stillAround(player) && none(player, dev.hominin.evolution.entity.Dinopithecus.class, 150.0D)
+                && random.nextFloat() < DINOPITHECUS_CHANCE) {
+            spawnGroup(player, ModEntities.DINOPITHECUS.get(), 2 + random.nextInt(2), 40, 75);
+        }
+    }
+
+    /** Whether Dinopithecus is still a living animal in this player's era. */
+    private static boolean stillAround(ServerPlayer player) {
+        String stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA)
+                .getStage().getPath();
+        return !stage.equals("homo_erectus") && !stage.equals("homo_ergaster")
+                && !stage.equals("homo_heidelbergensis") && !stage.equals("homo_sapiens")
+                && !stage.equals("homo_neanderthalensis");
     }
 
     private static boolean none(ServerPlayer player, Class<? extends Mob> type, double radius) {

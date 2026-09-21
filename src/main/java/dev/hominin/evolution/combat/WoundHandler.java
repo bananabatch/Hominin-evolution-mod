@@ -2,11 +2,9 @@ package dev.hominin.evolution.combat;
 
 import javax.annotation.Nullable;
 
-import dev.hominin.evolution.ModEffects;
 import dev.hominin.evolution.ModItems;
 import dev.hominin.evolution.ModTags;
 import dev.hominin.evolution.entity.WoundedFleeGoal;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
@@ -23,15 +21,21 @@ import net.minecraft.world.item.ItemStack;
  * open a cut that will not close.
  */
 public final class WoundHandler {
-    /** How likely a cut is to bleed, how long, and how bad a wound it can deepen to. */
-    private record Edge(float chance, int ticks, int maxSeverity) {
+    /**
+     * How likely a cut is to bleed, and the worst kind of wound this edge can open.
+     *
+     * <p>The tier is the weapon's ceiling, not its guarantee: a spear usually opens
+     * something internal and occasionally opens a body outright.
+     */
+    private record Edge(float chance, Bleeding.Tier tier, float worstChance) {
     }
 
-    private static final Edge FLAKE = new Edge(0.6F, 8 * 20, 1);
+    private static final Edge FLAKE = new Edge(0.6F, Bleeding.Tier.EXTERNAL, 0.0F);
     /** Fine enough to cut, not heavy enough to make a cut worse. */
-    private static final Edge POINTY_STICK = new Edge(0.35F, 6 * 20, 0);
-    private static final Edge SPEAR = new Edge(0.75F, 10 * 20, 2);
-    private static final Edge HARDENED_SPEAR = new Edge(0.85F, 12 * 20, 2);
+    private static final Edge POINTY_STICK = new Edge(0.35F, Bleeding.Tier.EXTERNAL, 0.0F);
+    /** Driven in rather than drawn across: this is what internal bleeding is. */
+    private static final Edge SPEAR = new Edge(0.75F, Bleeding.Tier.INTERNAL, 0.08F);
+    private static final Edge HARDENED_SPEAR = new Edge(0.85F, Bleeding.Tier.INTERNAL, 0.18F);
 
     /** Priority 0 puts flight above the animal's own wandering and grazing. */
     private static final int FLEE_PRIORITY = 0;
@@ -59,12 +63,7 @@ public final class WoundHandler {
         if (target.getRandom().nextFloat() >= edge.chance()) {
             return;
         }
-        // A fresh cut on an open wound makes it worse, up to what the weapon can do.
-        MobEffectInstance existing = target.getEffect(ModEffects.BLEEDING);
-        int severity = existing == null ? 0 : Math.min(edge.maxSeverity(), existing.getAmplifier() + 1);
-        int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
-        target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
-        dev.hominin.evolution.hunt.Quarry.wounded(target);
+        Bleeding.inflict(target, tierOf(edge, target));
 
         // A saber-toothed cat does not run from a cut, and a baboon with its troop behind it attacks instead.
         boolean standsGround = target.getType().is(ModTags.EntityTypes.FEARLESS)
@@ -83,11 +82,15 @@ public final class WoundHandler {
         if (edge == null || target.getRandom().nextFloat() >= Math.min(0.95F, edge.chance() + bonus)) {
             return;
         }
-        MobEffectInstance existing = target.getEffect(ModEffects.BLEEDING);
-        int severity = existing == null ? 0 : Math.min(edge.maxSeverity(), existing.getAmplifier() + 1);
-        int ticks = existing == null ? edge.ticks() : Math.max(existing.getDuration(), edge.ticks());
-        target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
-        dev.hominin.evolution.hunt.Quarry.wounded(target);
+        Bleeding.inflict(target, tierOf(edge, target));
+    }
+
+    /** Most blows do what the weapon usually does. Occasionally one goes all the way in. */
+    private static Bleeding.Tier tierOf(Edge edge, LivingEntity target) {
+        if (edge.worstChance() > 0.0F && target.getRandom().nextFloat() < edge.worstChance()) {
+            return Bleeding.Tier.CATASTROPHIC;
+        }
+        return edge.tier();
     }
 
     /**

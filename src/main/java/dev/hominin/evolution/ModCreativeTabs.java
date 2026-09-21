@@ -25,6 +25,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.QUARTZITE_DEPOSIT.get());
                         output.accept(ModItems.LIMESTONE_DEPOSIT.get());
                         output.accept(ModItems.ROCK.get());
+                        output.accept(ModItems.TICK.get());
+                        output.accept(ModItems.THATCH.get());
+                        output.accept(ModItems.TWINE.get());
+                        output.accept(ModItems.FIRE_DRILL.get());
                         output.accept(ModItems.GRINDING_ROCK.get());
                         output.accept(ModItems.FLAKE.get());
                         output.accept(ModItems.CHOPPER.get());
@@ -51,6 +55,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.NEST.get());
                         output.accept(ModItems.BAND_MEMBER_SPAWN_EGG.get());
                         output.accept(ModItems.BABOON_SPAWN_EGG.get());
+                        output.accept(ModItems.DINOPITHECUS_SPAWN_EGG.get());
                         output.accept(ModItems.PACHYCROCUTA_SPAWN_EGG.get());
                         output.accept(ModItems.SABERTOOTH_SPAWN_EGG.get());
                         output.accept(ModItems.HOMOTHERIUM_SPAWN_EGG.get());

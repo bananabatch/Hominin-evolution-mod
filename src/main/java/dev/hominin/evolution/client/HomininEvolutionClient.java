@@ -23,6 +23,7 @@ public class HomininEvolutionClient {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClimbController::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(TradeTierTooltip::onTooltip);
+        NeoForge.EVENT_BUS.addListener(FocusCamera::onComputeFov);
         NeoForge.EVENT_BUS.addListener(ClientSync::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(ChecklistOverlay::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(LockedSlotOverlay::onRender);
@@ -33,6 +34,8 @@ public class HomininEvolutionClient {
         modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) -> {
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("dinopithecus"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::dinopithecus);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::pachycrocuta);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
@@ -54,6 +57,9 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.BABOON.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                             "baboon", 1.0F, 0.4F));
+            event.registerEntityRenderer(ModEntities.DINOPITHECUS.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("dinopithecus"),
+                            "dinopithecus", 1.45F, 0.7F));
             event.registerEntityRenderer(ModEntities.PACHYCROCUTA.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
                             "pachycrocuta", 1.15F, 0.7F));

@@ -9,6 +9,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 
@@ -87,10 +88,24 @@ public final class Grooming {
         finish(player, member);
     }
 
+    /** How many come off one member, and how many off you when they return the favour. */
+    private static final int PICKED_PER_SESSION = 2;
+
     private static void finish(ServerPlayer player, BandMember member) {
         lastGroomed.put(member.getUUID(), player.level().getGameTime());
         member.addBond(1);
         member.heal(1.0F);
+        // What you actually get out of it, on top of the trust.
+        int found = member.pickTicks(PICKED_PER_SESSION);
+        if (found > 0) {
+            ItemStack ticks = dev.hominin.evolution.survival.Infestation.pickedOff(found);
+            if (!player.getInventory().add(ticks)) {
+                player.drop(ticks, false);
+            }
+        }
+        // And the obligation. Grooming is not a favour, it is the opening half of a
+        // trade, and the other half is not optional.
+        member.oweGrooming(player);
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HEART, member.getX(), member.getEyeY() + 0.3D,
                 member.getZ(), 5, 0.3D, 0.2D, 0.3D, 0.0D);
         dev.hominin.evolution.EvolutionManager.incrementCriterion(player, Band.COHESION, 1);

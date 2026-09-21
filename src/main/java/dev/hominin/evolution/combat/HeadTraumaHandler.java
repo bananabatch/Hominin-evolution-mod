@@ -267,8 +267,16 @@ public final class HeadTraumaHandler {
         }
     }
 
+    /**
+     * A bleed inside the skull. A second one on top of the first is not a worse headache
+     * - there is nowhere for it to go, and that is what makes repeated concussions the
+     * one unarmed way to open a catastrophic wound.
+     */
     private static void bleed(Player player, LivingEntity target, HeadTrauma trauma) {
         if (trauma.isBleeding()) {
+            Bleeding.inflict(target, Bleeding.Tier.CATASTROPHIC);
+            player.displayClientMessage(
+                    Component.literal("It goes again, on top of the first. That is the end of it."), true);
             return;
         }
         trauma.setBleeding(true);

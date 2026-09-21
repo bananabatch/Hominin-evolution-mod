@@ -71,7 +71,8 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
         NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHurt);
-        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHeal);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Carcasses::onHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.Afflictions::onHeal);
         // High, so a wrestle is cancelled before anything treats it as a real blow.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, Band::onAttackEntity);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerDeath);
@@ -81,6 +82,7 @@ public class HomininEvolutionMod {
         {
             event.put(ModEntities.BAND_MEMBER.get(), BandMember.createAttributes().build());
             event.put(ModEntities.BABOON.get(), dev.hominin.evolution.entity.Baboon.createAttributes().build());
+            event.put(ModEntities.DINOPITHECUS.get(), dev.hominin.evolution.entity.Dinopithecus.attributes().build());
             event.put(ModEntities.PACHYCROCUTA.get(), dev.hominin.evolution.entity.Pachycrocuta.createAttributes().build());
             event.put(ModEntities.SABERTOOTH.get(), dev.hominin.evolution.entity.Sabertooth.createAttributes().build());
             event.put(ModEntities.HOMOTHERIUM.get(), dev.hominin.evolution.entity.Homotherium.createAttributes().build());

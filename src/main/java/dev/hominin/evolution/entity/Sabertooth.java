@@ -12,7 +12,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -49,7 +48,7 @@ public class Sabertooth extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.4D, true));
+        goalSelector.addGoal(1, new PredatorAttackGoal(this, 1.4D, 50, 20));
         goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.6D, 0.002F));
         goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 10.0F));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -77,6 +76,15 @@ public class Sabertooth extends PathfinderMob {
         boolean hit = super.doHurtTarget(target);
         if (hit) {
             playSound(ModSounds.SABERTOOTH_ROAR.get(), 1.4F, 1.0F);
+        }
+        // Those teeth are built for opening a throat. Usually it is a deep wound;
+        // rarely it is the last one, and rarely is deliberate - being killed outright
+        // by bad luck is only interesting if it almost never happens.
+        if (hit && target instanceof LivingEntity bitten) {
+            dev.hominin.evolution.combat.Bleeding.inflict(bitten,
+                    getRandom().nextFloat() < 0.05F
+                            ? dev.hominin.evolution.combat.Bleeding.Tier.CATASTROPHIC
+                            : dev.hominin.evolution.combat.Bleeding.Tier.INTERNAL);
         }
         return hit;
     }

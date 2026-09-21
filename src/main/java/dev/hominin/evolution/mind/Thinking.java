@@ -56,6 +56,14 @@ public final class Thinking {
      * broken keybind.
      */
     public static void think(ServerPlayer player) {
+        // Stared down by a troop you just struck: this is not a moment for ideas. You drop
+        // low, look away, and make yourself as small and as harmless as you can.
+        if (dev.hominin.evolution.entity.TroopRelations.hasPendingMistake(player)) {
+            player.setShiftKeyDown(true);
+            dev.hominin.evolution.entity.TroopRelations.forgive(player,
+                    "You drop low and look away. After a long moment, the troop goes back to foraging.");
+            return;
+        }
         long now = player.level().getGameTime();
         // Thinking about the animal that just ran is not inventing anything, and costs nothing
         // but what the chase itself costs.

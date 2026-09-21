@@ -43,6 +43,60 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
+    /**
+     * The giant baboon. Built on the same plan as its smaller cousin and wrong in every
+     * proportion: deeper chest, heavier shoulders, a muzzle carrying the largest canines
+     * of any monkey that has ever lived - and the tail, which on a baboon is a thin thing
+     * it carries in an arch and on this is a counterweight as long as the animal is.
+     */
+    public static LayerDefinition dinopithecus() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13)
+                .addBox(-4F, -3.5F, -7F, 8F, 7F, 14F), PartPose.offsetAndRotation(0F, 13F, 0.5F, -0.26F, 0F, 0F));
+        // The shoulder cape an adult male carries, and the ridge of the spine under it.
+        body.addOrReplaceChild("mane", CubeListBuilder.create().texOffs(46, 13)
+                .addBox(-4.5F, -4.6F, -7.5F, 9F, 6F, 6F), PartPose.offset(0F, 0F, 0F));
+        body.addOrReplaceChild("spine", CubeListBuilder.create().texOffs(78, 13)
+                .addBox(-1F, -5F, -1.5F, 2F, 2F, 9F), PartPose.offset(0F, 0F, 0F));
+
+        // Three segments rather than two, each one longer, and held in a high arch.
+        PartDefinition tail_base = body.addOrReplaceChild("tail_base", CubeListBuilder.create().texOffs(0, 35)
+                .addBox(-1.5F, -1.5F, 0F, 3F, 3F, 6F), PartPose.offsetAndRotation(0F, -2.5F, 7F, 1.05F, 0F, 0F));
+        PartDefinition tail_mid = tail_base.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(20, 35)
+                .addBox(-1F, -1F, 0F, 2F, 2F, 7F), PartPose.offsetAndRotation(0F, 0F, 6F, -2.0F, 0F, 0F));
+        tail_mid.addOrReplaceChild("tail_tip", CubeListBuilder.create().texOffs(40, 35)
+                .addBox(-0.5F, -0.5F, 0F, 1F, 1F, 6F), PartPose.offsetAndRotation(0F, 0F, 7F, 0.35F, 0F, 0F));
+
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-3.5F, -3.5F, -5F, 7F, 7F, 5F), PartPose.offset(0F, 10F, -5.5F));
+        head.addOrReplaceChild("ruff", CubeListBuilder.create().texOffs(26, 0)
+                .addBox(-5F, -4F, -3F, 10F, 8F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(100, 0)
+                .addBox(-3.5F, -4F, -5.5F, 7F, 1.5F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("muzzle_base", CubeListBuilder.create().texOffs(54, 0)
+                .addBox(-2.5F, -1F, -9F, 5F, 5F, 4F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("muzzle_tip", CubeListBuilder.create().texOffs(74, 0)
+                .addBox(-2F, -0.5F, -12F, 4F, 4F, 3F), PartPose.offset(0F, 0F, 0F));
+        // The canines, which are the entire reason anybody remembers this animal.
+        // Two canines, one each side of the jaw with a gap between them - not a single
+        // block of tooth across the front.
+        head.addOrReplaceChild("left_fang", CubeListBuilder.create().texOffs(90, 0)
+                .addBox(0.6F, 2.5F, -11.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_fang", CubeListBuilder.create().texOffs(90, 0)
+                .addBox(-1.6F, 2.5F, -11.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
+
+        root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(56, 35)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(-2.5F, 14F, -4.5F));
+        root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(56, 35)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(2.5F, 14F, -4.5F));
+        root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(74, 35)
+                .addBox(-2F, 0F, -2F, 4F, 8F, 4F), PartPose.offset(-2.5F, 16F, 4.5F));
+        root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(74, 35)
+                .addBox(-2F, 0F, -2F, 4F, 8F, 4F), PartPose.offset(2.5F, 16F, 4.5F));
+        return LayerDefinition.create(mesh, 128, 128);
+    }
+
     public static LayerDefinition pachycrocuta() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();

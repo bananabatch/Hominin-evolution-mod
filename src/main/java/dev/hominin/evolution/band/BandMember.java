@@ -325,6 +325,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
         // Just above building one: once the nest exists, getting into it is the priority.
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SleepInNestGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.PlayGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TinkerGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CraftGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ExcursionGoal(this));
@@ -818,9 +819,47 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             swing(InteractionHand.OFF_HAND);
         }
         if (--eatingTicks == 0) {
+            maybeAcquireTaste(food);
             consume(properties);
             food.shrink(1);
         }
+    }
+
+    /**
+     * Tastes are not fixed. Something eaten often enough, or just at the right moment,
+     * becomes a favourite - and a hominin that has just discovered it likes something
+     * says so, because that is information the rest of the band can use.
+     */
+    private void maybeAcquireTaste(ItemStack food) {
+        if (isFavourite(food) || random.nextFloat() >= NEW_TASTE_CHANCE) {
+            return;
+        }
+        ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(food.getItem());
+        favouriteFoods.set(random.nextInt(favouriteFoods.size()), id);
+        Band.announceDiscovery(this, ": \"Hmm. I like this a lot.\" (" + food.getHoverName().getString() + ")");
+    }
+
+    private static final float NEW_TASTE_CHANCE = 0.06F;
+
+    /**
+     * Eating what somebody else passed over. A favourite handed to you by name is worth
+     * more than the food in it - somebody noticed - and that is what sharing is for.
+     *
+     * @return true if it was one of their favourites.
+     */
+    public boolean eatShared(ItemStack food) {
+        FoodProperties properties = food.get(DataComponents.FOOD);
+        if (properties == null) {
+            return false;
+        }
+        boolean favourite = isFavourite(food);
+        maybeAcquireTaste(food);
+        consume(properties);
+        if (level() instanceof ServerLevel server) {
+            server.sendParticles(favourite ? ParticleTypes.HEART : ParticleTypes.HAPPY_VILLAGER,
+                    getX(), getEyeY() + 0.3D, getZ(), favourite ? 3 : 2, 0.3D, 0.2D, 0.3D, 0.0D);
+        }
+        return favourite;
     }
 
     private void consume(FoodProperties food) {
@@ -1170,6 +1209,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         ItemStack held = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
             describeTo(player);
+            attendTo(player, ATTEND_TICKS);
             player.sendSystemMessage(Component.literal("Press H within 5 seconds to talk to "
                     + getName().getString() + ".").withStyle(ChatFormatting.GRAY));
             return InteractionResult.CONSUME;
@@ -1608,9 +1648,90 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (isBaby() || attacker == this || !attacker.isAlive()) {
             return;
         }
+        if (attacker.getUUID().equals(gaveUpOn) && tickCount < gaveUpUntil && !isComingFor(attacker)) {
+            return;
+        }
         defendTicks = DEFEND_TICKS;
         fleeTicks = 0;
+        chaseStartedAt = tickCount;
+        lastLandedAt = tickCount;
         setTarget(attacker);
+    }
+
+    // ------------------------------------------------------------ knowing when to quit
+
+    /** How long a chase can go without landing anything before it is not worth it. */
+    private static final int GIVE_UP_TICKS = 12 * 20;
+    /** Further than this and it has got away. */
+    private static final double GOT_AWAY = 24.0D;
+    /** Nobody chases something so far that they lose the band doing it. */
+    private static final double TOO_FAR_FROM_LEADER = 40.0D;
+    /** How long a quarry that got away is left alone before anyone tries again. */
+    private static final int LET_IT_GO_TICKS = 30 * 20;
+
+    @Nullable
+    private LivingEntity chasing;
+    private int chaseStartedAt;
+    private int lastLandedAt;
+    @Nullable
+    private UUID gaveUpOn;
+    private int gaveUpUntil;
+
+    /** Whether this thing is actually attacking us - which is never something to walk away from. */
+    private boolean isComingFor(LivingEntity target) {
+        if (!(target instanceof net.minecraft.world.entity.Mob mob) || mob.getTarget() == null) {
+            return false;
+        }
+        LivingEntity itsTarget = mob.getTarget();
+        return itsTarget == this || itsTarget == leaderPlayer()
+                || (itsTarget instanceof BandMember other && other.isAlliedTo(this));
+    }
+
+    /**
+     * Quitting. A hunter that chases everything it swings at until one of them drops is
+     * a hunter that ends up alone, a long way from the band, at dusk. So a chase ends
+     * when it stops paying: nothing landed for twelve seconds, the quarry well out
+     * ahead, or the band left behind. Anything actually fighting back is not a chase,
+     * and is never walked away from.
+     */
+    private void tickGiveUp() {
+        LivingEntity target = getTarget();
+        // A new target from anywhere - the band's call, its own hunting, being hit - starts
+        // a fresh clock. Otherwise a target picked up by some other route would be judged
+        // on how long ago the last, unrelated fight ended.
+        if (target != chasing) {
+            chasing = target;
+            chaseStartedAt = tickCount;
+            lastLandedAt = tickCount;
+        }
+        if (target == null || tickCount % 10 != 0) {
+            return;
+        }
+        if (!target.isAlive()) {
+            setTarget(null);
+            return;
+        }
+        if (isComingFor(target)) {
+            lastLandedAt = tickCount;
+            return;
+        }
+        Player leader = leaderPlayer();
+        boolean fruitless = tickCount - lastLandedAt > GIVE_UP_TICKS;
+        boolean gotAway = distanceToSqr(target) > GOT_AWAY * GOT_AWAY;
+        boolean strayed = leader != null && distanceToSqr(leader) > TOO_FAR_FROM_LEADER * TOO_FAR_FROM_LEADER;
+        if (!fruitless && !gotAway && !strayed) {
+            return;
+        }
+        gaveUpOn = target.getUUID();
+        gaveUpUntil = tickCount + LET_IT_GO_TICKS;
+        setTarget(null);
+        defendTicks = 0;
+        huntTicks = 0;
+        getNavigation().stop();
+        if (random.nextInt(3) == 0) {
+            Band.announce(this, strayed ? " gives up the chase and heads back to the band."
+                    : " gives up the chase, panting.");
+        }
     }
 
     public boolean isDefending() {
@@ -1683,6 +1804,188 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         groomTicks = Math.max(groomTicks, ticks);
     }
 
+    /** Long enough to cover the selection window and the exchange that follows it. */
+    public static final int ATTEND_TICKS = 140;
+
+    // ------------------------------------------------------------ play
+
+    public static final int PLAY_TAG = 1;
+    public static final int PLAY_WRESTLE = 2;
+    /** Practice pays off up to a point. Past three rounds there is nothing left to learn. */
+    public static final int MAX_TRAINING = 3;
+
+    private int playKind;
+    private int playTicks;
+    @Nullable
+    private UUID playPartnerId;
+    /** Rounds of each learned. Each one stretches the matching adrenaline response. */
+    private int tagTraining;
+    private int wrestleTraining;
+
+    public void startPlay(int kind, BandMember partner, int ticks) {
+        playKind = kind;
+        playTicks = ticks;
+        playPartnerId = partner.getUUID();
+    }
+
+    public boolean isPlaying() {
+        return playTicks > 0 && playKind != 0;
+    }
+
+    public int playKind() {
+        return playKind;
+    }
+
+    @Nullable
+    public BandMember playPartner() {
+        if (playPartnerId == null || !(level() instanceof ServerLevel server)) {
+            return null;
+        }
+        return server.getEntity(playPartnerId) instanceof BandMember partner ? partner : null;
+    }
+
+    /** Called once a tick while playing. The round ends on its own, and counts. */
+    public void tickPlayClock() {
+        if (--playTicks <= 0) {
+            stopPlay(true);
+        }
+    }
+
+    public void stopPlay(boolean finished) {
+        if (finished && playKind == PLAY_TAG) {
+            tagTraining = Math.min(MAX_TRAINING, tagTraining + 1);
+        } else if (finished && playKind == PLAY_WRESTLE) {
+            wrestleTraining = Math.min(MAX_TRAINING, wrestleTraining + 1);
+        }
+        playKind = 0;
+        playTicks = 0;
+        playPartnerId = null;
+    }
+
+    public int getTagTraining() {
+        return tagTraining;
+    }
+
+    public int getWrestleTraining() {
+        return wrestleTraining;
+    }
+
+    /** How long they are giving you their attention, and whose it is. */
+    private int attendTicks;
+    @Nullable
+    private UUID attendingTo;
+
+    /**
+     * Stopping to listen. Picking somebody out and then chasing them round a clearing
+     * while you try to say something to them is not a conversation - so when you single
+     * one out, they stop what they are doing, turn, and wait to hear it.
+     */
+    public void attendTo(Player player, int ticks) {
+        attendTicks = Math.max(attendTicks, ticks);
+        attendingTo = player.getUUID();
+    }
+
+    public boolean isAttending() {
+        return attendTicks > 0;
+    }
+
+    private void tickAttention() {
+        if (attendTicks <= 0) {
+            return;
+        }
+        // Anything actually dangerous ends the conversation immediately.
+        if (inDanger() || isUpATree()) {
+            attendTicks = 0;
+            attendingTo = null;
+            return;
+        }
+        attendTicks--;
+        getNavigation().stop();
+        if (attendingTo != null && level().getPlayerByUUID(attendingTo) instanceof Player listener) {
+            getLookControl().setLookAt(listener, 30.0F, 30.0F);
+        }
+        if (attendTicks == 0) {
+            attendingTo = null;
+        }
+    }
+
+    /** How many ticks are on this one, and who is owed a turn in return. */
+    private int ticksOnMe;
+    @Nullable
+    private UUID owesGroomingTo;
+
+    public int getTicksOnMe() {
+        return ticksOnMe;
+    }
+
+    /**
+     * Picking them off. Returns how many actually came off, which is what the groomer
+     * gets to keep - so grooming somebody who has been neglected pays better than
+     * grooming somebody already clean, exactly as it should.
+     */
+    public int pickTicks(int wanted) {
+        int found = Math.min(wanted, ticksOnMe);
+        ticksOnMe -= found;
+        return found;
+    }
+
+    /**
+     * The other half of the trade. Nobody in a primate group grooms for nothing: being
+     * groomed puts you in debt, and the debt gets paid. You do not get to opt out of
+     * this, and neither do they.
+     */
+    public void oweGrooming(Player player) {
+        owesGroomingTo = player.getUUID();
+    }
+
+    public boolean owesGroomingTo(Player player) {
+        return player.getUUID().equals(owesGroomingTo);
+    }
+
+    /** Settling up. */
+    public void groomingRepaid() {
+        owesGroomingTo = null;
+    }
+
+    /** Slowly collecting them, the same way the player does. */
+    private void tickInfestation() {
+        if (tickCount % 2400 == 0 && ticksOnMe < 10) {
+            ticksOnMe++;
+        }
+    }
+
+    /**
+     * Paying the debt. Stand near somebody who groomed you and sooner or later you
+     * return it - which is the point of the whole arrangement, because they cannot reach
+     * their own back either.
+     */
+    private void repayGrooming() {
+        if (owesGroomingTo == null || tickCount % 20 != 0 || getTarget() != null || isUpATree()) {
+            return;
+        }
+        if (!(level().getPlayerByUUID(owesGroomingTo) instanceof net.minecraft.server.level.ServerPlayer owed)
+                || distanceToSqr(owed) > 32.0D * 32.0D) {
+            return;
+        }
+        if (distanceToSqr(owed) > 2.5D * 2.5D) {
+            getNavigation().moveTo(owed, 1.1D);
+            return;
+        }
+        groomingRepaid();
+        dev.hominin.evolution.survival.Infestation.groomed(owed, 2);
+        beingGroomed(60);
+        getNavigation().stop();
+        getLookControl().setLookAt(owed);
+        playSound(net.minecraft.sounds.SoundEvents.WOOL_HIT, 0.5F, 1.4F);
+        if (level() instanceof ServerLevel server) {
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                    owed.getX(), owed.getEyeY(), owed.getZ(), 4, 0.3D, 0.3D, 0.3D, 0.0D);
+        }
+        owed.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                getName().getString() + " sits you down and goes through your hair in turn.")
+                .withStyle(ChatFormatting.LIGHT_PURPLE));
+    }
+
     public boolean isBeingGroomed() {
         return groomTicks > 0;
     }
@@ -1716,11 +2019,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         float fightChance = carriesWeapon() ? 0.65F : 0.35F;
         if (random.nextFloat() < fightChance) {
-            fightingUntil = now + ADRENALINE_TICKS;
+            // Every round of wrestling done in safety is five more seconds of fight now.
+            int fightTicks = ADRENALINE_TICKS + wrestleTraining * 100;
+            fightingUntil = now + fightTicks;
             addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, ADRENALINE_TICKS, 1));
+                    net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, fightTicks, 1));
             addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, ADRENALINE_TICKS, 0));
+                    net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, fightTicks, 0));
             panicking = false;
             fleeTicks = 0;
             defendTicks = DEFEND_TICKS;
@@ -1730,8 +2035,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         } else {
             // The same shape as a struck animal's flight: a burst nothing can follow, then a
             // longer, slower run. Twenty seconds of Speed II made a frightened member vanish.
+            // And every round of tag is another second of running before the legs go.
+            int runTicks = PANIC_RUN_TICKS + tagTraining * 20;
             addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, PANIC_BURST_TICKS + PANIC_RUN_TICKS, 0));
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, PANIC_BURST_TICKS + runTicks, 0));
             addEffect(new net.minecraft.world.effect.MobEffectInstance(
                     net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, PANIC_BURST_TICKS, 1));
             panicking = true;
@@ -1759,6 +2066,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public boolean doHurtTarget(Entity target) {
         boolean hit = super.doHurtTarget(target);
+        if (hit) {
+            lastLandedAt = tickCount;
+        }
         if (hit && target instanceof LivingEntity living && !(target instanceof Player)) {
             float bonus = isFighting() ? 0.25F : 0.0F;
             dev.hominin.evolution.combat.WoundHandler.cutBy(this, getMainHandItem(), living, bonus);
@@ -1978,6 +2288,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             groomTicks--;
             getNavigation().stop();
         }
+        tickAttention();
         tickFreeze();
         tickWallClimb();
         if (tickCount % 20 == 7) {
@@ -1988,6 +2299,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         armUrgencyTicks = Math.max(0, armUrgencyTicks - 1);
         defendTicks = Math.max(0, defendTicks - 1);
+        tickGiveUp();
         readyTicks = Math.max(0, readyTicks - 1);
         wrestleCooldown = Math.max(0, wrestleCooldown - 1);
         huntTicks = Math.max(0, huntTicks - 1);
@@ -2007,6 +2319,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (tickCount % 20 == 0) {
             deliverFood();
         }
+        tickInfestation();
+        repayGrooming();
         if (tickCount % 100 == 0 && guestOf != null && level().isNight()) {
             // The alpha takes its band home at dusk - but only if there still is one.
             // Hanging the whole departure on the alpha meant that a visiting band whose
@@ -2105,6 +2419,12 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putBoolean("PersonalityRolled", personalityRolled);
         tag.putInt("StonePreference", stonePreference);
         tag.putBoolean("ObsidianObsession", obsidianObsession);
+        tag.putInt("TicksOnMe", ticksOnMe);
+        tag.putInt("TagTraining", tagTraining);
+        tag.putInt("WrestleTraining", wrestleTraining);
+        if (owesGroomingTo != null) {
+            tag.putUUID("OwesGroomingTo", owesGroomingTo);
+        }
         if (want != null) {
             tag.putString("Want", Wants.idOf(want).toString());
             tag.putLong("WantUntil", wantUntil);
@@ -2168,6 +2488,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         personalityRolled = tag.getBoolean("PersonalityRolled");
         stonePreference = tag.getInt("StonePreference");
         obsidianObsession = tag.getBoolean("ObsidianObsession");
+        ticksOnMe = tag.getInt("TicksOnMe");
+        tagTraining = tag.getInt("TagTraining");
+        wrestleTraining = tag.getInt("WrestleTraining");
+        owesGroomingTo = tag.hasUUID("OwesGroomingTo") ? tag.getUUID("OwesGroomingTo") : null;
         want = tag.contains("Want") ? itemOf(tag.getString("Want")) : null;
         wantUntil = tag.getLong("WantUntil");
         tradeOffer = tag.contains("TradeOffer") ? itemOf(tag.getString("TradeOffer")) : null;

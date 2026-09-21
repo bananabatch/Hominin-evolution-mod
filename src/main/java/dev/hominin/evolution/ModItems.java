@@ -59,6 +59,9 @@ public final class ModItems {
     public static final DeferredItem<Item> BABOON_SPAWN_EGG = ITEMS.register("baboon_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BABOON,
                     0x8A7A52, 0x4D4038, new Item.Properties()));
+    public static final DeferredItem<Item> DINOPITHECUS_SPAWN_EGG = ITEMS.register("dinopithecus_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.DINOPITHECUS,
+                    0x55504A, 0x8C6A3F, new Item.Properties()));
     public static final DeferredItem<Item> PACHYCROCUTA_SPAWN_EGG = ITEMS.register("pachycrocuta_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PACHYCROCUTA,
                     0x9C8058, 0x4E3A28, new Item.Properties()));
@@ -94,6 +97,28 @@ public final class ModItems {
      * it is also a nodule of the best stone there is - so it can be broken down into
      * chert, or worked straight into a multi tool.
      */
+    /**
+     * Cut grass, dried and bundled. Useless on its own and the beginning of almost
+     * everything: twine, bedding, roofing. The first material that is made rather than
+     * found - which is why it waits for erectus.
+     */
+    public static final DeferredItem<Item> THATCH =
+            ITEMS.registerSimpleItem("thatch", new Item.Properties());
+
+    /**
+     * Thatch twisted against itself until the fibres bind. Two things held together is
+     * the whole idea, and everything hafted comes out of it.
+     */
+    public static final DeferredItem<Item> TWINE =
+            ITEMS.registerSimpleItem("twine", new Item.Properties());
+
+    /**
+     * A spindle and a hearth board: the trick of making fire instead of finding it.
+     * Carrying one is proof you worked it out, which is what erectus is waiting for.
+     */
+    public static final DeferredItem<Item> FIRE_DRILL =
+            ITEMS.registerSimpleItem("fire_drill", new Item.Properties());
+
     public static final DeferredItem<Item> CHERT_HAMMERSTONE =
             ITEMS.registerSimpleItem("chert_hammerstone", new Item.Properties());
 
@@ -264,6 +289,14 @@ public final class ModItems {
 
     public static final DeferredItem<Item> GRUB = ITEMS.registerSimpleItem("grub",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
+
+    /**
+     * Picked off somebody else and eaten on the spot. Barely food, and that is the
+     * point: it is the immediate, concrete payment for grooming somebody, which is why
+     * primates do so much of it and why it never had to be altruism.
+     */
+    public static final DeferredItem<Item> TICK = ITEMS.registerSimpleItem("tick",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.1F).build()));
 
     public static final DeferredItem<Item> BEETLE = ITEMS.registerSimpleItem("beetle",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));

@@ -43,6 +43,11 @@ public final class Thirst {
 
     public static void drink(ServerPlayer player, int amount) {
         set(player, get(player) + amount);
+        // Somebody bleeding out is drinking for a different reason than thirst, and
+        // every mouthful goes on that count whether or not they needed the water.
+        if (amount > 0) {
+            dev.hominin.evolution.combat.Bleeding.drank(player, amount);
+        }
     }
 
     public static void sync(ServerPlayer player) {

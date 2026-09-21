@@ -52,6 +52,9 @@ public final class Social {
         NO_HUNT("Don't hunt with me", Topic.DANGER),
         CLIMB("Let's climb a tree / All clear", Topic.DANGER),
         GROOM("Groom them", Topic.TOGETHER),
+        GROOM_ME("Get these off me", Topic.TOGETHER),
+        PLAY("Let's play", Topic.TOGETHER),
+        SHARE("Let's share food", Topic.TOGETHER),
         INFO("Info", Topic.TOGETHER);
 
         private final String label;
@@ -117,6 +120,10 @@ public final class Social {
             return;
         }
         boolean individual = entityId >= 0;
+        // Addressed directly, they stop and listen rather than wandering off mid-sentence.
+        if (individual) {
+            listeners.forEach(member -> member.attendTo(player, BandMember.ATTEND_TICKS));
+        }
         BandMember first = listeners.get(0);
         String who = individual ? first.getName().getString() : first.isWild() ? "The other band" : "Your band";
         switch (command) {
@@ -153,6 +160,9 @@ public final class Social {
                 }
                 Grooming.begin(player, first);
             }
+            case GROOM_ME -> askToBeGroomed(player, listeners, who);
+            case PLAY -> play(player, listeners);
+            case SHARE -> share(player, listeners);
             case INFO -> {
                 if (individual) {
                     sendInfo(player, first);
@@ -255,6 +265,19 @@ public final class Social {
         }
         if (individual) {
             showInventory(player, listeners.get(0));
+            return;
+        }
+        // Asking the whole band: start with whoever is nearest, and let the player walk
+        // through the rest one at a time to see who is carrying what.
+        BandMember nearest = null;
+        for (BandMember member : listeners) {
+            if (member.isLedBy(player) && (nearest == null
+                    || member.distanceToSqr(player) < nearest.distanceToSqr(player))) {
+                nearest = member;
+            }
+        }
+        if (nearest != null) {
+            showInventory(player, nearest);
             return;
         }
         if (giveWhatIsNeeded(player, listeners)) {
@@ -432,6 +455,166 @@ public final class Social {
     }
 
     /** Everything worth knowing about one member, for the info screen. */
+    // ------------------------------------------------------------ play and share
+
+    private static final int PLAY_TICKS = 200;
+    private static final int PLAY_COOLDOWN = 1200;
+    /** Somebody hurt this recently means it is not a time for games. */
+    private static final int PLAY_SAFE_AFTER = 1200;
+    private static final int SHARE_COOLDOWN = 8 * 60 * 20;
+    private static final Map<UUID, Long> lastPlay = new HashMap<>();
+    private static final Map<UUID, Long> lastShare = new HashMap<>();
+
+    /**
+     * A game, and only when it is safe. Play is what animals do with the hours nothing is
+     * trying to kill them, and a band that plays in the open with a cat about is not
+     * playing, it is being eaten.
+     */
+    private static void play(ServerPlayer player, List<BandMember> listeners) {
+        long now = player.level().getGameTime();
+        Long last = lastPlay.get(player.getUUID());
+        if (last != null && now - last < PLAY_COOLDOWN) {
+            say(player, "They are still catching their breath from the last one.");
+            return;
+        }
+        boolean shaken = player.tickCount - player.getLastHurtByMobTimestamp() < PLAY_SAFE_AFTER
+                && player.getLastHurtByMobTimestamp() > 0;
+        List<BandMember> players = new ArrayList<>();
+        for (BandMember member : listeners) {
+            if (member.inDanger()) {
+                shaken = true;
+            }
+            if (!member.isWild() && !member.isPlaying() && !member.isUpATree()) {
+                players.add(member);
+            }
+        }
+        if (shaken) {
+            say(player, "Nobody feels like playing with danger this close.");
+            return;
+        }
+        if (players.size() < 2) {
+            say(player, "There is nobody here to play with.");
+            return;
+        }
+        lastPlay.put(player.getUUID(), now);
+        boolean tag = player.getRandom().nextBoolean();
+        int kind = tag ? BandMember.PLAY_TAG : BandMember.PLAY_WRESTLE;
+        for (int i = 0; i + 1 < players.size(); i += 2) {
+            players.get(i).startPlay(kind, players.get(i + 1), PLAY_TICKS);
+            players.get(i + 1).startPlay(kind, players.get(i), PLAY_TICKS);
+        }
+        // You are in it too, and you learn from it the same way they do - three rounds'
+        // worth per species, because the body you evolve into has to learn it again.
+        String key = tag ? "play_tag" : "play_wrestle";
+        int learned = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA)
+                .getCriterionCounters().getOrDefault(key, 0);
+        if (learned < BandMember.MAX_TRAINING) {
+            dev.hominin.evolution.EvolutionManager.incrementCriterion(player, key, 1);
+        }
+        player.sendSystemMessage(Component.literal(tag
+                ? "The band breaks into a game of chase. Next time you have to run, you will run a little longer."
+                : "The band piles into a wrestling match. Next time you have to fight, you will last a little longer.")
+                .withStyle(ChatFormatting.LIGHT_PURPLE));
+    }
+
+    /**
+     * Passing food round. Everyone who has something puts it in, and it goes to whoever
+     * likes it best. Nobody ends up much fuller - the point is who noticed what you like.
+     */
+    private static void share(ServerPlayer player, List<BandMember> listeners) {
+        long now = player.level().getGameTime();
+        Long last = lastShare.get(player.getUUID());
+        if (last != null && now - last < SHARE_COOLDOWN) {
+            say(player, "You only just shared a meal. (" + (SHARE_COOLDOWN - (now - last)) / 20 + "s)");
+            return;
+        }
+        List<BandMember> diners = new ArrayList<>();
+        for (BandMember member : listeners) {
+            if (!member.isWild() && !member.inDanger()) {
+                diners.add(member);
+            }
+        }
+        if (diners.isEmpty()) {
+            say(player, "There is nobody here to share with.");
+            return;
+        }
+        List<ItemStack> pot = new ArrayList<>();
+        ItemStack held = player.getMainHandItem();
+        if (held.has(net.minecraft.core.component.DataComponents.FOOD)) {
+            pot.add(held.split(1));
+        }
+        for (BandMember member : diners) {
+            ItemStack food = member.takeFood();
+            if (!food.isEmpty()) {
+                pot.add(food);
+            }
+        }
+        if (pot.isEmpty()) {
+            say(player, "Nobody has anything to share. Hold some food and ask again.");
+            return;
+        }
+        lastShare.put(player.getUUID(), now);
+        int favourites = 0;
+        for (ItemStack food : pot) {
+            BandMember best = diners.get(player.getRandom().nextInt(diners.size()));
+            for (BandMember member : diners) {
+                if (member.isFavourite(food)) {
+                    best = member;
+                    break;
+                }
+            }
+            if (best.eatShared(food)) {
+                favourites++;
+                best.addBond(1);
+            }
+        }
+        for (BandMember member : diners) {
+            member.addBond(1);
+        }
+        dev.hominin.evolution.EvolutionManager.incrementCriterion(player, Band.COHESION, diners.size());
+        player.sendSystemMessage(Component.literal("The food goes round. " + pot.size()
+                + (pot.size() == 1 ? " thing" : " things") + " shared"
+                + (favourites > 0 ? ", and " + favourites + " went to someone who loves it." : "."))
+                .withStyle(ChatFormatting.LIGHT_PURPLE));
+    }
+
+    /**
+     * You cannot reach your own back. That is the entire reason primates groom each
+     * other at all, so asking is not a weakness in the design - it is the design.
+     */
+    private static void askToBeGroomed(ServerPlayer player, List<BandMember> listeners, String who) {
+        if (dev.hominin.evolution.survival.Infestation.of(player) == 0) {
+            say(player, "There is nothing on you worth picking off.");
+            return;
+        }
+        BandMember willing = null;
+        for (BandMember member : listeners) {
+            // Only actually fighting rules somebody out. "In danger" also covered a raised
+            // alarm or being a bit hurt, which is most of a band most of the time.
+            if (member.isBaby() || member.getTarget() != null || member.isWild()) {
+                continue;
+            }
+            // Somebody who owes you comes first, then whoever likes you most.
+            if (member.owesGroomingTo(player)) {
+                willing = member;
+                break;
+            }
+            if (willing == null || member.getBond() > willing.getBond()) {
+                willing = member;
+            }
+        }
+        if (willing == null) {
+            say(player, "Nobody here is free to do it.");
+            return;
+        }
+        if (willing.getBond() < 1 && !willing.owesGroomingTo(player)) {
+            say(player, willing.getName().getString() + " does not know you well enough to get that close.");
+            return;
+        }
+        willing.oweGrooming(player);
+        say(player, willing.getName().getString() + " comes over to see to you.");
+    }
+
     private static void sendInfo(ServerPlayer player, BandMember member) {
         member.ensureName();
         List<String> lines = new ArrayList<>();
@@ -440,6 +623,8 @@ public final class Social {
         lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
         lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
         lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
+        lines.add("Ticks on them: " + (member.getTicksOnMe() == 0 ? "none" : String.valueOf(member.getTicksOnMe()))
+                + (member.owesGroomingTo(player) ? " - owes you a turn" : ""));
         if (Wants.hasWants(member)) {
             Item preferred = member.preferredStone();
             lines.add("Prefers: " + (preferred == null ? "any good stone" : Wants.describeItem(preferred)));
@@ -472,9 +657,26 @@ public final class Social {
             }
         }
         member.ensureName();
+        // Everyone in the band close enough to ask, nearest first, so the screen can page.
+        List<BandMember> band = new ArrayList<>(Band.ownNear(player, GROUP_RADIUS));
+        band.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(player)));
+        List<Integer> ids = new ArrayList<>();
+        for (BandMember other : band) {
+            if (!other.isBaby()) {
+                ids.add(other.getId());
+            }
+        }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new dev.hominin.evolution.network.MemberInventoryPayload(member.getId(), member.getName().getString(),
-                        slots, stacks));
+                        slots, stacks, ids));
+    }
+
+    /** The screen asked to see a different member of the band. */
+    public static void viewInventory(ServerPlayer player, int entityId) {
+        if (player.level().getEntity(entityId) instanceof BandMember member && member.isAlive()
+                && member.isLedBy(player) && member.distanceToSqr(player) <= GROUP_RADIUS * GROUP_RADIUS) {
+            showInventory(player, member);
+        }
     }
 
     /** The player picked something from a member's list. */
@@ -534,6 +736,10 @@ public final class Social {
             return;
         }
         runner.ensureName();
+        if (runner.getBond() < kind.minBond()) {
+            say(player, runner.getName().getString() + " doesn't think that much of you yet.");
+            return;
+        }
         if (kind == FetchKind.FOOD) {
             if (!runner.giveFoodTo(player)) {
                 runner.fetchFoodFor(player);

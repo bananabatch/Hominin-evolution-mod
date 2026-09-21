@@ -107,6 +107,13 @@ public final class ThreatDisplay {
         int startled = EvolutionEventHandler.startleNearby(player, radius,
                 Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
         startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
+        // One thing out here does not back down, and finding that out is the lesson.
+        if (dev.hominin.evolution.entity.Dinopithecus.answerDisplay(player, radius)) {
+            dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/nice_try_genius");
+            player.displayClientMessage(Component.literal(
+                    "It does not back away. It comes straight at you.")
+                    .withStyle(net.minecraft.ChatFormatting.DARK_RED), true);
+        }
         countPointlessDisplays(player, threatNearby);
         if (startled > 0) {
             player.displayClientMessage(Component.literal(band > 0

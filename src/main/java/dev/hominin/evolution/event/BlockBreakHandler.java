@@ -63,6 +63,25 @@ public final class BlockBreakHandler {
     }
 
     /**
+     * Grass cut with an edge rather than torn up by hand. Pulling a handful of stems out
+     * of the ground gets you a handful of stems; cutting them low with a flake gets you
+     * the length of the stalk, which is the part you can do anything with.
+     */
+    private static void cutThatch(Player player, BlockState state, BlockPos pos) {
+        if (player.level().isClientSide() || !state.is(ModTags.Blocks.THATCH_SOURCE)
+                || !player.getMainHandItem().is(ModTags.Items.CUTTING_EDGE)) {
+            return;
+        }
+        if (player.getRandom().nextFloat() < THATCH_CHANCE) {
+            Block.popResource(player.level(), pos,
+                    new ItemStack(dev.hominin.evolution.ModItems.THATCH.get()));
+        }
+    }
+
+    /** Not every handful of grass is worth keeping. */
+    private static final float THATCH_CHANCE = 0.55F;
+
+    /**
      * A deposit is a place, not a possession. They exist as items so worldgen and the
      * creative tab can place them, but a survival player holding one could put a quarry
      * down wherever they stood and work it forever - the seam was supposed to be the
@@ -99,6 +118,7 @@ public final class BlockBreakHandler {
             event.setCanceled(true);
             return;
         }
+        cutThatch(player, state, event.getPos());
         maybeDropLongBranch(player, state, event.getPos());
     }
 

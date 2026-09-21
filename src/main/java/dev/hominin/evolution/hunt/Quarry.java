@@ -19,7 +19,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 /**
@@ -59,7 +58,6 @@ public final class Quarry {
     /** Animals in the second half of their run, and when to hand them the slower legs. */
     private static final Map<UUID, Long> secondWind = new HashMap<>();
     /** Wounds that will not close, and when they finally do. */
-    private static final Map<UUID, Long> noRegenUntil = new HashMap<>();
 
     /** Anything that will stand and fight does not bolt: predators, the fearless, a mobbing troop. */
     public static boolean standsGround(LivingEntity target) {
@@ -118,16 +116,15 @@ public final class Quarry {
         }
     }
 
-    /** A wound that keeps opening: nothing closes for three minutes. */
+    /**
+     * A wound that keeps opening: nothing closes for three minutes. This goes through
+     * {@link dev.hominin.evolution.survival.Afflictions} rather than holding a veto of
+     * its own, so that it and everything else that stops a body healing can only ever
+     * amount to one reason at a time.
+     */
     public static void wounded(LivingEntity animal) {
-        noRegenUntil.put(animal.getUUID(), animal.level().getGameTime() + NO_REGEN_TICKS);
-    }
-
-    public static void onHeal(LivingHealEvent event) {
-        Long until = noRegenUntil.get(event.getEntity().getUUID());
-        if (until != null && event.getEntity().level().getGameTime() < until) {
-            event.setCanceled(true);
-        }
+        dev.hominin.evolution.survival.Afflictions.afflict(animal,
+                dev.hominin.evolution.survival.Afflictions.Affliction.BLED_OUT, NO_REGEN_TICKS);
     }
 
     /**
@@ -194,7 +191,6 @@ public final class Quarry {
             }
             return true;
         });
-        noRegenUntil.values().removeIf(until -> now >= until);
         hunts.values().removeIf(hunt -> now - hunt.ranAt() > TRAIL_TICKS);
     }
 

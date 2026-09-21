@@ -108,6 +108,20 @@ public final class ItemInteractions {
                     List.of(ERECTUS), false, false, true,
                     "You batter the end of the branch until it carries its own weight.",
                     "Weight at the far end. It would land harder if it were heavier where it lands."),
+            // Erectus: grass twisted against itself until it holds. Two hands and no
+            // tool at all - the material is the idea.
+            new HandRecipe(id("twine"), ModItems.THATCH, ModItems.THATCH, ModItems.TWINE,
+                    List.of(ERECTUS), false, true, true,
+                    "You twist the stems against each other until they bind into cord.",
+                    "Twisted the other way, it holds itself together. That will tie anything."),
+            // Habilis: the drill. Spinning one stick against another is the only way to
+            // fire that does not need a fire to already exist, and working it out is
+            // what lets a habilis stop waiting for lightning.
+            new HandRecipe(id("fire_drill"), () -> net.minecraft.world.item.Items.STICK,
+                    () -> net.minecraft.world.item.Items.STICK, ModItems.FIRE_DRILL,
+                    List.of(HABILIS, ERECTUS), false, true, true,
+                    "You spin one stick against the other until the dust smoulders.",
+                    "Rubbing it makes it hot. Rub it hard enough, for long enough, and hot becomes fire."),
             // Erectus: turning the point in a fire case-hardens the wood. Needs a free
             // hand rather than a second ingredient - the fire is the other half.
             new HandRecipe(id("fire_hardened_spear"), ModItems.SHARPENED_SPEAR, null, ModItems.FIRE_HARDENED_SPEAR,
@@ -201,6 +215,12 @@ public final class ItemInteractions {
         }
         ItemStack result = new ItemStack(recipe.result().get());
         ToolUse.creditOldowanTool(player, result.getItem());
+        // Working out the drill is itself the discovery of fire. It is the one route
+        // that needs no lightning and no lava - which is the point of knowing it.
+        if (result.is(ModItems.FIRE_DRILL.get())) {
+            dev.hominin.evolution.EvolutionManager.incrementCriterion(
+                    player, "notice_fire_source", 1);
+        }
         if (!player.getInventory().add(result)) {
             player.drop(result, false);
         }

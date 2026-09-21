@@ -83,6 +83,46 @@ public class Baboon extends PathfinderMob {
     public void joinTroop(UUID troop, @Nullable UUID leader) {
         troopId = troop;
         troopLeader = leader;
+        if (home == null) {
+            home = blockPosition();
+        }
+    }
+
+    /** Where this troop sleeps. A baboon's friends are its friends by day only. */
+    @Nullable
+    private net.minecraft.core.BlockPos home;
+
+    @Nullable
+    public UUID getTroop() {
+        return troopId;
+    }
+
+    /** The player this one is travelling with today, if any. */
+    @Nullable
+    private UUID escortOf;
+
+    public void escort(Player player) {
+        escortOf = player.getUUID();
+        // A burst of hearts as it falls in, so you can see which of the troop chose you.
+        if (level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.HEART, getX(), getEyeY() + 0.4D, getZ(),
+                    6, 0.4D, 0.3D, 0.4D, 0.0D);
+        }
+        player.displayClientMessage(Component.literal("A baboon falls in beside you."), true);
+    }
+
+    public boolean isEscorting(Player player) {
+        return player.getUUID().equals(escortOf);
+    }
+
+    public void stopEscorting() {
+        escortOf = null;
+    }
+
+    /** The troop has decided about you, and it was not in your favour. */
+    public void turnOn(Player player) {
+        escortOf = null;
+        enrage(player);
     }
 
     @Override
@@ -100,6 +140,8 @@ public class Baboon extends PathfinderMob {
                 return angerTicks > 0 && super.canContinueToUse();
             }
         });
+        goalSelector.addGoal(2, new EscortGoal());
+        goalSelector.addGoal(2, new GoHomeGoal());
         goalSelector.addGoal(3, new ForageGoal());
         goalSelector.addGoal(4, new KeepWithTroopGoal());
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
@@ -121,6 +163,13 @@ public class Baboon extends PathfinderMob {
                 && !(attacker instanceof Baboon)) {
             List<Baboon> troop = troopNearby();
             if (troop.size() + 1 >= SWARM_TROOP_SIZE) {
+                // A player gets one chance to show it was not meant. Anything else - and a
+                // player who has already been given that chance - gets the troop.
+                if (attacker instanceof net.minecraft.server.level.ServerPlayer player && !player.isSpectator()
+                        && TroopRelations.mistake(player, this)) {
+                    getNavigation().stop();
+                    return hurt;
+                }
                 // Caught near the troop: every one of them comes screaming.
                 mob(attacker);
             } else {
@@ -184,6 +233,7 @@ public class Baboon extends PathfinderMob {
         if (angerTicks > 0 && getRandom().nextInt(50) == 0) {
             playSound(ModSounds.BABOON_ANGRY.get(), 1.4F, 0.9F + getRandom().nextFloat() * 0.3F);
         }
+        tickRelations();
         // The troop leader keeps watch: a predator that comes close is mobbed and driven off.
         if (tickCount % 40 == 0 && troopId != null && troopLeader == null && angerTicks == 0) {
             List<net.minecraft.world.entity.Mob> predators = level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
@@ -195,11 +245,184 @@ public class Baboon extends PathfinderMob {
         }
     }
 
+    /**
+     * Everything the troop does because of who you are to it: freezing to stare while you
+     * decide how to put a mistake right, keeping a grudge within limits, and watching the
+     * back of a friend it is travelling with.
+     */
+    private void tickRelations() {
+        if (troopId == null) {
+            findTroop();
+            return;
+        }
+        if (home == null) {
+            // A troop from an older save: wherever it is now is where it lives.
+            home = blockPosition();
+        }
+        if (escortOf != null && !level().isDay()) {
+            escortOf = null;
+        }
+        // And a heart now and then while it travels with you, to tell it from the rest.
+        if (escortOf != null && tickCount % 60 == 0 && level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.HEART, getX(), getEyeY() + 0.5D, getZ(),
+                    1, 0.1D, 0.1D, 0.1D, 0.0D);
+        }
+        // Waiting to see what you do. Not moving, not looking away.
+        Player watched = null;
+        for (Player player : level().players()) {
+            if (troopId.equals(TroopRelations.pendingTroop(player)) && distanceTo(player) < 28.0F) {
+                watched = player;
+            }
+        }
+        if (watched != null) {
+            getNavigation().stop();
+            getLookControl().setLookAt(watched, 30.0F, 30.0F);
+            return;
+        }
+        LivingEntity target = getTarget();
+        // A grudge is fierce but local: run far enough and they let you go.
+        if (target instanceof Player player && TroopRelations.holdsGrudge(player, troopId)
+                && distanceTo(player) > GRUDGE_CHASE) {
+            setTarget(null);
+            angerTicks = 0;
+        }
+        if (tickCount % 20 != 0 || angerTicks > 0) {
+            return;
+        }
+        // ...but come back near them and they remember.
+        for (Player player : level().players()) {
+            if (!player.isCreative() && !player.isSpectator() && distanceTo(player) < GRUDGE_SIGHT
+                    && TroopRelations.holdsGrudge(player, troopId)) {
+                mob(player);
+                return;
+            }
+        }
+        // A friend in trouble. Anything with teeth that comes near somebody the troop
+        // travels with gets what any predator near the troop gets.
+        if (escortOf != null && level().getPlayerByUUID(escortOf) instanceof Player friend) {
+            List<net.minecraft.world.entity.Mob> threats = level().getEntitiesOfClass(
+                    net.minecraft.world.entity.Mob.class, friend.getBoundingBox().inflate(MOB_PREDATOR_RADIUS),
+                    m -> m.isAlive() && m.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS));
+            if (!threats.isEmpty()) {
+                playSound(ModSounds.BABOON_ANGRY.get(), 1.8F, 1.0F);
+                enrage(threats.get(0));
+            }
+        }
+    }
+
+    /**
+     * A baboon on its own - one hatched from an egg, or the last of a troop - goes
+     * looking for others. It joins whatever troop is nearby, or, if the others around it
+     * have none either, starts one they can all join.
+     */
+    private void findTroop() {
+        if (tickCount % 40 != 0) {
+            return;
+        }
+        for (Baboon other : level().getEntitiesOfClass(Baboon.class, getBoundingBox().inflate(TROOP_RADIUS),
+                b -> b != this && b.isAlive() && b.troopId != null)) {
+            joinTroop(other.troopId, other.troopLeader != null ? other.troopLeader : other.getUUID());
+            return;
+        }
+        if (!level().getEntitiesOfClass(Baboon.class, getBoundingBox().inflate(TROOP_RADIUS),
+                b -> b != this && b.isAlive()).isEmpty()) {
+            joinTroop(UUID.randomUUID(), null);
+        }
+    }
+
+    /** How far a troop with a grudge will chase you, and how close you can come before it notices. */
+    private static final float GRUDGE_CHASE = 24.0F;
+    private static final float GRUDGE_SIGHT = 9.0F;
+
+    /**
+     * Back to the troop's sleeping ground once it gets dark - whoever it spent the day
+     * with. This is also what makes an escort an escort and not a pet: it leaves.
+     */
+    private class GoHomeGoal extends Goal {
+        GoHomeGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            return home != null && !level().isDay() && !isAngry()
+                    && distanceToSqr(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D) > 10.0D * 10.0D;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return home != null && !level().isDay() && !isAngry()
+                    && distanceToSqr(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D) > 4.0D * 4.0D;
+        }
+
+        @Override
+        public void start() {
+            escortOf = null;
+            getNavigation().moveTo(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, 1.1D);
+        }
+
+        @Override
+        public void tick() {
+            if (tickCount % 40 == 0) {
+                getNavigation().moveTo(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D, 1.1D);
+            }
+        }
+    }
+
+    /** Keeping company with a friend: close, but not underfoot. */
+    private class EscortGoal extends Goal {
+        EscortGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Nullable
+        private Player friend() {
+            return escortOf == null ? null : level().getPlayerByUUID(escortOf);
+        }
+
+        @Override
+        public boolean canUse() {
+            Player friend = friend();
+            return friend != null && !isAngry() && distanceTo(friend) > 5.0F;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            Player friend = friend();
+            return friend != null && !isAngry() && distanceTo(friend) > 3.0F;
+        }
+
+        @Override
+        public void tick() {
+            Player friend = friend();
+            if (friend != null && tickCount % 10 == 0) {
+                getNavigation().moveTo(friend, 1.15D);
+            }
+        }
+
+        @Override
+        public void stop() {
+            getNavigation().stop();
+        }
+    }
+
     // ------------------------------------------------------------ trading
 
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
+        // Anything at all, offered while they stare, is an apology.
+        if (hand == InteractionHand.MAIN_HAND && !held.isEmpty() && troopId != null
+                && troopId.equals(TroopRelations.pendingTroop(player))) {
+            if (!level().isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer server) {
+                if (!player.getAbilities().instabuild) {
+                    held.shrink(1);
+                }
+                playSound(SoundEvents.ITEM_PICKUP, 0.7F, 1.2F);
+                TroopRelations.forgive(server, "It snatches what you hold out, and the troop settles.");
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide());
+        }
         if (hand != InteractionHand.MAIN_HAND || !held.has(DataComponents.FOOD)) {
             return super.mobInteract(player, hand);
         }
@@ -226,10 +449,23 @@ public class Baboon extends PathfinderMob {
                         4, 0.3D, 0.3D, 0.3D, 0.0D);
                 player.displayClientMessage(Component.literal("The baboon snatches it and pushes ")
                         .append(given.getHoverName()).append(" into your hand."), true);
+                if (troopId != null) {
+                    TroopRelations.goodwill(player, troopId, 1);
+                }
                 return InteractionResult.CONSUME;
             }
         }
-        player.displayClientMessage(Component.literal("It has nothing to swap with you."), true);
+        // Nothing to swap - so it is a gift, which buys more than a trade does.
+        if (!player.getAbilities().instabuild) {
+            held.shrink(1);
+        }
+        playSound(SoundEvents.GENERIC_EAT, 0.7F, 1.1F);
+        ((ServerLevel) level()).sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getEyeY(), getZ(),
+                4, 0.3D, 0.3D, 0.3D, 0.0D);
+        player.displayClientMessage(Component.literal("It takes it, and eats it in front of you. A gift."), true);
+        if (troopId != null) {
+            TroopRelations.goodwill(player, troopId, 2);
+        }
         return InteractionResult.CONSUME;
     }
 
@@ -255,6 +491,9 @@ public class Baboon extends PathfinderMob {
             tag.putUUID("TroopLeader", troopLeader);
         }
         tag.put("Pouch", pouch.createTag(registryAccess()));
+        if (home != null) {
+            tag.putLong("Home", home.asLong());
+        }
     }
 
     @Override
@@ -263,6 +502,7 @@ public class Baboon extends PathfinderMob {
         troopId = tag.hasUUID("Troop") ? tag.getUUID("Troop") : null;
         troopLeader = tag.hasUUID("TroopLeader") ? tag.getUUID("TroopLeader") : null;
         pouch.fromTag(tag.getList("Pouch", 10), registryAccess());
+        home = tag.contains("Home") ? net.minecraft.core.BlockPos.of(tag.getLong("Home")) : null;
     }
 
     @Override

@@ -90,6 +90,11 @@ public class FetchGoal extends Goal {
                 return;
             }
         }
+        if (kind.source() == FetchKind.Source.MADE) {
+            // They either had it - handled above by carries() - or they did not.
+            fail(kind, player);
+            return;
+        }
         if (source == null) {
             source = findSource(kind);
             if (source == null) {
@@ -215,8 +220,13 @@ public class FetchGoal extends Goal {
     }
 
     private void fail(FetchKind kind, Player player) {
-        player.sendSystemMessage(Component.literal(member.getName().getString() + " looked around, but couldn't find "
-                + kind.label().toLowerCase() + " anywhere near here.").withStyle(net.minecraft.ChatFormatting.GRAY));
+        // A tool is not somewhere to be looked for. Saying they searched and found none
+        // would be a lie about what the problem is: they simply have not got one.
+        String excuse = kind.source() == FetchKind.Source.MADE
+                ? " hasn't got " + kind.label().toLowerCase() + " to give you."
+                : " looked around, but couldn't find " + kind.label().toLowerCase() + " anywhere near here.";
+        player.sendSystemMessage(Component.literal(member.getName().getString() + excuse)
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
         member.clearFetch();
     }
 }
