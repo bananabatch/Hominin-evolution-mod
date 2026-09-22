@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "base=true": {
+      "model": "hominin_evolution:block/building_branch_base"
+    },
+    "base=false": {
+      "model": "hominin_evolution:block/building_branch_post"
+    }
+  }
+}

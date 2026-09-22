@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "hominin_evolution:item/building_branch"
-  }
+  "parent": "hominin_evolution:block/building_branch_base"
 }

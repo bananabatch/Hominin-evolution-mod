@@ -10,7 +10,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Sit at it with two of a stone in hand and a hammerstone and a bone somewhere about you. The hammerstone does the rough shaping; the bone takes the fine flakes off.$(br2)$(l)Hand axe$() - chops wood at last.$(br)$(l)Cleaver$() - a knife that lasts.$(br)$(l)Multitool$() - both, for four stones."
+      "text": "Open the station and lay things out on it: a hammerstone, a bone for the fine flakes, and as much stone as you like - four rows of it. It all stays there.$(br2)Along the top, choose the industry: $(l)Oldowan$() needs only the hammer, $(l)Acheulean$() the bone as well. Then choose what to make. The first stone laid out is the one worked."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Hand axe$() - chops wood at last.$(br)$(l)Cleaver$() - a knife that lasts, and it chops too.$(br)$(l)Multitool$() - both, for four stones.$(br2)The panel beside the buttons shows your chances of each tier with the stone laid out first, at the skill you have now."
     },
     {
       "type": "patchouli:text",

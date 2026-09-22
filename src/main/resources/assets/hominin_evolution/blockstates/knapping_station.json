@@ -1,7 +1,234 @@
 {
-  "variants": {
-    "": {
-      "model": "hominin_evolution:block/knapping_station"
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_base"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "hammer": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_hammer"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "bopper": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_bopper"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "stones": "1"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_1"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "stones": "2"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_2"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "stones": "3"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_3"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_base",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "hammer": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_hammer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "bopper": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_bopper",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "stones": "1"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "stones": "2"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "stones": "3"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_base",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "hammer": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_hammer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "bopper": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_bopper",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "stones": "1"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "stones": "2"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "stones": "3"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_base",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "hammer": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_hammer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "bopper": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_bopper",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "stones": "1"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "stones": "2"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "stones": "3"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/knapping_station_stones_3",
+        "y": 270
+      }
     }
-  }
+  ]
 }

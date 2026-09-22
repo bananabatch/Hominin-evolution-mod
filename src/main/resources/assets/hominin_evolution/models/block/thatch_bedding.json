@@ -1,8 +1,9 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "top": "hominin_evolution:block/thatch_bedding_top",
-    "side": "hominin_evolution:block/thatch_bedding_side",
+    "straw": "hominin_evolution:block/thatch_bedding_side",
+    "fur": "hominin_evolution:block/thatch_bedding_top",
+    "pillow": "hominin_evolution:block/thatch_bedding_pillow",
     "particle": "hominin_evolution:block/thatch_bedding_top"
   },
   "elements": [
@@ -14,27 +15,123 @@
       ],
       "to": [
         16,
-        9,
+        4,
         16
       ],
       "faces": {
         "north": {
-          "texture": "#side"
+          "texture": "#straw"
         },
         "south": {
-          "texture": "#side"
+          "texture": "#straw"
         },
         "east": {
-          "texture": "#side"
+          "texture": "#straw"
         },
         "west": {
-          "texture": "#side"
+          "texture": "#straw"
         },
         "up": {
-          "texture": "#top"
+          "texture": "#straw"
         },
         "down": {
-          "texture": "#side"
+          "texture": "#straw"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        4,
+        4
+      ],
+      "to": [
+        15.5,
+        5.5,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#fur"
+        },
+        "south": {
+          "texture": "#fur"
+        },
+        "east": {
+          "texture": "#fur"
+        },
+        "west": {
+          "texture": "#fur"
+        },
+        "up": {
+          "texture": "#fur"
+        },
+        "down": {
+          "texture": "#fur"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        2.5,
+        15.5
+      ],
+      "to": [
+        15.5,
+        5.5,
+        16.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#fur"
+        },
+        "south": {
+          "texture": "#fur"
+        },
+        "east": {
+          "texture": "#fur"
+        },
+        "west": {
+          "texture": "#fur"
+        },
+        "up": {
+          "texture": "#fur"
+        },
+        "down": {
+          "texture": "#fur"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        4,
+        0.5
+      ],
+      "to": [
+        14.5,
+        7.5,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pillow"
+        },
+        "south": {
+          "texture": "#pillow"
+        },
+        "east": {
+          "texture": "#pillow"
+        },
+        "west": {
+          "texture": "#pillow"
+        },
+        "up": {
+          "texture": "#pillow"
+        },
+        "down": {
+          "texture": "#pillow"
         }
       }
     }

@@ -77,6 +77,16 @@ public final class ModBlocks {
                             .strength(2.0F)
                             .noOcclusion());
 
+    /** An upright post in a ring of rocks: what a thatch shelter is framed with. */
+    public static final DeferredBlock<dev.hominin.evolution.block.BuildingBranchBlock> BUILDING_BRANCH =
+            BLOCKS.registerBlock("building_branch", dev.hominin.evolution.block.BuildingBranchBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(1.0F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .ignitedByLava());
+
     /** Bound thatch: a wall or a roof, unless the weather gets to it first. */
     public static final DeferredBlock<dev.hominin.evolution.block.ThatchBlock> THATCH_BLOCK =
             BLOCKS.registerBlock("thatch_block", dev.hominin.evolution.block.ThatchBlock::new,

@@ -189,6 +189,7 @@ public final class HomininCommand {
             return 0;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        StageDefinition previous = StageRegistry.get(data.getStage());
         data.setStage(stageId);
         data.getCriterionCounters().clear();
         data.getNotifiedReadyStages().clear();
@@ -198,6 +199,14 @@ public final class HomininCommand {
         data.setDistanceCredits(0);
         StageSync.sync(player);
         HomininAdvancements.awardStages(player);
+        // The same sequence evolving plays - dark, deep time, the new name - but without the
+        // move and the fresh inventory, so testing a stage does not cost you your things.
+        String age = dev.hominin.evolution.stage.StageAge.ago(stage.yearsAgo());
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.CutsceneStartPayload(
+                        previous == null ? "" : dev.hominin.evolution.stage.StageAge.later(previous.yearsAgo(),
+                                stage.yearsAgo()),
+                        age.isEmpty() ? stage.displayName() : stage.displayName() + " - " + age));
         ctx.getSource().sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " set to stage " + stage.displayName()), true);
         return 1;
     }

@@ -96,9 +96,12 @@ public class HomininEvolutionClient {
         modEventBus.addListener(EvolutionCutscene::register);
         modEventBus.addListener(RebirthCutscene::register);
         modEventBus.addListener(TiredApesFlash::register);
-        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
-                event.register(dev.hominin.evolution.ModMenus.WORK_STATION.get(),
-                        dev.hominin.evolution.client.WorkStationScreen::new));
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> {
+            event.register(dev.hominin.evolution.ModMenus.WORK_STATION.get(),
+                    dev.hominin.evolution.client.WorkStationScreen::new);
+            event.register(dev.hominin.evolution.ModMenus.KNAPPING_STATION.get(),
+                    dev.hominin.evolution.client.KnappingStationScreen::new);
+        });
         modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) ->
                 event.registerReloadListener(new KeyframeAnimations()));
         // Guarded by name so the class - and every Player Animator type it

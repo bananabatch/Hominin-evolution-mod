@@ -50,7 +50,8 @@ public class AcheuleanToolItem extends Item {
         ItemStack stack = new ItemStack(this);
         stack.set(ModDataComponents.QUALITY.get(), quality);
         stack.set(DataComponents.MAX_DAMAGE, Math.max(8, Math.round(baseDurability * DURABILITY[quality])));
-        double damage = baseDamage + (4 - quality) * 0.5D;
+        // baseDamage is the crude tool's; each tier up adds 0.375, so a flawless one hits 1.5 harder.
+        double damage = baseDamage + (4 - quality) * 0.375D;
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
                 .add(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_ID, damage - 1.0D,
                         AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND)

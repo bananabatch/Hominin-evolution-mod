@@ -110,8 +110,11 @@ You play a hominin, not a person, and you earn your way up the line.
 - **Checklist.** Required: survive 2 days, make an Acheulean tool, spend a night by a lit hearth. Then any 3 of: eat 3 pieces of cooked meat, run down big game you wounded (it dies 30+ seconds after your first hit), walk a scavenger off a kill, range 1,000 blocks from where you began as erectus, trade with another erectus band, grow the band to 14, adopt a norm.
 - **Milestone → heidelbergensis:** make a tier 2 or better Acheulean tool from anything but obsidian.
 - **Hide** drops from cows and horses. **Knapping station:** 4 sticks in the main hand, a hide in the off hand, press P.
-- **The Acheulean.** Sit at the station holding 2 of a stone (4 for the multitool), with a hammerstone and a bone (or long bone) anywhere on you. Choose a **hand axe** (chops wood — logs finally break — and is a heavy weapon), a **cleaver** (a lasting knife: meat, marrow, thatch) or an **Acheulean multitool** (both, and a hammer).
-- **Quality tiers** 4 (crude) to 0 (flawless). Durability ×0.4 / ×0.7 / ×1 / ×1.6 / ×2.5, and +0.5 damage per tier up. Tiers 4–3 sometimes cause external bleeding, tier 2 internal, tier 1 always internal with a 15% chance of catastrophic, tier 0 30%.
+- **The knapping station** is a proper workbench now. Open it and lay out a **hammerstone**, a **bopper** (a bone or long bone) and up to **four rows of stone**; it all stays there when you walk away, and breaking the station drops it. The block shows what is on it: an empty hide mat and anvil, then the hammerstone, the bone and a pile of cobbles that grows as you stock it.
+  - Tabs along the top pick the **industry**: *Oldowan* (flake, chopper, multi tool, grinding stone — hammerstone only, no bone needed) and *Acheulean* (erectus on; needs the bone too). Click what you want to make.
+  - The first stone laid out is the one worked. For the Acheulean the side panel shows your **odds of each tier** with that stone at your current skill level, and warns if the hammer or bone is missing.
+- **The Acheulean.** 2 of a stone per tool (4 for the multitool). A **hand axe** (chops wood — logs finally break — and is a heavy weapon), a **cleaver** (a lasting knife: meat, marrow, thatch — and it chops like a chopper), or an **Acheulean multitool** (both, and a hammer). All three are solid 3D knapped stone in the hand; every tier of a tool looks the same.
+- **Quality tiers** 4 (crude) to 0 (flawless). Durability ×0.4 / ×0.7 / ×1 / ×1.6 / ×2.5. Damage rises 0.375 per tier: a hand axe hits for 3.5 at tier 4 and 5 when flawless (cleaver 3–4.5, multitool 3.25–4.75). Tiers 4–3 sometimes cause external bleeding, tier 2 internal, tier 1 always internal with a 15% chance of catastrophic, tier 0 30%.
 - **Knapping skill** levels 4 to 1, shown in the journal. Leave 4 after 1 tool, 3 after 2 more, 2 after 3 more; thinking (K) while holding chert, obsidian or a good Acheulean tool sometimes counts. A Lomekwian knapper starts at 3. Carries over when you evolve.
   - Level 4 makes tier 4; level 3 tier 3 (20% tier 2); level 2 tier 2 (25% tier 1, 40% with obsidian); level 1 tier 1 (15% tier 0 with chert, 45% with obsidian).
   - The stone caps it: limestone never beats tier 4; quartzite tier 3, or 2 at level 1; chert and obsidian can reach 0; obsidian is never worse than tier 2.
@@ -122,11 +125,11 @@ You play a hominin, not a person, and you earn your way up the line.
   - **Workable branch:** a hand axe worn against a log (or a long branch) — 2 from a log, 1 from a branch.
   - **Club:** two workable branches down the centre column, a hammerstone in the tool slot.
   - **Workable spear:** the same two branches worked with an edge (a flake, a hand axe or better) — hits harder and lasts longer than a sharpened spear, and gives the branch back instead of breaking outright.
-  - **Building branch:** a workable branch on a base of 3 rocks — raw stock for whatever gets built on top of the Acheulean.
+  - **Building branch:** a workable branch on a base of 3 rocks, makes 2. It places as an upright post in a ring of rocks; stack them and the ones above stand on the post below with no rocks of their own.
   - **Thatch block:** a full grid of thatch, 4 twine in the tool slot. Left uncured it rots away on its own over time; right-click it with hide to cure it, and it lasts for good.
   - **Thatch bedding:** 3 hide over a row of thatch, 10 twine in the tool slot — makes 2. Lay two side by side to sleep in; a nest still works, but a nest is what leaves you with ticks.
   - **A proper digging stick:** a branch and a hammerstone side by side, 10 twine in the tool slot.
-  - Not yet built: building blueprints (thatch tents and huts) that would let a building branch actually go up as a structure — for now the branch is raw material waiting on that system.
+  - Not yet built: building blueprints (preset thatch tents and huts). Posts and thatch place freely for now.
 
 ## 4. Scavenging and hunting
 

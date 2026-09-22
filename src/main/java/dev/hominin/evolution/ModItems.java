@@ -289,16 +289,17 @@ public final class ModItems {
      * and makes a fearsome weapon.
      */
     public static final DeferredItem<Item> HAND_AXE = ITEMS.register("hand_axe",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 5.0D, 1.2D, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 3.5D, 1.2D, new Item.Properties()
                     .component(DataComponents.TOOL, handAxe())));
 
     /** A broad straight edge: a butcher's knife that lasts - meat, marrow, grass. */
     public static final DeferredItem<Item> CLEAVER = ITEMS.register("cleaver",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 4.0D, 1.6D, new Item.Properties()));
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 3.0D, 1.6D, new Item.Properties()
+                    .component(DataComponents.TOOL, chopping())));
 
     /** Everything at once, and a lot of stone: hand axe, cleaver and hammer in one. */
     public static final DeferredItem<Item> ACHEULEAN_MULTITOOL = ITEMS.register("acheulean_multitool",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(320, 4.5D, 1.3D, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(320, 3.25D, 1.3D, new Item.Properties()
                     .component(DataComponents.TOOL, handAxe())));
 
     /**
@@ -329,8 +330,8 @@ public final class ModItems {
      * A workable branch set in a base of rock: the beginning of building something rather
      * than just carrying something. What the thatch structures to come are framed with.
      */
-    public static final DeferredItem<Item> BUILDING_BRANCH = ITEMS.registerSimpleItem("building_branch",
-            new Item.Properties());
+    public static final DeferredItem<Item> BUILDING_BRANCH = ITEMS.register("building_branch",
+            () -> new BlockItem(ModBlocks.BUILDING_BRANCH.get(), new Item.Properties()));
 
     public static final DeferredItem<Item> THATCH_BLOCK = ITEMS.register("thatch_block",
             () -> new BlockItem(ModBlocks.THATCH_BLOCK.get(), new Item.Properties()));

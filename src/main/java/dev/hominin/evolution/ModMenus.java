@@ -14,6 +14,10 @@ public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<WorkStationMenu>> WORK_STATION =
             MENUS.register("work_station", () -> IMenuTypeExtension.create(WorkStationMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.hominin.evolution.knapping.KnappingStationMenu>>
+            KNAPPING_STATION = MENUS.register("knapping_station",
+                    () -> IMenuTypeExtension.create(dev.hominin.evolution.knapping.KnappingStationMenu::new));
+
     private ModMenus() {
     }
 }

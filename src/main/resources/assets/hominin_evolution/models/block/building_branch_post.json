@@ -1,0 +1,45 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "bark": "hominin_evolution:block/branch_bark",
+    "end": "hominin_evolution:block/branch_end",
+    "granite": "hominin_evolution:block/granite_rock",
+    "chert": "hominin_evolution:block/chert_rock",
+    "lime": "hominin_evolution:block/limestone_rock",
+    "particle": "hominin_evolution:block/branch_bark"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        16,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark"
+        },
+        "south": {
+          "texture": "#bark"
+        },
+        "east": {
+          "texture": "#bark"
+        },
+        "west": {
+          "texture": "#bark"
+        },
+        "up": {
+          "texture": "#end"
+        },
+        "down": {
+          "texture": "#end"
+        }
+      }
+    }
+  ]
+}

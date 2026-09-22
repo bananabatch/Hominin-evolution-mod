@@ -1,156 +1,152 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "mat": "hominin_evolution:block/knapping_mat",
-    "anvil": "hominin_evolution:block/knapping_anvil_side",
-    "anvil_top": "hominin_evolution:block/knapping_anvil_top",
-    "debris": "hominin_evolution:block/knapping_debris",
-    "hammer": "hominin_evolution:block/knapping_hammer",
-    "bone": "hominin_evolution:block/knapping_bone",
+    "bark": "hominin_evolution:block/branch_bark",
+    "end": "hominin_evolution:block/branch_end",
     "granite": "hominin_evolution:block/granite_rock",
     "chert": "hominin_evolution:block/chert_rock",
     "lime": "hominin_evolution:block/limestone_rock",
-    "particle": "hominin_evolution:block/knapping_anvil_side"
+    "particle": "hominin_evolution:block/branch_bark"
   },
   "elements": [
     {
       "from": [
-        0.5,
+        6,
         0,
-        1
+        6
       ],
       "to": [
-        15.5,
-        1,
-        15
+        10,
+        16,
+        10
       ],
       "faces": {
         "north": {
-          "texture": "#mat"
+          "texture": "#bark"
         },
         "south": {
-          "texture": "#mat"
+          "texture": "#bark"
         },
         "east": {
-          "texture": "#mat"
+          "texture": "#bark"
         },
         "west": {
-          "texture": "#mat"
+          "texture": "#bark"
         },
         "up": {
-          "texture": "#mat"
+          "texture": "#end"
         },
         "down": {
-          "texture": "#mat"
+          "texture": "#end"
         }
       }
     },
     {
       "from": [
-        4.5,
-        1,
-        4.5
-      ],
-      "to": [
-        11.5,
-        5,
-        11.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#anvil"
-        },
-        "south": {
-          "texture": "#anvil"
-        },
-        "east": {
-          "texture": "#anvil"
-        },
-        "west": {
-          "texture": "#anvil"
-        },
-        "up": {
-          "texture": "#anvil_top"
-        },
-        "down": {
-          "texture": "#anvil"
-        }
-      }
-    },
-    {
-      "from": [
-        1.5,
-        1,
-        4.5
-      ],
-      "to": [
-        4.5,
-        3.5,
-        7.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#hammer"
-        },
-        "south": {
-          "texture": "#hammer"
-        },
-        "east": {
-          "texture": "#hammer"
-        },
-        "west": {
-          "texture": "#hammer"
-        },
-        "up": {
-          "texture": "#hammer"
-        },
-        "down": {
-          "texture": "#hammer"
-        }
-      }
-    },
-    {
-      "from": [
-        12,
-        1,
+        2.5,
+        0,
         3
       ],
       "to": [
-        13.5,
-        2,
-        11
+        6.5,
+        3.5,
+        7
       ],
       "faces": {
         "north": {
-          "texture": "#bone"
+          "texture": "#granite"
         },
         "south": {
-          "texture": "#bone"
+          "texture": "#granite"
         },
         "east": {
-          "texture": "#bone"
+          "texture": "#granite"
         },
         "west": {
-          "texture": "#bone"
+          "texture": "#granite"
         },
         "up": {
-          "texture": "#bone"
+          "texture": "#granite"
         },
         "down": {
-          "texture": "#bone"
+          "texture": "#granite"
         }
       }
     },
     {
       "from": [
-        1.5,
-        1,
-        9
+        10,
+        0,
+        2.5
       ],
       "to": [
-        4,
+        13.5,
+        2.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chert"
+        },
+        "south": {
+          "texture": "#chert"
+        },
+        "east": {
+          "texture": "#chert"
+        },
+        "west": {
+          "texture": "#chert"
+        },
+        "up": {
+          "texture": "#chert"
+        },
+        "down": {
+          "texture": "#chert"
+        }
+      }
+    },
+    {
+      "from": [
         3,
-        11.5
+        0,
+        9.5
+      ],
+      "to": [
+        7,
+        2.5,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#lime"
+        },
+        "south": {
+          "texture": "#lime"
+        },
+        "east": {
+          "texture": "#lime"
+        },
+        "west": {
+          "texture": "#lime"
+        },
+        "up": {
+          "texture": "#lime"
+        },
+        "down": {
+          "texture": "#lime"
+        }
+      }
+    },
+    {
+      "from": [
+        9.5,
+        0,
+        9.5
+      ],
+      "to": [
+        13,
+        3,
+        13
       ],
       "faces": {
         "north": {

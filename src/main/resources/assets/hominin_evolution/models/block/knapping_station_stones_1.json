@@ -1,0 +1,49 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "mat": "hominin_evolution:block/knapping_mat",
+    "anvil": "hominin_evolution:block/knapping_anvil_side",
+    "anvil_top": "hominin_evolution:block/knapping_anvil_top",
+    "debris": "hominin_evolution:block/knapping_debris",
+    "hammer": "hominin_evolution:block/knapping_hammer",
+    "bone": "hominin_evolution:block/knapping_bone",
+    "granite": "hominin_evolution:block/granite_rock",
+    "chert": "hominin_evolution:block/chert_rock",
+    "lime": "hominin_evolution:block/limestone_rock",
+    "particle": "hominin_evolution:block/knapping_anvil_side"
+  },
+  "elements": [
+    {
+      "from": [
+        1.5,
+        1,
+        9
+      ],
+      "to": [
+        4,
+        3,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#granite"
+        },
+        "south": {
+          "texture": "#granite"
+        },
+        "east": {
+          "texture": "#granite"
+        },
+        "west": {
+          "texture": "#granite"
+        },
+        "up": {
+          "texture": "#granite"
+        },
+        "down": {
+          "texture": "#granite"
+        }
+      }
+    }
+  ]
+}

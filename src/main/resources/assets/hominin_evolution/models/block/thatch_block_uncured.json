@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "hominin_evolution:block/thatch_uncured"
+    "end": "hominin_evolution:block/thatch_uncured_top",
+    "side": "hominin_evolution:block/thatch_uncured"
   }
 }

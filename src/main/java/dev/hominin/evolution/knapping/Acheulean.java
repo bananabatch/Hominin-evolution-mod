@@ -125,6 +125,74 @@ public final class Acheulean {
         return obsidian ? Math.min(tier, 2) : tier;
     }
 
+    /**
+     * The chance of each tier, 0 (flawless) to 4 (crude), for this level and stone - the same
+     * sums {@link #rollQuality} makes, laid out for the station's odds panel.
+     */
+    public static double[] odds(int level, ItemStack stone) {
+        boolean obsidian = stone.is(ModItems.OBSIDIAN_ROCK.get());
+        boolean chert = stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get());
+        double[] base = new double[5];
+        switch (level) {
+            case 3 -> {
+                base[3] = 0.8D;
+                base[2] = 0.2D;
+            }
+            case 2 -> {
+                double better = obsidian ? 0.4D : 0.25D;
+                base[1] = better;
+                base[2] = 1.0D - better;
+            }
+            case 1 -> {
+                double flawless = obsidian ? 0.45D : chert ? 0.15D : 0.0D;
+                base[0] = flawless;
+                base[1] = 1.0D - flawless;
+            }
+            default -> base[4] = 1.0D;
+        }
+        int ceiling = stone.is(ModItems.LIMESTONE_ROCK.get()) ? 4
+                : stone.is(ModItems.GRANITE_ROCK.get()) ? (level <= 1 ? 2 : 3)
+                : chert || obsidian ? 0 : 3;
+        double[] out = new double[5];
+        for (int tier = 0; tier <= 4; tier++) {
+            int result = Math.max(tier, ceiling);
+            if (obsidian) {
+                result = Math.min(result, 2);
+            }
+            out[result] += base[tier];
+        }
+        return out;
+    }
+
+    /**
+     * One Acheulean tool made from this kind of stone, the stone already paid for: rolled,
+     * handed over, and credited - checklist, skill, the flawless achievement, the milestone.
+     */
+    public static ItemStack make(ServerPlayer player, KnappingChoice choice, ItemStack stoneKind, BlockPos where) {
+        int quality = rollQuality(level(player), stoneKind, player.getRandom());
+        boolean obsidian = stoneKind.is(ModItems.OBSIDIAN_ROCK.get());
+        AcheuleanToolItem tool = (AcheuleanToolItem) choice.result();
+        ItemStack made = tool.make(quality);
+        String name = made.getHoverName().getString().toLowerCase();
+        if (!player.getInventory().add(made.copy())) {
+            player.drop(made.copy(), false);
+        }
+        player.level().playSound(null, where, SoundEvents.STONE_HIT, SoundSource.PLAYERS, 1.0F, 0.8F);
+        player.displayClientMessage(Component.literal("It comes off the stone as a "
+                + AcheuleanToolItem.TIER_NAMES[quality].toLowerCase() + " " + name + " (tier " + quality + ").")
+                .withStyle(ChatFormatting.GOLD), true);
+        EvolutionManager.incrementCriterion(player, "make_acheulean_tool", 1);
+        if (quality == 0) {
+            dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/last_tool");
+        }
+        practise(player, 1);
+        if (quality <= 2 && !obsidian
+                && EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.FINE_ACHEULEAN)) {
+            EvolutionManager.attemptMilestone(player, BuiltinMilestones.FINE_ACHEULEAN);
+        }
+        return made;
+    }
+
     // ------------------------------------------------------------ the station
 
     private static boolean hasSoftHammer(Player player) {

@@ -1,105 +1,214 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "post": "hominin_evolution:block/hide_mat",
-    "base": "minecraft:block/andesite",
-    "particle": "hominin_evolution:block/hide_mat"
+    "bark": "hominin_evolution:block/branch_bark",
+    "end": "hominin_evolution:block/branch_end",
+    "mat": "hominin_evolution:block/knapping_mat",
+    "coil": "hominin_evolution:block/twine_coil",
+    "hammer": "hominin_evolution:block/knapping_hammer",
+    "flake": "hominin_evolution:block/knapping_debris",
+    "particle": "hominin_evolution:block/branch_bark"
   },
   "elements": [
     {
       "from": [
-        3,
+        2.5,
         0,
-        3
+        2.5
+      ],
+      "to": [
+        13.5,
+        9,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark"
+        },
+        "south": {
+          "texture": "#bark"
+        },
+        "east": {
+          "texture": "#bark"
+        },
+        "west": {
+          "texture": "#bark"
+        },
+        "up": {
+          "texture": "#end"
+        },
+        "down": {
+          "texture": "#end"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        9,
+        1
+      ],
+      "to": [
+        15,
+        11,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#mat"
+        },
+        "south": {
+          "texture": "#mat"
+        },
+        "east": {
+          "texture": "#mat"
+        },
+        "west": {
+          "texture": "#mat"
+        },
+        "up": {
+          "texture": "#mat"
+        },
+        "down": {
+          "texture": "#end"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        11,
+        9
       ],
       "to": [
         13,
-        3,
+        12.5,
         13
       ],
       "faces": {
         "north": {
-          "texture": "#base"
+          "texture": "#coil"
         },
         "south": {
-          "texture": "#base"
+          "texture": "#coil"
         },
         "east": {
-          "texture": "#base"
+          "texture": "#coil"
         },
         "west": {
-          "texture": "#base"
+          "texture": "#coil"
         },
         "up": {
-          "texture": "#base"
+          "texture": "#coil"
         },
         "down": {
-          "texture": "#base"
+          "texture": "#coil"
         }
       }
     },
     {
       "from": [
-        6,
         3,
-        6
+        11,
+        8.5
       ],
       "to": [
-        10,
-        15,
-        10
+        6.5,
+        13,
+        12
       ],
       "faces": {
         "north": {
-          "texture": "#post"
+          "texture": "#hammer"
         },
         "south": {
-          "texture": "#post"
+          "texture": "#hammer"
         },
         "east": {
-          "texture": "#post"
+          "texture": "#hammer"
         },
         "west": {
-          "texture": "#post"
+          "texture": "#hammer"
         },
         "up": {
-          "texture": "#post"
+          "texture": "#hammer"
         },
         "down": {
-          "texture": "#post"
+          "texture": "#hammer"
         }
       }
     },
     {
       "from": [
-        2,
-        3,
-        6.5
+        3.5,
+        11,
+        3
       ],
       "to": [
-        6,
-        9,
-        9.5
+        7,
+        11.5,
+        5.5
       ],
       "faces": {
         "north": {
-          "texture": "#post"
+          "texture": "#flake"
         },
         "south": {
-          "texture": "#post"
+          "texture": "#flake"
         },
         "east": {
-          "texture": "#post"
+          "texture": "#flake"
         },
         "west": {
-          "texture": "#post"
+          "texture": "#flake"
         },
         "up": {
-          "texture": "#post"
+          "texture": "#flake"
         },
         "down": {
-          "texture": "#post"
+          "texture": "#flake"
         }
+      }
+    },
+    {
+      "from": [
+        8,
+        11,
+        2.5
+      ],
+      "to": [
+        14,
+        12,
+        3.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark"
+        },
+        "south": {
+          "texture": "#bark"
+        },
+        "east": {
+          "texture": "#bark"
+        },
+        "west": {
+          "texture": "#bark"
+        },
+        "up": {
+          "texture": "#bark"
+        },
+        "down": {
+          "texture": "#bark"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          11,
+          11.5,
+          3
+        ]
       }
     }
   ]
