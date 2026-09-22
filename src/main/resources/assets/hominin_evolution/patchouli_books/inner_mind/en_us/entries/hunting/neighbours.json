@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(l)Baboons$() move in troops of twenty. They will swap food with you from their cheeks.$(br2)A baboon alone runs. A baboon near its troop screams, and then there are twenty of them. Take the stragglers."
+      "text": "$(l)Baboons$() move in troops of twenty and trade food from their cheeks. They sleep up trees, and bark when they see a cat - listen, and you are told which way it is.$(br2)Hit one near its troop and they all go still: five seconds to hand one something, or hold $(k:hominin_evolution.think) and look small. Do nothing, and they hold a grudge."
     },
     {
       "type": "patchouli:text",
@@ -35,6 +35,14 @@
     {
       "type": "patchouli:text",
       "text": "What you are matters. An australopithecine is meat and every animal out here knows it. Habilis with a spear and a band behind it gives a cat pause.$(br2)Erectus is the other way about: armed, they walk up to a kill and take it off whatever got there first."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A predator is not a monster. It takes two of you and goes, and it keeps count until it dies. Between bites it pulls back: that pause is your chance.$(br2)Only a club cracks a skull. A branch stings; four hard blows and anything that can be frightened breaks off."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Crocodiles$() lie in warm water two blocks deep and wait for something to come and drink. If the jaws close, it rolls and drags you toward deep water.$(br2)Hit it hard - or have somebody else hit it - and it lets go. In a drought there are more of them."
     }
   ]
 }

@@ -277,6 +277,67 @@ public final class ModItems {
                     .usingConvertsTo(Items.STICK)
                     .build()));
 
+    /** A cow's or horse's skin, scraped. The start of everything erectus sits, sleeps and works on. */
+    public static final DeferredItem<Item> HIDE = ITEMS.registerSimpleItem("hide", new Item.Properties());
+
+    public static final DeferredItem<Item> KNAPPING_STATION = ITEMS.register("knapping_station",
+            () -> new BlockItem(ModBlocks.KNAPPING_STATION.get(), new Item.Properties()));
+
+    /**
+     * The Acheulean hand axe: a teardrop of stone worked on both faces. For a million and a
+     * half years the most successful tool anyone ever made - it chops wood, butchers, digs,
+     * and makes a fearsome weapon.
+     */
+    public static final DeferredItem<Item> HAND_AXE = ITEMS.register("hand_axe",
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 5.0D, 1.2D, new Item.Properties()
+                    .component(DataComponents.TOOL, handAxe())));
+
+    /** A broad straight edge: a butcher's knife that lasts - meat, marrow, grass. */
+    public static final DeferredItem<Item> CLEAVER = ITEMS.register("cleaver",
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 4.0D, 1.6D, new Item.Properties()));
+
+    /** Everything at once, and a lot of stone: hand axe, cleaver and hammer in one. */
+    public static final DeferredItem<Item> ACHEULEAN_MULTITOOL = ITEMS.register("acheulean_multitool",
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(320, 4.5D, 1.3D, new Item.Properties()
+                    .component(DataComponents.TOOL, handAxe())));
+
+    /**
+     * The primitive work station: a branch driven into a base of rocks, hide lashed round it.
+     * Everything beyond the Acheulean is worked here - branches, thatch, bedding, the digging
+     * stick done properly.
+     */
+    public static final DeferredItem<Item> WORK_STATION = ITEMS.register("work_station",
+            () -> new BlockItem(ModBlocks.WORK_STATION.get(), new Item.Properties()));
+
+    /**
+     * A log or a long branch, split and squared with a hand axe: raw stock for a club, a
+     * proper spear, or building. A long branch works just as well as a whole log.
+     */
+    public static final DeferredItem<Item> WORKABLE_BRANCH = ITEMS.registerSimpleItem("workable_branch",
+            new Item.Properties());
+
+    /**
+     * A workable branch whittled to a point at the work station. It hits harder and lasts
+     * longer than a sharpened spear - and when it finally gives out, the branch underneath
+     * does not go with it.
+     */
+    public static final DeferredItem<Item> WORKABLE_SPEAR = ITEMS.register("workable_spear",
+            () -> new dev.hominin.evolution.item.WorkableSpearItem(new Item.Properties()
+                    .durability(90).attributes(weapon(5.0D, 1.5D, 2.0D))));
+
+    /**
+     * A workable branch set in a base of rock: the beginning of building something rather
+     * than just carrying something. What the thatch structures to come are framed with.
+     */
+    public static final DeferredItem<Item> BUILDING_BRANCH = ITEMS.registerSimpleItem("building_branch",
+            new Item.Properties());
+
+    public static final DeferredItem<Item> THATCH_BLOCK = ITEMS.register("thatch_block",
+            () -> new BlockItem(ModBlocks.THATCH_BLOCK.get(), new Item.Properties()));
+
+    public static final DeferredItem<Item> THATCH_BEDDING = ITEMS.register("thatch_bedding",
+            () -> new BlockItem(ModBlocks.THATCH_BEDDING.get(), new Item.Properties()));
+
     public static final DeferredItem<Item> HOMININ_CARCASS = ITEMS.register("hominin_carcass",
             () -> new BlockItem(ModBlocks.HOMININ_CARCASS.get(), new Item.Properties()));
 
@@ -316,6 +377,10 @@ public final class ModItems {
      */
     public static final DeferredItem<Item> MEAT_CHUNK = ITEMS.registerSimpleItem("meat_chunk",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.2F).build()));
+
+    /** A portion of meat, cooked on a hearth: more in it, and nothing in it to make you ill. */
+    public static final DeferredItem<Item> COOKED_MEAT_CHUNK = ITEMS.registerSimpleItem("cooked_meat_chunk",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(3).saturationModifier(0.6F).build()));
 
     public static final DeferredItem<Item> GRUB = ITEMS.registerSimpleItem("grub",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
@@ -363,6 +428,13 @@ public final class ModItems {
      * @param bonusReach   extra blocks of entity reach, or 0 for none
      */
     /** A stone edge heavy enough to break what the stone-tool gate protects. */
+    /** A hand axe cuts wood as well as stone does anything - and everything a chopper can. */
+    private static Tool handAxe() {
+        return new Tool(List.of(
+                Tool.Rule.minesAndDrops(ModTags.Blocks.REQUIRES_HAND_AXE, 3.0F),
+                Tool.Rule.minesAndDrops(ModTags.Blocks.REQUIRES_STONE_TOOL, 3.0F)), 1.0F, 1);
+    }
+
     private static Tool chopping() {
         return new Tool(List.of(Tool.Rule.minesAndDrops(ModTags.Blocks.REQUIRES_STONE_TOOL, 2.0F)), 1.0F, 1);
     }

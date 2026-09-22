@@ -51,7 +51,7 @@ public class CraftGoal extends Goal {
     }
 
     private enum Plan {
-        GRIND, GRINDING_STONE, SPEAR, POINTY_STICK, FLAKE, CHOPPER, MULTITOOL
+        GRIND, GRINDING_STONE, SPEAR, POINTY_STICK, FLAKE, CHOPPER, MULTITOOL, HAND_AXE
     }
 
     private final BandMember member;
@@ -151,6 +151,11 @@ public class CraftGoal extends Goal {
                 return Plan.POINTY_STICK;
             }
         }
+        // Erectus with a knapping station nearby: a hand axe of their own, if they have none.
+        if (makesAcheulean() && goodStones() >= 2 && !has(s -> s.is(ModItems.HAND_AXE.get()))
+                && !member.getMainHandItem().is(ModItems.HAND_AXE.get()) && stationNearby()) {
+            return Plan.HAND_AXE;
+        }
         // Good stone gets knapped whenever there is some; limestone only rarely, and grudgingly.
         boolean workable = goodStones() >= 2 || (stones() >= 2 && limestoneAnyway());
         if (count(ModItems.FLAKE.get()) < 2 && workable) {
@@ -165,6 +170,24 @@ public class CraftGoal extends Goal {
             return Plan.MULTITOOL;
         }
         return null;
+    }
+
+    /** The Acheulean is erectus's: the species that invented it and everyone after. */
+    private boolean makesAcheulean() {
+        String stage = member.getStage().getPath();
+        return !isPreOldowan(member.getStage()) && !stage.equals("homo_habilis") && !stage.equals("homo_rudolfensis")
+                && !dev.hominin.evolution.band.Paranthropus.is(member);
+    }
+
+    private boolean stationNearby() {
+        net.minecraft.core.BlockPos origin = member.blockPosition();
+        for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(origin.offset(-24, -4, -24),
+                origin.offset(24, 4, 24))) {
+            if (member.level().getBlockState(pos).is(dev.hominin.evolution.ModBlocks.KNAPPING_STATION.get())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A pointy stick or better is a proper weapon; a bare branch or a gnawed stick is not. */
@@ -213,6 +236,25 @@ public class CraftGoal extends Goal {
                     member.markMadeChopper();
                     make(ModItems.CHOPPER.get(), " batters a stone down into a Chopper.");
                 }
+            }
+            case HAND_AXE -> {
+                ItemStack stone = find(dev.hominin.evolution.band.Wants::isGoodStone);
+                if (stone == null) {
+                    return;
+                }
+                ItemStack kind = stone.copyWithCount(1);
+                take(s -> s.is(kind.getItem()));
+                if (!take(s -> s.is(kind.getItem()))) {
+                    takeStone();
+                }
+                int quality = dev.hominin.evolution.knapping.Acheulean.rollQuality(member.getKnapLevel(), kind,
+                        member.getRandom());
+                member.addToInventory(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get())
+                        .make(quality));
+                member.practiseKnapping();
+                Band.announceDiscovery(member, " sits at the knapping station and shapes a "
+                        + dev.hominin.evolution.item.AcheuleanToolItem.TIER_NAMES[quality].toLowerCase()
+                        + " hand axe (tier " + quality + ").");
             }
             case MULTITOOL -> {
                 Item stone = count(ModItems.CHERT_HAMMERSTONE.get()) >= 1 ? ModItems.CHERT_HAMMERSTONE.get()

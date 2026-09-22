@@ -116,6 +116,7 @@ public final class Grooming {
         // And the obligation. Grooming is not a favour, it is the opening half of a
         // trade, and the other half is not optional.
         member.oweGrooming(player);
+        Mating.court(player, member, 1);
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HEART, member.getX(), member.getEyeY() + 0.3D,
                 member.getZ(), 5, 0.3D, 0.2D, 0.3D, 0.0D);
         dev.hominin.evolution.EvolutionManager.incrementCriterion(player, Band.COHESION, 1);
@@ -127,6 +128,8 @@ public final class Grooming {
 
     /** Two members grooming each other: the same thing, without the player in it. */
     public static void betweenMembers(BandMember groomer, BandMember other) {
+        groomer.addAffinity(other, 1);
+        other.addAffinity(groomer, 1);
         lastGroomed.put(other.getUUID(), groomer.level().getGameTime());
         other.heal(1.0F);
         if (groomer.level() instanceof ServerLevel level) {

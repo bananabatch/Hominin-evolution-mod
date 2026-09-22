@@ -20,8 +20,8 @@ You play a hominin, not a person, and you earn your way up the line.
 | *H. rudolfensis* | 2.5 mya | 5–9 | Yes — fallback beside habilis |
 | Homo habilis | 2.4 mya | 7–12 | Yes |
 | *H. ergaster* | 1.95 mya | 9–14 | Yes — fallback behind erectus |
-| Homo erectus | 1.9 mya | 12–17 | Partly — its gate is a placeholder |
-| Homo heidelbergensis | 700 kya | 15–19 | **Planned** |
+| Homo erectus | 1.9 mya | 12–17 | Yes |
+| Homo heidelbergensis | 700 kya | 15–19 | Reachable; its own content is **planned** |
 | Homo sapiens | 300 kya | 25–40 | **Planned** |
 | Homo neanderthalensis | 400 kya | 18–25 | **Planned** |
 
@@ -105,6 +105,29 @@ You play a hominin, not a person, and you earn your way up the line.
 
 ---
 
+### Homo erectus
+
+- **Checklist.** Required: survive 2 days, make an Acheulean tool, spend a night by a lit hearth. Then any 3 of: eat 3 pieces of cooked meat, run down big game you wounded (it dies 30+ seconds after your first hit), walk a scavenger off a kill, range 1,000 blocks from where you began as erectus, trade with another erectus band, grow the band to 14, adopt a norm.
+- **Milestone → heidelbergensis:** make a tier 2 or better Acheulean tool from anything but obsidian.
+- **Hide** drops from cows and horses. **Knapping station:** 4 sticks in the main hand, a hide in the off hand, press P.
+- **The Acheulean.** Sit at the station holding 2 of a stone (4 for the multitool), with a hammerstone and a bone (or long bone) anywhere on you. Choose a **hand axe** (chops wood — logs finally break — and is a heavy weapon), a **cleaver** (a lasting knife: meat, marrow, thatch) or an **Acheulean multitool** (both, and a hammer).
+- **Quality tiers** 4 (crude) to 0 (flawless). Durability ×0.4 / ×0.7 / ×1 / ×1.6 / ×2.5, and +0.5 damage per tier up. Tiers 4–3 sometimes cause external bleeding, tier 2 internal, tier 1 always internal with a 15% chance of catastrophic, tier 0 30%.
+- **Knapping skill** levels 4 to 1, shown in the journal. Leave 4 after 1 tool, 3 after 2 more, 2 after 3 more; thinking (K) while holding chert, obsidian or a good Acheulean tool sometimes counts. A Lomekwian knapper starts at 3. Carries over when you evolve.
+  - Level 4 makes tier 4; level 3 tier 3 (20% tier 2); level 2 tier 2 (25% tier 1, 40% with obsidian); level 1 tier 1 (15% tier 0 with chert, 45% with obsidian).
+  - The stone caps it: limestone never beats tier 4; quartzite tier 3, or 2 at level 1; chert and obsidian can reach 0; obsidian is never worse than tier 2.
+  - Tier 0 earns *The Last Tool You Will Ever Need*.
+- **Band members** each have a knapping level (mostly 3–2, rarely 1 or 4; shown in Info). Children start at 4, or learn their minder's level or one below it. Erectus members with a knapping station within 24 blocks make their own hand axes and get better at it.
+- **Hearths.** From erectus the fire drill lights a hearth (a campfire) instead of a flash of fire. It burns 2 minutes on its own; feed it sticks (+1 min), long branches (+2.5), logs (+5), grass or nesting material (+0.5), up to 20 minutes banked. It goes out when it runs dry; relight it with the drill. It cooks: meat chunks become cooked meat chunks. At night no predator comes within 24 blocks of a lit hearth you are sitting by.
+- **The primitive work station.** 2 hide in hand, 4 rocks of any kind in the off hand, press P. It opens a proper 3×3 grid with its own tool slot — nothing is made without the right tool sitting in it.
+  - **Workable branch:** a hand axe worn against a log (or a long branch) — 2 from a log, 1 from a branch.
+  - **Club:** two workable branches down the centre column, a hammerstone in the tool slot.
+  - **Workable spear:** the same two branches worked with an edge (a flake, a hand axe or better) — hits harder and lasts longer than a sharpened spear, and gives the branch back instead of breaking outright.
+  - **Building branch:** a workable branch on a base of 3 rocks — raw stock for whatever gets built on top of the Acheulean.
+  - **Thatch block:** a full grid of thatch, 4 twine in the tool slot. Left uncured it rots away on its own over time; right-click it with hide to cure it, and it lasts for good.
+  - **Thatch bedding:** 3 hide over a row of thatch, 10 twine in the tool slot — makes 2. Lay two side by side to sleep in; a nest still works, but a nest is what leaves you with ticks.
+  - **A proper digging stick:** a branch and a hammerstone side by side, 10 twine in the tool slot.
+  - Not yet built: building blueprints (thatch tents and huts) that would let a building branch actually go up as a structure — for now the branch is raw material waiting on that system.
+
 ## 4. Scavenging and hunting
 
 - Everything that dies leaves a **carcass** — a 3D ribcage block. Animals also die on their own of exhaustion, disease or old wounds, so the country has bones in it.
@@ -132,11 +155,11 @@ Band members are hominins of your own species who follow you and look after them
 - They **sleep in the nests they build**, one body to a nest, and get up when the light or the danger changes.
 - They swim rather than walk around water, and bathe in rivers on hot days.
 
-**Talking (H)** — grouped by topic; right-click one first to speak to just them. **Everything goes through this menu**: right-clicking a hominin only picks them out, and handing things over is *Here, take this* under Tools and things.
+**Talking (H)** — grouped by topic (Food, Tools and things, Danger, Social); right-click one first to speak to just them. **Everything goes through this menu**: right-clicking a hominin only picks them out, and handing things over is *Here, take this* under Tools and things.
 - **Food:** Let's forage · I'm hungry
 - **Tools and things:** Here, take this (whatever you hold — food, what they asked for, anything for their pack; feeding a stray this way is how you win it over) · Trade · I need an item · Get me… (sticks, branches, nesting material, any of the four stones — and, as they come to think more of you, a flake, hammerstone, pointy stick, digging stick, chopper, spear, club or multi tool. They can only hand over one they actually have.)
 - **Danger:** I'm hurt · Let's hunt together · Don't hunt with me · Let's climb a tree / All clear
-- **Each other:** Let's stick together today · Groom them · Get these off me · Let's play · Let's share food · Info
+- **Social:** Let's stick together today · Groom them · Get these off me · Let's play · Let's share food · Info · Tribe stats · Let's have a child · Our dead stay with us
 
 **Bonding**
 - **Picking somebody out stops them.** Right-click any hominin and they stop, turn to face you and wait; press H within five seconds to talk to just them.
@@ -167,10 +190,19 @@ Band members are hominins of your own species who follow you and look after them
 
 **The dead**
 - Every hominin that dies (your band, other bands, Paranthropus) and every chimpanzee or bonobo leaves a **hominin carcass**. Butchered, it gives 2–3 hominin meat, sometimes a rib or long bone, the **brain**, and a 35% chance of the **skull**.
-- **Eating hominin meat** without a norm costs 1 cohesion — the band saw.
-- **The norm** (H → Each other → *Our dead stay with us*, erectus and later, permanent across evolutions): eating your dead is right, and costs nothing. But it binds — every time one of your band dies, you owe a feast: eat hominin meat or a brain with at least one of the band within 16 blocks, within a day (+3 cohesion). Miss it and it is a betrayal: −8 cohesion and −1 bond with everyone.
-- **Kuru.** A brain carries it one time in three, whoever eats it — you, or whoever at the feast takes the brain when you do not. Incurable, milk included. Day one, trembling and nausea; late on day two, blindness; the morning of day three, death (*"shook, laughed, and died of kuru"*). Meanwhile predators can tell: camp pressure builds far faster. A band member with kuru shakes visibly and dies after two and a half days. Your own death clears it.
+- **Eating hominin meat** without a norm costs 1 cohesion — the band saw — at most once every ten minutes.
+- **The norm** (H → Social → *Our dead stay with us*, erectus and later, permanent across evolutions): eating your dead is right, and costs nothing. But it binds — every time one of your band dies, you owe a feast: eat hominin meat or a brain with at least one of the band within 16 blocks, within a day (+3 cohesion). Miss it and it is a betrayal: −8 cohesion and −1 bond with everyone.
+- **Kuru.** A brain carries it one time in three (*"The brain tastes strange. Sweet, and wrong somehow."* tells you it did; your journal shows it), whoever eats it — you, or whoever at the feast takes the brain when you do not. Incurable, milk included. Day one, trembling and nausea; late on day two, blindness; the morning of day three, death (*"shook, laughed, and died of kuru"*). Meanwhile predators can tell: camp pressure builds far faster. A band member with kuru shakes visibly and dies after two and a half days. Your own death clears it.
 - **Hominin Skull.** Use it to hold it out at arm's length and look it in the eye — the pose holds for two seconds — while the screen shows the picture and *"Whatever took you — a predator, another band, disease — you will be avenged."* +3 cohesion, +1 bond with everyone of yours within 8 blocks, once a day. Achievement: *Tuff Pose + Monologue*.
+
+**Mates and children**
+- From habilis on, hominins **pair-bond**: one mate, kept. Before that, nobody is anybody's in particular.
+- Well-fed members (hunger above 15, mostly healthy, not bleeding) pair up on their own and announce it in chat, then conceive now and then: *"Asha is expecting. Ido is the father."*
+- **You can be chosen too.** Groom or feed an adult of the other sex in your band. It takes three times, or once with a favourite food. Or, at bond 2, pick them out and ask outright: H → Social → *Be my mate*. Then *Let's have a child*: if you are female, you carry it; if male, they do.
+- From habilis, **your mate keeps close** (within about 4 blocks, not the band's loose 10). When a predator hits you, your mate gets Speed I and Strength I for 5 seconds; when one hits your mate, you do. At most once every 3 seconds.
+- **Pregnancy** takes a day. Hunger runs twice as fast (for you, faster exhaustion); pregnant members ask for food more often and forage more.
+- **Labour**, the last quarter: a member goes off alone to a quiet spot, glowing, and predators come for her, with more arriving while it lasts. You glow in your own. While a birth is being guarded, anyone within 48 blocks gets Strength, and your threat display drives off **anything**, the fearless included.
+- H → Social → **Tribe stats** (whole band): cohesion, your mate, and every member's bond with you, mate, closest friend (built by grooming each other), pregnancy and current want. Scrolls for big bands.
 
 **Family**
 - Feed a male and female together and a child comes a day later, grown two days after that.
@@ -200,7 +232,7 @@ Band members are hominins of your own species who follow you and look after them
 - **Chimpanzees** live in communities of 4–7: often in jungle, fairly often in savanna within 90 blocks of a jungle, and rarely further out from erectus on. They hold a range. The alpha status-checks anyone inside it — walks up, stands too close, bristles and grunts, with no other warning — and you have five seconds to hand it something or hold K. Pass and trust rises; fail and the alpha makes its point, and trust falls. Hitting one, or displaying at them, opens the same window as a baboon troop. Feed them (sneak-use shows trust) and a community that trusts you grooms your ticks and mobs any predator chasing you through its range. A grudge means attack on sight inside the range.
 - **Baboon trust.** Trades and gifts build it; gifts count double. Once a troop trusts you, up to three travel with your band by day, mob any predator that comes near you, and go home at night.
 - **The five-second window.** Hit a baboon near its troop and the whole troop goes still and stares while your view narrows. Hand one anything, or hold K to make yourself small, and they let it go. Do nothing — or hit one again — and the troop erupts and holds a grudge: they won't chase you past 24 blocks, but they attack whenever you come within 9. A grudge can be worn down, slowly, with gifts.
-- **Bonobos**, from erectus on, in troops of 6–10 by rivers and at forest edges. **Nothing hunts within 64 blocks of a peaceful troop**: no predators spawn, no visitors come to camp, and camp pressure drains away. It's the only safe ground in the game. They give food to anyone nearby who is hungry, groom anyone with ticks without needing trust first, drift along beside you while you forage, and share out whatever food you hand them. Sneak-use tells you where you stand. **Hurt one** (you, or one of your band), and that troop is no refuge any more. Nor is any troop you meet afterwards, for the rest of your line: they keep away from you. There is no apology.
+- **Bonobos** have their own model: small round head with the hair parted down the middle, flat black face, pale lips, bare dark chest, long thin limbs. From erectus on, in troops of 6–10 by rivers and at forest edges. **Nothing hunts within 64 blocks of a peaceful troop**: no predators spawn, no visitors come to camp, and camp pressure drains away. It's the only safe ground in the game. They give food to anyone nearby who is hungry, groom anyone with ticks without needing trust first, drift along beside you while you forage, and share out whatever food you hand them. Sneak-use tells you where you stand. **Hurt one** (you, or one of your band), and that troop is no refuge any more. Nor is any troop you meet afterwards, for the rest of your line: they keep away from you. There is no apology.
 - **Crocodiles** lie in warm water at least two blocks deep: savanna pools, rivers, jungle, swamp. They're twice as likely during a drought. Come within about 7 blocks of the water and one lunges. If it connects, it grabs you and rolls: you're dragged toward deep water, slowed right down, and bitten every second, and the first bite bleeds. One hit of 3 damage or more makes it let go, and so does a band member hitting it. A miss sends it back under to wait. It never chases far up the bank, a threat display does nothing to it, and it drops 2–4 meat.
 - **Dinopithecus**, the giant baboon: groups of 2–3, never hunting you, but deadly if you come within 5 blocks. It pauses between bites and never backs off. A threat display does not frighten it — it charges you and earns *Nice Try, Genius*. Its bites cause internal bleeding, sometimes catastrophic. Gone by erectus.
 - **Pachycrocuta:** the giant hyena. Stalks you while you are not looking; a display drives it off.
@@ -210,6 +242,7 @@ Band members are hominins of your own species who follow you and look after them
 - **Predator pressure:** camping in one place builds it — faster at night, with carcasses about, or while hurt; slower with a big band. First tracks you did not make, then visitors. Moving camp 64 blocks resets it.
 - **Standing by stage:** australopithecines are prey; armed habilis with 3 band members nearby gives predators pause; armed erectus is not attacked at all.
 - **Predators are not monsters.** One takes two of the band and then leaves with what it came for — *"The sabertooth has what it came for, and goes."* It keeps that count until it dies, so one that finds a new target cannot start again and work through everybody. Satiation is not fear, so even the fearless walk away from a full belly.
+- **Predator damage** (before difficulty): sabertooth 7, homotherium 6, giant hyena 6, Dinopithecus 5, crocodile 4 a bite, chimpanzee 4, crowned eagle 4 — they hurt, and they open wounds, but no single bite kills a healthy hominin.
 - **Predators fight in passes.** A bite, then a real pause and a withdrawal, which is your chance to run, climb or get a spear up. A sabertooth bites every 2.5 seconds, not every second.
 - **Only a club cracks a predator's skull.** A branch stings it; four blows and anything that can be frightened breaks off instead. Nothing fearless breaks off, which is what the club is for. A concussed predator runs, your band stands down rather than chasing it into cover, and sees it off with a collective display.
 - Predators hunt **ordinary game** — cattle, horses, whatever grazes near the water. Hominins are the exception, not the diet.
@@ -249,7 +282,7 @@ Everything below is written down and not yet built. Roughly in the order it is b
 
 ### 1. Foundations
 
-- **More skills**, and knapping skill levels from erectus on — the Lomekwian skill already carries forward to give you a head start there.
+- **More skills**, and the Levallois technique at heidelbergensis.
 
 ### 2. Screens and society
 

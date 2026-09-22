@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "hominin_evolution:item/acheulean_multitool"
+  }
+}

@@ -45,7 +45,10 @@ public class ForageGoal extends Goal {
         if (member.isUpATree() || (member.hasFood() && !together)) {
             return false;
         }
-        if (!together && (!member.isHungry() || member.getRandom().nextInt(40) != 0)) {
+        // A pregnancy keeps them foraging whether or not they feel hungry.
+        boolean eatingForTwo = member.isPregnant();
+        if (!together && ((!member.isHungry() && !eatingForTwo)
+                || member.getRandom().nextInt(eatingForTwo ? 20 : 40) != 0)) {
             return false;
         }
         spot = findSpot();

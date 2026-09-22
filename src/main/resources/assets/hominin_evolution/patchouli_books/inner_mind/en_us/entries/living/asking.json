@@ -10,11 +10,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Food$()$(li)Let's forage - they come and root beside you$(li)I'm hungry - they hand over what they have, and go looking if they have none$(br2)$(l)Tools and things$()$(li)I need an item - they work out what you are short of$(li)Get me... - one of them goes and fetches it"
+      "text": "$(l)Food$()$(li)Let's forage$(li)I'm hungry$(br2)$(l)Tools and things$()$(li)Here, take this - whatever you are holding: food, what they asked for, anything for their pack$(li)Trade$(li)I need an item$(li)Get me..."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Danger$()$(li)I'm hurt - they stay close and watchful$(li)Let's hunt together - they go for what you go for$(li)Don't hunt with me - they leave your prey alone$(li)Let's climb a tree - and again to call them down$(br2)$(l)Each other$()$(li)Groom them$(li)Info$(li)Let's stick together today, to another band"
+      "text": "$(l)Danger$()$(li)I'm hurt$(li)Let's hunt together / Don't$(li)Let's climb a tree$(br2)$(l)Social$()$(li)Groom them, Get these off me$(li)Let's play, Let's share food$(li)Info, Tribe stats$(li)Be my mate, Let's have a child$(li)Our dead stay with us$(li)Let's stick together today, to another band"
     },
     {
       "type": "patchouli:text",
@@ -27,6 +27,10 @@
     {
       "type": "patchouli:text",
       "text": "Feed one its favourite food and it remembers. Hand it what it asked for and it remembers that too.$(br2)Hit one while sneaking and it is wrestling, not fighting - and that is how both of you learn to fight."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Tribe stats$(), asked of the whole band: cohesion, who is mated to whom, who is closest to whom, how each of them feels about you, who is pregnant, and what each one wants."
     }
   ]
 }

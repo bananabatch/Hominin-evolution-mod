@@ -108,6 +108,18 @@ public final class ThreatDisplay {
                 Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
         startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
         startled += dev.hominin.evolution.band.Paranthropus.scareNear(player, radius + 8.0D);
+        if (dev.hominin.evolution.band.Mating.guarding(player)) {
+            // Guarding a birth: nothing gets past this, not even what fears nothing.
+            for (net.minecraft.world.entity.PathfinderMob mob : player.level().getEntitiesOfClass(
+                    net.minecraft.world.entity.PathfinderMob.class, player.getBoundingBox().inflate(radius + 8.0D),
+                    m -> m.isAlive() && !(m instanceof dev.hominin.evolution.band.BandMember)
+                            && (m.getType().is(ModTags.EntityTypes.PREDATORS)
+                                    || m instanceof net.minecraft.world.entity.monster.Enemy
+                                    || m.getType().is(ModTags.EntityTypes.FEARLESS)))) {
+                dev.hominin.evolution.combat.Scare.scare(mob, player.position(), 30 * 20);
+                startled++;
+            }
+        }
         // Chimpanzees take it as a challenge too - but they give you the chance to take it back.
         dev.hominin.evolution.entity.Chimpanzee.answerDisplay(player, radius);
         // One thing out here does not back down, and finding that out is the lesson.

@@ -102,9 +102,35 @@ public final class Quarry {
                 bolt(other, hunter);
             }
         }
+        if (isBigGame(victim)) {
+            if (firstBlood.size() > 2048) {
+                firstBlood.clear();
+            }
+            firstBlood.putIfAbsent(victim.getUUID(), new FirstBlood(hunter.getUUID(), victim.level().getGameTime()));
+        }
         if (hunts(hunter) && isBigGame(victim)) {
             hunts.put(hunter.getUUID(), new Hunt(victim.getUUID(), victim.level().getGameTime(), false));
         }
+    }
+
+    private record FirstBlood(java.util.UUID hunter, long at) {
+    }
+
+    /** Who first drew blood from big game, and when: a persistence hunt is measured from there. */
+    private static final java.util.Map<java.util.UUID, FirstBlood> firstBlood = new java.util.HashMap<>();
+    /** Long enough that it was a chase, not a lucky blow. */
+    private static final long PERSISTENCE_TICKS = 20 * 30;
+
+    /** Big game that died a good while after you first wounded it: you ran it down. */
+    public static void creditPersistence(LivingEntity dead) {
+        FirstBlood blood = firstBlood.remove(dead.getUUID());
+        if (blood == null || dead.level().getGameTime() - blood.at() < PERSISTENCE_TICKS
+                || !(dead.level().getPlayerByUUID(blood.hunter()) instanceof ServerPlayer hunter)) {
+            return;
+        }
+        dev.hominin.evolution.EvolutionManager.incrementCriterion(hunter, "persistence_kill", 1);
+        hunter.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                "It could not run any more. You could.").withStyle(net.minecraft.ChatFormatting.GOLD), true);
     }
 
     /** The burst: a hard sprint that nothing on two legs can follow, and then a longer stride. */

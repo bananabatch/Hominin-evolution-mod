@@ -29,7 +29,7 @@ public final class Social {
         FOOD("Food"),
         THINGS("Tools and things"),
         DANGER("Danger"),
-        TOGETHER("Each other"),
+        TOGETHER("Social"),
         DEVELOPER("Developer");
 
         private final String label;
@@ -62,6 +62,9 @@ public final class Social {
         TEACH("Teach...", Topic.TOGETHER),
         SHARE("Let's share food", Topic.TOGETHER),
         INFO("Info", Topic.TOGETHER),
+        TRIBE("Tribe stats", Topic.TOGETHER),
+        MAKE_MATE("Be my mate", Topic.TOGETHER),
+        HAVE_CHILD("Let's have a child", Topic.TOGETHER),
         NORM_DEAD("Our dead stay with us (make it the norm)", Topic.TOGETHER),
         DEV_BOND_UP("Bond +5 (whoever's listening)", Topic.DEVELOPER),
         DEV_BOND_DOWN("Bond -5 (whoever's listening)", Topic.DEVELOPER),
@@ -158,6 +161,17 @@ public final class Social {
         switch (command) {
             case GIVE -> nearestOf(player, listeners).receiveFromHand(player);
             case NORM_DEAD -> Mortuary.adopt(player);
+            case TRIBE -> sendTribe(player);
+            case MAKE_MATE -> {
+                if (individual) {
+                    Mating.makeMate(player, first);
+                }
+            }
+            case HAVE_CHILD -> {
+                if (individual) {
+                    Mating.haveChild(player, first);
+                }
+            }
             case LEAD_STONE, LEAD_OBSIDIAN -> {
                 if (!Paranthropus.is(first)) {
                     say(player, who + (individual ? " has" : " have") + " no better idea where to find it than you do.");
@@ -672,6 +686,7 @@ public final class Social {
         lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
         lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
         lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
+        lines.add("Knapping: level " + member.getKnapLevel() + (member.getKnapLevel() == 1 ? " (master)" : ""));
         List<String> knows = member.knownSkillTitles();
         lines.add("Knows: " + (knows.isEmpty() ? "nothing they were taught" : String.join(", ", knows)));
         lines.add("Ticks on them: " + (member.getTicksOnMe() == 0 ? "none" : String.valueOf(member.getTicksOnMe()))
@@ -690,6 +705,49 @@ public final class Social {
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new dev.hominin.evolution.network.MemberInfoPayload(member.getName().getString(), lines));
+    }
+
+    /** The whole band at a glance: who is with whom, how they feel about you and each other, what they want. */
+    private static void sendTribe(ServerPlayer player) {
+        List<BandMember> band = Band.all(player);
+        var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        List<String> lines = new ArrayList<>();
+        lines.add("Cohesion: " + counters.getOrDefault(Band.COHESION, 0) + "    Members: " + band.size());
+        BandMember mine = Mating.mateOf(player);
+        if (mine != null) {
+            mine.ensureName();
+            lines.add("Your mate: " + mine.getName().getString());
+        }
+        if (Mortuary.hasNorm(player)) {
+            lines.add("Norm: our dead stay with us");
+        }
+        lines.add("");
+        band.sort((a, b) -> Integer.compare(b.getBond(), a.getBond()));
+        for (BandMember member : band) {
+            member.ensureName();
+            StringBuilder line = new StringBuilder(member.getName().getString())
+                    .append(member.isBaby() ? " (child, " : " (").append(member.isFemale() ? "F)" : "M)")
+                    .append(" - bond ").append(member.getBond());
+            String mate = Mating.mateName(member, player.serverLevel());
+            if (mate != null) {
+                line.append(" - mate: ").append(mate);
+            }
+            var friend = member.closestFriend();
+            if (friend != null && player.serverLevel().getEntity(friend.getKey()) instanceof BandMember close) {
+                close.ensureName();
+                line.append(" - closest to ").append(close.getName().getString()).append(" (").append(friend.getValue())
+                        .append(")");
+            }
+            if (member.isPregnant()) {
+                line.append(member.isInLabour() ? " - GIVING BIRTH" : " - pregnant");
+            }
+            if (member.getWant() != null) {
+                line.append(" - wants ").append(Wants.describeItem(member.getWant()));
+            }
+            lines.add(line.toString());
+        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.MemberInfoPayload("Your band", lines));
     }
 
     /** Sends the player the list of what one member carries, to pick from. */

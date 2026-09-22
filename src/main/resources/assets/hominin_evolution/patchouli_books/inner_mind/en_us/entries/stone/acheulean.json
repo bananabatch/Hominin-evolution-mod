@@ -1,0 +1,28 @@
+{
+  "name": "The Acheulean",
+  "icon": "hominin_evolution:hand_axe",
+  "category": "hominin_evolution:stone",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "From erectus a rock in each hand is not enough. Lash four sticks into a frame and stretch a hide over it - four sticks in your hand, the hide in the other, and $(k:hominin_evolution.item_interact) - and you have somewhere to sit and work stone properly."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Sit at it with two of a stone in hand and a hammerstone and a bone somewhere about you. The hammerstone does the rough shaping; the bone takes the fine flakes off.$(br2)$(l)Hand axe$() - chops wood at last.$(br)$(l)Cleaver$() - a knife that lasts.$(br)$(l)Multitool$() - both, for four stones."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Every tool comes out somewhere from $(l)tier 4$(), crude, to $(l)tier 0$(), flawless. Better tools last longer, hit harder and cut deeper.$(br2)Two things decide it: your hands, and the stone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Your knapping skill runs from level 4 to level 1, and your journal shows it. One tool takes you off 4; two more off 3; three more off 2. Turning a good stone or a good tool over in your mind sometimes teaches the hands as well."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Limestone is only ever crude. Quartzite gets no better than rough, unless your hands are the best there are. Chert, in a master's hands, can be flawless. Obsidian flakes so cleanly that even a beginner gets a strong edge - and a master may get a perfect one."
+    }
+  ]
+}

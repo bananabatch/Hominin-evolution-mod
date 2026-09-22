@@ -80,7 +80,7 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 30.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.ATTACK_DAMAGE, 6.0D)
+                .add(Attributes.ATTACK_DAMAGE, 4.0D)
                 .add(Attributes.FOLLOW_RANGE, 24.0D);
     }
 

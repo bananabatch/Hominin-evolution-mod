@@ -26,6 +26,9 @@ import net.minecraft.world.item.ItemStack;
 public final class Infestation {
     /** Two a day at most. Six takes three days of nobody touching you. */
     private static final int TICKS_PER_BITE = 12000;
+    /** A nest is bedding, not a bed: sleeping in one risks a tick nothing has to bite for. */
+    private static final float NEST_SLEEP_RISK = 0.01F;
+    private static final int NEST_SLEEP_CHECK_TICKS = 200;
 
     /** Past this many, nothing you do heals. */
     public static final int CRIPPLING = 6;
@@ -64,6 +67,7 @@ public final class Infestation {
      * having a body - and the only cure is somebody else's hands.
      */
     public static void tick(ServerPlayer player) {
+        tickNestSleep(player);
         UUID id = player.getUUID();
         long now = player.level().getGameTime();
         if (now - lastBite.getOrDefault(id, now) >= TICKS_PER_BITE) {
@@ -83,6 +87,26 @@ public final class Infestation {
         if (of(player) >= CRIPPLING) {
             Afflictions.afflict(player, Afflictions.Affliction.INFESTED, AFFLICTION_TICKS);
         }
+    }
+
+    /**
+     * A nest is leaves and twigs on the ground, and everything living in the ground has a
+     * chance to get on you. Thatch bedding does not carry this risk.
+     */
+    private static void tickNestSleep(ServerPlayer player) {
+        if (player.tickCount % NEST_SLEEP_CHECK_TICKS != 0 || !player.isSleeping() || of(player) >= MAX) {
+            return;
+        }
+        var sleepingPos = player.getSleepingPos();
+        if (sleepingPos.isEmpty()
+                || !(player.level().getBlockState(sleepingPos.get()).getBlock()
+                        instanceof dev.hominin.evolution.block.NestBlock)
+                || player.getRandom().nextFloat() >= NEST_SLEEP_RISK) {
+            return;
+        }
+        set(player, of(player) + 1);
+        player.displayClientMessage(Component.literal("Something in the nest bit you in the night.")
+                .withStyle(ChatFormatting.GRAY), true);
     }
 
     /**

@@ -23,7 +23,10 @@ public final class TiredApesFlash {
 
     private static final long HOLD_MS = 3_000L;
     private static final long FADE_MS = 1_200L;
-    private static final long TOTAL_MS = HOLD_MS + FADE_MS;
+    /** The words stay on after the picture has gone, long enough to read them. */
+    private static final long TEXT_HOLD_MS = 7_000L;
+    private static final long TEXT_FADE_MS = 1_500L;
+    private static final long TOTAL_MS = TEXT_HOLD_MS + TEXT_FADE_MS;
 
     private static long startedAt = -1L;
 
@@ -45,7 +48,8 @@ public final class TiredApesFlash {
             return;
         }
         // All at once, the whole screen, for three seconds - then it fades away.
-        float alpha = elapsed < HOLD_MS ? 1.0F : 1.0F - (elapsed - HOLD_MS) / (float) FADE_MS;
+        float alpha = elapsed < HOLD_MS ? 1.0F : Math.max(0.0F, 1.0F - (elapsed - HOLD_MS) / (float) FADE_MS);
+        float textAlpha = elapsed < TEXT_HOLD_MS ? 1.0F : 1.0F - (elapsed - TEXT_HOLD_MS) / (float) TEXT_FADE_MS;
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
         int drawWidth = width;
@@ -60,7 +64,7 @@ public final class TiredApesFlash {
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
 
-        int a = Math.max(0, Math.min(255, Math.round(alpha * 255.0F)));
+        int a = Math.max(0, Math.min(255, Math.round(textAlpha * 255.0F)));
         if (a >= 5) {
             Font font = Minecraft.getInstance().font;
             String text = "It seems you and your band could do this all day without getting tired.";

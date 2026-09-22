@@ -39,6 +39,18 @@ public enum KnappingChoice {
     GRINDING_STONE("knapping.hominin_evolution.grinding_stone",
             "knapping.hominin_evolution.grinding_stone.hint", ModItems.GRINDING_ROCK),
 
+    /** Acheulean, at a knapping station: the hand axe. */
+    HAND_AXE("knapping.hominin_evolution.hand_axe",
+            "knapping.hominin_evolution.hand_axe.hint", ModItems.HAND_AXE),
+
+    /** Acheulean: a broad straight cutting edge. */
+    CLEAVER("knapping.hominin_evolution.cleaver",
+            "knapping.hominin_evolution.cleaver.hint", ModItems.CLEAVER),
+
+    /** Acheulean: everything in one, for twice the stone. */
+    ACHEULEAN_MULTITOOL("knapping.hominin_evolution.acheulean_multitool",
+            "knapping.hominin_evolution.acheulean_multitool.hint", ModItems.ACHEULEAN_MULTITOOL),
+
     /** Only for a chert hammerstone: give up the hammer and keep the stone. */
     SPLIT_CORE("knapping.hominin_evolution.split_core",
             "knapping.hominin_evolution.split_core.hint", ModItems.CHERT_ROCK);

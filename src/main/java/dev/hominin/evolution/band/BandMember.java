@@ -312,6 +312,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(1, new FleeToTreeGoal(this));
         goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.GuideGoal(this));
+        goalSelector.addGoal(1, new dev.hominin.evolution.band.goal.LabourGoal(this));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.WrestleGoal(this));
         goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.FetchGoal(this));
         goalSelector.addGoal(3, new ArmSelfGoal(this));
@@ -418,6 +419,117 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         leaveTicks = 0;
     }
 
+    // ------------------------------------------------------------ mates and friends
+
+    /** A mate: another member's UUID, or a player's. From habilis on, one and kept. */
+    @Nullable
+    private UUID mate;
+    /** How far the player has got courting this one. */
+    private int courtship;
+    /** Who in the band this one is close to, built up by grooming each other. */
+    private final java.util.Map<UUID, Integer> affinity = new java.util.HashMap<>();
+    /** Where a mother goes to give birth, away from everyone. */
+    @Nullable
+    private BlockPos labourSpot;
+
+    @Nullable
+    public UUID getMate() {
+        return mate;
+    }
+
+    public void setMate(@Nullable UUID mate) {
+        this.mate = mate;
+        courtship = 0;
+    }
+
+    public boolean isMateOf(UUID other) {
+        return other.equals(mate);
+    }
+
+    /** Returns the courtship so far. */
+    public int addCourtship(int amount) {
+        courtship += amount;
+        return courtship;
+    }
+
+    public void addAffinity(BandMember other, int amount) {
+        affinity.merge(other.getUUID(), amount, Integer::sum);
+    }
+
+    /** The one they are closest to, and how close, or null. */
+    @Nullable
+    public java.util.Map.Entry<UUID, Integer> closestFriend() {
+        java.util.Map.Entry<UUID, Integer> best = null;
+        for (java.util.Map.Entry<UUID, Integer> entry : affinity.entrySet()) {
+            if (best == null || entry.getValue() > best.getValue()) {
+                best = entry;
+            }
+        }
+        return best;
+    }
+
+    public void startPregnancy() {
+        readyTicks = 0;
+        if (female && pregnancyTicks <= 0) {
+            pregnancyTicks = PREGNANCY_TICKS;
+        }
+    }
+
+    /** The last stretch: gone off alone, and glowing. Only in a player's band, where somebody can guard her. */
+    public boolean isInLabour() {
+        return pregnancyTicks > 0 && pregnancyTicks <= Mating.LABOUR_TICKS && leader != null;
+    }
+
+    @Nullable
+    public BlockPos getLabourSpot() {
+        return labourSpot;
+    }
+
+    private void tickPregnancy() {
+        if (pregnancyTicks <= 0 || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        if (pregnancyTicks == Mating.LABOUR_TICKS && leader != null) {
+            // Somewhere quiet, a good way off from everyone.
+            labourSpot = Band.standingSpotNear(server, blockPosition(), 18, random.nextFloat() * net.minecraft.util.Mth.TWO_PI);
+            Mating.memberLabourBegan(this);
+        }
+        if (isInLabour() && tickCount % 20 == 0) {
+            addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.GLOWING, 40, 0, false, false));
+            if (leaderPlayer() instanceof net.minecraft.server.level.ServerPlayer guard) {
+                Mating.labour(guard, blockPosition(), false);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------ knapping skill
+
+    /** 4 (beginner) to 1 (master); 0 until first needed. Mostly 3 or 2, rarely either end. */
+    private int knapLevel;
+    private int knapPractice;
+
+    public int getKnapLevel() {
+        if (knapLevel == 0) {
+            float roll = random.nextFloat();
+            knapLevel = roll < 0.1F ? 1 : roll < 0.5F ? 2 : roll < 0.9F ? 3 : 4;
+        }
+        return knapLevel;
+    }
+
+    /** Making one more tool: the same steps as the player - 1, then 2, then 3. */
+    public void practiseKnapping() {
+        int level = getKnapLevel();
+        if (level <= 1) {
+            return;
+        }
+        int needed = level == 4 ? 1 : level == 3 ? 2 : 3;
+        if (++knapPractice >= needed) {
+            knapPractice = 0;
+            knapLevel = level - 1;
+        }
+    }
+
     // ------------------------------------------------------------ kuru
 
     /** Game time this one caught kuru at a funeral feast, or -1. It dies of it in two and a half days. */
@@ -428,6 +540,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (kuruSince < 0L) {
             kuruSince = level().getGameTime();
         }
+    }
+
+    private void tickMating() {
+        if ((tickCount + getId()) % 1200 == 0) {
+            Mating.tickMember(this);
+        }
+        tickPregnancy();
     }
 
     private void tickKuru() {
@@ -757,10 +876,19 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public void ensureName() {
-        if (!hasCustomName()) {
-            String name = SYLLABLES[random.nextInt(SYLLABLES.length)] + SYLLABLES[random.nextInt(SYLLABLES.length)];
-            setCustomName(Component.literal(Character.toUpperCase(name.charAt(0)) + name.substring(1)));
+        // Two syllables can spell out "Male", which then reads as a label, not a name.
+        if (!hasCustomName() || isReservedName(getCustomName().getString())) {
+            String name;
+            do {
+                name = SYLLABLES[random.nextInt(SYLLABLES.length)] + SYLLABLES[random.nextInt(SYLLABLES.length)];
+                name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+            } while (isReservedName(name));
+            setCustomName(Component.literal(name));
         }
+    }
+
+    private static boolean isReservedName(String name) {
+        return name.equalsIgnoreCase("male") || name.equalsIgnoreCase("female");
     }
 
     // ------------------------------------------------------------ age
@@ -1359,6 +1487,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             player.displayClientMessage(Component.literal(getName().getString()
                     + " eats from your hand, and stays close."), true);
             return;
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer suitor) {
+            Mating.court(suitor, this, favourite ? Mating.COURTSHIP_NEEDED : 1);
         }
         if (!isBaby() && !isPregnant()) {
             readyTicks = READY_TICKS;
@@ -1976,8 +2107,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private void inheritSkills() {
         if (!(level() instanceof ServerLevel server) || getCaretaker() == null
                 || !(server.getEntity(getCaretaker()) instanceof BandMember minder)) {
+            knapLevel = 4;
             return;
         }
+        // Children start at the bottom, and are taught up to their minder's level or one short of it.
+        knapLevel = Math.min(4, minder.getKnapLevel() + (random.nextBoolean() ? 0 : 1));
         java.util.List<String> passed = new java.util.ArrayList<>();
         for (dev.hominin.evolution.mind.Skills.Skill skill : dev.hominin.evolution.mind.Skills.Skill.values()) {
             if (minder.knowsSkill(skill) && !knowsSkill(skill)) {
@@ -2380,7 +2514,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                 removeEffect(net.minecraft.world.effect.MobEffects.GLOWING);
             }
         }
-        if (!isBaby() && ++hungerClock >= HUNGER_TICKS) {
+        // Eating for two: a pregnancy burns through food twice as fast.
+        if (!isBaby() && (hungerClock += isPregnant() ? 2 : 1) >= HUNGER_TICKS) {
             hungerClock = 0;
             hunger = Math.max(0, hunger - 1);
         }
@@ -2445,6 +2580,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         tickInfestation();
         tickKuru();
+        tickMating();
         repayGrooming();
         if (tickCount % 100 == 0 && guestOf != null && level().isNight()) {
             // The alpha takes its band home at dusk - but only if there still is one.
@@ -2475,6 +2611,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             Band.performDisplay(this);
         }
         if (pregnancyTicks > 0 && --pregnancyTicks == 0) {
+            labourSpot = null;
             Band.giveBirth(this);
         }
         if (growUpTicks > 0 && --growUpTicks == 0) {
@@ -2525,6 +2662,23 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putInt("KnapLevel", knapLevel);
+        tag.putInt("KnapPractice", knapPractice);
+        if (mate != null) {
+            tag.putUUID("Mate", mate);
+        }
+        tag.putInt("Courtship", courtship);
+        if (labourSpot != null) {
+            tag.putLong("LabourSpot", labourSpot.asLong());
+        }
+        net.minecraft.nbt.ListTag friends = new net.minecraft.nbt.ListTag();
+        for (java.util.Map.Entry<UUID, Integer> entry : affinity.entrySet()) {
+            CompoundTag friend = new CompoundTag();
+            friend.putUUID("Id", entry.getKey());
+            friend.putInt("Value", entry.getValue());
+            friends.add(friend);
+        }
+        tag.put("Affinity", friends);
         if (kuruSince >= 0L) {
             tag.putLong("KuruSince", kuruSince);
         }
@@ -2594,6 +2748,18 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        knapLevel = tag.getInt("KnapLevel");
+        knapPractice = tag.getInt("KnapPractice");
+        mate = tag.hasUUID("Mate") ? tag.getUUID("Mate") : null;
+        courtship = tag.getInt("Courtship");
+        labourSpot = tag.contains("LabourSpot") ? BlockPos.of(tag.getLong("LabourSpot")) : null;
+        affinity.clear();
+        for (net.minecraft.nbt.Tag entry : tag.getList("Affinity", 10)) {
+            CompoundTag friend = (CompoundTag) entry;
+            if (friend.hasUUID("Id")) {
+                affinity.put(friend.getUUID("Id"), friend.getInt("Value"));
+            }
+        }
         kuruSince = tag.contains("KuruSince") ? tag.getLong("KuruSince") : -1L;
         readInventoryFromTag(tag, registryAccess());
         if (tag.contains("Hunger")) {

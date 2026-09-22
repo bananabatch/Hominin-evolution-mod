@@ -14,11 +14,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)$(k:hominin_evolution.social)$() - talk to the band. Right-click one of them first and it speaks to just that one.$(br2)$(l)$(k:hominin_evolution.threat_display)$() - pant-hoot, leap and throw a fright into whatever is near. It works better the more of your band can hear you."
+      "text": "$(l)$(k:hominin_evolution.social)$() - talk. Right-click one of them first and it speaks to just that one.$(br2)$(l)$(k:hominin_evolution.threat_display)$() $(l)twice$() - pant-hoot, leap and throw a fright into whatever is near. Twice, so a stray brush of the key does not set it off."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Sneak and use$() does most of the rest:$(li)on the ground - forage$(li)on a stone deposit - take note of it$(li)on a rock or branch - throw it$(li)on one of your band - see who they are$(br)$(l)Use$() on water drinks from it. $(l)Use$() on a bone with a flake to hand cracks it open."
+      "text": "$(l)$(k:hominin_evolution.journal)$() - your journal: who you are, what is wrong with you, your band, and every skill you know.$(br2)$(l)Sneak and use$() does most of the rest:$(li)on the ground - forage$(li)on a stone deposit - take note of it$(li)on a rock or branch - throw it$(br)$(l)Use$() on water drinks from it."
     },
     {
       "type": "patchouli:text",

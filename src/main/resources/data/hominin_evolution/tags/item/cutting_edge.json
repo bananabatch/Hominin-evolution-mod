@@ -3,6 +3,9 @@
   "values": [
     "hominin_evolution:flake",
     "hominin_evolution:oldowan_multitool",
-    "hominin_evolution:chopper"
+    "hominin_evolution:chopper",
+    "hominin_evolution:hand_axe",
+    "hominin_evolution:cleaver",
+    "hominin_evolution:acheulean_multitool"
   ]
 }

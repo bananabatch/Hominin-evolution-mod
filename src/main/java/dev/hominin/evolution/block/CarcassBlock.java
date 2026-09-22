@@ -96,6 +96,9 @@ public class CarcassBlock extends HorizontalDirectionalBlock {
             if (claimant != null && dev.hominin.evolution.hunt.Predation.standing(claimant) >= 3
                     && dev.hominin.evolution.hunt.Predation.armed(claimant)) {
                 dev.hominin.evolution.combat.Scare.scare(hyena, claimant.position(), 400);
+                if (claimant instanceof net.minecraft.server.level.ServerPlayer server) {
+                    dev.hominin.evolution.EvolutionManager.incrementCriterion(server, "take_kill", 1);
+                }
                 claimant.displayClientMessage(Component.literal(
                         "You walk up to the kill, and it gives ground."), true);
                 return;

@@ -38,6 +38,21 @@ public final class Journal {
         stats.add("Health: " + Math.round(player.getHealth()) + " / " + Math.round(player.getMaxHealth())
                 + "    Water: " + Thirst.get(player) + " / " + Thirst.MAX);
         stats.add("Ticks: " + Infestation.describe(player));
+        stats.add("Knapping: " + dev.hominin.evolution.knapping.Acheulean.describe(player));
+        if (dev.hominin.evolution.survival.Kuru.has(player)) {
+            stats.add("Illness: " + dev.hominin.evolution.survival.Kuru.describe(player));
+        }
+        if (dev.hominin.evolution.band.Mating.isPregnant(player)) {
+            stats.add("Pregnant: " + dev.hominin.evolution.band.Mating.describePregnancy(player));
+        }
+        BandMember mate = dev.hominin.evolution.band.Mating.mateOf(player);
+        if (mate != null) {
+            mate.ensureName();
+            stats.add("Mate: " + mate.getName().getString());
+        }
+        if (dev.hominin.evolution.band.Mortuary.hasNorm(player)) {
+            stats.add("Norm: your dead stay with you");
+        }
         Afflictions.Affliction affliction = Afflictions.current(player);
         stats.add("Healing: " + (affliction == null ? "nothing is stopping you"
                 : "held back by " + affliction.label().toLowerCase() + " (" + Afflictions.secondsLeft(player) + "s)"));
@@ -99,7 +114,7 @@ public final class Journal {
      * Each individual is one sex or the other. Stored as a plain counter, so it is drawn
      * again when you evolve: the descendant who wakes up is somebody new.
      */
-    private static int gender(ServerPlayer player, PlayerEvolutionData data) {
+    public static int gender(ServerPlayer player, PlayerEvolutionData data) {
         return data.getCriterionCounters().computeIfAbsent(GENDER, key -> 1 + player.getRandom().nextInt(2));
     }
 

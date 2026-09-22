@@ -61,6 +61,42 @@ public final class ModBlocks {
      * Ribs and hide, lying where something stopped. Everything that dies leaves one; old
      * ones out in the country are picked cleaner but hold far more bone.
      */
+    /** A flat anvil stone on a hide mat: where the Acheulean is made. */
+    public static final DeferredBlock<dev.hominin.evolution.block.KnappingStationBlock> KNAPPING_STATION =
+            BLOCKS.registerBlock("knapping_station", dev.hominin.evolution.block.KnappingStationBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.STONE)
+                            .strength(1.5F)
+                            .noOcclusion());
+
+    /** The primitive work station: branches, thatch, bedding and a proper digging stick are made here. */
+    public static final DeferredBlock<dev.hominin.evolution.block.WorkStationBlock> WORK_STATION =
+            BLOCKS.registerBlock("work_station", dev.hominin.evolution.block.WorkStationBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(2.0F)
+                            .noOcclusion());
+
+    /** Bound thatch: a wall or a roof, unless the weather gets to it first. */
+    public static final DeferredBlock<dev.hominin.evolution.block.ThatchBlock> THATCH_BLOCK =
+            BLOCKS.registerBlock("thatch_block", dev.hominin.evolution.block.ThatchBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_YELLOW)
+                            .strength(0.5F)
+                            .sound(SoundType.GRASS)
+                            .randomTicks()
+                            .ignitedByLava());
+
+    /** Hide over thatch: a real bed, laid in pairs. */
+    public static final DeferredBlock<dev.hominin.evolution.block.ThatchBeddingBlock> THATCH_BEDDING =
+            BLOCKS.registerBlock("thatch_bedding", dev.hominin.evolution.block.ThatchBeddingBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.TERRACOTTA_BROWN)
+                            .strength(0.4F)
+                            .sound(SoundType.WOOL)
+                            .noOcclusion()
+                            .ignitedByLava());
+
     /** A hominin, chimpanzee or bonobo, dead. Butchers to hominin meat, ribs, a brain, maybe the skull. */
     public static final DeferredBlock<dev.hominin.evolution.block.HomininCarcassBlock> HOMININ_CARCASS =
             BLOCKS.registerBlock("hominin_carcass", dev.hominin.evolution.block.HomininCarcassBlock::new,

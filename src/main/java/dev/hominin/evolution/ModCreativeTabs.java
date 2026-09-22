@@ -36,6 +36,22 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.RIB.get());
                         output.accept(ModItems.CARCASS.get());
                         output.accept(ModItems.HOMININ_CARCASS.get());
+                        output.accept(ModItems.HIDE.get());
+                        output.accept(ModItems.KNAPPING_STATION.get());
+                        for (int quality = 4; quality >= 0; quality--) {
+                            output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get())
+                                    .make(quality));
+                        }
+                        output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(2));
+                        output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.ACHEULEAN_MULTITOOL.get())
+                                .make(2));
+                        output.accept(ModItems.WORK_STATION.get());
+                        output.accept(ModItems.WORKABLE_BRANCH.get());
+                        output.accept(ModItems.WORKABLE_SPEAR.get());
+                        output.accept(ModItems.BUILDING_BRANCH.get());
+                        output.accept(ModItems.THATCH_BLOCK.get());
+                        output.accept(ModItems.THATCH_BEDDING.get());
+                        output.accept(ModItems.COOKED_MEAT_CHUNK.get());
                         output.accept(ModItems.HOMININ_MEAT.get());
                         output.accept(ModItems.HOMININ_BRAIN.get());
                         output.accept(ModItems.HOMININ_SKULL.get());

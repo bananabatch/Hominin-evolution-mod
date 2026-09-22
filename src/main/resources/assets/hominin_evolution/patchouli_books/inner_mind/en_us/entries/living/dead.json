@@ -1,0 +1,24 @@
+{
+  "name": "The Dead",
+  "icon": "hominin_evolution:hominin_skull",
+  "category": "hominin_evolution:living",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Every one of us that dies, and every chimpanzee and bonobo, leaves a body. Butchered, it is meat, bone, a brain, and sometimes the skull.$(br2)Eat it with nothing to say it is right, and the band draws back from you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From erectus, a band can make a rule of it: $(l)Our dead stay with us$(). Then it is right - but it binds. When one of yours dies you eat of them, with the band, within the day. Every time. Leave them to the hyenas and the band will not forget it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A brain is rich, and a gamble. One in three carries $(l)kuru$(). You will taste it - sweet, and wrong. Trembling the first day, blindness late on the second, and on the third morning it ends. Nothing cures it. Everything that hunts can tell."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Hold a skull out at arm's length and look it in the eye. Whatever took them, they will be avenged - and the band, watching you swear it, believes you. Once a day."
+    }
+  ]
+}

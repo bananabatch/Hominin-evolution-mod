@@ -191,6 +191,47 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 128, 64);
     }
 
+    /**
+     * A bonobo: slighter than a chimpanzee in every way. A small round head with the hair
+     * parted down the middle, a flat black face with no real brow, a short muzzle and pale
+     * lips, small ears tucked into the hair, a narrow chest, and long thin limbs.
+     */
+    public static LayerDefinition bonobo() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 20)
+                .addBox(-4F, -4F, -6F, 8F, 8F, 12F), PartPose.offsetAndRotation(0F, 12F, 0F, -0.3F, 0F, 0F));
+
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-3.5F, -3.5F, -5F, 7F, 7F, 6F), PartPose.offset(0F, 7F, -7F));
+        head.addOrReplaceChild("face", CubeListBuilder.create().texOffs(28, 0)
+                .addBox(-3F, -3F, -5.5F, 6F, 5F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(44, 0)
+                .addBox(-3.5F, -3.8F, -6F, 7F, 1F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(62, 0)
+                .addBox(-2.5F, -0.5F, -7.5F, 5F, 4F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("lips", CubeListBuilder.create().texOffs(78, 0)
+                .addBox(-2F, 2F, -8F, 4F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(28, 8)
+                .addBox(3.5F, -2F, -3F, 1F, 3F, 2F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(28, 8)
+                .addBox(-4.5F, -2F, -3F, 1F, 3F, 2F), PartPose.offset(0F, 0F, 0F));
+
+        for (String side : new String[] {"right", "left"}) {
+            float x = side.equals("right") ? -4F : 4F;
+            PartDefinition arm = root.addOrReplaceChild(side + "_front_leg", CubeListBuilder.create().texOffs(0, 42)
+                    .addBox(-1.5F, 0F, -1.5F, 3F, 12F, 3F), PartPose.offset(x, 10F, -4F));
+            arm.addOrReplaceChild(side + "_hand", CubeListBuilder.create().texOffs(14, 42)
+                    .addBox(-1.5F, 12F, -2F, 3F, 2F, 3F), PartPose.offset(0F, 0F, 0F));
+            float legX = side.equals("right") ? -2.5F : 2.5F;
+            PartDefinition leg = root.addOrReplaceChild(side + "_hind_leg", CubeListBuilder.create().texOffs(28, 42)
+                    .addBox(-1.5F, 0F, -1.5F, 3F, 8F, 3F), PartPose.offset(legX, 15F, 4.5F));
+            leg.addOrReplaceChild(side + "_foot", CubeListBuilder.create().texOffs(42, 42)
+                    .addBox(-1.5F, 8F, -2.5F, 3F, 1F, 4F), PartPose.offset(0F, 0F, 0F));
+        }
+        return LayerDefinition.create(mesh, 128, 64);
+    }
+
     public static LayerDefinition pachycrocuta() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();

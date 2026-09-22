@@ -1,0 +1,20 @@
+{
+  "name": "The Journal",
+  "icon": "minecraft:writable_book",
+  "category": "hominin_evolution:living",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(k:hominin_evolution.journal) opens your journal. Stats: your species and sex, health and water, ticks, illness, what is stopping you healing, your mate and your band, and how many bands your species can still lose."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Skills: everything you know by name, and everything you don't as ???. They are learned by doing - knapping, termite fishing, cracking marrow, making fire, tracking, grooming, calming a troop, thinking.$(br2)Pick one to see what it gives you and whether it survives evolving."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Teach$() under $(k:hominin_evolution.social): choose a skill and do it in front of the band, and those watching learn it. Children learn what their minder knows as they grow."
+    }
+  ]
+}

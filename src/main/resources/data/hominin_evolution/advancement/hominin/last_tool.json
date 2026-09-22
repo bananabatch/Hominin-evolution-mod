@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/homo_erectus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:hand_axe"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.last_tool.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.last_tool.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

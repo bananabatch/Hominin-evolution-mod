@@ -193,6 +193,7 @@ public final class Band {
             defend(player, attacker);
             if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(attacker)) {
                 playerAdrenaline(player);
+                Mating.onPlayerStruck(player);
             }
         }
     }
@@ -509,6 +510,11 @@ public final class Band {
      * bare-handed cuff still lands, but they shake it off fast.
      */
     public static void onMemberHurt(LivingIncomingDamageEvent event) {
+        if (event.getEntity() instanceof BandMember struck && !struck.level().isClientSide()
+                && event.getSource().getEntity() instanceof LivingEntity by
+                && dev.hominin.evolution.hunt.PredatorAppetite.isPredator(by)) {
+            Mating.onMateStruck(struck);
+        }
         if (!(event.getEntity() instanceof BandMember member)
                 || !(event.getSource().getEntity() instanceof ServerPlayer player)
                 || !member.isCompanionOf(player)) {
@@ -712,6 +718,18 @@ public final class Band {
             if (other == fed || other.isFemale() == fed.isFemale() || !other.isReadyToPair()
                     || !other.isCompanionOf(player)) {
                 continue;
+            }
+            // From habilis on, a pair is a pair: only mates, or two with nobody yet.
+            if (Mating.pairBonds(fed.getStage())) {
+                boolean mates = other.getUUID().equals(fed.getMate());
+                boolean bothFree = fed.getMate() == null && other.getMate() == null;
+                if (!mates && !bothFree) {
+                    continue;
+                }
+                if (bothFree) {
+                    fed.setMate(other.getUUID());
+                    other.setMate(fed.getUUID());
+                }
             }
             if (!hasRoomFor(player)) {
                 player.displayClientMessage(Component.literal("Your band is as big as the land can feed."), true);

@@ -1,0 +1,24 @@
+{
+  "name": "Mates and Children",
+  "icon": "minecraft:poppy",
+  "category": "hominin_evolution:living",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "You are male or female, like everyone else - your journal says which.$(br2)Groom or feed somebody of the other sex and you are courting them: three times, or once with their favourite food. Or, at bond two, pick them out and ask: $(l)Be my mate$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Before habilis nobody is anybody's in particular. From habilis on it is one mate, kept - and yours stays close. When a predator strikes you, your mate is on it faster and harder; when one strikes your mate, so are you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Pick your mate out and ask $(l)Let's have a child$(). If you are female you carry it; if not, they do. A pregnancy takes a day and eats: hunger runs fast, and food is what they ask for."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Near the end the mother goes off alone to give birth, and glows - and everything that hunts can find her too. While a birth is being guarded, your band fights harder and your display drives off anything at all."
+    }
+  ]
+}

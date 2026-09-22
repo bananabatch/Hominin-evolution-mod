@@ -35,6 +35,8 @@ public class HomininEvolutionMod {
         Attachments.ATTACHMENT_TYPES.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModDataComponents.COMPONENTS.register(modEventBus);
+        ModMenus.MENUS.register(modEventBus);
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
         ModRecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
         ModSounds.SOUND_EVENTS.register(modEventBus);
@@ -52,6 +54,12 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinishUsingItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onItemCrafted);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) -> {
+            if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+                dev.hominin.evolution.survival.Hearths.tickLevel(level);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Hides::onDrops);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onEntityJoinLevel);

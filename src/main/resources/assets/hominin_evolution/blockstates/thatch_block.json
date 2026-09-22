@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "cured=false": {
+      "model": "hominin_evolution:block/thatch_block_uncured"
+    },
+    "cured=true": {
+      "model": "hominin_evolution:block/thatch_block_cured"
+    }
+  }
+}

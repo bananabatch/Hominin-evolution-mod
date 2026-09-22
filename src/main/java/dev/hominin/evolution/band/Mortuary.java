@@ -28,6 +28,9 @@ public final class Mortuary {
     /** When the owed funeral feast is due by, in minutes of game time; zero when nothing is owed. */
     private static final String DUE = "funeral_due_minute";
     private static final long FEAST_WINDOW_TICKS = 24000L;
+    /** The band minds once per sitting, not once per mouthful: ten minutes between. */
+    private static final String LAST_DISAPPROVAL = "flesh_disapproval_minute";
+    private static final int DISAPPROVAL_GAP_MINUTES = 10;
     private static final double WITH_THE_BAND = 16.0D;
 
     public static boolean isHomininFlesh(ItemStack stack) {
@@ -61,6 +64,7 @@ public final class Mortuary {
             return;
         }
         counters(player).put(NORM, 1);
+        EvolutionManager.incrementCriterion(player, "adopt_norm", 1);
         player.sendSystemMessage(Component.literal("It is decided: your dead stay with you. From now on, when one of "
                 + "the band dies, you eat of them together within a day - every time.").withStyle(ChatFormatting.DARK_RED));
         player.sendSystemMessage(Component.literal("(Butcher the body with a stone tool. Whoever eats the brain risks "
@@ -98,17 +102,23 @@ public final class Mortuary {
             }
         } else {
             // No rule says this is right, and everyone saw.
-            int cohesion = counters(player).getOrDefault(Band.COHESION, 0);
-            counters(player).put(Band.COHESION, Math.max(0, cohesion - 1));
-            if (!band.isEmpty()) {
+            int minute = (int) (player.level().getGameTime() / 1200L);
+            int last = counters(player).getOrDefault(LAST_DISAPPROVAL, -DISAPPROVAL_GAP_MINUTES);
+            if (!band.isEmpty() && minute - last >= DISAPPROVAL_GAP_MINUTES) {
+                counters(player).put(LAST_DISAPPROVAL, minute);
+                int cohesion = counters(player).getOrDefault(Band.COHESION, 0);
+                counters(player).put(Band.COHESION, Math.max(0, cohesion - 1));
                 player.displayClientMessage(Component.literal("The band watches you eat it, and something in them pulls "
                         + "back. (Cohesion -1)").withStyle(ChatFormatting.GRAY), true);
             }
         }
-        if (brain && Kuru.exposed(player)) {
-            // Nothing to feel yet. The trembling starts tomorrow.
-            player.sendSystemMessage(Component.literal("It tasted like nothing in particular.")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+        if (brain) {
+            // Nothing to feel yet - but something to taste. The trembling starts tomorrow.
+            boolean caught = Kuru.exposed(player);
+            player.sendSystemMessage(Component.literal(caught
+                    ? "The brain tastes strange. Sweet, and wrong somehow."
+                    : Kuru.has(player) ? "It makes no difference now." : "It tastes the way a brain should.")
+                    .withStyle(caught ? ChatFormatting.DARK_PURPLE : ChatFormatting.DARK_GRAY));
         }
     }
 

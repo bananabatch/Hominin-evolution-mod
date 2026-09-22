@@ -53,7 +53,7 @@ public final class Kuru {
 
     /** Once a second. */
     public static void tick(ServerPlayer player) {
-        if (player.tickCount % 20 != 0 || !has(player) || player.isCreative() || player.isSpectator()) {
+        if (player.tickCount % 20 != 0 || !has(player) || player.isSpectator()) {
             return;
         }
         int caught = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().get(SINCE) - 1;
@@ -62,6 +62,9 @@ public final class Kuru {
         long hour = time % 24000L;
         if (!player.hasEffect(ModEffects.KURU)) {
             player.addEffect(new MobEffectInstance(ModEffects.KURU, -1, 0, false, false, true));
+        }
+        if (player.isCreative()) {
+            return;
         }
         // The morning of the third day.
         if (days >= 2 && hour < 12000L || days >= 3) {

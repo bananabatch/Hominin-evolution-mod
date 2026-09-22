@@ -84,7 +84,8 @@ public final class Wants {
             return;
         }
         if (member.getWant() == null && now >= member.getNextWant()) {
-            member.setNextWant(now + WANT_MIN_TICKS + member.getRandom().nextInt(WANT_SPREAD_TICKS));
+            member.setNextWant(now + (WANT_MIN_TICKS + member.getRandom().nextInt(WANT_SPREAD_TICKS))
+                    / (member.isPregnant() ? 2 : 1));
             // Two people asking you for things is a band. Six is a queue, and you stop
             // listening to a queue - so the rest hold their tongue until one is settled.
             if (asking(leader) < MAX_OPEN_WANTS) {
@@ -133,6 +134,12 @@ public final class Wants {
             options.add(ModItems.LONG_BRANCH.get());
         }
         if (member.getHunger() < BandMember.HUNGRY || options.isEmpty()) {
+            options.add(member.favouriteFood());
+        }
+        if (member.isPregnant()) {
+            // Eating for two: food is most of what is asked for.
+            options.add(member.favouriteFood());
+            options.add(member.favouriteFood());
             options.add(member.favouriteFood());
         }
         Item want = options.get(member.getRandom().nextInt(options.size()));

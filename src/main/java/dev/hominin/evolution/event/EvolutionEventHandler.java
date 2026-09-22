@@ -145,10 +145,20 @@ public final class EvolutionEventHandler {
         // The drill works anywhere there is dry ground to work against, so like the
         // branch it is checked before any block's own interaction.
         if (event.getItemStack().is(ModItems.FIRE_DRILL.get())) {
+            if (dev.hominin.evolution.survival.Hearths.use(player, event.getPos(), event.getItemStack())) {
+                event.setCanceled(true);
+                return;
+            }
             workTheDrill(player, event.getLevel(), event.getPos(), event.getFace());
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
+        // A hearth takes fuel: sticks, branches, grass, logs.
+        if (state.is(net.minecraft.world.level.block.Blocks.CAMPFIRE)
+                && dev.hominin.evolution.survival.Hearths.use(player, event.getPos(), event.getItemStack())) {
+            event.setCanceled(true);
+            return;
+        }
         // Fishing comes before the block's own interaction: the stick is what makes
         // it termite fishing rather than whatever else the block would have done.
         if (state.is(ModTags.Blocks.TERMITE_SOURCE) && event.getItemStack().is(Items.STICK)) {
@@ -203,15 +213,22 @@ public final class EvolutionEventHandler {
                     "The dust will not catch in this wet. Get under something."), true);
             return;
         }
-        level.setBlock(above, net.minecraft.world.level.block.Blocks.FIRE.defaultBlockState(), 11);
+        // From erectus, fire is kept: the drill lights a hearth that burns as long as it is fed.
+        boolean hearth = dev.hominin.evolution.knapping.Acheulean.canUse(player) && level instanceof net.minecraft.server.level.ServerLevel;
+        if (hearth) {
+            dev.hominin.evolution.survival.Hearths.light((net.minecraft.server.level.ServerLevel) level, above);
+        } else {
+            level.setBlock(above, net.minecraft.world.level.block.Blocks.FIRE.defaultBlockState(), 11);
+        }
         level.playSound(null, above, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
         // Somebody who has done this before does not wreck the drill doing it.
         if (!dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.FIRE) || player.getRandom().nextBoolean()) {
             player.getMainHandItem().shrink(1);
         }
         dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.FIRE);
-        player.sendSystemMessage(Component.literal(
-                "The smoke thickens, catches, and goes up. You made that.")
+        player.sendSystemMessage(Component.literal(hearth
+                ? "The smoke thickens and catches. A hearth - feed it sticks and branches and it will keep."
+                : "The smoke thickens, catches, and goes up. You made that.")
                 .withStyle(ChatFormatting.GOLD));
         if (EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.FIRE_TRANSFER)) {
             EvolutionManager.attemptMilestone(player, BuiltinMilestones.FIRE_TRANSFER);
@@ -826,11 +843,13 @@ public final class EvolutionEventHandler {
         if (entity instanceof ServerPlayer dead) {
             // However you died, the disease died with you.
             dev.hominin.evolution.survival.Kuru.clear(dead);
+            dev.hominin.evolution.band.Mating.clearPregnancy(dead);
         }
         if (entity.level().isClientSide() || entity instanceof Player) {
             return;
         }
         creditHunt(event.getSource().getEntity(), entity);
+        dev.hominin.evolution.hunt.Quarry.creditPersistence(entity);
         checkArmsRace(event, entity);
         dev.hominin.evolution.hunt.Carcasses.onDeath(entity);
         checkTaungChild(event, entity);
@@ -932,6 +951,13 @@ public final class EvolutionEventHandler {
                 || stack.is(net.minecraft.world.item.Items.RABBIT)) {
             dev.hominin.evolution.combat.Bleeding.maybeInfect(player, "Raw, and you were already torn open.");
         }
+        if (stack.is(ModItems.COOKED_MEAT_CHUNK.get()) || stack.is(net.minecraft.world.item.Items.COOKED_BEEF)
+                || stack.is(net.minecraft.world.item.Items.COOKED_PORKCHOP)
+                || stack.is(net.minecraft.world.item.Items.COOKED_MUTTON)
+                || stack.is(net.minecraft.world.item.Items.COOKED_CHICKEN)
+                || stack.is(net.minecraft.world.item.Items.COOKED_RABBIT)) {
+            EvolutionManager.incrementCriterion(player, "eat_cooked_meat", 1);
+        }
         if (dev.hominin.evolution.band.Mortuary.isHomininFlesh(stack)) {
             dev.hominin.evolution.band.Mortuary.ate(player, stack);
         }
@@ -1026,6 +1052,9 @@ public final class EvolutionEventHandler {
         WildBands.tick(player);
         dev.hominin.evolution.band.Paranthropus.tick(player);
         dev.hominin.evolution.survival.Kuru.tick(player);
+        dev.hominin.evolution.band.Mating.tick(player);
+        dev.hominin.evolution.survival.Hearths.tickPlayer(player);
+        dev.hominin.evolution.stage.ErectusGoals.tick(player);
         dev.hominin.evolution.band.Mortuary.tick(player);
         Band.tickPlayer(player);
         dev.hominin.evolution.inventory.InventoryLimits.tick(player);

@@ -36,6 +36,8 @@ public class HomininEvolutionClient {
                     dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::chimpanzee);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("bonobo"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::bonobo);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crocodile"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::crocodile);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("dinopithecus"),
@@ -64,10 +66,9 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.CHIMPANZEE.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
                             "chimpanzee", 1.0F, 0.5F));
-            // A bonobo is a slighter chimpanzee: the same build, smaller, with a black face.
             event.registerEntityRenderer(ModEntities.BONOBO.get(), ctx -> new dev.hominin.evolution.client.model
-                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("chimpanzee"),
-                            "bonobo", 0.88F, 0.45F));
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("bonobo"),
+                            "bonobo", 1.0F, 0.45F));
             event.registerEntityRenderer(ModEntities.CROCODILE.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crocodile"),
                             "crocodile", 1.0F, 0.7F));
@@ -95,6 +96,9 @@ public class HomininEvolutionClient {
         modEventBus.addListener(EvolutionCutscene::register);
         modEventBus.addListener(RebirthCutscene::register);
         modEventBus.addListener(TiredApesFlash::register);
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
+                event.register(dev.hominin.evolution.ModMenus.WORK_STATION.get(),
+                        dev.hominin.evolution.client.WorkStationScreen::new));
         modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) ->
                 event.registerReloadListener(new KeyframeAnimations()));
         // Guarded by name so the class - and every Player Animator type it

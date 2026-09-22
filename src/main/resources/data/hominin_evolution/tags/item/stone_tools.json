@@ -5,6 +5,9 @@
     "hominin_evolution:flake",
     "hominin_evolution:chert_hammerstone",
     "hominin_evolution:lomekwian_tool",
-    "hominin_evolution:oldowan_multitool"
+    "hominin_evolution:oldowan_multitool",
+    "hominin_evolution:hand_axe",
+    "hominin_evolution:cleaver",
+    "hominin_evolution:acheulean_multitool"
   ]
 }

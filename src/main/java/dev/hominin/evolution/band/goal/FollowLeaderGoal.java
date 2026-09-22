@@ -47,7 +47,11 @@ public class FollowLeaderGoal extends Goal {
         if (target == null || target.isSpectator() || member.isUpATree() || member.isOnExcursion()) {
             return false;
         }
-        if (member.distanceToSqr(target) < startDistance * startDistance) {
+        // A pair-bonded mate keeps close - within a few steps, not the band's usual loose ten.
+        float start = target instanceof net.minecraft.world.entity.player.Player partner
+                && member.isMateOf(partner.getUUID())
+                && dev.hominin.evolution.band.Mating.pairBonds(member.getStage()) ? 4.0F : startDistance;
+        if (member.distanceToSqr(target) < start * start) {
             return false;
         }
         leader = target;

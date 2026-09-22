@@ -1,0 +1,20 @@
+{
+  "name": "Keeping Fire",
+  "icon": "minecraft:campfire",
+  "category": "hominin_evolution:body",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Habilis finds fire. Erectus keeps it. Work a fire drill against the ground and you have a hearth, not a flash of flame - and a hearth burns as long as somebody feeds it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Sticks, branches, grass, logs: right-click the hearth with them. A few minutes' fire each, and up to twenty banked. Let it run dry and it goes to ash; the drill lights it again."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Meat laid on it comes off cooked, and cooked meat goes further and makes nobody ill.$(br2)At night nothing that hunts will come into the light of a hearth you are sitting by. Spend a whole night beside one - awake or asleep - and you are the kind of animal that owns the dark."
+    }
+  ]
+}

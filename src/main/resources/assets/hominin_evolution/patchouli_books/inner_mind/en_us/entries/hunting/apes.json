@@ -1,0 +1,28 @@
+{
+  "name": "Other Apes",
+  "icon": "hominin_evolution:chimpanzee_spawn_egg",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Chimpanzees$() hold a range at the jungle's edge. The alpha will walk up and stand too close - hand it something, or hold $(k:hominin_evolution.think), within five seconds. Feed them, and a community that trusts you grooms you and mobs whatever is chasing you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Bonobos$(), from erectus on, by rivers and forest edges. Nothing hunts within sixty-four blocks of a peaceful troop. They share food, groom you, and forage beside you.$(br2)Hurt one and that is over, for good, for every troop your people ever meet."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Dinopithecus$(), the giant baboon, never hunts you - but come within five blocks and it will not stop. A display does not work on it. Gone by erectus."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Paranthropus$() - the other hominin, until antecessor. They strip the ground for sixty blocks, so foraging near them comes up empty; drive them off with a display or a thrown stone.$(br2)They see cats first and shriek. They trade, sometimes badly, and will show you good stone or obsidian."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Baboons, chimpanzees and bonobos work the ground too: foraging within thirty-five blocks of them fails far more often than it should."
+    }
+  ]
+}

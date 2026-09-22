@@ -110,6 +110,7 @@ public final class Thinking {
             reflect(player, now);
             return;
         }
+        dev.hominin.evolution.knapping.Acheulean.pondered(player, player.getMainHandItem());
         if (!recipe.needsThought()) {
             player.displayClientMessage(
                     Component.literal("There is nothing to work out here. Your hands already know."), true);

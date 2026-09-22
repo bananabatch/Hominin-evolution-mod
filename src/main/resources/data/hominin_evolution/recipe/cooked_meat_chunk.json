@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:meat_chunk"
+  },
+  "result": {
+    "id": "hominin_evolution:cooked_meat_chunk"
+  },
+  "experience": 0.1,
+  "cookingtime": 400
+}

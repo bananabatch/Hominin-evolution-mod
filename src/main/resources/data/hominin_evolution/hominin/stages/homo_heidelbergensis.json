@@ -1,0 +1,30 @@
+{
+  "display_name": "Homo heidelbergensis",
+  "years_ago": 700000,
+  "gate": {
+    "required": [
+      {
+        "id": "heidelbergensis_placeholder",
+        "description": "Homo heidelbergensis content is not built yet.",
+        "count": 1
+      }
+    ],
+    "optional_pool": [],
+    "choose": 0
+  },
+  "milestone": {
+    "type": "hominin_evolution:heidelbergensis_placeholder",
+    "description": "Homo heidelbergensis content is not built yet."
+  },
+  "behaviors_gained": [
+    "Levallois technique (coming)",
+    "Hunting big game head-on (coming)"
+  ],
+  "behaviors_lost": [],
+  "arrival_items": [
+    {
+      "id": "hominin_evolution:hammerstone",
+      "count": 1
+    }
+  ]
+}

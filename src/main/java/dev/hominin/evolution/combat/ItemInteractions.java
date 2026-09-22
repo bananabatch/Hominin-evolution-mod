@@ -188,6 +188,9 @@ public final class ItemInteractions {
             return;
         }
 
+        if (tryStation(player, main, off) || tryWorkStation(player, main, off)) {
+            return;
+        }
         HandRecipe recipe = match(main, off);
         if (recipe == null) {
             return;
@@ -227,6 +230,65 @@ public final class ItemInteractions {
         player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_BREAK,
                 SoundSource.PLAYERS, 0.7F, 1.1F);
         player.displayClientMessage(Component.literal(recipe.message()), true);
+    }
+
+    /**
+     * The knapping station: four sticks lashed into a frame, and a hide stretched over it for
+     * a mat. Erectus and later - it is the first thing made to make other things with.
+     */
+    private static boolean tryStation(ServerPlayer player, ItemStack main, ItemStack off) {
+        if (!main.is(net.minecraft.world.item.Items.STICK) || !off.is(ModItems.HIDE.get())) {
+            return false;
+        }
+        if (!dev.hominin.evolution.knapping.Acheulean.canUse(player)) {
+            player.displayClientMessage(Component.literal("You turn it over in your hands, but nothing comes of it yet."),
+                    true);
+            return true;
+        }
+        if (main.getCount() < 4) {
+            player.displayClientMessage(Component.literal("A frame for the mat takes four sticks."), true);
+            return true;
+        }
+        main.shrink(4);
+        off.shrink(1);
+        ItemStack station = new ItemStack(ModItems.KNAPPING_STATION.get());
+        if (!player.getInventory().add(station)) {
+            player.drop(station, false);
+        }
+        player.level().playSound(null, player.blockPosition(), SoundEvents.WOOL_PLACE, SoundSource.PLAYERS, 0.9F, 0.8F);
+        player.displayClientMessage(Component.literal("You lash the frame and stretch the hide across it. "
+                + "Somewhere to sit and work stone properly."), true);
+        return true;
+    }
+
+    /**
+     * The primitive work station: a branch driven into a base of rocks, hide lashed round it.
+     * Two hide in the main hand, four rocks of any kind in the off hand.
+     */
+    private static boolean tryWorkStation(ServerPlayer player, ItemStack main, ItemStack off) {
+        if (!main.is(ModItems.HIDE.get()) || !(off.is(ModTags.Items.ROCKS) || off.is(ModTags.Items.KNAPPABLE_STONE))) {
+            return false;
+        }
+        if (!dev.hominin.evolution.knapping.Acheulean.canUse(player)) {
+            player.displayClientMessage(Component.literal("You turn it over in your hands, but nothing comes of it yet."),
+                    true);
+            return true;
+        }
+        if (main.getCount() < 2 || off.getCount() < 4) {
+            player.displayClientMessage(Component.literal("A work station takes two hide and four rocks of any kind."),
+                    true);
+            return true;
+        }
+        main.shrink(2);
+        off.shrink(4);
+        ItemStack station = new ItemStack(ModItems.WORK_STATION.get());
+        if (!player.getInventory().add(station)) {
+            player.drop(station, false);
+        }
+        player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 0.9F, 0.8F);
+        player.displayClientMessage(Component.literal("You drive a branch into a base of rocks and lash hide round "
+                + "it. Somewhere to work more than stone now."), true);
+        return true;
     }
 
     /**

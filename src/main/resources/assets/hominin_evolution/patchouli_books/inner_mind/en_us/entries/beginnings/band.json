@@ -14,15 +14,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Call, and they call with you. One voice is a bluff; several is a reason to leave.$(br2)$(k:sneak) and $(k:use) on one to learn who they are. $(k:sneak) and $(k:attack) to wrestle - play fighting is how fighting is learned."
+      "text": "Call, and they call with you. One voice is a bluff; several is a reason to leave.$(br2)Right-click one to pick them out: they stop and face you, and the next $(k:hominin_evolution.social) speaks to them alone. $(k:sneak) and $(k:attack) to wrestle - play fighting is how fighting is learned."
     },
     {
       "type": "patchouli:text",
-      "text": "Feed a male and a female close together, and in a day there may be one more of you. Every kind of hominin lives in a band of its own size, and the land will only feed so many.$(br2)If you die, the band does not. Nor, quite, do you."
+      "text": "Well fed and whole, they pair off and have children on their own, and tell you so. From habilis on a pair is a pair: one mate, kept. Every kind of hominin lives in a band of its own size, and the land will only feed so many.$(br2)If you die, the band does not. Nor, quite, do you."
     },
     {
       "type": "patchouli:text",
-      "text": "There are other bands. They will not follow you, but they carry things.$(br2)Hold out something of yours and offer it. If they have something worth as much, they will give it."
+      "text": "There are other bands. They will not follow you, but they carry things.$(br2)Pick one out, press $(k:hominin_evolution.social) and choose $(l)Trade$(): you see everything they carry and what each thing is worth to them."
     },
     {
       "type": "patchouli:text",

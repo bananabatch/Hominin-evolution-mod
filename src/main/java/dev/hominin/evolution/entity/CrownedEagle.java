@@ -58,7 +58,7 @@ public class CrownedEagle extends PathfinderMob {
                 .add(Attributes.MAX_HEALTH, 14.0D)
                 .add(Attributes.FLYING_SPEED, 0.6D)
                 .add(Attributes.MOVEMENT_SPEED, 0.32D)
-                .add(Attributes.ATTACK_DAMAGE, 6.0D)
+                .add(Attributes.ATTACK_DAMAGE, 4.0D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D);
     }
 

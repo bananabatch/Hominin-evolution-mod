@@ -2,22 +2,71 @@
   "display_name": "Homo erectus",
   "years_ago": 1900000,
   "gate": {
-    "required": {
-      "id": "erectus_placeholder",
-      "description": "Homo erectus content is not built yet.",
-      "count": 1
-    },
-    "optional_pool": [],
-    "choose": 0
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 2 days.",
+        "count": 2
+      },
+      {
+        "id": "make_acheulean_tool",
+        "description": "Make an Acheulean tool at a knapping station.",
+        "count": 1
+      },
+      {
+        "id": "hearth_night",
+        "description": "Spend a night by a lit hearth.",
+        "count": 1
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "eat_cooked_meat",
+        "description": "Eat 3 pieces of cooked meat.",
+        "count": 3
+      },
+      {
+        "id": "persistence_kill",
+        "description": "Run down big game you wounded.",
+        "count": 1
+      },
+      {
+        "id": "take_kill",
+        "description": "Walk up to a scavenger's kill and take it.",
+        "count": 1
+      },
+      {
+        "id": "range_far",
+        "description": "Range 1000 blocks from where you began.",
+        "count": 1
+      },
+      {
+        "id": "trade_erectus",
+        "description": "Trade with another erectus band.",
+        "count": 1
+      },
+      {
+        "id": "big_band",
+        "description": "Grow your band to 14.",
+        "count": 1
+      },
+      {
+        "id": "adopt_norm",
+        "description": "Give your people a rule to live by.",
+        "count": 1
+      }
+    ],
+    "choose": 3
   },
   "milestone": {
-    "type": "hominin_evolution:erectus_placeholder",
-    "description": "Homo erectus content is not built yet."
+    "type": "hominin_evolution:fine_acheulean",
+    "description": "Make a tier 2 or better Acheulean tool from anything but obsidian."
   },
   "behaviors_gained": [
-    "Fire and cooked food",
-    "Hafted tools (Acheulean hand axe)",
-    "Persistence hunting"
+    "Kept fire: hearths, and cooked food",
+    "The Acheulean: hand axes, cleavers",
+    "Persistence hunting",
+    "Ranging far"
   ],
   "behaviors_lost": [
     "Obligate tree sleeping"
@@ -35,5 +84,6 @@
       "id": "hominin_evolution:sharpened_spear",
       "count": 1
     }
-  ]
+  ],
+  "next_stage": "hominin_evolution:homo_heidelbergensis"
 }

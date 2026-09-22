@@ -1,0 +1,28 @@
+{
+  "name": "The Work Station",
+  "icon": "hominin_evolution:work_station",
+  "category": "hominin_evolution:hands",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "From erectus, two hide in hand and four rocks of any kind in the other, then $(k:hominin_evolution.item_interact): a branch driven into a base of rocks, hide lashed round it. Somewhere to work more than stone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A grid, and a tool slot beside it. Nothing comes of the grid without the right thing in that slot - the tool is what the recipe actually is.$(br2)A hand axe against a log, or a long branch, makes a $(l)workable branch$(). Two of them down the middle with a hammerstone make a $(l)club$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The same two branches worked with an edge - a flake, a hand axe, anything that cuts - make a $(l)workable spear$(): harder-hitting and longer-lasting than a sharpened one, and when it finally breaks the branch underneath does not go with it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A branch on a base of three rocks makes a $(l)building branch$() - raw stock for whatever gets built on top of the Acheulean, once there is something to build.$(br2)Ten twine, a branch and a hammerstone side by side make a proper $(l)digging stick$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A grid of $(l)thatch$(), four twine in the tool slot, makes a thatch block. Left as it is, the weather takes it apart - stretch hide over it and it stops caring.$(br2)Three hide over a row of thatch, ten twine in the slot, makes two pieces of $(l)bedding$(). Lay them side by side to sleep in - a real bed, and unlike a nest it does not leave you with ticks."
+    }
+  ]
+}

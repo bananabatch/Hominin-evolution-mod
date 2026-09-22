@@ -114,6 +114,12 @@ public class SocialScreen extends Screen {
         if (guiding) {
             return false;
         }
+        if (command == Social.Command.TRIBE) {
+            return targetId < 0 && !otherBand;
+        }
+        if (command == Social.Command.HAVE_CHILD || command == Social.Command.MAKE_MATE) {
+            return targetId >= 0 && !otherBand;
+        }
         if (command == Social.Command.NORM_DEAD) {
             // A rule for your own band, and only for a mind that can hold one: erectus on.
             net.minecraft.resources.ResourceLocation stage = Minecraft.getInstance().player == null ? null

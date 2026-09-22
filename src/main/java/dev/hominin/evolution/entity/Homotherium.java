@@ -42,7 +42,7 @@ public class Homotherium extends PathfinderMob {
                 .add(Attributes.MAX_HEALTH, 38.0D)
                 // Faster over open ground than anything on two legs. Trees are the answer.
                 .add(Attributes.MOVEMENT_SPEED, 0.36D)
-                .add(Attributes.ATTACK_DAMAGE, 9.0D)
+                .add(Attributes.ATTACK_DAMAGE, 6.0D)
                 .add(Attributes.FOLLOW_RANGE, 36.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D);
     }

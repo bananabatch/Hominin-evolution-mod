@@ -1,6 +1,8 @@
 {
   "values": [
     "hominin_evolution:flake",
-    "hominin_evolution:oldowan_multitool"
+    "hominin_evolution:oldowan_multitool",
+    "hominin_evolution:cleaver",
+    "hominin_evolution:acheulean_multitool"
   ]
 }

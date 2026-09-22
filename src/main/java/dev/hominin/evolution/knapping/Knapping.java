@@ -120,6 +120,10 @@ public final class Knapping {
      * the stone in hand was never offered.
      */
     public static void resolve(ServerPlayer player, @Nullable KnappingChoice choice) {
+        if (choice != null && Acheulean.isAcheulean(choice)) {
+            Acheulean.resolve(player, choice);
+            return;
+        }
         ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
         ItemStack off = player.getItemInHand(InteractionHand.OFF_HAND);
         if (choice == null || !off.is(ModTags.Items.HAMMERSTONES) || !choicesFor(main).contains(choice)) {

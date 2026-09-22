@@ -275,6 +275,10 @@ public final class Trading {
         }
         member.addToInventory(taken);
         Territory.offered(member, player, taken);
+        String species = member.getStage().getPath();
+        if (member.isWild() && (species.equals("homo_erectus") || species.equals("homo_ergaster"))) {
+            dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "trade_erectus", 1);
+        }
         Component givenName = given.getHoverName();
         if (!player.getInventory().add(given)) {
             player.drop(given, false);
