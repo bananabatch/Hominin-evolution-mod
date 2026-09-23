@@ -1,0 +1,10 @@
+{
+  "parent": "hominin_evolution:item/hand_axe",
+  "textures": {
+    "body": "hominin_evolution:item/stone/limestone_body",
+    "scar": "hominin_evolution:item/stone/limestone_scar",
+    "edge": "hominin_evolution:item/stone/limestone_edge",
+    "cortex": "hominin_evolution:item/stone/limestone_cortex",
+    "particle": "hominin_evolution:item/stone/limestone_body"
+  }
+}

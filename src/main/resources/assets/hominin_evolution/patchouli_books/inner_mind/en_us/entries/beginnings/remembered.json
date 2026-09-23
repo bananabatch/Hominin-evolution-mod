@@ -1,0 +1,20 @@
+{
+  "name": "What Is Remembered",
+  "icon": "minecraft:bone",
+  "category": "hominin_evolution:beginnings",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Evolving takes everything. The camp, the tools, the band, the body - all of it stays in the deep past, and your descendants wake a long way off with nothing.$(br2)One thing crosses: a name."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When you go, whoever you were closest to - your mate, or whoever thought most of you - is remembered.$(br2)Somebody in the band that wakes around your descendants is called after them, and starts out thinking a little more of you than the rest do."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They do not know who the name belonged to. It is only a name their people use, and nobody alive has ever met its owner.$(br2)Your journal keeps the line of them - one from every band you have left behind. It is the oldest thing anyone has ever inherited."
+    }
+  ]
+}

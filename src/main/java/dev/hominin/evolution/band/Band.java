@@ -191,6 +191,14 @@ public final class Band {
             }
             Social.onLeaderHit(player);
             defend(player, attacker);
+            if (Cohesion.perfect(player)) {
+                // A band that would do anything for you does not wait to be asked.
+                for (BandMember member : ownNear(player, 32.0D)) {
+                    if (!member.isBaby()) {
+                        member.defendAgainst(attacker);
+                    }
+                }
+            }
             if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(attacker)) {
                 playerAdrenaline(player);
                 Mating.onPlayerStruck(player);
@@ -259,9 +267,12 @@ public final class Band {
                 .filter(m -> m.huntsWithLeader() && !m.isBaby()).toList());
         willing.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(player)));
         int helpers = 0;
-        int limit = 1 + player.getRandom().nextInt(2);
+        int limit = 1 + player.getRandom().nextInt(2) + Cohesion.extraHelpers(player);
+        willing.removeIf(BandMember::isInjured);
         for (BandMember member : willing) {
-            if (member.isHunting() || helpers < limit) {
+            // A good hunter who likes you comes along whenever you go after something.
+            boolean keen = member.getBond() >= 5 && member.getHuntLevel() <= 2;
+            if (member.isHunting() || helpers < limit || keen) {
                 member.defendAgainst(target);
                 helpers++;
             }
@@ -281,20 +292,21 @@ public final class Band {
      * Tells the leader what a member is up to, so the band feels like it has a life of
      * its own. Rate-limited per member and per leader, so it never becomes chat spam.
      */
-    public static void announce(BandMember member, String rest) {
+    public static boolean announce(BandMember member, String rest) {
         Player leader = member.leaderPlayer();
         if (leader == null || member.distanceToSqr(leader) > 48.0D * 48.0D) {
-            return;
+            return false;
         }
         long now = member.level().getGameTime();
         if (now - lastMemberAnnouncement.getOrDefault(member.getUUID(), -99999L) < ANNOUNCE_MEMBER_COOLDOWN
                 || now - lastLeaderAnnouncement.getOrDefault(leader.getUUID(), -99999L) < ANNOUNCE_LEADER_COOLDOWN) {
-            return;
+            return false;
         }
         lastMemberAnnouncement.put(member.getUUID(), now);
         lastLeaderAnnouncement.put(leader.getUUID(), now);
         member.ensureName();
         leader.sendSystemMessage(Component.literal(member.getName().getString() + rest).withStyle(ChatFormatting.GRAY));
+        return true;
     }
 
     /** Something worth hearing about, whatever else was said lately. */
@@ -444,7 +456,7 @@ public final class Band {
             return;
         }
         List<BandMember> ready = members.stream()
-                .filter(m -> !m.isBaby() && !m.isHungry() && m.getTarget() == null && !m.isUpATree()
+                .filter(m -> !m.isBaby() && !m.isHungry() && !m.isInjured() && m.getTarget() == null && !m.isUpATree()
                         && m.distanceToSqr(player) < 32.0D * 32.0D)
                 .toList();
         if (ready.isEmpty()) {
@@ -510,6 +522,16 @@ public final class Band {
      * bare-handed cuff still lands, but they shake it off fast.
      */
     public static void onMemberHurt(LivingIncomingDamageEvent event) {
+        if (event.getEntity() instanceof BandMember laidUp && laidUp.isInjured() && !laidUp.level().isClientSide()
+                && event.getSource().getEntity() instanceof LivingEntity threat && !(threat instanceof Player)
+                && !(threat instanceof BandMember)) {
+            // Someone laid up is everyone's to protect.
+            for (BandMember guard : near(laidUp, 24.0D)) {
+                if (guard != laidUp && !guard.isBaby() && !guard.isInjured() && guard.isAlliedTo(laidUp)) {
+                    guard.defendAgainst(threat);
+                }
+            }
+        }
         if (event.getEntity() instanceof BandMember struck && !struck.level().isClientSide()
                 && event.getSource().getEntity() instanceof LivingEntity by
                 && dev.hominin.evolution.hunt.PredatorAppetite.isPredator(by)) {
@@ -686,7 +708,7 @@ public final class Band {
                 event.setCanceled(true);
                 wrestleWindow.put(player.getUUID(), now + BandMember.WRESTLE_TICKS);
                 member.wrestle(player);
-                EvolutionManager.incrementCriterion(player, COHESION, 1);
+                Cohesion.addLimited(player, "wrestle", 1, 5 * 60 * 20L);
             }
             return;
         }
@@ -857,7 +879,12 @@ public final class Band {
     /** A fresh band of the player's current species, beside them. */
     public static void formNewBand(ServerPlayer player) {
         topUp(player, player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
+        // New people: no history with you, good or bad.
+        Cohesion.reset(player);
+        Needs.forget(player.getUUID());
         player.sendSystemMessage(Component.literal("You wake among a new band.").withStyle(ChatFormatting.GREEN));
+        Remembrance.carryInto(player);
+        dev.hominin.evolution.hunt.Persistence.tellStartingSkills(player);
     }
 
     public static void bringAlong(ServerPlayer player, BlockPos from) {
@@ -1029,6 +1056,15 @@ public final class Band {
         boolean onFallback = dev.hominin.evolution.stage.Fallbacks.isFallback(data.getStage());
         int limit = onFallback ? dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK : BANDS_TO_EXTINCTION;
         return Math.max(0, limit - data.getCriterionCounters().getOrDefault(BANDS_LOST, 0));
+    }
+
+    /** The band drove you out. They go their own way; you are on your own, and it counts as a band lost. */
+    public static void driveOut(ServerPlayer player) {
+        for (BandMember member : all(player)) {
+            member.discard();
+        }
+        hadBand.add(player.getUUID());
+        bandLost(player);
     }
 
     private static void bandLost(ServerPlayer player) {

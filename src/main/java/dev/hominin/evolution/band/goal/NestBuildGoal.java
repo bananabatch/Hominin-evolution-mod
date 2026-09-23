@@ -76,7 +76,7 @@ public class NestBuildGoal extends Goal {
         placed = 0;
         ticks = 0;
         lastNestDay = member.level().getDayTime() / 24000L;
-        Band.announce(member, " says they're making a nest for the night.");
+        dev.hominin.evolution.band.Lines.tell(member, "nest_go");
     }
 
     @Override

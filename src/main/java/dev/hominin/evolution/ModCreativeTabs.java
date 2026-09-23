@@ -35,6 +35,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.HAMMERSTONE.get());
                         output.accept(ModItems.RIB.get());
                         output.accept(ModItems.CARCASS.get());
+                        output.accept(ModItems.GIANT_CARCASS.get());
                         output.accept(ModItems.HOMININ_CARCASS.get());
                         output.accept(ModItems.HIDE.get());
                         output.accept(ModItems.KNAPPING_STATION.get());
@@ -43,11 +44,18 @@ public final class ModCreativeTabs {
                                     .make(quality));
                         }
                         output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(2));
-                        output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.ACHEULEAN_MULTITOOL.get())
-                                .make(2));
+                        // One of each stone, to see them side by side.
+                        for (dev.hominin.evolution.item.StoneMaterial stone : dev.hominin.evolution.item.StoneMaterial.values()) {
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.stamp(
+                                    ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get()).make(1), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.stamp(
+                                    ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(1), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(ModItems.CHOPPER.get()), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(ModItems.FLAKE.get()), stone));
+                        }
                         output.accept(ModItems.WORK_STATION.get());
                         output.accept(ModItems.WORKABLE_BRANCH.get());
-                        output.accept(ModItems.WORKABLE_SPEAR.get());
+                        output.accept(ModItems.WORKABLE_SHAFT.get());
                         output.accept(ModItems.BUILDING_BRANCH.get());
                         output.accept(ModItems.THATCH_BLOCK.get());
                         output.accept(ModItems.THATCH_BEDDING.get());
@@ -81,7 +89,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.BONOBO_SPAWN_EGG.get());
                         output.accept(ModItems.CROCODILE_SPAWN_EGG.get());
                         output.accept(ModItems.PACHYCROCUTA_SPAWN_EGG.get());
+                        output.accept(ModItems.CROCUTA_SPAWN_EGG.get());
                         output.accept(ModItems.SABERTOOTH_SPAWN_EGG.get());
+                        output.accept(ModItems.PELOROVIS_SPAWN_EGG.get());
                         output.accept(ModItems.HOMOTHERIUM_SPAWN_EGG.get());
                         output.accept(ModItems.CROWNED_EAGLE_SPAWN_EGG.get());
                         output.accept(ModItems.MEAT_CHUNK.get());

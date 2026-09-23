@@ -46,6 +46,11 @@
     "hominin_evolution:chert_rock",
     "hominin_evolution:granite_rock",
     "hominin_evolution:limestone_rock",
-    "hominin_evolution:obsidian_rock"
+    "hominin_evolution:obsidian_rock",
+    "hominin_evolution:knapping_station",
+    "hominin_evolution:work_station",
+    "hominin_evolution:thatch_block",
+    "hominin_evolution:thatch_bedding",
+    "hominin_evolution:building_branch"
   ]
 }

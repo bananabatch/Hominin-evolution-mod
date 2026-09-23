@@ -91,7 +91,7 @@ public class TinkerGoal extends Goal {
         ticks = 0;
         knapping = 0;
         if (rock != null) {
-            Band.announce(member, " says they're going to look for some good stones.");
+            dev.hominin.evolution.band.Lines.tell(member, "tinker_go");
         }
     }
 
@@ -166,7 +166,7 @@ public class TinkerGoal extends Goal {
         }
         ItemStack tool = new ItemStack(made);
         member.addToInventory(tool.copy());
-        Band.announceDiscovery(member, " strikes two stones together - and makes a " + tool.getHoverName().getString() + "!");
+        dev.hominin.evolution.band.Lines.announce(member, "tinker_made", tool.getHoverName().getString());
         knapping = 0;
         ticks = GIVE_UP_TICKS;
     }

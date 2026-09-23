@@ -2,6 +2,7 @@ package dev.hominin.evolution;
 
 import java.util.function.Supplier;
 
+import dev.hominin.evolution.data.Ancestors;
 import dev.hominin.evolution.data.HeadTrauma;
 import dev.hominin.evolution.data.PlayerEvolutionData;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -28,6 +29,18 @@ public final class Attachments {
             "head_trauma",
             () -> AttachmentType.builder(HeadTrauma::new)
                     .serialize(HeadTrauma.CODEC)
+                    .build());
+
+    /**
+     * The names your line carries out of the deep past - one from each band you left behind.
+     * Kept apart from the rest of a player's data because it outlives every part of it: the
+     * species changes, the body changes, the counters are wiped, and these do not.
+     */
+    public static final Supplier<AttachmentType<Ancestors>> ANCESTORS = ATTACHMENT_TYPES.register(
+            "ancestors",
+            () -> AttachmentType.builder(() -> new Ancestors())
+                    .serialize(Ancestors.CODEC)
+                    .copyOnDeath()
                     .build());
 
     /**

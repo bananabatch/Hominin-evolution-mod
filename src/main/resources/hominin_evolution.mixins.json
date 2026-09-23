@@ -7,6 +7,7 @@
     "BlockStateBaseMixin",
     "ChunkGeneratorMixin",
     "InventoryMixin",
+    "ItemStackMixin",
     "LivingEntityMixin",
     "SlotMixin"
   ],

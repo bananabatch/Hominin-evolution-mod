@@ -64,6 +64,15 @@ public final class HomininCommand {
                                         .suggestResource(StageRegistry.all().keySet(), builder))
                                 .executes(ctx -> setStage(ctx, ctx.getSource().getPlayerOrException(),
                                         ResourceLocationArgument.getId(ctx, "stage")))))
+                .then(Commands.literal("season")
+                        .executes(ctx -> season(ctx, null, false))
+                        .then(Commands.literal("dry").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> season(ctx, dev.hominin.evolution.survival.Seasons.Season.DRY, true)))
+                        .then(Commands.literal("prosperous").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> season(ctx,
+                                        dev.hominin.evolution.survival.Seasons.Season.PROSPEROUS, true)))
+                        .then(Commands.literal("natural").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> season(ctx, null, true))))
                 .then(Commands.literal("unlockadvancements")
                         .requires(src -> src.hasPermission(2))
                         .executes(HomininCommand::unlockAdvancements))
@@ -85,6 +94,22 @@ public final class HomininCommand {
                         .executes(ctx -> toggleDeveloperMode(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> toggleDeveloperMode(ctx, EntityArgument.getPlayer(ctx, "player"))))));
+    }
+
+    /** What season it is - and, for testing, which season it should be. */
+    private static int season(CommandContext<CommandSourceStack> ctx,
+            @javax.annotation.Nullable dev.hominin.evolution.survival.Seasons.Season season, boolean set) {
+        var level = ctx.getSource().getLevel();
+        if (set) {
+            dev.hominin.evolution.survival.Seasons.force(season);
+        }
+        var now = dev.hominin.evolution.survival.Seasons.of(level);
+        int left = dev.hominin.evolution.survival.Seasons.daysLeft(level);
+        boolean dry = dev.hominin.evolution.survival.Drought.isActive(level);
+        ctx.getSource().sendSuccess(() -> Component.literal(now.label() + (set && season != null ? " (forced)" : "")
+                + ", " + left + (left == 1 ? " day" : " days") + " left" + (dry ? " - and today is a dry day." : ".")),
+                false);
+        return 1;
     }
 
     /** Testing aid: one more member for the caller's band. */
@@ -188,25 +213,9 @@ public final class HomininCommand {
             ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageId));
             return 0;
         }
-        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition previous = StageRegistry.get(data.getStage());
-        data.setStage(stageId);
-        data.getCriterionCounters().clear();
-        data.getNotifiedReadyStages().clear();
-        // Same reset the natural evolution path does, so jumping stages for testing
-        // doesn't carry distance progress across with it.
-        data.setStageStartWalkDistance(player.walkDist);
-        data.setDistanceCredits(0);
-        StageSync.sync(player);
-        HomininAdvancements.awardStages(player);
-        // The same sequence evolving plays - dark, deep time, the new name - but without the
-        // move and the fresh inventory, so testing a stage does not cost you your things.
-        String age = dev.hominin.evolution.stage.StageAge.ago(stage.yearsAgo());
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                new dev.hominin.evolution.network.CutsceneStartPayload(
-                        previous == null ? "" : dev.hominin.evolution.stage.StageAge.later(previous.yearsAgo(),
-                                stage.yearsAgo()),
-                        age.isEmpty() ? stage.displayName() : stage.displayName() + " - " + age));
+        // Exactly what evolving does: the cutscene, deep time, a new place, a fresh
+        // inventory and a new band. Skills carry over, as they would.
+        EvolutionManager.become(player, stageId);
         ctx.getSource().sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " set to stage " + stage.displayName()), true);
         return 1;
     }

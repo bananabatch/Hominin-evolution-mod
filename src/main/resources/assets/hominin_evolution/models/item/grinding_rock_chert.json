@@ -1,0 +1,7 @@
+{
+  "parent": "hominin_evolution:item/grinding_rock",
+  "textures": {
+    "0": "hominin_evolution:item/grinding_rock_chert",
+    "particle": "hominin_evolution:item/grinding_rock_chert"
+  }
+}

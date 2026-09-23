@@ -106,7 +106,9 @@ public class WoundedFleeGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return hunter() != null && (bleeding() || aftershock > 0) && !concussed();
+        // Megafauna runs for distance, then stops to blow: between runs it stands its ground.
+        return hunter() != null && (bleeding() || aftershock > 0) && !concussed()
+                && !dev.hominin.evolution.hunt.Quarry.holdsItsGround(mob);
     }
 
     @Override

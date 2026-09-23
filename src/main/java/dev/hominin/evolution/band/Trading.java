@@ -50,11 +50,37 @@ public final class Trading {
             Map.entry("chopper", 4), Map.entry("sharpened_spear", 4), Map.entry("wooden_club", 4),
             // 5 - rare, or skill a band may not have
             Map.entry("obsidian_rock", 5), Map.entry("chert_hammerstone", 5), Map.entry("oldowan_multitool", 5),
-            Map.entry("fire_hardened_spear", 5));
+            Map.entry("fire_hardened_spear", 5),
+            // Erectus work. An Acheulean tool's tier is then set by its quality - see qualityPenalty.
+            Map.entry("hand_axe", 5), Map.entry("cleaver", 5), Map.entry("hide", 2),
+            Map.entry("workable_branch", 2), Map.entry("workable_shaft", 3), Map.entry("twine", 2),
+            Map.entry("thatch", 1), Map.entry("cooked_meat_chunk", 2));
 
     /** Finer ordering inside a tier, so "the best thing they have" is well defined. */
     private static final Map<String, Integer> WITHIN_TIER = Map.of(
-            "oldowan_multitool", 3, "chert_hammerstone", 2, "chopper", 2, "flake", 2, "termite_stick", 1);
+            "oldowan_multitool", 3, "chert_hammerstone", 2, "chopper", 2, "flake", 2, "termite_stick", 1,
+            "hand_axe", 4, "cleaver", 3);
+
+    /**
+     * How far below its best an Acheulean tool trades, by quality. A flawless or excellent one is
+     * the best thing anybody owns; a crude one is still a real tool, but nobody is fooled.
+     */
+    private static int qualityPenalty(ItemStack stack) {
+        if (!(stack.getItem() instanceof dev.hominin.evolution.item.AcheuleanToolItem)) {
+            return 0;
+        }
+        return switch (dev.hominin.evolution.item.AcheuleanToolItem.qualityOf(stack)) {
+            case 0, 1 -> 0;
+            case 2, 3 -> 1;
+            default -> 2;
+        };
+    }
+
+    /** Finer ordering among Acheulean tools of the same tier: the better-made one first. */
+    private static int qualityBonus(ItemStack stack) {
+        return stack.getItem() instanceof dev.hominin.evolution.item.AcheuleanToolItem
+                ? 4 - dev.hominin.evolution.item.AcheuleanToolItem.qualityOf(stack) : 0;
+    }
 
     /**
      * Technology, by the stage that first makes it, and how highly it ranks at that stage.
@@ -71,7 +97,8 @@ public final class Trading {
             Map.entry("pointy_stick", new Tech(2, 3)), Map.entry("digging_stick", new Tech(2, 3)),
             Map.entry("grinding_rock", new Tech(2, 3)), Map.entry("sharpened_spear", new Tech(2, 4)),
             Map.entry("chert_hammerstone", new Tech(2, 5)), Map.entry("oldowan_multitool", new Tech(2, 5)),
-            Map.entry("wooden_club", new Tech(3, 4)), Map.entry("fire_hardened_spear", new Tech(3, 5)));
+            Map.entry("wooden_club", new Tech(3, 4)), Map.entry("fire_hardened_spear", new Tech(3, 5)),
+            Map.entry("hand_axe", new Tech(3, 5)), Map.entry("cleaver", new Tech(3, 5)));
 
     /** Tiers lost for each stage a band has moved past a technology. */
     private static final int TIERS_LOST_PER_STAGE = 3;
@@ -98,7 +125,7 @@ public final class Trading {
         if (tech.stage() > era) {
             return MAX_TIER;
         }
-        return Math.max(1, tech.peakTier() - TIERS_LOST_PER_STAGE * (era - tech.stage()));
+        return Math.max(1, tech.peakTier() - TIERS_LOST_PER_STAGE * (era - tech.stage()) - qualityPenalty(stack));
     }
 
     public static int valueOf(ItemStack stack, @javax.annotation.Nullable ResourceLocation stage) {
@@ -107,7 +134,7 @@ public final class Trading {
             return 0;
         }
         String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
-        return tier * 10 + WITHIN_TIER.getOrDefault(path, 0);
+        return tier * 10 + WITHIN_TIER.getOrDefault(path, 0) + qualityBonus(stack);
     }
 
     /** The trade tier of one of this item, 0 if a band has no use for it. */
@@ -119,7 +146,7 @@ public final class Trading {
         if (key.getNamespace().equals(HomininEvolutionMod.MODID)) {
             Integer tier = TIERS.get(key.getPath());
             if (tier != null) {
-                return tier;
+                return Math.max(1, tier - qualityPenalty(stack));
             }
         }
         if (stack.is(Items.STICK)) {
@@ -143,7 +170,7 @@ public final class Trading {
             return 0;
         }
         String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
-        return tier * 10 + WITHIN_TIER.getOrDefault(path, 0);
+        return tier * 10 + WITHIN_TIER.getOrDefault(path, 0) + qualityBonus(stack);
     }
 
     /**
@@ -154,8 +181,12 @@ public final class Trading {
     public static void offer(BandMember member, Player player, ItemStack offered) {
         ResourceLocation era = member.getStage();
         int offerTier = tierOf(offered, era);
-        // In a dry spell nobody parts with anything unless they come out of the exchange ahead.
-        if (dev.hominin.evolution.survival.Drought.isActive(member.level())) {
+        // In the rains they are generous; in hard times nobody parts with anything unless they come out ahead.
+        // Generous, not foolish: something worthless to them stays worthless.
+        if (offerTier > 0 && dev.hominin.evolution.survival.Seasons.plentiful(member.level())) {
+            offerTier++;
+        }
+        if (dev.hominin.evolution.survival.Seasons.strained(member.level())) {
             offerTier--;
             if (offerTier <= 0) {
                 player.displayClientMessage(Component.literal(member.getName().getString()
@@ -245,9 +276,11 @@ public final class Trading {
         }
         ResourceLocation era = member.getStage();
         int offerTier = tierOf(offered, era);
-        boolean dry = dev.hominin.evolution.survival.Drought.isActive(member.level());
+        boolean dry = dev.hominin.evolution.survival.Seasons.strained(member.level());
         if (dry) {
             offerTier--;
+        } else if (offerTier > 0 && dev.hominin.evolution.survival.Seasons.plentiful(member.level())) {
+            offerTier++;
         }
         int wantedTier = tierOf(wanted, era);
         if (offerTier <= 0) {
@@ -262,7 +295,9 @@ public final class Trading {
         boolean lowball = wantedTier > offerTier && Paranthropus.fallsForLowball(member, offerTier, wantedTier);
         if (wantedTier > offerTier && !lowball) {
             say(player, name + " looks at what you offer, and at what you want, and keeps it. (Offer a "
-                    + TIER_NAMES[Math.min(MAX_TIER, wantedTier + (dry ? 1 : 0))] + " thing or better.)");
+                    + TIER_NAMES[Math.max(1, Math.min(MAX_TIER, wantedTier + (dry ? 1 : 0)
+                            - (!dry && dev.hominin.evolution.survival.Seasons.plentiful(member.level()) ? 1 : 0)))]
+                    + " thing or better.)");
             return;
         }
         ItemStack given = wanted.split(1);
@@ -298,6 +333,22 @@ public final class Trading {
 
     /** What a member carries, sent to the player's trade screen. */
     public static void openTrade(net.minecraft.server.level.ServerPlayer player, BandMember member) {
+        if (member.isLedBy(player) && member.isAntisocial() && member.getBond() < 6) {
+            member.ensureName();
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<" + member.getName().getString()
+                    + "> \"What's mine stays mine.\"").withStyle(net.minecraft.ChatFormatting.GOLD));
+            return;
+        }
+        if (member.isLedBy(player)) {
+            String refusal = Cohesion.refusesTrade(player, member);
+            if (refusal != null) {
+                member.ensureName();
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<" + member.getName().getString() + "> ")
+                        .withStyle(net.minecraft.ChatFormatting.GOLD).append(net.minecraft.network.chat.Component
+                                .literal(refusal).withStyle(net.minecraft.ChatFormatting.WHITE)));
+                return;
+            }
+        }
         java.util.List<Integer> slots = new java.util.ArrayList<>();
         java.util.List<ItemStack> stacks = new java.util.ArrayList<>();
         if (!member.getMainHandItem().isEmpty()) {

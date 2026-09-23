@@ -346,6 +346,54 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
+    /**
+     * Pelorovis: a buffalo built too big. A deep barrel of a body with a hump over the shoulders,
+     * the head carried low, and horns that go out sideways a long way before they curl up - the
+     * whole reason the animal has its name.
+     */
+    public static LayerDefinition pelorovis() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-6F, -5.5F, -9F, 12F, 11F, 18F), PartPose.offset(0F, 9.5F, 1F));
+        body.addOrReplaceChild("hump", CubeListBuilder.create().texOffs(60, 0)
+                .addBox(-5F, -8F, -9F, 10F, 3F, 8F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(96, 0)
+                .addBox(-1F, 0F, -1F, 2F, 9F, 2F), PartPose.offsetAndRotation(0F, -4.5F, 9F, 0.25F, 0F, 0F));
+        tail.addOrReplaceChild("tuft", CubeListBuilder.create().texOffs(104, 0)
+                .addBox(-1.5F, 8.5F, -1.5F, 3F, 3F, 3F), PartPose.offset(0F, 0F, 0F));
+
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 30)
+                .addBox(-3.5F, -3F, -6F, 7F, 8F, 6F), PartPose.offset(0F, 7F, -8F));
+        head.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(26, 30)
+                .addBox(-2.5F, 1F, -9F, 5F, 5F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("boss", CubeListBuilder.create().texOffs(42, 30)
+                .addBox(-4.5F, -4.5F, -5F, 9F, 2F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(86, 30)
+                .addBox(3.5F, -1F, -2F, 3F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(86, 30)
+                .addBox(-6.5F, -1F, -2F, 3F, 2F, 1F), PartPose.offset(0F, 0F, 0F));
+        // Out to the side and a little back, then curling up.
+        PartDefinition leftHorn = head.addOrReplaceChild("left_horn", CubeListBuilder.create().texOffs(66, 30)
+                .addBox(0F, -1F, -1F, 8F, 2F, 2F), PartPose.offsetAndRotation(4.5F, -3.5F, -3.5F, 0F, 0.3F, -0.2F));
+        leftHorn.addOrReplaceChild("left_horn_tip", CubeListBuilder.create().texOffs(66, 34)
+                .addBox(0F, -1F, -1F, 6F, 2F, 2F), PartPose.offsetAndRotation(7.5F, 0F, 0F, 0F, 0F, -0.95F));
+        PartDefinition rightHorn = head.addOrReplaceChild("right_horn", CubeListBuilder.create().texOffs(66, 30)
+                .addBox(-8F, -1F, -1F, 8F, 2F, 2F), PartPose.offsetAndRotation(-4.5F, -3.5F, -3.5F, 0F, -0.3F, 0.2F));
+        rightHorn.addOrReplaceChild("right_horn_tip", CubeListBuilder.create().texOffs(66, 34)
+                .addBox(-6F, -1F, -1F, 6F, 2F, 2F), PartPose.offsetAndRotation(-7.5F, 0F, 0F, 0F, 0F, 0.95F));
+
+        root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(0, 44)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(-3.5F, 14F, -5F));
+        root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(0, 44)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(3.5F, 14F, -5F));
+        root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(16, 44)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(-3.5F, 14F, 7F));
+        root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(16, 44)
+                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(3.5F, 14F, 7F));
+        return LayerDefinition.create(mesh, 128, 64);
+    }
+
     private WildAnimalLayers() {
     }
 }

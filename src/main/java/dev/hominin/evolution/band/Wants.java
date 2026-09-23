@@ -47,6 +47,8 @@ public final class Wants {
     private static final int GIFT_COOLDOWN_TICKS = 5 * 60 * 20;
     /** Bond needed before a member starts looking out for you. */
     public static final int GIFT_BOND = 3;
+    /** Bond at which a good hunter hunts for you, and a good knapper makes you tools unasked. */
+    public static final int HUNTS_FOR_YOU_BOND = 6;
     private static final double TALK_RANGE = 24.0D;
 
     private static final Map<UUID, Long> lastLeaderThought = new HashMap<>();
@@ -69,15 +71,32 @@ public final class Wants {
         }
         long now = member.level().getGameTime();
         member.ensurePersonality();
+        if (member.getWant() != null && now > member.getWantUntil() && !member.isWantVoiced()) {
+            // Never asked of you: it just passes.
+            member.clearWant();
+        }
         if (member.getWant() != null && now > member.getWantUntil()) {
             Item ignored = member.getWant();
             member.clearWant();
-            if (dev.hominin.evolution.entity.WildAnimals.erectusOrLater(leader)) {
-                member.addBond(-1);
+            // Wants left unmet add up: each one is a little less faith in you.
+            if (leader instanceof net.minecraft.server.level.ServerPlayer server && Morals.unmetWantCost(leader) > 0) {
+                member.ensureName();
+                Cohesion.add(server, -1, "brought " + member.getName().getString() + " the " + describeItem(ignored)
+                        + " they asked for");
+            }
+            int cost = Morals.unmetWantCost(leader);
+            if (dev.hominin.evolution.entity.WildAnimals.erectusOrLater(leader) && cost > 0) {
+                member.addBond(-cost);
                 member.ensureName();
                 leader.displayClientMessage(Component.literal(member.getName().getString()
-                        + " stops waiting for " + describeItem(ignored) + ", and remembers that you never brought it.")
+                        + " stops waiting for " + describeItem(ignored) + ", and remembers that you never brought it."
+                        + (cost > 1 ? " (Sharing is your people's way - bond -" + cost + ")" : ""))
                         .withStyle(ChatFormatting.GRAY), false);
+            } else if (cost == 0) {
+                member.ensureName();
+                leader.displayClientMessage(Component.literal(member.getName().getString() + " lets go of wanting "
+                        + describeItem(ignored) + ". Times are tight; nobody expected it.")
+                        .withStyle(ChatFormatting.DARK_GRAY), false);
             }
         }
         if (member.distanceToSqr(leader) > TALK_RANGE * TALK_RANGE || member.inDanger()) {
@@ -86,18 +105,26 @@ public final class Wants {
         if (member.getWant() == null && now >= member.getNextWant()) {
             member.setNextWant(now + (WANT_MIN_TICKS + member.getRandom().nextInt(WANT_SPREAD_TICKS))
                     / (member.isPregnant() ? 2 : 1));
-            // Two people asking you for things is a band. Six is a queue, and you stop
-            // listening to a queue - so the rest hold their tongue until one is settled.
-            if (asking(leader) < MAX_OPEN_WANTS) {
-                chooseWant(member, leader, now);
+            // Everyone wants something. When times are tight and the band holds that you need
+            // not share, they want less.
+            boolean holdBack = Morals.applies(leader, Morals.Moral.TIGHT_TIMES) && member.getRandom().nextBoolean();
+            if (!holdBack) {
+                chooseWant(member, now);
             }
+        }
+        // Two people asking you for things is a band; six is a queue, and you stop listening to a
+        // queue. So only the two who want it most say so - the rest keep it to themselves (Info
+        // still shows it) until one of the two is settled.
+        if (member.getWant() != null && !member.isWantVoiced() && asking(leader) < MAX_OPEN_WANTS
+                && mostUrgentUnsaid(member, leader)) {
+            voice(member, leader);
         }
         if (now >= member.getNextThought()) {
             member.setNextThought(now + THOUGHT_MIN_TICKS + member.getRandom().nextInt(THOUGHT_SPREAD_TICKS));
             think(member, leader, now);
         }
         if (member.getBond() >= GIFT_BOND && now >= member.getNextGift() && member.distanceToSqr(leader) < 12.0D * 12.0D
-                && member.getRandom().nextFloat() < Math.min(0.3F, member.getBond() * 0.02F)) {
+                && member.getRandom().nextFloat() < Math.min(0.45F, member.getBond() * 0.02F * Cohesion.giftFactor(leader))) {
             if (tryGift(member, leader)) {
                 member.setNextGift(now + GIFT_COOLDOWN_TICKS);
             }
@@ -107,20 +134,31 @@ public final class Wants {
     /** How many of the band may have an open request at once. */
     private static final int MAX_OPEN_WANTS = 2;
 
-    /** How many of this leader's band are currently waiting on something. */
+    /** How many of this leader's band have asked for something and are waiting on it. */
     private static int asking(Player leader) {
         int open = 0;
         for (BandMember other : Band.near(leader, 64.0D)) {
-            if (other.getWant() != null && other.leaderPlayer() == leader) {
+            if (other.isWantVoiced() && other.leaderPlayer() == leader) {
                 open++;
             }
         }
         return open;
     }
 
+    /** Whether nobody nearby with an unsaid want wants theirs more. */
+    private static boolean mostUrgentUnsaid(BandMember member, Player leader) {
+        for (BandMember other : Band.near(leader, 64.0D)) {
+            if (other != member && other.getWant() != null && !other.isWantVoiced() && other.leaderPlayer() == leader
+                    && other.getWantUrgency() > member.getWantUrgency()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------ wants
 
-    private static void chooseWant(BandMember member, Player leader, long now) {
+    private static void chooseWant(BandMember member, long now) {
         List<Item> options = new ArrayList<>();
         if (member.isObsessedWithObsidian() && member.count(ModItems.OBSIDIAN_ROCK.get()) == 0) {
             options.add(ModItems.OBSIDIAN_ROCK.get());
@@ -144,6 +182,29 @@ public final class Wants {
         }
         Item want = options.get(member.getRandom().nextInt(options.size()));
         member.setWant(want, now + WANT_LASTS_TICKS);
+        // How badly: eating for two, or going hungry, above all; an obsession; nothing to hold; a taste.
+        float urgency = member.isPregnant() && want == member.favouriteFood() ? 0.9F
+                : want == member.favouriteFood() && member.getHunger() < BandMember.HUNGRY
+                        ? 0.6F + 0.4F * (BandMember.HUNGRY - member.getHunger()) / (float) BandMember.HUNGRY
+                : want == ModItems.OBSIDIAN_ROCK.get() ? 0.7F
+                : want == ModItems.LONG_BRANCH.get() ? 0.5F
+                : want == preferred ? 0.3F : 0.35F;
+        if (member.isAntisocial()) {
+            // Always on at you for food.
+            member.setWant(member.favouriteFood(), now + WANT_LASTS_TICKS);
+            urgency = 0.75F;
+        }
+        member.setWantUrgency(urgency + member.getRandom().nextFloat() * 0.3F);
+    }
+
+    /** Says it: asks you for it, or offers a trade for it if you are carrying one. */
+    private static void voice(BandMember member, Player leader) {
+        Item want = member.getWant();
+        Item preferred = member.preferredStone();
+        // Asked now: the wait for it to be brought starts from the asking, not from the wanting.
+        member.setWant(want, member.level().getGameTime() + WANT_LASTS_TICKS);
+        member.setWantVoiced(true);
+        member.ensureName();
         String name = new ItemStack(want).getHoverName().getString();
 
         // They can see what you carry. If you have it, they may offer something like it back.
@@ -218,7 +279,7 @@ public final class Wants {
                     .withStyle(ChatFormatting.LIGHT_PURPLE), true);
         }
         if (want == ModItems.OBSIDIAN_ROCK.get()) {
-            Band.announceDiscovery(member, " can't stop turning the obsidian over in their hands.");
+            Lines.announce(member, "obsidian_turn");
         }
         return true;
     }
@@ -228,7 +289,17 @@ public final class Wants {
     /** A member who likes you gives you what you are short of - unasked. */
     private static boolean tryGift(BandMember member, Player leader) {
         String name = member.getName().getString();
-        if (leader.getFoodData().getFoodLevel() <= 14 && member.hasFood()) {
+        if (member.isAntisocial()) {
+            return false;
+        }
+        if (dev.hominin.evolution.survival.Seasons.isProsperous(member.level())
+                && !Morals.holds(leader, Morals.Moral.ALWAYS_SHARE) && member.getRandom().nextBoolean()) {
+            // Plenty for everyone, and no rule that says share: they hold on to their own.
+            return false;
+        }
+        // Under the tight-times rule, food is kept close when times are hard - even from you.
+        if (leader.getFoodData().getFoodLevel() <= 14 && member.hasFood()
+                && !Morals.applies(leader, Morals.Moral.TIGHT_TIMES)) {
             ItemStack food = member.takeFood();
             if (!food.isEmpty()) {
                 give(leader, food, name + " sees you're hungry and hands you " + food.getHoverName().getString()
@@ -255,6 +326,19 @@ public final class Wants {
                 member.equipBestWeapon();
                 return true;
             }
+        }
+        // A good hunter who likes you goes off after something and brings you a share.
+        if (member.getBond() >= HUNTS_FOR_YOU_BOND && member.getHuntLevel() <= 2 && !member.isPregnant()
+                && leader.getFoodData().getFoodLevel() <= 16 && member.getRandom().nextInt(3) == 0) {
+            int meat = 1 + member.getRandom().nextInt(member.getHuntLevel() == 1 ? 3 : 2);
+            give(leader, new ItemStack(ModItems.MEAT_CHUNK.get(), meat), name
+                    + " slips away for a while, and comes back with meat - for you.");
+            return true;
+        }
+        // A good knapper who likes you sees you with no real edge, and makes you one.
+        if (member.getBond() >= HUNTS_FOR_YOU_BOND && member.getKnapLevel() <= 2
+                && Commissions.offerUnasked(member, leader)) {
+            return true;
         }
         if (!inventory.contains(ModTags.Items.HAMMERSTONES)) {
             ItemStack hammer = member.takeFirst(s -> s.is(ModTags.Items.HAMMERSTONES));
@@ -332,14 +416,20 @@ public final class Wants {
         if (member.level().isNight()) {
             thoughts.add("The dark is full of eyes.");
         }
-        thoughts.add("The flakes are sharper when you strike at the edge, not the middle.");
-        thoughts.add("The ground here has good roots under it.");
-        thoughts.add("I saw where the termites are. I'll remember.");
+        // What anyone might think, and what the season and the band's own rules put in their heads.
+        var random = member.getRandom();
+        thoughts.add(Lines.pick("thought_any", random));
+        thoughts.add(Lines.pick("thought_any", random));
+        thoughts.add(Lines.pick(dev.hominin.evolution.survival.Seasons.isDry(member.level()) ? "thought_dry"
+                : "thought_green", random));
+        String moral = Morals.poolForThought(leader);
+        if (moral != null) {
+            thoughts.add(Lines.pick(moral, random));
+        }
         lastLeaderThought.put(leader.getUUID(), now);
-        String thought = thoughts.get(member.getRandom().nextInt(thoughts.size()));
-        leader.sendSystemMessage(Component.literal(member.getName().getString() + " thinks: ")
-                .withStyle(ChatFormatting.DARK_AQUA)
-                .append(Component.literal(thought).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC)));
+        // Never the thought this leader heard a moment ago, whoever is thinking it.
+        String thought = Lines.pickFrom("thoughts|" + leader.getUUID(), thoughts, random);
+        Lines.thought(member, leader, thought);
     }
 
     private static void say(BandMember member, Player leader, String line, @Nullable String hint) {

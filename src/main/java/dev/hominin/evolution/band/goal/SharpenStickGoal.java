@@ -71,7 +71,7 @@ public class SharpenStickGoal extends Goal {
             member.sharpened();
             member.setHandTask(BandMember.HandTask.NONE);
             member.addToInventory(new ItemStack(ModItems.SHARPENED_STICK.get()));
-            Band.announceDiscovery(member, " gnaws a stick to a point, in case it comes back.");
+            dev.hominin.evolution.band.Lines.announce(member, "sharpen_stick");
         }
     }
 

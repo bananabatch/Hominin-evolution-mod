@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/chopper",
+  "textures": {
+    "cortex": "hominin_evolution:item/stone/obsidian_cortex",
+    "worked": "hominin_evolution:item/stone/obsidian_scar",
+    "edge": "hominin_evolution:item/stone/obsidian_edge",
+    "particle": "hominin_evolution:item/stone/obsidian_cortex"
+  }
+}

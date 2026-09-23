@@ -83,7 +83,7 @@ public final class HeadTraumaHandler {
         if (stack.is(ModItems.WOODEN_CLUB.get())) {
             return CLUB;
         }
-        if (stack.is(ModItems.LONG_BRANCH.get())) {
+        if (ModItems.isLongBranch(stack)) {
             return BRANCH;
         }
         return null;

@@ -53,6 +53,10 @@ public class QuarryGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (member.isInjured()) {
+            // Laid up: nobody goes far on a bad leg.
+            return false;
+        }
         if (nextTry < 0) {
             nextTry = member.tickCount + member.getRandom().nextInt(COOLDOWN_SPREAD);
         }
@@ -84,9 +88,9 @@ public class QuarryGoal extends Goal {
         striking = 0;
         Block block = member.level().getBlockState(target).getBlock();
         if (block == ModBlocks.OBSIDIAN_ROCK.get() && member.isObsessedWithObsidian()) {
-            Band.announceDiscovery(member, " has spotted obsidian, and can't think about anything else.");
+            dev.hominin.evolution.band.Lines.announce(member, "spot_obsidian");
         } else {
-            Band.announce(member, " says they're going to find some good stone.");
+            dev.hominin.evolution.band.Lines.tell(member, "quarry_go");
         }
         walk();
     }
@@ -161,7 +165,8 @@ public class QuarryGoal extends Goal {
         }
         member.addToInventory(new ItemStack(stone, count));
         if (stone != ModItems.LIMESTONE_ROCK.get() && member.getRandom().nextFloat() < HAMMERSTONE_CHANCE) {
-            member.addToInventory(new ItemStack(ModItems.HAMMERSTONE.get()));
+            member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stampFrom(
+                    new ItemStack(ModItems.HAMMERSTONE.get()), new ItemStack(stone)));
         }
         afterGetting(stone);
         target = null;
@@ -171,7 +176,7 @@ public class QuarryGoal extends Goal {
         if (stone == ModItems.LIMESTONE_ROCK.get()) {
             Wants.complainAboutLimestone(member);
         } else if (stone == ModItems.OBSIDIAN_ROCK.get() && member.isObsessedWithObsidian()) {
-            Band.announceDiscovery(member, " can't stop turning the obsidian over in their hands.");
+            dev.hominin.evolution.band.Lines.announce(member, "obsidian_turn");
         }
     }
 

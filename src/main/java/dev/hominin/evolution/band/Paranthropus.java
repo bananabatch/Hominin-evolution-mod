@@ -102,7 +102,7 @@ public final class Paranthropus {
     public static float forageShare(ServerPlayer player) {
         float share = 1.0F;
         if (!near(player, FORAGE_RADIUS).isEmpty()) {
-            share *= dev.hominin.evolution.survival.Drought.isActive(player.level()) ? 0.15F : 0.3F;
+            share *= dev.hominin.evolution.survival.Seasons.strained(player.level()) ? 0.15F : 0.3F;
         }
         boolean primates = !player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(PRIMATE_FORAGE_RADIUS),

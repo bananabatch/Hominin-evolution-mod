@@ -4,7 +4,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModNetworking {
-    private static final String VERSION = "5";
+    private static final String VERSION = "6";
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(VERSION);
@@ -41,6 +41,8 @@ public final class ModNetworking {
         registrar.playToClient(TiredApesPayload.TYPE, TiredApesPayload.STREAM_CODEC, TiredApesPayload::handle);
         registrar.playToClient(StagePayload.TYPE, StagePayload.STREAM_CODEC, StagePayload::handle);
         registrar.playToClient(MemberInfoPayload.TYPE, MemberInfoPayload.STREAM_CODEC, MemberInfoPayload::handle);
+        registrar.playToClient(MoralsPayload.TYPE, MoralsPayload.STREAM_CODEC, MoralsPayload::handle);
+        registrar.playToServer(MoralActionPayload.TYPE, MoralActionPayload.STREAM_CODEC, MoralActionPayload::handle);
         registrar.playToClient(ThirstPayload.TYPE, ThirstPayload.STREAM_CODEC, ThirstPayload::handle);
         registrar.playToClient(FocusPayload.TYPE, FocusPayload.STREAM_CODEC, FocusPayload::handle);
         registrar.playToClient(ChoicesPayload.TYPE, ChoicesPayload.STREAM_CODEC, ChoicesPayload::handle);

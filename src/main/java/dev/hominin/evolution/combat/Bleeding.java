@@ -8,9 +8,11 @@ import dev.hominin.evolution.ModEffects;
 import dev.hominin.evolution.survival.Afflictions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -27,6 +29,16 @@ import net.minecraft.world.entity.player.Player;
  * is what each one does to a player on top of the damage.
  */
 public final class Bleeding {
+    /** Blood lost a little at a time, and all at once - and the bleed inside a skull. */
+    public static final ResourceKey<DamageType> BLEEDING = key("bleeding");
+    public static final ResourceKey<DamageType> BLED_OUT = key("bled_out");
+    public static final ResourceKey<DamageType> BRAIN_BLEED = key("brain_bleed");
+
+    private static ResourceKey<DamageType> key(String name) {
+        return ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(dev.hominin.evolution.HomininEvolutionMod.MODID, name));
+    }
+
     /**
      * The three tiers. The ordinal is the effect amplifier, so the order matters.
      */
@@ -142,7 +154,7 @@ public final class Bleeding {
         long left = state.endsAt() - player.level().getGameTime();
         if (left <= 0) {
             dying.remove(player.getUUID());
-            player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+            player.hurt(player.damageSources().source(BLED_OUT), Float.MAX_VALUE);
             return;
         }
         if (left % 100 == 0) {

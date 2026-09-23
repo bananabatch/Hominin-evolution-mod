@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "name": "digging_stick_dig",
+  "description": "Both hands take the digging stick, lift it, drive the blade down into the ground ahead with the weight behind it, then lean back on it to lever the soil up",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 14,
+    "stopTick": 14,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -20.0,
+          "yaw": 0.0,
+          "roll": -6.0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": -4
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 4,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -66.0,
+          "yaw": -28.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -91.9,
+          "yaw": 45.5,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 4,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0009,
+          "z": 0.0244
+        }
+      },
+      {
+        "tick": 7,
+        "easing": "easeInCubic",
+        "rightArm": {
+          "pitch": -57.5,
+          "yaw": -28.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -85.2,
+          "yaw": 45.7,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -22,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0255,
+          "z": -0.1311
+        }
+      },
+      {
+        "tick": 9,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -57.5,
+          "yaw": -28.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -85.2,
+          "yaw": 45.7,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -24,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0303,
+          "z": -0.1424
+        }
+      },
+      {
+        "tick": 14,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -58.0,
+          "yaw": -28.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -85.6,
+          "yaw": 45.7,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0104,
+          "z": -0.0847
+        }
+      }
+    ]
+  }
+}

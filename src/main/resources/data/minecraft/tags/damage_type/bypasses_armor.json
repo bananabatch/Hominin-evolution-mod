@@ -1,6 +1,9 @@
 {
   "replace": false,
   "values": [
-    "hominin_evolution:kuru"
+    "hominin_evolution:kuru",
+    "hominin_evolution:bleeding",
+    "hominin_evolution:bled_out",
+    "hominin_evolution:brain_bleed"
   ]
 }

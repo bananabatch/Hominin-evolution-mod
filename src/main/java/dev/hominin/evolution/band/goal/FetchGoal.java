@@ -122,6 +122,9 @@ public class FetchGoal extends Goal {
             if (!player.getInventory().add(given)) {
                 player.drop(given, false);
             }
+            if (player instanceof net.minecraft.server.level.ServerPlayer taker) {
+                dev.hominin.evolution.band.Mood.took(taker, 1);
+            }
         }
         member.clearFetch();
     }

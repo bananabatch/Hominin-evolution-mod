@@ -1,0 +1,184 @@
+package dev.hominin.evolution.item;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import dev.hominin.evolution.ModDataComponents;
+import dev.hominin.evolution.ModItems;
+import dev.hominin.evolution.ModTags;
+import dev.hominin.evolution.combat.Bleeding;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+
+/**
+ * What a stone tool was knapped from. Every stone tool carries it, and it shows: each has a look
+ * of its own. And it matters in the hand - chert holds a keener edge than rough stone, and obsidian
+ * keener still: sharp enough that a cut from it will sometimes open a wound a tier deeper than the
+ * blow alone would have.
+ */
+public enum StoneMaterial {
+    BASALT("Basalt", ChatFormatting.DARK_GRAY, 0.0F, "rough, dark lava stone - the common cobble"),
+    QUARTZITE("Quartzite", ChatFormatting.GRAY, 0.0F, "coarse and tough - it holds up to a beating"),
+    CHERT("Chert", ChatFormatting.GOLD, 0.5F, "fine-grained and waxy - it takes a keener edge"),
+    LIMESTONE("Limestone", ChatFormatting.WHITE, 0.0F, "soft and chalky - it barely holds an edge"),
+    OBSIDIAN("Obsidian", ChatFormatting.DARK_PURPLE, 1.0F, "volcanic glass - the sharpest edge there is");
+
+    private final String title;
+    private final ChatFormatting colour;
+    private final float damageBonus;
+    private final String about;
+
+    StoneMaterial(String title, ChatFormatting colour, float damageBonus, String about) {
+        this.title = title;
+        this.colour = colour;
+        this.damageBonus = damageBonus;
+        this.about = about;
+    }
+
+    public String title() {
+        return title;
+    }
+
+    public float damageBonus() {
+        return damageBonus;
+    }
+
+    /** The chance an obsidian cut deepens the wound it made by a tier. */
+    public static final float OBSIDIAN_DEEPEN_CHANCE = 0.25F;
+
+    // ------------------------------------------------------------ what a thing is made of
+
+    /** What a piece of raw stone is. Null for anything that is not knapping stone. */
+    @Nullable
+    public static StoneMaterial ofStone(ItemStack stone) {
+        if (stone.is(ModItems.OBSIDIAN_ROCK.get())) {
+            return OBSIDIAN;
+        }
+        if (stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get())) {
+            return CHERT;
+        }
+        if (stone.is(ModItems.GRANITE_ROCK.get())) {
+            return QUARTZITE;
+        }
+        if (stone.is(ModItems.LIMESTONE_ROCK.get())) {
+            return LIMESTONE;
+        }
+        return stone.is(ModItems.ROCK.get()) ? BASALT : null;
+    }
+
+    /** What a stone tool is made of: what it was stamped with, or what the item always is. */
+    @Nullable
+    public static StoneMaterial of(ItemStack tool) {
+        Integer stored = tool.get(ModDataComponents.MATERIAL.get());
+        if (stored != null && stored >= 0 && stored < values().length) {
+            return values()[stored];
+        }
+        return tool.is(ModItems.CHERT_HAMMERSTONE.get()) ? CHERT : null;
+    }
+
+    public static boolean isStoneTool(ItemStack stack) {
+        return stack.is(ModTags.Items.STONE_TOOLS) || stack.is(ModItems.GRINDING_ROCK.get());
+    }
+
+    /** Marks a freshly made tool with the stone it came from. Returns the same stack. */
+    public static ItemStack stamp(ItemStack tool, @Nullable StoneMaterial material) {
+        if (material != null && isStoneTool(tool) && !tool.is(ModItems.CHERT_HAMMERSTONE.get())) {
+            tool.set(ModDataComponents.MATERIAL.get(), material.ordinal());
+        }
+        return tool;
+    }
+
+    /** Marks a tool made from this piece of stone. */
+    public static ItemStack stampFrom(ItemStack tool, ItemStack stone) {
+        return stamp(tool, ofStone(stone));
+    }
+
+    // ------------------------------------------------------------ the stone a player is working
+
+    /** What the player last struck: handed to whatever comes out of it by another route. */
+    private static final Map<UUID, StoneMaterial> struck = new HashMap<>();
+
+    public static void struckBy(UUID player, @Nullable StoneMaterial material) {
+        if (material == null) {
+            struck.remove(player);
+        } else {
+            struck.put(player, material);
+        }
+    }
+
+    @Nullable
+    public static StoneMaterial lastStruck(UUID player) {
+        return struck.get(player);
+    }
+
+    // ------------------------------------------------------------ in the hand
+
+    private record Deepen(LivingEntity target, long at) {
+    }
+
+    private static final List<Deepen> deepening = new ArrayList<>();
+
+    /** A keener edge lands harder; obsidian may open the wound further once the blow is done. */
+    public static void onHurt(LivingIncomingDamageEvent event) {
+        LivingEntity target = event.getEntity();
+        if (target.level().isClientSide() || !(event.getSource().getDirectEntity() instanceof LivingEntity attacker)
+                || event.getSource().getEntity() != attacker) {
+            return;
+        }
+        ItemStack weapon = attacker.getMainHandItem();
+        StoneMaterial material = isStoneTool(weapon) ? of(weapon) : null;
+        if (material == null) {
+            return;
+        }
+        if (material.damageBonus > 0.0F) {
+            event.setAmount(event.getAmount() + material.damageBonus);
+        }
+        if (material == OBSIDIAN && target.getRandom().nextFloat() < OBSIDIAN_DEEPEN_CHANCE && deepening.size() < 256) {
+            // After the blow has done what it does: the weapon's own cut lands first.
+            deepening.add(new Deepen(target, target.level().getGameTime() + 1));
+        }
+    }
+
+    /** Once a tick: obsidian cuts opening one tier deeper than the blow that made them. */
+    public static void tick(ServerLevel level) {
+        if (deepening.isEmpty()) {
+            return;
+        }
+        long now = level.getGameTime();
+        deepening.removeIf(d -> {
+            if (d.target().level() != level || now < d.at()) {
+                return d.target().isRemoved();
+            }
+            LivingEntity target = d.target();
+            if (target.isAlive()) {
+                var bleeding = target.getEffect(dev.hominin.evolution.ModEffects.BLEEDING);
+                int next = bleeding == null ? 0 : bleeding.getAmplifier() + 1;
+                if (next < Bleeding.Tier.values().length) {
+                    Bleeding.inflict(target, Bleeding.Tier.values()[next]);
+                }
+            }
+            return true;
+        });
+    }
+
+    /** The tooltip line: what it is made of, and what that means. */
+    public static void describe(ItemStack stack, List<Component> tooltip) {
+        StoneMaterial material = isStoneTool(stack) ? of(stack) : null;
+        if (material == null) {
+            return;
+        }
+        String effect = material == OBSIDIAN ? " (+1 damage; cuts can open a tier deeper)"
+                : material == CHERT ? " (+half a heart damage)" : "";
+        tooltip.add(Math.min(1, tooltip.size()), Component.literal(material.title + " - " + material.about + effect)
+                .withStyle(material.colour));
+    }
+}

@@ -72,7 +72,7 @@ public class TermiteFishGoal extends Goal {
         ticks = 0;
         working = 0;
         member.setHandTask(BandMember.HandTask.FISH);
-        Band.announce(member, " says they're going to fish for termites.");
+        dev.hominin.evolution.band.Lines.tell(member, "termite_go");
         walk();
     }
 

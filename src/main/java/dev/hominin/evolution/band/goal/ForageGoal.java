@@ -89,7 +89,7 @@ public class ForageGoal extends Goal {
         working = 0;
         member.setHandTask(BandMember.HandTask.FORAGE);
         if (!member.isForagingTogether()) {
-            dev.hominin.evolution.band.Band.announce(member, " says they're going to forage.");
+            dev.hominin.evolution.band.Lines.tell(member, "forage_go");
         }
         member.getNavigation().moveTo(spot.getX() + 0.5D, spot.getY() + 1, spot.getZ() + 0.5D, 1.0D);
     }
@@ -129,11 +129,13 @@ public class ForageGoal extends Goal {
             level.playSound(null, spot, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.NEUTRAL, 1.0F, 1.0F);
             member.addToInventory(new ItemStack(Items.SWEET_BERRIES, 1 + member.getRandom().nextInt(2)));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
-        } else if (member.getRandom().nextFloat() < (SUCCESS_CHANCE + member.foragingBonus())
+        } else if (member.getRandom().nextFloat() < (SUCCESS_CHANCE + member.foragingBonus()
+                + (dev.hominin.evolution.band.Cohesion.perfect(member.leaderPlayer()) ? 0.2F : 0.0F))
                 * dev.hominin.evolution.survival.Drought.forageMultiplier(level)
                 * (CraftGoal.canCraft(member) ? 0.6F : 1.0F)) {
             Item[] insects = {ModItems.GRUB.get(), ModItems.BEETLE.get(), ModItems.EARTHWORM.get()};
-            member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)]));
+            int finds = dev.hominin.evolution.band.Cohesion.perfect(member.leaderPlayer()) ? 2 : 1;
+            member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)], finds));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
         }
         spot = null;

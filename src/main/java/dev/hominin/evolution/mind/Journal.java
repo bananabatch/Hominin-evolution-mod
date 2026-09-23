@@ -39,6 +39,7 @@ public final class Journal {
                 + "    Water: " + Thirst.get(player) + " / " + Thirst.MAX);
         stats.add("Ticks: " + Infestation.describe(player));
         stats.add("Knapping: " + dev.hominin.evolution.knapping.Acheulean.describe(player));
+        stats.add("Persistence hunting: " + dev.hominin.evolution.hunt.Persistence.describe(player));
         if (dev.hominin.evolution.survival.Kuru.has(player)) {
             stats.add("Illness: " + dev.hominin.evolution.survival.Kuru.describe(player));
         }
@@ -61,7 +62,8 @@ public final class Journal {
         List<BandMember> band = Band.all(player);
         int left = Band.bandsLeft(player);
         stats.add("Band: " + band.size() + (band.size() == 1 ? " member" : " members")
-                + "    Cohesion: " + data.getCriterionCounters().getOrDefault(Band.COHESION, 0));
+                + "    Cohesion: " + dev.hominin.evolution.band.Cohesion.get(player) + "/"
+                + dev.hominin.evolution.band.Cohesion.MAX);
         stats.add(left == 0 ? "This band is the last one your species has."
                 : "You can lose " + left + " more " + (left == 1 ? "band" : "bands") + " before your species dies out.");
         if (!band.isEmpty()) {
@@ -80,6 +82,12 @@ public final class Journal {
             if (band.size() > MAX_MEMBERS_LISTED) {
                 stats.add("   and " + (band.size() - MAX_MEMBERS_LISTED) + " more");
             }
+        }
+        java.util.List<String> remembered = dev.hominin.evolution.band.Remembrance.lines(player);
+        if (!remembered.isEmpty()) {
+            stats.add("");
+            stats.add("Remembered - names your line carries:");
+            stats.addAll(remembered);
         }
         stats.add("");
         var counters = data.getCriterionCounters();

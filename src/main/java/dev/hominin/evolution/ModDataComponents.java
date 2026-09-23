@@ -17,6 +17,11 @@ public final class ModDataComponents {
             COMPONENTS.registerComponentType("quality",
                     builder -> builder.persistent(Codec.intRange(0, 4)).networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    /** What a stone tool was knapped from: a StoneMaterial ordinal. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MATERIAL =
+            COMPONENTS.registerComponentType("material",
+                    builder -> builder.persistent(Codec.intRange(0, 4)).networkSynchronized(ByteBufCodecs.VAR_INT));
+
     private ModDataComponents() {
     }
 }

@@ -42,8 +42,7 @@ public final class WorkRecipes {
     private static final Predicate<ItemStack> HIDE = is(ModItems.HIDE);
     private static final Predicate<ItemStack> HAND_AXE = stack -> stack.is(ModTags.Items.HAND_AXE_TOOLS);
     private static final Predicate<ItemStack> HAMMER = stack -> stack.is(ModTags.Items.HAMMERSTONES);
-    private static final Predicate<ItemStack> EDGE = stack -> stack.is(ModTags.Items.FLAKES)
-            || stack.is(ModTags.Items.HAND_AXE_TOOLS);
+    private static final Predicate<ItemStack> CLEAVER = is(ModItems.CLEAVER);
     private static final Predicate<ItemStack> TWINE = is(ModItems.TWINE);
 
     private static List<Predicate<ItemStack>> grid(Predicate<ItemStack>... cells) {
@@ -56,16 +55,14 @@ public final class WorkRecipes {
                     ModItems.WORKABLE_BRANCH, 2),
             new WorkRecipe("workable_branch", HAND_AXE, ToolUse.WEAR, 1, List.of(is(ModItems.LONG_BRANCH)), true,
                     ModItems.WORKABLE_BRANCH, 1),
+            // A workable branch trued end to end with a cleaver's straight edge: a shaft.
+            new WorkRecipe("workable_shaft", CLEAVER, ToolUse.WEAR, 1, List.of(BRANCH), true,
+                    ModItems.WORKABLE_SHAFT, 1),
             // Two branches down the middle, battered with a hammerstone: a club.
             new WorkRecipe("club", HAMMER, ToolUse.WEAR, 1, grid(
                     null, null, null,
                     null, BRANCH, null,
                     null, BRANCH, null), false, ModItems.WOODEN_CLUB, 1),
-            // The same two, worked to a point with an edge: a spear that outlasts its point.
-            new WorkRecipe("workable_spear", EDGE, ToolUse.WEAR, 1, grid(
-                    null, BRANCH, null,
-                    null, BRANCH, null,
-                    null, null, null), false, ModItems.WORKABLE_SPEAR, 1),
             // A branch set upright in a base of rocks: something to build with.
             new WorkRecipe("building_branch", stack -> true, ToolUse.WEAR, 0, grid(
                     null, null, null,

@@ -1,0 +1,7 @@
+{
+  "parent": "hominin_evolution:item/flake",
+  "textures": {
+    "0": "hominin_evolution:item/flake_basalt",
+    "particle": "hominin_evolution:item/flake_basalt"
+  }
+}

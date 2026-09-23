@@ -119,7 +119,7 @@ public final class Grooming {
         Mating.court(player, member, 1);
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HEART, member.getX(), member.getEyeY() + 0.3D,
                 member.getZ(), 5, 0.3D, 0.2D, 0.3D, 0.0D);
-        dev.hominin.evolution.EvolutionManager.incrementCriterion(player, Band.COHESION, 1);
+        Cohesion.addLimited(player, "groom", 1, 2 * 60 * 20L);
         player.displayClientMessage(Component.literal(picksHair(member)
                 ? member.getName().getString() + " leans into it, and settles. They trust you a little more."
                 : member.getName().getString() + " lets you clean them up, and settles. They trust you a little more.")
@@ -137,7 +137,7 @@ public final class Grooming {
                     3, 0.3D, 0.3D, 0.3D, 0.0D);
         }
         if (groomer.leaderPlayer() instanceof ServerPlayer leader) {
-            dev.hominin.evolution.EvolutionManager.incrementCriterion(leader, Band.COHESION, 1);
+            Cohesion.addLimited(leader, "groomed", 1, 2 * 60 * 20L);
         }
     }
 

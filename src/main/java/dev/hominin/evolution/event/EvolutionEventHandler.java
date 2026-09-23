@@ -136,7 +136,7 @@ public final class EvolutionEventHandler {
         // Banging a branch works against any block, so it is checked before the
         // block-specific interactions below. It has to be an upright face though -
         // you hammer a branch against a trunk, not down into the dirt.
-        if (event.getItemStack().is(ModItems.LONG_BRANCH.get())) {
+        if (ModItems.isLongBranch(event.getItemStack())) {
             if (event.getFace() != null && event.getFace().getAxis().isHorizontal()) {
                 knockForBand(player, event.getLevel(), event.getPos());
             }
@@ -153,6 +153,14 @@ public final class EvolutionEventHandler {
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
+        // A dead trunk, cracked open for the grubs in it.
+        if (state.is(dev.hominin.evolution.ModBlocks.DECAYING_LOG.get())
+                && !(event.getItemStack().getItem() instanceof net.minecraft.world.item.BlockItem)) {
+            if (dev.hominin.evolution.survival.DeadWood.crack(player, event.getPos())) {
+                event.setCanceled(true);
+            }
+            return;
+        }
         // A hearth takes fuel: sticks, branches, grass, logs.
         if (state.is(net.minecraft.world.level.block.Blocks.CAMPFIRE)
                 && dev.hominin.evolution.survival.Hearths.use(player, event.getPos(), event.getItemStack())) {
@@ -458,7 +466,8 @@ public final class EvolutionEventHandler {
         float hammerChance = chert ? CHERT_HAMMERSTONE_FIND_CHANCE : HAMMERSTONE_FIND_CHANCE;
         if ((quartzite || chert) && level.getRandom().nextFloat() < hammerChance
                 && dev.hominin.evolution.hunt.Seams.takeCobble(level, pos)) {
-            giveOrDrop(player, new ItemStack(ModItems.HAMMERSTONE.get()));
+            giveOrDrop(player, dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(ModItems.HAMMERSTONE.get()),
+                    chert ? dev.hominin.evolution.item.StoneMaterial.CHERT : dev.hominin.evolution.item.StoneMaterial.QUARTZITE));
             // Picking the one usable cobble out of a face of rubble is the whole skill.
             ToolUse.creditOldowanTool(player, ModItems.HAMMERSTONE.get());
             player.displayClientMessage(Component.literal(
@@ -486,6 +495,8 @@ public final class EvolutionEventHandler {
             return;
         }
         level.playSound(null, pos, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.PLAYERS, 0.6F, 1.0F);
+        // Each go at the ground is seen: a digging stick is driven in and levered, a stick jabbed.
+        player.swing(InteractionHand.MAIN_HAND, true);
         if (count == 1) {
             Band.leaderForaging(player, pos);
         }
@@ -579,7 +590,9 @@ public final class EvolutionEventHandler {
             boolean threat = mob.getType().is(ModTags.EntityTypes.PREDATORS)
                     || mob instanceof net.minecraft.world.entity.monster.Enemy;
             if ((predatorsOnly && !threat) || !dev.hominin.evolution.combat.Scare.canBeScared(mob)
-                    || mob instanceof dev.hominin.evolution.band.BandMember) {
+                    || mob instanceof dev.hominin.evolution.band.BandMember
+                    || mob instanceof dev.hominin.evolution.entity.Crocuta
+                    || mob instanceof dev.hominin.evolution.entity.Pachycrocuta) {
                 continue;
             }
             if (level.getRandom().nextFloat() >= chance) {
@@ -772,6 +785,8 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.survival.Afflictions.forget(playerId);
             Thinking.forget(leaving);
             Arrival.forget(leaving);
+            dev.hominin.evolution.survival.Seasons.forget(playerId);
+            dev.hominin.evolution.band.Lines.forget(playerId);
         }
         knapProgress.remove(playerId);
         forageProgress.remove(playerId);
@@ -849,6 +864,7 @@ public final class EvolutionEventHandler {
             return;
         }
         creditHunt(event.getSource().getEntity(), entity);
+        creditMegafauna(event.getSource().getEntity(), entity);
         dev.hominin.evolution.hunt.Quarry.creditPersistence(entity);
         checkArmsRace(event, entity);
         dev.hominin.evolution.hunt.Carcasses.onDeath(entity);
@@ -912,6 +928,28 @@ public final class EvolutionEventHandler {
      * A kill only counts as a hunt if the weapon is still in hand when the animal
      * goes down - the point of the criterion is using the tool, not owning it.
      */
+    /**
+     * Megafauna brought down. The hunter is whoever landed the last blow, the leader of the band
+     * member who did, or - for an animal run down until it dropped - whoever first drew its blood.
+     */
+    private static void creditMegafauna(@Nullable net.minecraft.world.entity.Entity killer, LivingEntity victim) {
+        if (!victim.getType().is(dev.hominin.evolution.ModTags.EntityTypes.MEGAFAUNA)) {
+            return;
+        }
+        ServerPlayer hunter = killer instanceof ServerPlayer player ? player
+                : killer instanceof dev.hominin.evolution.band.BandMember member
+                        && member.leaderPlayer() instanceof ServerPlayer leader
+                        && leader.distanceToSqr(member) < 64.0D * 64.0D ? leader
+                : dev.hominin.evolution.hunt.Quarry.firstBloodOf(victim);
+        if (hunter == null) {
+            return;
+        }
+        EvolutionManager.incrementCriterion(hunter, "hunt_megafauna", 1);
+        hunter.sendSystemMessage(Component.literal("The " + victim.getName().getString().toLowerCase()
+                + " is down. There is more meat on it than the band has seen in a season.")
+                .withStyle(ChatFormatting.GOLD));
+    }
+
     private static void creditHunt(@Nullable net.minecraft.world.entity.Entity killer, LivingEntity victim) {
         if (killer instanceof dev.hominin.evolution.band.BandMember member) {
             ItemStack weapon = member.getMainHandItem();
@@ -1044,6 +1082,10 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.hunt.Carcasses.tickLoners(player);
         dev.hominin.evolution.hunt.Predation.tick(player);
         dev.hominin.evolution.hunt.Quarry.tick(player.serverLevel());
+        dev.hominin.evolution.band.Needs.tick(player);
+        dev.hominin.evolution.item.StoneMaterial.tick(player.serverLevel());
+        dev.hominin.evolution.band.Cohesion.tick(player);
+        dev.hominin.evolution.band.Mood.tick(player);
         ThreatDisplay.tick(player);
         dev.hominin.evolution.combat.Bleeding.tick(player);
         dev.hominin.evolution.combat.Bleeding.tickInfection(player);
@@ -1056,6 +1098,9 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.survival.Hearths.tickPlayer(player);
         dev.hominin.evolution.stage.ErectusGoals.tick(player);
         dev.hominin.evolution.band.Mortuary.tick(player);
+        dev.hominin.evolution.band.Morals.tick(player);
+        dev.hominin.evolution.survival.Seasons.tick(player);
+        dev.hominin.evolution.band.Territory.tickNeighbours(player);
         Band.tickPlayer(player);
         dev.hominin.evolution.inventory.InventoryLimits.tick(player);
         dev.hominin.evolution.entity.WildAnimals.tick(player);
@@ -1072,6 +1117,12 @@ public final class EvolutionEventHandler {
         long currentDay = player.level().getDayTime() / TICKS_PER_DAY;
         announceDrought(player, currentDay);
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        // Hands that were already that good when the requirement arrived count at once.
+        if (dev.hominin.evolution.knapping.Acheulean.canUse(player)
+                && !data.getCriterionCounters().containsKey("knapping_level_2")
+                && dev.hominin.evolution.knapping.Acheulean.level(player) <= 2) {
+            EvolutionManager.forceSatisfyCriterion(player, "knapping_level_2");
+        }
         if (data.getLastCountedDay() < 0) {
             data.setLastCountedDay(currentDay);
         } else if (currentDay > data.getLastCountedDay()) {

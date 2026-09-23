@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "name": "cleaver_hold",
+  "description": "The cleaver (or chopper) carried low in front in both hands, blade lying flat and pointing ahead",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 40,
+    "stopTick": 40,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -65.2,
+          "yaw": -29.7,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -66.4,
+          "yaw": 34.9,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -66.5,
+          "yaw": -29.4,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -67.6,
+          "yaw": 34.5,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -1.5,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0001,
+          "z": -0.0092
+        }
+      },
+      {
+        "tick": 40,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -65.2,
+          "yaw": -29.7,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -66.4,
+          "yaw": 34.9,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

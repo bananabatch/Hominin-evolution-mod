@@ -69,15 +69,15 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         clearWidgets();
         toolButtons.clear();
         int x = leftPos + PANEL_X;
-        int tabWidth = PANEL_WIDTH / 2 - 1;
-        for (Industry each : Industry.values()) {
-            Button tab = Button.builder(Component.literal(each.label), b -> {
-                industry = each;
-                rebuild();
-            }).bounds(x + each.ordinal() * (tabWidth + 2), topPos + 4, tabWidth, 16).build();
-            tab.active = each != industry;
-            addRenderableWidget(tab);
-        }
+        // One button, cycling: every industry you could work, one after the next.
+        Button cycle = Button.builder(Component.literal(industry.label + "  \u00BB"), b -> {
+            industry = Industry.values()[(industry.ordinal() + 1) % Industry.values().length];
+            rebuild();
+        }).bounds(x, topPos + 4, PANEL_WIDTH, 16)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "Industry: " + industry.label + ". Click for the next one.")))
+                .build();
+        addRenderableWidget(cycle);
         List<KnappingChoice> choices = industry == Industry.ACHEULEAN ? Acheulean.CHOICES : StationKnapping.OLDOWAN;
         int y = topPos + 26;
         for (KnappingChoice choice : choices) {
@@ -153,6 +153,11 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         }
         if (stone.is(ModItems.LIMESTONE_ROCK.get())) {
             graphics.drawString(font, "Limestone: crude only.", x, y + 2, 0x5A5A5A, false);
+            y += 10;
+        }
+        if (odds[0] > 0.0D) {
+            graphics.drawString(font, "A flawless hand axe", x, y + 2, TIER_COLOURS[0], false);
+            graphics.drawString(font, "is a multitool.", x, y + 11, TIER_COLOURS[0], false);
         }
     }
 

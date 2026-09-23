@@ -1,0 +1,28 @@
+{
+  "name": "Your People's Ways",
+  "icon": "hominin_evolution:hominin_skull",
+  "category": "hominin_evolution:living",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "From erectus there is enough of a mind in a band to hold a rule. Press $(k:hominin_evolution.social) and choose $(l)Culture$(): every way your people could live by, and which they do.$(br2)None of them is simply good. Each pays off in one kind of time and costs in another."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Most only bind in the times they are about. $(l)Hard times$() are a dry season or a dry day; $(l)plenty$() is a prosperous season. The tab shows which of yours bind right now.$(br2)Letting a rule go takes the band two days, and it still binds while it fades. Once gone, it cannot come back for a day."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Our dead stay with us$() - always. You eat of the dead together, every time.$(br2)$(l)It's okay not to share when times are tight$() - in hard times they ask for less and forgive unmet wants, but keep their own food close."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Stealing is wrong when there isn't much$() - in hard times thieves are stopped and made to give it back. Take food from a hungry member yourself and the band sees it.$(br2)$(l)Stealing is wrong even in plenty$() - the same, in a prosperous season."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Sharing is always good$() - shared meals bond more and come twice as often, but an unmet want costs double.$(br2)It cannot be held alongside the tight-times rule. Without any rule, hungry members steal now and then, and the band frays a little each time."
+    }
+  ]
+}

@@ -79,11 +79,19 @@ public final class ModItems {
     public static final DeferredItem<Item> PACHYCROCUTA_SPAWN_EGG = ITEMS.register("pachycrocuta_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PACHYCROCUTA,
                     0x9C8058, 0x4E3A28, new Item.Properties()));
+    /** Clans come as clans: the egg puts down five (see Crocuta#finalizeSpawn). */
+    public static final DeferredItem<Item> CROCUTA_SPAWN_EGG = ITEMS.register("crocuta_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.CROCUTA,
+                    0xC4A46C, 0x3A2A1E, new Item.Properties()));
     public static final DeferredItem<Item> HOMOTHERIUM_SPAWN_EGG = ITEMS.register("homotherium_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.HOMOTHERIUM, 0xC8A05A, 0x3E3226, new Item.Properties()));
 
     public static final DeferredItem<Item> CROWNED_EAGLE_SPAWN_EGG = ITEMS.register("crowned_eagle_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.CROWNED_EAGLE, 0x4A3A2E, 0xD8CBB0, new Item.Properties()));
+
+    public static final DeferredItem<Item> PELOROVIS_SPAWN_EGG = ITEMS.register("pelorovis_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PELOROVIS,
+                    0x4A3E34, 0xC8BCA0, new Item.Properties()));
 
     public static final DeferredItem<Item> SABERTOOTH_SPAWN_EGG = ITEMS.register("sabertooth_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.SABERTOOTH,
@@ -289,18 +297,13 @@ public final class ModItems {
      * and makes a fearsome weapon.
      */
     public static final DeferredItem<Item> HAND_AXE = ITEMS.register("hand_axe",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 3.5D, 1.2D, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 3.5D, 1.2D, true, new Item.Properties()
                     .component(DataComponents.TOOL, handAxe())));
 
     /** A broad straight edge: a butcher's knife that lasts - meat, marrow, grass. */
     public static final DeferredItem<Item> CLEAVER = ITEMS.register("cleaver",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 3.0D, 1.6D, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 3.0D, 1.6D, false, new Item.Properties()
                     .component(DataComponents.TOOL, chopping())));
-
-    /** Everything at once, and a lot of stone: hand axe, cleaver and hammer in one. */
-    public static final DeferredItem<Item> ACHEULEAN_MULTITOOL = ITEMS.register("acheulean_multitool",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(320, 3.25D, 1.3D, new Item.Properties()
-                    .component(DataComponents.TOOL, handAxe())));
 
     /**
      * The primitive work station: a branch driven into a base of rocks, hide lashed round it.
@@ -312,19 +315,21 @@ public final class ModItems {
 
     /**
      * A log or a long branch, split and squared with a hand axe: raw stock for a club, a
-     * proper spear, or building. A long branch works just as well as a whole log.
+     * shaft, or building. In the hand it is still a long branch - the same reach, the same
+     * swing - but worked wood splits, and a worn-out one is only a branch again.
      */
-    public static final DeferredItem<Item> WORKABLE_BRANCH = ITEMS.registerSimpleItem("workable_branch",
-            new Item.Properties());
+    public static final DeferredItem<Item> WORKABLE_BRANCH = ITEMS.register("workable_branch",
+            () -> new dev.hominin.evolution.item.WorkedBranchItem(new Item.Properties()
+                    .durability(48).attributes(weapon(0.5D, 1.0D, 2.0D))));
 
     /**
-     * A workable branch whittled to a point at the work station. It hits harder and lasts
-     * longer than a sharpened spear - and when it finally gives out, the branch underneath
-     * does not go with it.
+     * A workable branch trued with a cleaver: straight, even and smooth from end to end. It is
+     * not a weapon yet - it is what the weapons to come are made on: stone-tipped spears, a
+     * proper digging stick, the long hunting spears. Swung, it is a long branch.
      */
-    public static final DeferredItem<Item> WORKABLE_SPEAR = ITEMS.register("workable_spear",
-            () -> new dev.hominin.evolution.item.WorkableSpearItem(new Item.Properties()
-                    .durability(90).attributes(weapon(5.0D, 1.5D, 2.0D))));
+    public static final DeferredItem<Item> WORKABLE_SHAFT = ITEMS.register("workable_shaft",
+            () -> new dev.hominin.evolution.item.WorkedBranchItem(new Item.Properties()
+                    .durability(64).attributes(weapon(0.5D, 1.0D, 2.0D))));
 
     /**
      * A workable branch set in a base of rock: the beginning of building something rather
@@ -358,6 +363,9 @@ public final class ModItems {
     /** The carcass itself, for anyone who wants to put one down. */
     public static final DeferredItem<Item> CARCASS = ITEMS.register("carcass",
             () -> new BlockItem(ModBlocks.CARCASS.get(), new Item.Properties()));
+
+    public static final DeferredItem<Item> GIANT_CARCASS = ITEMS.register("giant_carcass",
+            () -> new BlockItem(ModBlocks.GIANT_CARCASS.get(), new Item.Properties()));
 
     /**
      * An egg pierced and drunk out, the shell left whole. Ostrich shells were still being
@@ -438,6 +446,14 @@ public final class ModItems {
 
     private static Tool chopping() {
         return new Tool(List.of(Tool.Rule.minesAndDrops(ModTags.Blocks.REQUIRES_STONE_TOOL, 2.0F)), 1.0F, 1);
+    }
+
+    /**
+     * A long branch, or worked wood that still handles like one: the same reach, the same
+     * swing, the same thing to bang on a trunk or hold out at a cat.
+     */
+    public static boolean isLongBranch(net.minecraft.world.item.ItemStack stack) {
+        return stack.is(LONG_BRANCH.get()) || stack.is(WORKABLE_BRANCH.get()) || stack.is(WORKABLE_SHAFT.get());
     }
 
     private static ItemAttributeModifiers weapon(double attackDamage, double attackSpeed, double bonusReach) {

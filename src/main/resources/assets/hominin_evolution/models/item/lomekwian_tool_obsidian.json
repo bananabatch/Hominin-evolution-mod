@@ -1,0 +1,7 @@
+{
+  "parent": "hominin_evolution:item/lomekwian_tool",
+  "textures": {
+    "0": "hominin_evolution:item/lomekwian_tool_obsidian",
+    "particle": "hominin_evolution:item/lomekwian_tool_obsidian"
+  }
+}

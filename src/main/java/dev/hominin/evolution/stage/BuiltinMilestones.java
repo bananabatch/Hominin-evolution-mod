@@ -19,7 +19,8 @@ public final class BuiltinMilestones {
 
     public static void bootstrap() {
         MilestoneHandlers.register(STRIKE_FLAKE, (player, stage) -> {
-            player.addItem(new ItemStack(ModItems.FLAKE.get()));
+            player.addItem(dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(ModItems.FLAKE.get()),
+                    dev.hominin.evolution.item.StoneMaterial.lastStruck(player.getUUID())));
             player.sendSystemMessage(Component.literal("The blow lands where you meant it to. A sharp flake breaks free."));
         });
         MilestoneHandlers.register(WALK_UPRIGHT, (player, stage) -> player.sendSystemMessage(Component.literal(

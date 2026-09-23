@@ -73,7 +73,7 @@ public class ScavengeGoal extends Goal {
     public void start() {
         ticks = 0;
         working = 0;
-        Band.announce(member, " has smelled a kill, and goes to find it.");
+        dev.hominin.evolution.band.Lines.tell(member, "scavenge_go");
         walk();
     }
 
@@ -126,8 +126,7 @@ public class ScavengeGoal extends Goal {
         }
         level.destroyBlock(carcass, false, member);
         if (bone) {
-            Band.announceDiscovery(member, member.getRandom().nextBoolean()
-                    ? ": \"Sweet, a bone!\"" : ": \"There is still marrow in this one!\"");
+            dev.hominin.evolution.band.Lines.say(member, "bone");
         }
         carcass = null;
     }
@@ -160,7 +159,7 @@ public class ScavengeGoal extends Goal {
                     4, 0.2D, 0.1D, 0.2D, 0.0D);
         }
         if (longBone) {
-            Band.announce(member, " cracks a long bone open with a stone and scoops out the marrow.");
+            dev.hominin.evolution.band.Lines.tell(member, "marrow");
         }
         return true;
     }

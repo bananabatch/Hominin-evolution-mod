@@ -38,7 +38,7 @@ public class HomininSkullItem extends Item {
                 new dev.hominin.evolution.network.BodyAnimationPayload(server.getId(), "skull_pose"));
         PacketDistributor.sendToPlayer(server, new dev.hominin.evolution.network.SkullPosePayload());
         dev.hominin.evolution.advancement.HomininAdvancements.award(server, "hominin/tuff_pose");
-        EvolutionManager.incrementCriterion(server, Band.COHESION, 3);
+        dev.hominin.evolution.band.Cohesion.add(server, 3);
         List<BandMember> watching = Band.ownNear(server, AUDIENCE);
         for (BandMember member : watching) {
             member.addBond(1);

@@ -206,35 +206,36 @@ public class CraftGoal extends Goal {
                 if (worn != null && stone != null) {
                     worn.setDamageValue(Math.max(0, worn.getDamageValue() - GRIND_REPAIR));
                     wear(stone);
-                    say(" grinds a fresh edge back onto their " + worn.getHoverName().getString() + ".");
+                    dev.hominin.evolution.band.Lines.announce(member, "craft_regrind",
+                            worn.getHoverName().getString().toLowerCase());
                 }
             }
             case GRINDING_STONE -> {
                 if (take(s -> s.is(ModItems.LIMESTONE_ROCK.get()))) {
-                    make(ModItems.GRINDING_ROCK.get(), " shapes a flat, rough stone for grinding edges.");
+                    make(ModItems.GRINDING_ROCK.get(), "craft_grinding");
                 }
             }
             case SPEAR -> {
                 if (take(s -> s.is(ModItems.LONG_BRANCH.get()) || member.getMainHandItem().is(ModItems.LONG_BRANCH.get()))) {
                     wear(find(s -> s.is(ModTags.Items.FLAKES)));
-                    make(ModItems.SHARPENED_SPEAR.get(), " whittles a branch into a Sharpened Spear with a flake.");
+                    make(ModItems.SHARPENED_SPEAR.get(), "craft_spear");
                 }
             }
             case POINTY_STICK -> {
                 if (take(s -> s.is(Items.STICK) || s.is(ModItems.SHARPENED_STICK.get()))) {
                     wear(find(s -> s.is(ModTags.Items.FLAKES)));
-                    make(ModItems.POINTY_STICK.get(), " works a flake along a stick and makes a Pointy Stick.");
+                    make(ModItems.POINTY_STICK.get(), "craft_pointy");
                 }
             }
             case FLAKE -> {
                 if (takeStone()) {
-                    make(ModItems.FLAKE.get(), " strikes a sharp Flake off a stone.");
+                    make(ModItems.FLAKE.get(), "craft_flake");
                 }
             }
             case CHOPPER -> {
                 if (takeStone()) {
                     member.markMadeChopper();
-                    make(ModItems.CHOPPER.get(), " batters a stone down into a Chopper.");
+                    make(ModItems.CHOPPER.get(), "craft_chopper");
                 }
             }
             case HAND_AXE -> {
@@ -249,12 +250,11 @@ public class CraftGoal extends Goal {
                 }
                 int quality = dev.hominin.evolution.knapping.Acheulean.rollQuality(member.getKnapLevel(), kind,
                         member.getRandom());
-                member.addToInventory(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get())
-                        .make(quality));
+                member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stampFrom(
+                        ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get()).make(quality), kind));
                 member.practiseKnapping();
-                Band.announceDiscovery(member, " sits at the knapping station and shapes a "
-                        + dev.hominin.evolution.item.AcheuleanToolItem.TIER_NAMES[quality].toLowerCase()
-                        + " hand axe (tier " + quality + ").");
+                dev.hominin.evolution.band.Lines.announce(member, "craft_hand_axe",
+                        dev.hominin.evolution.item.AcheuleanToolItem.TIER_NAMES[quality].toLowerCase(), quality);
             }
             case MULTITOOL -> {
                 Item stone = count(ModItems.CHERT_HAMMERSTONE.get()) >= 1 ? ModItems.CHERT_HAMMERSTONE.get()
@@ -263,19 +263,16 @@ public class CraftGoal extends Goal {
                 for (int i = 0; i < cost; i++) {
                     take(s -> s.is(stone));
                 }
-                make(ModItems.OLDOWAN_MULTITOOL.get(), " works a stone on both faces into an Oldowan Multitool!");
+                make(ModItems.OLDOWAN_MULTITOOL.get(), "craft_multitool");
             }
         }
     }
 
-    private void make(Item item, String announcement) {
-        member.addToInventory(new ItemStack(item));
-        Band.announceDiscovery(member, announcement);
+    /** Makes the thing, and tells the leader - in one of several ways, never the same twice running. */
+    private void make(Item item, String kind) {
+        member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(item), worked));
+        dev.hominin.evolution.band.Lines.announce(member, kind);
         Band.contribute(member, "craft_oldowan_tools");
-    }
-
-    private void say(String rest) {
-        Band.announceDiscovery(member, rest);
     }
 
     private void wear(@Nullable ItemStack tool) {
@@ -321,10 +318,18 @@ public class CraftGoal extends Goal {
                 ? member.getMainHandItem() : null;
     }
 
+    /** The stone last taken to work, so whatever it becomes is made of it. */
+    @Nullable
+    private dev.hominin.evolution.item.StoneMaterial worked;
+
     private boolean take(Predicate<ItemStack> test) {
         ItemStack stack = find(test);
         if (stack == null) {
             return false;
+        }
+        dev.hominin.evolution.item.StoneMaterial material = dev.hominin.evolution.item.StoneMaterial.ofStone(stack);
+        if (material != null) {
+            worked = material;
         }
         stack.shrink(1);
         return true;

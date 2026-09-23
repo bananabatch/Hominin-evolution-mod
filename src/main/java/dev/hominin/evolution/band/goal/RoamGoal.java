@@ -28,6 +28,10 @@ public class RoamGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (member.isInjured()) {
+            // Laid up: nobody goes far on a bad leg.
+            return false;
+        }
         if (!member.isAlpha() || member.isGuest() || member.getLeavePos() != null || member.getRandom().nextInt(300) != 0) {
             return false;
         }

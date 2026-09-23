@@ -37,8 +37,12 @@ public final class Developer {
             case DEV_BOND_UP -> bond(player, entityId, 5);
             case DEV_BOND_DOWN -> bond(player, entityId, -5);
             case DEV_COHESION -> {
-                EvolutionManager.incrementCriterion(player, Band.COHESION, 10);
-                yield "Band cohesion is now " + counters.getOrDefault(Band.COHESION, 0) + ".";
+                Cohesion.add(player, 10);
+                yield "Band cohesion is now " + Cohesion.get(player) + "/" + Cohesion.MAX + ".";
+            }
+            case DEV_COHESION_DOWN -> {
+                Cohesion.add(player, -10);
+                yield "Band cohesion is now " + Cohesion.get(player) + "/" + Cohesion.MAX + ".";
             }
             case DEV_TROOP_TRUST -> troop(player, TroopRelations.TRUSTED);
             case DEV_TROOP_GRUDGE -> troop(player, -1);

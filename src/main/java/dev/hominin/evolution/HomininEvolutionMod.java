@@ -61,6 +61,9 @@ public class HomininEvolutionMod {
             }
         });
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Hides::onDrops);
+        // After everything else has added its drops, so the season scales the lot.
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW,
+                dev.hominin.evolution.survival.Seasons::onDrops);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onEntityJoinLevel);
@@ -80,6 +83,8 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
         NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Persistence::onHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.item.StoneMaterial::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Carcasses::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.Afflictions::onHeal);
         // High, so a wrestle is cancelled before anything treats it as a real blow.
@@ -96,9 +101,11 @@ public class HomininEvolutionMod {
             event.put(ModEntities.BONOBO.get(), dev.hominin.evolution.entity.Bonobo.createAttributes().build());
             event.put(ModEntities.CROCODILE.get(), dev.hominin.evolution.entity.Crocodile.createAttributes().build());
             event.put(ModEntities.PACHYCROCUTA.get(), dev.hominin.evolution.entity.Pachycrocuta.createAttributes().build());
+            event.put(ModEntities.CROCUTA.get(), dev.hominin.evolution.entity.Crocuta.createAttributes().build());
             event.put(ModEntities.SABERTOOTH.get(), dev.hominin.evolution.entity.Sabertooth.createAttributes().build());
             event.put(ModEntities.HOMOTHERIUM.get(), dev.hominin.evolution.entity.Homotherium.createAttributes().build());
             event.put(ModEntities.CROWNED_EAGLE.get(), dev.hominin.evolution.entity.CrownedEagle.createAttributes().build());
+            event.put(ModEntities.PELOROVIS.get(), dev.hominin.evolution.entity.Pelorovis.createAttributes().build());
         });
         NeoForge.EVENT_BUS.addListener(HomininAdvancements::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerLoggedIn);

@@ -18,7 +18,10 @@
         "body": {
           "pitch": 0,
           "yaw": 0,
-          "roll": 0
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
         },
         "head": {
           "pitch": 0,
@@ -50,9 +53,12 @@
         "tick": 12,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -4,
+          "pitch": 4,
           "yaw": -8,
-          "roll": 0
+          "roll": 0,
+          "x": -0.0034,
+          "y": -0.0009,
+          "z": 0.0242
         },
         "head": {
           "pitch": -4,
@@ -84,9 +90,12 @@
         "tick": 52,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -4,
+          "pitch": 4,
           "yaw": -8,
-          "roll": 0
+          "roll": 0,
+          "x": -0.0034,
+          "y": -0.0009,
+          "z": 0.0242
         },
         "head": {
           "pitch": -4,
@@ -118,9 +127,12 @@
         "tick": 60,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -4,
+          "pitch": 4,
           "yaw": -8,
-          "roll": 0
+          "roll": 0,
+          "x": -0.0034,
+          "y": -0.0009,
+          "z": 0.0242
         },
         "head": {
           "pitch": -4,

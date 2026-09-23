@@ -29,7 +29,7 @@ public class BrainBleedEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Bypasses armour deliberately - the injury is already inside the skull.
-        entity.hurt(entity.damageSources().magic(), DAMAGE_PER_TICK);
+        entity.hurt(entity.damageSources().source(dev.hominin.evolution.combat.Bleeding.BRAIN_BLEED), DAMAGE_PER_TICK);
         return true;
     }
 }

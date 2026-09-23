@@ -1230,5 +1230,37 @@
         1.4
       ]
     }
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.1
+      },
+      "model": "hominin_evolution:item/hammerstone_basalt"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.2
+      },
+      "model": "hominin_evolution:item/hammerstone_quartzite"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.3
+      },
+      "model": "hominin_evolution:item/hammerstone_chert"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.4
+      },
+      "model": "hominin_evolution:item/hammerstone_limestone"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.5
+      },
+      "model": "hominin_evolution:item/hammerstone_obsidian"
+    }
+  ]
 }

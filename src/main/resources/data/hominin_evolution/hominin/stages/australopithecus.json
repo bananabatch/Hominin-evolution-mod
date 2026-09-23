@@ -10,8 +10,8 @@
       },
       {
         "id": "survive_days",
-        "description": "Survive 2 days.",
-        "count": 2
+        "description": "Survive 3 days.",
+        "count": 3
       }
     ],
     "optional_pool": [

@@ -31,6 +31,23 @@ public class HomininEvolutionClient {
         modContainer.registerConfig(ModConfig.Type.CLIENT, HomininModels.SPEC);
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         modEventBus.addListener(HomininModels::registerLayerDefinitions);
+        // Every stone tool looks like the stone it was made from.
+        modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) -> event.enqueueWork(() -> {
+            net.minecraft.resources.ResourceLocation material = net.minecraft.resources.ResourceLocation
+                    .fromNamespaceAndPath(dev.hominin.evolution.HomininEvolutionMod.MODID, "material");
+            for (var item : java.util.List.of(dev.hominin.evolution.ModItems.FLAKE, dev.hominin.evolution.ModItems.CHOPPER,
+                    dev.hominin.evolution.ModItems.HAMMERSTONE, dev.hominin.evolution.ModItems.LOMEKWIAN_TOOL,
+                    dev.hominin.evolution.ModItems.OLDOWAN_MULTITOOL, dev.hominin.evolution.ModItems.GRINDING_ROCK,
+                    dev.hominin.evolution.ModItems.HAND_AXE, dev.hominin.evolution.ModItems.CLEAVER)) {
+                net.minecraft.client.renderer.item.ItemProperties.register(item.get(), material,
+                        (stack, level, entity, seed) -> {
+                            Integer stone = stack.get(dev.hominin.evolution.ModDataComponents.MATERIAL.get());
+                            return stone == null ? 0.0F : (stone + 1) / 10.0F;
+                        });
+            }
+        }));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) ->
+                dev.hominin.evolution.item.StoneMaterial.describe(event.getItemStack(), event.getToolTip()));
         modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) -> {
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
@@ -50,6 +67,8 @@ public class HomininEvolutionClient {
                     dev.hominin.evolution.client.model.WildAnimalLayers::homotherium);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crowned_eagle"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::crownedEagle);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pelorovis"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::pelorovis);
         });
         modEventBus.addListener(HomininModels::addLayers);
         // Lowest, so nothing cancels the render after the pose has been pushed.
@@ -77,13 +96,20 @@ public class HomininEvolutionClient {
                             "dinopithecus", 1.45F, 0.7F));
             event.registerEntityRenderer(ModEntities.PACHYCROCUTA.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
-                            "pachycrocuta", 1.15F, 0.7F));
+                            "pachycrocuta", 1.55F, 1.0F));
+            // A hyena is a hyena: the same build, smaller, spotted and sandy.
+            event.registerEntityRenderer(ModEntities.CROCUTA.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pachycrocuta"),
+                            "crocuta", 0.85F, 0.5F));
             event.registerEntityRenderer(ModEntities.SABERTOOTH.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("sabertooth"),
                             "sabertooth", 1.2F, 0.8F));
             event.registerEntityRenderer(ModEntities.HOMOTHERIUM.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("homotherium"),
                             "homotherium", 1.15F, 0.8F));
+            event.registerEntityRenderer(ModEntities.PELOROVIS.get(), ctx -> new dev.hominin.evolution.client.model
+                    .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pelorovis"),
+                            "pelorovis", 1.4F, 1.1F));
             event.registerEntityRenderer(ModEntities.CROWNED_EAGLE.get(), ctx -> new dev.hominin.evolution.client.model
                     .BirdRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crowned_eagle"),
                             "crowned_eagle", 1.0F, 0.4F));

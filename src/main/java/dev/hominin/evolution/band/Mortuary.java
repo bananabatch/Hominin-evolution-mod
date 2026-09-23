@@ -89,7 +89,7 @@ public final class Mortuary {
         if (hasNorm(player)) {
             if (counters(player).getOrDefault(DUE, 0) > 0 && !band.isEmpty()) {
                 counters(player).remove(DUE);
-                EvolutionManager.incrementCriterion(player, Band.COHESION, 3);
+                Cohesion.add(player, 3);
                 player.sendSystemMessage(Component.literal("You eat of the dead with the band, as is right. They stay "
                         + "with you now.").withStyle(ChatFormatting.GOLD));
                 // Somebody at the feast takes the brain if you did not.
@@ -106,8 +106,7 @@ public final class Mortuary {
             int last = counters(player).getOrDefault(LAST_DISAPPROVAL, -DISAPPROVAL_GAP_MINUTES);
             if (!band.isEmpty() && minute - last >= DISAPPROVAL_GAP_MINUTES) {
                 counters(player).put(LAST_DISAPPROVAL, minute);
-                int cohesion = counters(player).getOrDefault(Band.COHESION, 0);
-                counters(player).put(Band.COHESION, Math.max(0, cohesion - 1));
+                Cohesion.add(player, -1, "given our dead their due");
                 player.displayClientMessage(Component.literal("The band watches you eat it, and something in them pulls "
                         + "back. (Cohesion -1)").withStyle(ChatFormatting.GRAY), true);
             }
@@ -132,8 +131,7 @@ public final class Mortuary {
             return;
         }
         counters(player).remove(DUE);
-        int cohesion = counters(player).getOrDefault(Band.COHESION, 0);
-        counters(player).put(Band.COHESION, Math.max(0, cohesion - 8));
+        Cohesion.add(player, -8, "kept to our way with the dead");
         for (BandMember member : Band.all(player)) {
             member.addBond(-1);
         }

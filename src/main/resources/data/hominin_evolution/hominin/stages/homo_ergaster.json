@@ -5,8 +5,8 @@
     "required": [
       {
         "id": "survive_days",
-        "description": "Survive 4 days.",
-        "count": 4
+        "description": "Survive 6 days.",
+        "count": 6
       }
     ],
     "optional_pool": [

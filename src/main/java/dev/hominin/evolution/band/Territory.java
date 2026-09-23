@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import dev.hominin.evolution.survival.Drought;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -52,7 +51,79 @@ public final class Territory {
     public static boolean hasAccess(BandMember member) {
         UUID band = member.getBandId();
         Claim claim = band == null ? null : claims.get(band);
-        return claim == null || claim.granted() || claim.uses() < WARN_AT;
+        return claim == null || claim.granted() || claim.uses() < warnAt(member);
+    }
+
+    /** How much of their ground a band watches you use before it speaks: less in the dry, more in the rains. */
+    private static int warnAt(net.minecraft.world.entity.Entity near) {
+        var level = near.level();
+        return dev.hominin.evolution.survival.Seasons.strained(level) ? WARN_AT / 2
+                : dev.hominin.evolution.survival.Seasons.plentiful(level) ? WARN_AT * 2 : WARN_AT;
+    }
+
+    // ------------------------------------------------------------ neighbours, by season
+
+    private static final Map<UUID, Long> metThisSeason = new HashMap<>();
+    private static final double NEIGHBOUR_RANGE = 10.0D;
+
+    /**
+     * Walking up to another band's camp. In the dry they bare their teeth and tell you to keep
+     * away; in the rains somebody comes over with food. Once per band per season.
+     */
+    public static void tickNeighbours(ServerPlayer player) {
+        if (player.tickCount % 40 != 20 || player.isSpectator()) {
+            return;
+        }
+        boolean hard = dev.hominin.evolution.survival.Seasons.strained(player.level());
+        boolean plenty = dev.hominin.evolution.survival.Seasons.plentiful(player.level());
+        if (!hard && !plenty) {
+            return;
+        }
+        long season = dev.hominin.evolution.survival.Drought.dayOf(player.level()) / dev.hominin.evolution.survival.Seasons.DAYS;
+        for (BandMember member : Band.near(player, NEIGHBOUR_RANGE)) {
+            UUID band = member.getBandId();
+            if (!member.isWild() || band == null || member.isBaby() || member.isGuestOf(player)
+                    || Paranthropus.is(member)) {
+                continue;
+            }
+            Claim claim = claims.get(band);
+            if (claim != null && claim.granted()) {
+                continue;
+            }
+            UUID key = new UUID(band.getMostSignificantBits() ^ player.getUUID().getMostSignificantBits(),
+                    band.getLeastSignificantBits() ^ season);
+            if (metThisSeason.containsKey(key)) {
+                continue;
+            }
+            if (metThisSeason.size() > 2048) {
+                metThisSeason.clear();
+            }
+            metThisSeason.put(key, season);
+            member.ensureName();
+            String name = member.getName().getString();
+            if (hard) {
+                Band.memberDisplay(member, 2);
+                player.sendSystemMessage(Component.literal("<" + name + "> ").withStyle(ChatFormatting.GOLD)
+                        .append(Component.literal(member.getRandom().nextBoolean()
+                                ? "There is not enough here for you as well. Keep walking."
+                                : "Not this season. Go and find your own water.").withStyle(ChatFormatting.WHITE)));
+            } else {
+                ItemStack food = member.takeFood();
+                if (food.isEmpty()) {
+                    food = new ItemStack(net.minecraft.world.item.Items.SWEET_BERRIES, 2);
+                }
+                member.getNavigation().moveTo(player, 1.0D);
+                player.sendSystemMessage(Component.literal("<" + name + "> ").withStyle(ChatFormatting.GOLD)
+                        .append(Component.literal("There is plenty this season. Here - eat.")
+                                .withStyle(ChatFormatting.WHITE)));
+                player.displayClientMessage(Component.literal(name + " hands you " + food.getHoverName().getString()
+                        + ".").withStyle(ChatFormatting.GREEN), true);
+                if (!player.getInventory().add(food)) {
+                    player.drop(food, false);
+                }
+            }
+            return;
+        }
     }
 
     /** Asking, trading, or travelling together buys the right to drink there. */
@@ -97,13 +168,13 @@ public final class Territory {
     private static void maybeSpeak(ServerPlayer player, BandMember member, UUID band, int uses) {
         Claim claim = claims.get(band);
         long now = player.level().getGameTime();
-        if (uses < WARN_AT || now - claim.lastWord() < COOLDOWN_TICKS) {
+        if (uses < warnAt(player) || now - claim.lastWord() < COOLDOWN_TICKS) {
             return;
         }
         claims.put(band, new Claim(claim.home(), uses, false, now));
         member.ensureName();
         String name = member.getName().getString();
-        boolean drought = Drought.isActive(player.level());
+        boolean drought = dev.hominin.evolution.survival.Seasons.strained(player.level());
         boolean erectus = member.getStage().getPath().equals("homo_erectus")
                 || member.getStage().getPath().equals("homo_heidelbergensis")
                 || member.getStage().getPath().equals("homo_sapiens");
@@ -150,8 +221,9 @@ public final class Territory {
 
     /** Whether this band will walk with the player today. */
     public static boolean willTravelWith(BandMember member, ServerPlayer player) {
-        if (Drought.isActive(player.level()) && !hasAccess(member)) {
-            return false;
+        // In the rains nobody minds company. In hard times, only those who have paid their way.
+        if (dev.hominin.evolution.survival.Seasons.plentiful(player.level())) {
+            return true;
         }
         return hasAccess(member);
     }

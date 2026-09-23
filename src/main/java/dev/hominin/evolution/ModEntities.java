@@ -61,7 +61,13 @@ public final class ModEntities {
     public static final Supplier<EntityType<dev.hominin.evolution.entity.Pachycrocuta>> PACHYCROCUTA =
             ENTITY_TYPES.register("pachycrocuta", () -> EntityType.Builder.<dev.hominin.evolution.entity.Pachycrocuta>of(
                     dev.hominin.evolution.entity.Pachycrocuta::new, MobCategory.CREATURE)
-                    .sized(1.1F, 1.4F).clientTrackingRange(10).build("pachycrocuta"));
+                    .sized(1.5F, 1.8F).clientTrackingRange(12).build("pachycrocuta"));
+
+    /** The clan hyena: the spotted hyena's early line, and the thing hominins fought over carcasses with. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Crocuta>> CROCUTA =
+            ENTITY_TYPES.register("crocuta", () -> EntityType.Builder.<dev.hominin.evolution.entity.Crocuta>of(
+                    dev.hominin.evolution.entity.Crocuta::new, MobCategory.CREATURE)
+                    .sized(0.9F, 1.1F).clientTrackingRange(10).build("crocuta"));
 
     public static final Supplier<EntityType<dev.hominin.evolution.entity.Sabertooth>> SABERTOOTH =
             ENTITY_TYPES.register("sabertooth", () -> EntityType.Builder.<dev.hominin.evolution.entity.Sabertooth>of(
@@ -73,6 +79,12 @@ public final class ModEntities {
             ENTITY_TYPES.register("homotherium", () -> EntityType.Builder.<dev.hominin.evolution.entity.Homotherium>of(
                     dev.hominin.evolution.entity.Homotherium::new, MobCategory.CREATURE)
                     .sized(1.2F, 1.5F).clientTrackingRange(10).build("homotherium"));
+
+    /** The giant buffalo: megafauna, and what an erectus hunt is measured against. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Pelorovis>> PELOROVIS =
+            ENTITY_TYPES.register("pelorovis", () -> EntityType.Builder.<dev.hominin.evolution.entity.Pelorovis>of(
+                    dev.hominin.evolution.entity.Pelorovis::new, MobCategory.CREATURE)
+                    .sized(1.9F, 1.9F).clientTrackingRange(10).build("pelorovis"));
 
     /** The bird that takes children out of the open. */
     public static final Supplier<EntityType<dev.hominin.evolution.entity.CrownedEagle>> CROWNED_EAGLE =

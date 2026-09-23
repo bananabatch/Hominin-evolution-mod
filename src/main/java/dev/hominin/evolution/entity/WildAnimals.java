@@ -32,7 +32,10 @@ public final class WildAnimals {
     private static final int TROOP_MIN = 14;
     private static final int TROOP_MAX = 20;
 
-    private static final float HYENA_CHANCE = 0.15F;
+    /** The giant hyena is a loner, and a rare one. */
+    private static final float HYENA_CHANCE = 0.08F;
+    /** Clans roam the grass, and ignore you unless you come near their food. */
+    private static final float CLAN_CHANCE = 0.2F;
     private static final float SABERTOOTH_CHANCE = 0.07F;
     /** One bird over the country at a time, and only by day. */
     private static final float EAGLE_CHANCE = 0.12F;
@@ -48,6 +51,9 @@ public final class WildAnimals {
     private static final float CHIMP_SAVANNA_CHANCE = 0.03F;
     /** Bonobos: erectus onward, by rivers and at forest edges. */
     private static final float BONOBO_CHANCE = 0.3F;
+    /** A herd of giant buffalo out on the grass. Common enough to hunt; big enough to regret it. */
+    private static final float PELOROVIS_CHANCE = 0.3F;
+
     /** A crocodile in any warm water worth drinking from - and twice as likely in a drought. */
     private static final float CROCODILE_CHANCE = 0.3F;
 
@@ -62,8 +68,11 @@ public final class WildAnimals {
             return;
         }
         RandomSource random = player.getRandom();
-        if (none(player, Pachycrocuta.class, 128.0D) && random.nextFloat() < HYENA_CHANCE) {
-            spawnGroup(player, ModEntities.PACHYCROCUTA.get(), random.nextFloat() < 0.3F ? 2 : 1, 40, 70);
+        if (none(player, Pachycrocuta.class, 192.0D) && random.nextFloat() < HYENA_CHANCE) {
+            spawnGroup(player, ModEntities.PACHYCROCUTA.get(), 1, 45, 80);
+        }
+        if (none(player, Crocuta.class, 128.0D) && random.nextFloat() < CLAN_CHANCE) {
+            spawnClan(player, random);
         }
         if (none(player, Sabertooth.class, 160.0D) && random.nextFloat() < SABERTOOTH_CHANCE) {
             spawnGroup(player, ModEntities.SABERTOOTH.get(), 1, 50, 90);
@@ -82,8 +91,11 @@ public final class WildAnimals {
         if (!stillAround(player) && none(player, Bonobo.class, 160.0D) && random.nextFloat() < BONOBO_CHANCE) {
             spawnBonobos(player, random);
         }
-        float crocodile = dev.hominin.evolution.survival.Drought.isActive(player.level())
+        float crocodile = dev.hominin.evolution.survival.Seasons.strained(player.level())
                 ? CROCODILE_CHANCE * 2.0F : CROCODILE_CHANCE;
+        if (none(player, Pelorovis.class, 160.0D) && random.nextFloat() < PELOROVIS_CHANCE) {
+            spawnHerd(player, random);
+        }
         if (none(player, Crocodile.class, 96.0D) && random.nextFloat() < crocodile) {
             spawnCrocodile(player, random);
         }
@@ -157,6 +169,36 @@ public final class WildAnimals {
             if (bonobo != null) {
                 bonobo.joinTroop(troop, hunted);
             }
+        }
+    }
+
+    /** A clan of three to five, wandering together until something dies. */
+    private static void spawnClan(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos site = findSite(level, player.blockPosition(), 45, 85, random, true);
+        if (site == null || Bonobo.sanctuary(level, site)) {
+            return;
+        }
+        UUID clan = UUID.randomUUID();
+        int size = 3 + random.nextInt(3);
+        for (int i = 0; i < size; i++) {
+            Crocuta hyena = place(level, ModEntities.CROCUTA.get(), site, 1 + random.nextInt(4));
+            if (hyena != null) {
+                hyena.joinClan(clan);
+            }
+        }
+    }
+
+    /** Three to five Pelorovis, grazing together in open homeland. */
+    private static void spawnHerd(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos site = findSite(level, player.blockPosition(), 50, 90, random, true);
+        if (site == null) {
+            return;
+        }
+        int size = 3 + random.nextInt(3);
+        for (int i = 0; i < size; i++) {
+            place(level, ModEntities.PELOROVIS.get(), site, 2 + random.nextInt(5));
         }
     }
 

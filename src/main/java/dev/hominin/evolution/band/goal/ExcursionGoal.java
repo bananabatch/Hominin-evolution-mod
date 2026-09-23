@@ -27,6 +27,10 @@ public class ExcursionGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (member.isInjured()) {
+            // Laid up: nobody goes far on a bad leg.
+            return false;
+        }
         return member.isOnExcursion() && member.getExcursionTarget() != null && !member.isUpATree();
     }
 

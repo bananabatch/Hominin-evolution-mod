@@ -32,6 +32,10 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> PACHYCROCUTA_AMBIENT = register("pachycrocuta_ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> PACHYCROCUTA_HURT = register("pachycrocuta_hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> PACHYCROCUTA_GROWL = register("pachycrocuta_growl");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCUTA_WHOOP = register("crocuta_whoop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCUTA_BARK = register("crocuta_bark");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCUTA_GIGGLE = register("crocuta_giggle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCUTA_HURT = register("crocuta_hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> SABERTOOTH_AMBIENT = register("sabertooth_ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> SABERTOOTH_HURT = register("sabertooth_hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> SABERTOOTH_ROAR = register("sabertooth_roar");

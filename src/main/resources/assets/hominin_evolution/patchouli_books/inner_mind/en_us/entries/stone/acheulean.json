@@ -10,11 +10,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Open the station and lay things out on it: a hammerstone, a bone for the fine flakes, and as much stone as you like - four rows of it. It all stays there.$(br2)Along the top, choose the industry: $(l)Oldowan$() needs only the hammer, $(l)Acheulean$() the bone as well. Then choose what to make. The first stone laid out is the one worked."
+      "text": "Open the station and lay things out on it: a hammerstone, a bone for the fine flakes, and as much stone as you like - four rows of it. It all stays there.$(br2)The button along the top cycles the industry: $(l)Oldowan$() needs only the hammer, $(l)Acheulean$() the bone as well. Then choose what to make. The first stone laid out is the one worked."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Hand axe$() - chops wood at last.$(br)$(l)Cleaver$() - a knife that lasts, and it chops too.$(br)$(l)Multitool$() - both, for four stones.$(br2)The panel beside the buttons shows your chances of each tier with the stone laid out first, at the skill you have now."
+      "text": "$(l)Hand axe$() - fells trees and works any wood at last.$(br)$(l)Cleaver$() - a knife that lasts; on a trunk it hacks branches off, like a chopper.$(br2)There is no separate multitool in the Acheulean: a $(l)flawless hand axe$() is one. It does a hand axe's work and a flake's and a hammerstone's.$(br2)The panel shows your chances of each tier with the stone laid out first."
     },
     {
       "type": "patchouli:text",

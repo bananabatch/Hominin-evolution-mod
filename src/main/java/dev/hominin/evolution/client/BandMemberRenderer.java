@@ -1,6 +1,7 @@
 package dev.hominin.evolution.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import dev.hominin.evolution.band.BandMember;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -25,6 +26,31 @@ public class BandMemberRenderer extends HumanoidMobRenderer<BandMember, BandMemb
     @Override
     public ResourceLocation getTextureLocation(BandMember member) {
         return HomininModels.lookForStage(member.getStage()).skin();
+    }
+
+    /**
+     * The whole-body lean an animation asks for, done exactly as Player Animator does it for a
+     * player - shift, then roll, yaw and pitch about a point at the hips - so a band member and
+     * its leader lean the same way from the same file.
+     */
+    @Override
+    protected void setupRotations(BandMember member, PoseStack poseStack, float bob, float yBodyRot,
+            float partialTick, float scale) {
+        super.setupRotations(member, poseStack, bob, yBodyRot, partialTick, scale);
+        BandMemberModel.Playing playing = BandMemberModel.playing(member, bob, member.getAttackAnim(partialTick));
+        KeyframeAnimations.BodyPose pose = playing == null ? null : playing.animation().bodyPose(playing.tick());
+        if (pose == null) {
+            return;
+        }
+        float size = HomininModels.lookForStage(member.getStage()).scale();
+        // Player Animator pivots 0.7 blocks up, a player's hips. A seated member's hips are down on
+        // the ground, and it hunches over its legs from there.
+        float pivot = member.isGrieving() ? 0.75F * size - SEATED_DROP : 0.7F * size;
+        poseStack.translate(pose.x() * size, pose.y() * size + pivot, pose.z() * size);
+        poseStack.mulPose(Axis.ZP.rotation(pose.roll()));
+        poseStack.mulPose(Axis.YP.rotation(pose.yaw()));
+        poseStack.mulPose(Axis.XP.rotation(pose.pitch()));
+        poseStack.translate(0.0F, -pivot, 0.0F);
     }
 
     @Override

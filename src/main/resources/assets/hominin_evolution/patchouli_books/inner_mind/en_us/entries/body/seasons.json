@@ -1,0 +1,16 @@
+{
+  "name": "The Seasons",
+  "icon": "minecraft:dead_bush",
+  "category": "hominin_evolution:body",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The savanna has two seasons, not four, and each lasts five days.$(br2)In the $(l)rains$() - a prosperous season - everything is green. Foraging is easy, kills and carcasses are fat, dry days are rare, and other bands are generous: they trade cheaper, walk with anyone, and may hand you food."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "In the $(l)dry$() the grass burns off. Foraging is hard, kills and carcasses give up far less, and most second days are dry days - never two in a row. Other bands keep what they have, trade dearer, and tell you to keep walking.$(br2)Tribe stats shows the season and how long is left."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Hyenas",
+  "icon": "hominin_evolution:crocuta_spawn_egg",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "There are two kinds, and they want different things from you.$(br2)$(l)Crocuta$(), the clan hyena - sandy, spotted, smaller than you think - lives in clans of three to six. It does not care about you at all. Until you go near its food."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Come within nine blocks of a carcass a clan is on and they turn, bristle and $(l)bark$(). That is the warning. Back off and it ends there. Stay, and a few seconds later the whole clan comes for you - though they run you off the food, not across the plain.$(br2)Clans also come for kills they did not make. Yours included."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)threat display$() at a clan is a bluff, and they know it. With the band shouting behind you it breaks them more often - they scatter giggling off the kill - but it can fail, and then they call it and come at once. Kill one and the rest may lose their nerve. Either way, running a clan off a kill counts."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Pachycrocuta$(), the giant hyena, is alone and enormous. It lives off other animals' kills, and a megafauna carcass is what it wants most. Standing over one does not warn it off: it comes straight through you for it.$(br2)Between meals it stalks the band."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "It follows at a distance and freezes whenever you look. Go too long without looking and it picks one of the band - a child, a straggler - kills them, and is gone into the grass before anyone can turn.$(br2)A display only sometimes moves it. Watching it is the real defence."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)giant carcass$() is what a megafauna kill leaves: a ribcage you could stand inside. Crack it open with a $(l)hammerstone$() for a great deal of meat, ribs and bone. A clan strips one over four sittings if nobody is standing over it, and you can see the meat going."
+    }
+  ]
+}

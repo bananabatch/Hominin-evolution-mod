@@ -1,0 +1,16 @@
+{
+  "name": "Megafauna",
+  "icon": "hominin_evolution:pelorovis_spawn_egg",
+  "category": "hominin_evolution:hunting",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Pelorovis$() - a buffalo too big for the word, with horns two metres across. Herds of three to five graze the open grass.$(br2)It starts nothing. Strike a healthy one and it turns on you, and the herd comes with it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Wear it past half its strength and it breaks and runs - and then it is a persistence hunt like any other, with a great deal more at the end: meat, hides, bone, and a large carcass.$(br2)Erectus must bring down one of the megafauna - a Pelorovis, or one of the great predators - to go further."
+    }
+  ]
+}

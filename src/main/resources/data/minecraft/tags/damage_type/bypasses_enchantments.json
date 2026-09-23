@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hominin_evolution:kuru"
+    "hominin_evolution:kuru",
+    "hominin_evolution:bled_out"
   ]
 }

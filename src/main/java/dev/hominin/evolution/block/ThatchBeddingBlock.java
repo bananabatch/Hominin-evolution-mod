@@ -14,12 +14,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -28,14 +31,40 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * A proper bed: a layer of thatch under stretched hide, softer and warmer than a nest, though
  * a nest still keeps ticks off you better. Two of these laid side by side are what it takes
  * to lie down in - one on its own is only a mat.
+ *
+ * <p>Beds laid against each other become one bed: the hide runs straight across the join with
+ * no hem, the pillows meet, and a bed joined at its head end gives up its pillow to the one it
+ * joins. A second bed laid beside the first turns to face the same way.
  */
 public class ThatchBeddingBlock extends HorizontalDirectionalBlock {
     public static final MapCodec<ThatchBeddingBlock> CODEC = simpleCodec(ThatchBeddingBlock::new);
     private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 9.0, 16.0);
+    public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
+    public static final BooleanProperty EAST = BlockStateProperties.EAST;
+    public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
+    public static final BooleanProperty WEST = BlockStateProperties.WEST;
 
     public ThatchBeddingBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(NORTH, false)
+                .setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false));
+    }
+
+    private static BooleanProperty side(Direction direction) {
+        return switch (direction) {
+            case EAST -> EAST;
+            case SOUTH -> SOUTH;
+            case WEST -> WEST;
+            default -> NORTH;
+        };
+    }
+
+    /** Which sides another bed is laid against. */
+    private BlockState joined(BlockState state, BlockGetter level, BlockPos pos) {
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            state = state.setValue(side(direction), level.getBlockState(pos.relative(direction)).is(this));
+        }
+        return state;
     }
 
     @Override
@@ -45,12 +74,27 @@ public class ThatchBeddingBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, NORTH, EAST, SOUTH, WEST);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+        Direction facing = context.getHorizontalDirection();
+        // Laid beside another bed, it lines up with that one, so the two make a single bed.
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            BlockState beside = context.getLevel().getBlockState(context.getClickedPos().relative(direction));
+            if (beside.is(this)) {
+                facing = beside.getValue(FACING);
+                break;
+            }
+        }
+        return joined(defaultBlockState().setValue(FACING, facing), context.getLevel(), context.getClickedPos());
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbour, LevelAccessor level,
+            BlockPos pos, BlockPos neighbourPos) {
+        return direction.getAxis().isHorizontal() ? state.setValue(side(direction), neighbour.is(this)) : state;
     }
 
     @Override
@@ -60,12 +104,9 @@ public class ThatchBeddingBlock extends HorizontalDirectionalBlock {
 
     /** Any of the four blocks beside this one, of the same kind, makes a pair worth sleeping in. */
     private boolean hasPartner(BlockGetter level, BlockPos pos) {
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (level.getBlockState(pos.relative(direction)).is(this)) {
-                return true;
-            }
-        }
-        return false;
+        BlockState state = level.getBlockState(pos);
+        return state.is(this) && (state.getValue(NORTH) || state.getValue(EAST) || state.getValue(SOUTH)
+                || state.getValue(WEST));
     }
 
     @Override

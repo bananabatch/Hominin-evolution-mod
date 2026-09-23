@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/cleaver",
+  "textures": {
+    "stone": "hominin_evolution:item/stone/quartzite_body",
+    "edge": "hominin_evolution:item/stone/quartzite_edge",
+    "scar": "hominin_evolution:item/stone/quartzite_scar",
+    "particle": "hominin_evolution:item/stone/quartzite_body"
+  }
+}

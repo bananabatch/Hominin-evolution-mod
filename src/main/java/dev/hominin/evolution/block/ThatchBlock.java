@@ -49,9 +49,31 @@ public class ThatchBlock extends Block {
     @Override
     protected void randomTick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos,
             RandomSource random) {
-        if (!state.getValue(CURED) && random.nextFloat() < DECAY_CHANCE) {
+        if (!state.getValue(CURED) && random.nextFloat() < DECAY_CHANCE && !sheltered(level, pos)) {
             level.destroyBlock(pos, false);
         }
+    }
+
+    /** How far up a stack of thatch a hide-covered block still shelters what is under it. */
+    private static final int SHELTER_REACH = 24;
+
+    /**
+     * Hide stretched over thatch anywhere above, in an unbroken stack of thatch, keeps the weather
+     * off everything under it: a hide roof protects the whole wall beneath it.
+     */
+    public static boolean sheltered(net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        BlockPos.MutableBlockPos above = pos.mutable();
+        for (int i = 0; i < SHELTER_REACH; i++) {
+            above.move(net.minecraft.core.Direction.UP);
+            BlockState state = level.getBlockState(above);
+            if (!(state.getBlock() instanceof ThatchBlock)) {
+                return false;
+            }
+            if (state.getValue(CURED)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

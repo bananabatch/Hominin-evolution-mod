@@ -60,7 +60,7 @@ public final class StationKnapping {
             say(player, "There is no stone laid out.");
             return;
         }
-        int cost = choice == KnappingChoice.ACHEULEAN_MULTITOOL ? Acheulean.MULTITOOL_STONE_COST : Acheulean.STONE_COST;
+        int cost = Acheulean.STONE_COST;
         Item kind = first.getItem();
         if (count(station, kind) < cost) {
             say(player, "That takes " + cost + " " + first.getHoverName().getString().toLowerCase()
@@ -76,6 +76,7 @@ public final class StationKnapping {
 
     private static void oldowan(ServerPlayer player, Container station, KnappingChoice choice, BlockPos pos) {
         Item result;
+        dev.hominin.evolution.item.StoneMaterial material = null;
         switch (choice) {
             case FLAKE, CHOPPER -> {
                 ItemStack stone = firstStone(station, StationKnapping::holdsAnEdge);
@@ -83,6 +84,7 @@ public final class StationKnapping {
                     say(player, "Limestone will not take an edge. Lay out something harder.");
                     return;
                 }
+                material = dev.hominin.evolution.item.StoneMaterial.ofStone(stone);
                 take(station, stone.getItem(), 1);
                 result = choice == KnappingChoice.FLAKE ? ModItems.FLAKE.get() : ModItems.CHOPPER.get();
             }
@@ -95,16 +97,20 @@ public final class StationKnapping {
                     say(player, "There is no stone laid out.");
                     return;
                 }
+                material = dev.hominin.evolution.item.StoneMaterial.ofStone(stone);
                 take(station, stone.getItem(), 1);
                 result = ModItems.GRINDING_ROCK.get();
             }
             case MULTITOOL -> {
                 if (count(station, ModItems.CHERT_HAMMERSTONE.get()) >= 1) {
                     take(station, ModItems.CHERT_HAMMERSTONE.get(), 1);
+                    material = dev.hominin.evolution.item.StoneMaterial.CHERT;
                 } else if (count(station, ModItems.OBSIDIAN_ROCK.get()) >= MULTITOOL_OBSIDIAN) {
                     take(station, ModItems.OBSIDIAN_ROCK.get(), MULTITOOL_OBSIDIAN);
+                    material = dev.hominin.evolution.item.StoneMaterial.OBSIDIAN;
                 } else if (count(station, ModItems.CHERT_ROCK.get()) >= MULTITOOL_CHERT) {
                     take(station, ModItems.CHERT_ROCK.get(), MULTITOOL_CHERT);
+                    material = dev.hominin.evolution.item.StoneMaterial.CHERT;
                 } else {
                     say(player, "A multi tool takes 8 chert, 2 obsidian, or a chert hammerstone.");
                     return;
@@ -115,7 +121,7 @@ public final class StationKnapping {
                 return;
             }
         }
-        ItemStack made = new ItemStack(result);
+        ItemStack made = dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(result), material);
         if (!player.getInventory().add(made)) {
             player.drop(made, false);
         }

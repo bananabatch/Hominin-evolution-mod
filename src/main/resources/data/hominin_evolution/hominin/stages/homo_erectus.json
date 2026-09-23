@@ -5,8 +5,8 @@
     "required": [
       {
         "id": "survive_days",
-        "description": "Survive 2 days.",
-        "count": 2
+        "description": "Survive 6 days.",
+        "count": 6
       },
       {
         "id": "make_acheulean_tool",
@@ -16,6 +16,16 @@
       {
         "id": "hearth_night",
         "description": "Spend a night by a lit hearth.",
+        "count": 1
+      },
+      {
+        "id": "hunt_megafauna",
+        "description": "Hunt a megafauna animal - a Pelorovis, or a great predator.",
+        "count": 1
+      },
+      {
+        "id": "knapping_level_2",
+        "description": "Become a level 2 knapper (make Acheulean tools).",
         "count": 1
       }
     ],

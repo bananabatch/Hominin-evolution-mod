@@ -79,7 +79,7 @@ public final class ThreatDisplay {
     private static final Map<UUID, Long> nextHop = new HashMap<>();
 
     public static boolean isThrowable(ItemStack stack) {
-        return stack.is(ModItems.LONG_BRANCH.get())
+        return ModItems.isLongBranch(stack)
                 || stack.is(ModItems.ROCK.get())
                 || stack.is(ModTags.Items.KNAPPABLE_STONE);
     }
@@ -107,6 +107,7 @@ public final class ThreatDisplay {
         int startled = EvolutionEventHandler.startleNearby(player, radius,
                 Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
         startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
+        startled += dev.hominin.evolution.entity.Crocuta.displayAt(player, radius + 8.0D, band);
         startled += dev.hominin.evolution.band.Paranthropus.scareNear(player, radius + 8.0D);
         if (dev.hominin.evolution.band.Mating.guarding(player)) {
             // Guarding a birth: nothing gets past this, not even what fears nothing.
@@ -147,7 +148,7 @@ public final class ThreatDisplay {
         }
         boolean displaying = displays(player);
         Throw style = displaying ? WILD_THROW : AIMED_THROW;
-        boolean branch = held.is(ModItems.LONG_BRANCH.get());
+        boolean branch = ModItems.isLongBranch(held);
 
         ThrownObject thrown = new ThrownObject(player.level(), player);
         thrown.setItem(held.copyWithCount(1));

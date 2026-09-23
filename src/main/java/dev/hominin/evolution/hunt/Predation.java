@@ -10,6 +10,7 @@ import dev.hominin.evolution.ModEntities;
 import dev.hominin.evolution.ModTags;
 import dev.hominin.evolution.band.Band;
 import dev.hominin.evolution.band.BandMember;
+import dev.hominin.evolution.entity.Bonobo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -113,6 +114,7 @@ public final class Predation {
             return;
         }
         ServerLevel level = player.serverLevel();
+        tickRange(player, level);
         Camp camp = camps.get(player.getUUID());
         if (camp == null) {
             camps.put(player.getUUID(), new Camp(player.blockPosition(), 0.0F, false));
@@ -140,7 +142,8 @@ public final class Predation {
             camps.put(player.getUUID(), new Camp(camp.anchor(), Math.max(0.0F, camp.pressure() - 3.0F), camp.warned()));
             return;
         }
-        float gain = 3.0F;
+        // A band that has lived here for days is a routine everything knows.
+        float gain = overstayed(player) ? 6.0F : 3.0F;
         if (dev.hominin.evolution.survival.Kuru.has(player)) {
             // Stumbling, shaking, easy: everything out there can tell.
             gain += 8.0F;
@@ -212,9 +215,10 @@ public final class Predation {
         float roll = level.random.nextFloat();
         if (level.isDay()) {
             // Daylight in the open belongs to the scimitar cat.
-            return roll < 0.6F ? ModEntities.HOMOTHERIUM.get() : ModEntities.PACHYCROCUTA.get();
+            return roll < 0.8F ? ModEntities.HOMOTHERIUM.get() : ModEntities.PACHYCROCUTA.get();
         }
-        if (roll < 0.45F) {
+        // The giant hyena is a rare, dreadful visitor now, not the usual one.
+        if (roll < 0.25F) {
             return ModEntities.PACHYCROCUTA.get();
         }
         return standing(player) >= 2 ? ModEntities.SABERTOOTH.get() : ModEntities.HOMOTHERIUM.get();
@@ -235,6 +239,141 @@ public final class Predation {
             }
         }
         return null;
+    }
+
+    // ------------------------------------------------------------ the home range
+
+    /**
+     * The long view of the same argument. Camp pressure is a night or two in one spot; the home
+     * range is days on the same country. Stay within 200 blocks of where you have been living
+     * for two whole days and everything that hunts there has learned you: it comes more often,
+     * it takes food out of the band's hands, and now and then it takes one of you.
+     */
+    private static final String RANGE_X = "range_x";
+    private static final String RANGE_Z = "range_z";
+    private static final String RANGE_SINCE = "range_since_minute";
+    private static final String RANGE_TOLD = "range_told";
+    private static final String RANGE_NEXT = "range_next_minute";
+    private static final int RANGE_RADIUS = 200;
+    private static final long WARN_TICKS = 36000L;
+    private static final long OVERSTAY_TICKS = 48000L;
+    /** Minutes between the country's reminders once you have overstayed. */
+    private static final int INCIDENT_MINUTES = 3;
+
+    private static java.util.Map<String, Integer> counters(ServerPlayer player) {
+        return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+    }
+
+    /** Days lived off the country you are in now. */
+    public static float daysOnGround(ServerPlayer player) {
+        Integer since = counters(player).get(RANGE_SINCE);
+        if (since == null) {
+            return 0.0F;
+        }
+        return (player.level().getGameTime() / 1200L - since) * 1200L / 24000.0F;
+    }
+
+    public static boolean overstayed(ServerPlayer player) {
+        return daysOnGround(player) * 24000.0F >= OVERSTAY_TICKS;
+    }
+
+    private static void tickRange(ServerPlayer player, ServerLevel level) {
+        var counters = counters(player);
+        int minute = (int) (level.getGameTime() / 1200L);
+        BlockPos here = player.blockPosition();
+        if (!counters.containsKey(RANGE_SINCE)) {
+            counters.put(RANGE_X, here.getX());
+            counters.put(RANGE_Z, here.getZ());
+            counters.put(RANGE_SINCE, minute);
+            counters.put(RANGE_TOLD, 0);
+            return;
+        }
+        int cx = counters.get(RANGE_X);
+        int cz = counters.get(RANGE_Z);
+        double dx = here.getX() - cx;
+        double dz = here.getZ() - cz;
+        if (dx * dx + dz * dz > (double) RANGE_RADIUS * RANGE_RADIUS) {
+            if (counters.getOrDefault(RANGE_TOLD, 0) > 0) {
+                player.sendSystemMessage(Component.literal(
+                        "New country. Nothing here knows your band yet.").withStyle(ChatFormatting.GREEN));
+            }
+            counters.put(RANGE_X, here.getX());
+            counters.put(RANGE_Z, here.getZ());
+            counters.put(RANGE_SINCE, minute);
+            counters.put(RANGE_TOLD, 0);
+            counters.remove(RANGE_NEXT);
+            return;
+        }
+        // The range's heart drifts to wherever you actually spend your time.
+        counters.put(RANGE_X, cx + (int) Math.round(dx / 40.0D));
+        counters.put(RANGE_Z, cz + (int) Math.round(dz / 40.0D));
+        long stayed = (long) (minute - counters.get(RANGE_SINCE)) * 1200L;
+        int told = counters.getOrDefault(RANGE_TOLD, 0);
+        if (stayed >= WARN_TICKS && told < 1) {
+            counters.put(RANGE_TOLD, 1);
+            player.sendSystemMessage(Component.literal("A day and a half on this ground. The things that hunt here "
+                    + "are starting to know your band's ways. Half a day more and they will act on it - move on "
+                    + "(200 blocks) before then.").withStyle(ChatFormatting.GOLD));
+        }
+        if (stayed < OVERSTAY_TICKS) {
+            return;
+        }
+        if (told < 2) {
+            counters.put(RANGE_TOLD, 2);
+            counters.put(RANGE_NEXT, minute + 1);
+            player.sendSystemMessage(Component.literal("Two days on the same ground. Everything that hunts here "
+                    + "knows your band now - where you sleep, where you eat, who lags behind. Move on.")
+                    .withStyle(ChatFormatting.RED));
+        }
+        if (minute < counters.getOrDefault(RANGE_NEXT, 0) || Bonobo.sanctuary(level, here)) {
+            return;
+        }
+        counters.put(RANGE_NEXT, minute + INCIDENT_MINUTES + level.random.nextInt(3));
+        incident(player, level);
+    }
+
+    /** The country reminds you: a visitor, a theft, or an ambush on whoever strays. */
+    private static void incident(ServerPlayer player, ServerLevel level) {
+        float roll = level.random.nextFloat();
+        java.util.List<BandMember> band = Band.ownNear(player, 64.0D);
+        if (roll < 0.35F && !band.isEmpty()) {
+            java.util.List<BandMember> fed = band.stream().filter(BandMember::hasFood).toList();
+            if (!fed.isEmpty()) {
+                BandMember robbed = fed.get(level.random.nextInt(fed.size()));
+                ItemStack taken = robbed.takeFood();
+                if (level.random.nextBoolean()) {
+                    robbed.takeFood();
+                }
+                robbed.ensureName();
+                player.sendSystemMessage(Component.literal("While nobody watched, something got into "
+                        + robbed.getName().getString() + "'s food and made off with " + taken.getHoverName().getString()
+                        + ". It knows this camp.").withStyle(ChatFormatting.RED));
+                return;
+            }
+        }
+        if (roll > 0.8F && !band.isEmpty()) {
+            // Whoever is furthest out: the one a hunter that knows you waits for.
+            BandMember straggler = band.get(0);
+            for (BandMember member : band) {
+                if (member.distanceToSqr(player) > straggler.distanceToSqr(player)) {
+                    straggler = member;
+                }
+            }
+            BlockPos site = siteNear(level, straggler.blockPosition(), 8, 14);
+            EntityType<? extends Mob> type = chooseVisitor(player, level);
+            Mob hunter = site == null ? null : type.create(level);
+            if (hunter != null) {
+                hunter.moveTo(site.getX() + 0.5D, site.getY(), site.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
+                hunter.finalizeSpawn(level, level.getCurrentDifficultyAt(site), MobSpawnType.EVENT, null);
+                level.addFreshEntity(hunter);
+                hunter.setTarget(straggler);
+                straggler.ensureName();
+                player.sendSystemMessage(Component.literal("Something has been waiting for one of you to stray - and "
+                        + straggler.getName().getString() + " has.").withStyle(ChatFormatting.DARK_RED));
+                return;
+            }
+        }
+        sendVisitor(player, level);
     }
 
     /** How settled this camp has become, for anything that wants to read it. */

@@ -40,7 +40,9 @@ public final class BlockBreakHandler {
             new ToolGate(ModTags.Blocks.REQUIRES_HAND_AXE, ModTags.Items.HAND_AXE_TOOLS,
                     "You cannot fell wood with your hands."),
             new ToolGate(ModTags.Blocks.REQUIRES_HAFTED_TOOL, ModTags.Items.HAFTED_TOOLS,
-                    "You have no tool that can break this."));
+                    "You have no tool that can break this."),
+            new ToolGate(ModTags.Blocks.REQUIRES_HAMMERSTONE, ModTags.Items.HAMMERSTONES,
+                    "It is far too big to pull apart. Crack it open with a hammerstone."));
 
     private static final long BLOCKED_MESSAGE_COOLDOWN_TICKS = 60L;
 
@@ -178,7 +180,7 @@ public final class BlockBreakHandler {
             if (state.is(gate.blocks())) {
                 // A chopper cannot fell a tree, but it can hack a branch off one,
                 // so it has to be allowed to swing at logs. See choppedBranchOff.
-                if (state.is(ModTags.Blocks.REQUIRES_HAND_AXE) && held.is(ModTags.Items.CHOPPERS)) {
+                if (state.is(net.minecraft.tags.BlockTags.LOGS) && held.is(ModTags.Items.CHOPPERS)) {
                     return true;
                 }
                 return held.is(gate.tools());
@@ -195,11 +197,12 @@ public final class BlockBreakHandler {
      * should be cancelled so the log survives.
      */
     private static boolean choppedBranchOff(Player player, BlockState state, BlockPos pos) {
-        if (player.isCreative() || !state.is(ModTags.Blocks.REQUIRES_HAND_AXE)) {
+        // Only a trunk has branches to hack off - and a hand axe fells it outright instead.
+        if (player.isCreative() || !state.is(net.minecraft.tags.BlockTags.LOGS)) {
             return false;
         }
         ItemStack held = player.getMainHandItem();
-        if (!held.is(ModTags.Items.CHOPPERS)) {
+        if (!held.is(ModTags.Items.CHOPPERS) || held.is(ModTags.Items.HAND_AXE_TOOLS)) {
             return false;
         }
         Level level = player.level();

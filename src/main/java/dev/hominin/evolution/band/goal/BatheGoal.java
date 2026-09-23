@@ -62,7 +62,7 @@ public class BatheGoal extends Goal {
     public void start() {
         ticks = 0;
         bathing = 0;
-        Band.announce(member, " wades into the water to cool off.");
+        dev.hominin.evolution.band.Lines.tell(member, "bathe");
         walk();
     }
 

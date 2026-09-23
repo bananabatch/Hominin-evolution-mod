@@ -114,13 +114,23 @@ public class SocialScreen extends Screen {
         if (guiding) {
             return false;
         }
-        if (command == Social.Command.TRIBE) {
+        if (command == Social.Command.TRIBE || command == Social.Command.PROMISE) {
             return targetId < 0 && !otherBand;
+        }
+        if (command == Social.Command.SHUN) {
+            return targetId >= 0 && !otherBand;
+        }
+        if (command == Social.Command.PASS_AROUND) {
+            return !otherBand;
+        }
+        if (command == Social.Command.KNAP) {
+            // Asked of one member of your own band, picked out.
+            return targetId >= 0 && !otherBand;
         }
         if (command == Social.Command.HAVE_CHILD || command == Social.Command.MAKE_MATE) {
             return targetId >= 0 && !otherBand;
         }
-        if (command == Social.Command.NORM_DEAD) {
+        if (command == Social.Command.CULTURE) {
             // A rule for your own band, and only for a mind that can hold one: erectus on.
             net.minecraft.resources.ResourceLocation stage = Minecraft.getInstance().player == null ? null
                     : ClientSync.stageOf(Minecraft.getInstance().player.getUUID());
@@ -180,6 +190,11 @@ public class SocialScreen extends Screen {
                     continue;
                 }
                 addRenderableWidget(Button.builder(Component.literal(candidate.label()), b -> {
+                    if (candidate == Social.Topic.CULTURE) {
+                        // Culture is a screen of its own: straight there.
+                        PacketDistributor.sendToServer(new SocialCommandPayload(-1, Social.Command.CULTURE.ordinal()));
+                        return;
+                    }
                     topic = candidate;
                     rebuildWidgets();
                 }).bounds(x, y, BUTTON_WIDTH, 20).build());

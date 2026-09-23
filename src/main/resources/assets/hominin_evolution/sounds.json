@@ -118,5 +118,52 @@
         "pitch": 1.3
       }
     ]
+  },
+  "crocuta_whoop": {
+    "subtitle": "subtitles.hominin_evolution.crocuta_whoop",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf.howl",
+        "type": "event",
+        "pitch": 1.5,
+        "volume": 0.6
+      }
+    ]
+  },
+  "crocuta_bark": {
+    "subtitle": "subtitles.hominin_evolution.crocuta_bark",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.aggro",
+        "type": "event",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity.wolf.growl",
+        "type": "event",
+        "pitch": 0.95
+      }
+    ]
+  },
+  "crocuta_giggle": {
+    "subtitle": "subtitles.hominin_evolution.crocuta_giggle",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.screech",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.7
+      }
+    ]
+  },
+  "crocuta_hurt": {
+    "subtitle": "subtitles.hominin_evolution.crocuta_hurt",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf.hurt",
+        "type": "event",
+        "pitch": 1.0
+      }
+    ]
   }
 }

@@ -42,6 +42,8 @@ public final class ModTags {
         public static final TagKey<Block> REQUIRES_STONE_TOOL = block("requires_stone_tool");
         public static final TagKey<Block> REQUIRES_HAND_AXE = block("requires_hand_axe");
         public static final TagKey<Block> REQUIRES_HAFTED_TOOL = block("requires_hafted_tool");
+        /** Too big to pull apart by hand: a giant carcass has to be cracked open with a hammerstone. */
+        public static final TagKey<Block> REQUIRES_HAMMERSTONE = block("requires_hammerstone");
 
         private Blocks() {
         }
@@ -80,6 +82,12 @@ public final class ModTags {
         /** Anything with a fine cutting edge: whittling, and cracking bones. */
         public static final TagKey<Item> FLAKES = item("flakes");
 
+        /**
+         * Tools that do every job at once. The Oldowan multi tool is in the tag; a flawless
+         * hand axe joins it by its quality rather than its item (see AcheuleanToolItem).
+         */
+        public static final TagKey<Item> MULTITOOLS = item("multitools");
+
         /** Anything with a worked edge that will cut rather than crush. */
         public static final TagKey<Item> CUTTING_EDGE = item("cutting_edge");
 
@@ -117,6 +125,12 @@ public final class ModTags {
          * predators can be added.
          */
         public static final TagKey<EntityType<?>> PREDATORS = entityType("predators");
+
+        /**
+         * The big animals of the Pleistocene - the giant buffalo, and the great predators. Bringing
+         * one of these down is a hunt in the full sense, and it is what erectus has to manage.
+         */
+        public static final TagKey<EntityType<?>> MEGAFAUNA = entityType("megafauna");
 
         /** Predators no threat display will move. */
         public static final TagKey<EntityType<?>> FEARLESS = entityType("fearless");

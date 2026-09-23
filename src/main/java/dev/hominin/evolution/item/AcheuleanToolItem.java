@@ -33,16 +33,36 @@ public class AcheuleanToolItem extends Item {
     private final int baseDurability;
     private final double baseDamage;
     private final double attackSpeed;
+    /** Whether a flawless one of these is the industry's multitool - true of the hand axe. */
+    private final boolean multitoolWhenFlawless;
 
-    public AcheuleanToolItem(int baseDurability, double baseDamage, double attackSpeed, Properties properties) {
+    public AcheuleanToolItem(int baseDurability, double baseDamage, double attackSpeed, boolean multitoolWhenFlawless,
+            Properties properties) {
         super(properties.durability(baseDurability));
         this.baseDurability = baseDurability;
         this.baseDamage = baseDamage;
         this.attackSpeed = attackSpeed;
+        this.multitoolWhenFlawless = multitoolWhenFlawless;
     }
 
     public static int qualityOf(ItemStack stack) {
         return stack.getOrDefault(ModDataComponents.QUALITY.get(), 4);
+    }
+
+    /**
+     * A flawless hand axe does everything: it is balanced and thin enough to take the place of
+     * a flake and heavy enough to strike with, on top of all a hand axe already does. There is
+     * no separate multitool in the Acheulean - there is only the hand axe done perfectly.
+     */
+    public static boolean isMultitool(ItemStack stack) {
+        return stack.getItem() instanceof AcheuleanToolItem tool && tool.multitoolWhenFlawless && qualityOf(stack) == 0;
+    }
+
+    /** The jobs a flawless hand axe takes on, as tags every check already asks about. */
+    public static boolean isMultitoolRole(net.minecraft.tags.TagKey<Item> tag) {
+        return tag.equals(dev.hominin.evolution.ModTags.Items.MULTITOOLS)
+                || tag.equals(dev.hominin.evolution.ModTags.Items.FLAKES)
+                || tag.equals(dev.hominin.evolution.ModTags.Items.HAMMERSTONES);
     }
 
     /** A fresh tool of this quality: durability and edge to match. */
@@ -86,6 +106,10 @@ public class AcheuleanToolItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         int quality = qualityOf(stack);
         tooltip.add(Component.literal("Tier " + quality + " - " + TIER_NAMES[quality]).withStyle(TIER_COLOURS[quality]));
+        if (isMultitool(stack)) {
+            tooltip.add(Component.literal("Multitool").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+            tooltip.add(Component.literal("Also a flake and a hammerstone.").withStyle(ChatFormatting.GRAY));
+        }
     }
 
     public static ResourceLocation id(String path) {

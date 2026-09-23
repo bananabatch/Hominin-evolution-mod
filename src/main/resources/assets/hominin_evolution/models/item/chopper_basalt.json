@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/chopper",
+  "textures": {
+    "cortex": "hominin_evolution:item/stone/basalt_cortex",
+    "worked": "hominin_evolution:item/stone/basalt_scar",
+    "edge": "hominin_evolution:item/stone/basalt_edge",
+    "particle": "hominin_evolution:item/stone/basalt_cortex"
+  }
+}

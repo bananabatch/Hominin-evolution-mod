@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "name": "digging_stick_jab",
+  "description": "Both hands raise the digging stick and stab it down and forward into whatever is in front, the body driving it",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 12,
+    "stopTick": 12,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -20.0,
+          "yaw": 0.0,
+          "roll": -6.0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": -4
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -72.0,
+          "yaw": -28.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -96.6,
+          "yaw": 45.9,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 6,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0019,
+          "z": 0.0366
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeInCubic",
+        "rightArm": {
+          "pitch": -70.0,
+          "yaw": -24.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -100.7,
+          "yaw": 52.3,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0104,
+          "z": -0.0847
+        }
+      },
+      {
+        "tick": 8,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -71.5,
+          "yaw": -24.0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -101.6,
+          "yaw": 52.6,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -18,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": -0.0,
+          "y": -0.0171,
+          "z": -0.1082
+        }
+      },
+      {
+        "tick": 12,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -20.0,
+          "yaw": 0.0,
+          "roll": -6.0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": -4
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0.0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

@@ -110,6 +110,15 @@ public final class EvolutionManager {
                 nextStageId = detour;
             }
         }
+        become(player, nextStageId);
+    }
+
+    /**
+     * Turns the player into this stage the whole way: the stage itself, the announcement, the
+     * old band left behind, and - from any earlier stage - the cutscene, the move, the fresh
+     * inventory and a new band. Evolving goes through here; so does {@code /hominin become}.
+     */
+    public static void become(ServerPlayer player, ResourceLocation nextStageId) {
         StageDefinition nextStage = StageRegistry.get(nextStageId);
         if (nextStage == null) {
             return;
@@ -125,7 +134,16 @@ public final class EvolutionManager {
         // satisfy habilis criteria the player never actually went looking for.
         data.setStageStartWalkDistance(player.walkDist);
         data.setDistanceCredits(0);
+        // Said goodbye to while the old band is still standing: one name crosses with you,
+        // under the species they actually walked as rather than the one you are now.
+        dev.hominin.evolution.band.Remembrance.keep(player,
+                previousStage == null ? null : previousStage.displayName());
         announceEvolution(player, nextStage);
+        // A new body, new hands: erectus on, what you start able to do is rolled, and told once the
+        // new band is round you.
+        if (dev.hominin.evolution.hunt.Persistence.rollsSkills(nextStageId)) {
+            dev.hominin.evolution.hunt.Persistence.rollFor(player);
+        }
         StageSync.sync(player);
         HomininAdvancements.awardStages(player);
         Band.evolveWith(player, nextStageId);

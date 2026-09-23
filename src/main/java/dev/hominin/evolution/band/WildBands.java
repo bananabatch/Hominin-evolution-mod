@@ -199,7 +199,9 @@ public final class WildBands {
 
     private static void equip(BandMember member, RandomSource random) {
         if (random.nextFloat() < 0.3F) {
-            member.getInventory().addItem(new ItemStack(ModItems.LOMEKWIAN_TOOL.get()));
+            member.getInventory().addItem(dev.hominin.evolution.item.StoneMaterial.stamp(
+                    new ItemStack(ModItems.LOMEKWIAN_TOOL.get()), random.nextBoolean()
+                            ? dev.hominin.evolution.item.StoneMaterial.BASALT : dev.hominin.evolution.item.StoneMaterial.QUARTZITE));
         }
         if (random.nextFloat() < 0.3F) {
             member.getInventory().addItem(new ItemStack(ModItems.TERMITE_STICK.get()));

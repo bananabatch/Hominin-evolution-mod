@@ -332,6 +332,12 @@ public final class Mating {
                 && !member.hasEffect(dev.hominin.evolution.ModEffects.BLEEDING);
     }
 
+    /** From joining a band to looking for a mate: one to three days. */
+    private static final int PAIR_MIN_TICKS = 24000;
+    private static final int PAIR_SPREAD_TICKS = 48000;
+    /** The share who never pair up by themselves (you can still ask them). */
+    private static final float NEVER_PAIRS = 0.3F;
+
     /** Once a minute or so, per member of a player's band. */
     public static void tickMember(BandMember member) {
         if (!thriving(member) || !(member.leaderPlayer() instanceof ServerPlayer leader)) {
@@ -341,9 +347,20 @@ public final class Mating {
         boolean bonds = pairBonds(member.getStage());
         UUID mateId = member.getMate();
         if (bonds && mateId == null) {
+            // Nobody arrives paired. A member takes a day or three to settle on anyone - and some
+            // never do, on their own.
+            long now = member.level().getGameTime();
+            if (member.getPairReadyAt() < 0L) {
+                member.setPairReadyAt(member.getRandom().nextFloat() < NEVER_PAIRS ? Long.MAX_VALUE
+                        : now + PAIR_MIN_TICKS + member.getRandom().nextInt(PAIR_SPREAD_TICKS));
+            }
+            if (now < member.getPairReadyAt() || member.getRandom().nextInt(4) != 0) {
+                return;
+            }
             for (BandMember other : near) {
                 if (other != member && other.isFemale() != member.isFemale() && other.getMate() == null
-                        && other.isLedBy(leader) && thriving(other)) {
+                        && other.isLedBy(leader) && thriving(other) && other.getPairReadyAt() >= 0L
+                        && now >= other.getPairReadyAt()) {
                     member.setMate(other.getUUID());
                     other.setMate(member.getUUID());
                     member.ensureName();

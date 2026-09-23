@@ -116,6 +116,16 @@ public final class ModBlocks {
                             .noOcclusion()
                             .randomTicks());
 
+    /** A megafauna kill: a ribcage you could stand inside. */
+    public static final DeferredBlock<dev.hominin.evolution.block.GiantCarcassBlock> GIANT_CARCASS =
+            BLOCKS.registerBlock("giant_carcass", dev.hominin.evolution.block.GiantCarcassBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.TERRACOTTA_WHITE)
+                            .strength(1.0F)
+                            .noOcclusion()
+                            .randomTicks()
+                            .sound(SoundType.BONE_BLOCK));
+
     public static final DeferredBlock<dev.hominin.evolution.block.CarcassBlock> CARCASS = BLOCKS.registerBlock(
             "carcass", dev.hominin.evolution.block.CarcassBlock::new,
             BlockBehaviour.Properties.of()

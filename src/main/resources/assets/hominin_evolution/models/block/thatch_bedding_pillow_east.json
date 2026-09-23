@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "straw": "hominin_evolution:block/thatch_bedding_side",
+    "fur": "hominin_evolution:block/thatch_bedding_top",
+    "hem": "hominin_evolution:block/thatch_bedding_hem",
+    "pillow": "hominin_evolution:block/thatch_bedding_pillow",
+    "particle": "hominin_evolution:block/thatch_bedding_top"
+  },
+  "elements": [
+    {
+      "from": [
+        14.5,
+        5.5,
+        0.75
+      ],
+      "to": [
+        16,
+        8.5,
+        4.75
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pillow"
+        },
+        "south": {
+          "texture": "#pillow"
+        },
+        "east": {
+          "texture": "#pillow"
+        },
+        "west": {
+          "texture": "#pillow"
+        },
+        "up": {
+          "texture": "#pillow"
+        },
+        "down": {
+          "texture": "#pillow"
+        }
+      }
+    }
+  ]
+}

@@ -121,7 +121,7 @@ public final class Knapping {
      */
     public static void resolve(ServerPlayer player, @Nullable KnappingChoice choice) {
         if (choice != null && Acheulean.isAcheulean(choice)) {
-            Acheulean.resolve(player, choice);
+            // The Acheulean is worked at a knapping station, from what is laid out there.
             return;
         }
         ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
@@ -130,6 +130,9 @@ public final class Knapping {
             return;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        // Whatever comes out of this strike is made of this stone.
+        dev.hominin.evolution.item.StoneMaterial.struckBy(player.getUUID(),
+                dev.hominin.evolution.item.StoneMaterial.ofStone(main));
 
         if (choice == KnappingChoice.SPLIT_CORE) {
             splitCore(player, main);
@@ -151,6 +154,18 @@ public final class Knapping {
         // Soft stone ruins an edge but makes a fine grinding face - limestone and
         // sandstone were the abrasives of choice for exactly that reason.
         boolean good = isGoodStone(main) || choice == KnappingChoice.GRINDING_STONE;
+        if (!good || overreaching) {
+            // A Lomekwian core is a mistake that happens to have an edge - and the hands that keep
+            // making that mistake need a rest between. One every two minutes.
+            long now = player.level().getGameTime();
+            long ready = lomekwianReady.getOrDefault(player.getUUID(), 0L);
+            if (now < ready && !data.isDeveloperMode()) {
+                player.displayClientMessage(Component.literal("Your hands are still sore from the last one. Give it "
+                        + Math.max(1, (ready - now) / 20L) + " seconds."), true);
+                return;
+            }
+            lomekwianReady.put(player.getUUID(), now + LOMEKWIAN_COOLDOWN);
+        }
         strike(player, main);
         if (!good || overreaching) {
             produceLomekwian(player, data, !good);
@@ -295,7 +310,13 @@ public final class Knapping {
         dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.LOMEKWIAN);
     }
 
+    /** One Lomekwian core per two minutes. */
+    private static final long LOMEKWIAN_COOLDOWN = 2 * 60 * 20L;
+    private static final java.util.Map<java.util.UUID, Long> lomekwianReady = new java.util.HashMap<>();
+
     private static void give(ServerPlayer player, ItemStack stack) {
+        dev.hominin.evolution.item.StoneMaterial.stamp(stack,
+                dev.hominin.evolution.item.StoneMaterial.lastStruck(player.getUUID()));
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }

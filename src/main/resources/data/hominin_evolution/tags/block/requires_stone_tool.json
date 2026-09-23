@@ -16,6 +16,7 @@
     "minecraft:coal_ore",
     "minecraft:copper_ore",
     "minecraft:nether_quartz_ore",
-    "minecraft:nether_gold_ore"
+    "minecraft:nether_gold_ore",
+    "hominin_evolution:hominin_carcass"
   ]
 }

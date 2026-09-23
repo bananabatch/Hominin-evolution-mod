@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "name": "hand_axe_hold",
+  "description": "The hand axe carried low in front in both hands, lying level",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 40,
+    "stopTick": 40,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -58.0,
+          "yaw": -28.1,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -61.1,
+          "yaw": 38.7,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": -10,
+          "roll": 0,
+          "x": -0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -59.3,
+          "yaw": -27.7,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -62.2,
+          "yaw": 38.2,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -1.5,
+          "yaw": -10,
+          "roll": 0,
+          "x": 0.0016,
+          "y": -0.0001,
+          "z": -0.009
+        }
+      },
+      {
+        "tick": 40,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -58.0,
+          "yaw": -28.1,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -61.1,
+          "yaw": 38.7,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": -10,
+          "roll": 0,
+          "x": -0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

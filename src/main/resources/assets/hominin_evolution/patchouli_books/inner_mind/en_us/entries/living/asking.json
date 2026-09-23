@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Right-click one of them beforehand and the whole menu speaks to that one alone - which is the only way to groom somebody, or to look them over."
+      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Right-click one of them beforehand and the whole menu speaks to that one alone. Right-click one while holding $(l)food$() and they simply take it from your hand."
     },
     {
       "type": "patchouli:text",
@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Danger$()$(li)I'm hurt$(li)Let's hunt together / Don't$(li)Let's climb a tree$(br2)$(l)Social$()$(li)Groom them, Get these off me$(li)Let's play, Let's share food$(li)Info, Tribe stats$(li)Be my mate, Let's have a child$(li)Our dead stay with us$(li)Let's stick together today, to another band"
+      "text": "$(l)Danger$()$(li)I'm hurt$(li)Let's hunt together / Don't$(li)Let's climb a tree$(br2)$(l)Social$()$(li)Groom them, Get these off me$(li)Let's play, Let's share food$(li)Info, Tribe stats$(li)Be my mate, Let's have a child$(li)Let's stick together today, to another band$(br2)$(l)Culture$() - your people's ways (erectus on)"
     },
     {
       "type": "patchouli:text",

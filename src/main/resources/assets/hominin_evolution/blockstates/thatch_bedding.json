@@ -1,20 +1,321 @@
 {
-  "variants": {
-    "facing=north": {
-      "model": "hominin_evolution:block/thatch_bedding",
-      "y": 0
+  "multipart": [
+    {
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_base"
+      }
     },
-    "facing=east": {
-      "model": "hominin_evolution:block/thatch_bedding",
-      "y": 90
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_join"
+      }
     },
-    "facing=south": {
-      "model": "hominin_evolution:block/thatch_bedding",
-      "y": 180
+    {
+      "when": {
+        "north": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem"
+      }
     },
-    "facing=west": {
-      "model": "hominin_evolution:block/thatch_bedding",
-      "y": 270
+    {
+      "when": {
+        "north": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_east_end"
+      }
+    },
+    {
+      "when": {
+        "north": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_west_end"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_corner"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_join",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_east_end",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_west_end",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_corner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_join",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_east_end",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_west_end",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_corner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_join",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_east_end",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_hem_west_end",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_corner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_east"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "north": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_west"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "east": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "east": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_east",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "east": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_east",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "south": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "west": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "west": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_east",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "west": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/thatch_bedding_pillow_west",
+        "y": 270
+      }
     }
-  }
+  ]
 }

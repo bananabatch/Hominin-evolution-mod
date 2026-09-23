@@ -30,6 +30,7 @@ public final class Social {
         THINGS("Tools and things"),
         DANGER("Danger"),
         TOGETHER("Social"),
+        CULTURE("Culture"),
         DEVELOPER("Developer");
 
         private final String label;
@@ -48,6 +49,8 @@ public final class Social {
         FOOD("I'm hungry, can you get me food?", Topic.FOOD),
         ITEM("I need an item...", Topic.THINGS),
         TRADE("Trade...", Topic.THINGS),
+        KNAP("Knap me a tool...", Topic.THINGS),
+        PASS_AROUND("Pass around what I'm holding", Topic.THINGS),
         GIVE("Here, take this (what I'm holding)", Topic.THINGS),
         LEAD_STONE("Show me good stone", Topic.THINGS),
         LEAD_OBSIDIAN("Show me obsidian", Topic.THINGS),
@@ -63,12 +66,15 @@ public final class Social {
         SHARE("Let's share food", Topic.TOGETHER),
         INFO("Info", Topic.TOGETHER),
         TRIBE("Tribe stats", Topic.TOGETHER),
+        PROMISE("I'll do better", Topic.TOGETHER),
+        SHUN("Shun them", Topic.TOGETHER),
         MAKE_MATE("Be my mate", Topic.TOGETHER),
         HAVE_CHILD("Let's have a child", Topic.TOGETHER),
-        NORM_DEAD("Our dead stay with us (make it the norm)", Topic.TOGETHER),
+        CULTURE("Our ways: morals and norms", Topic.CULTURE),
         DEV_BOND_UP("Bond +5 (whoever's listening)", Topic.DEVELOPER),
         DEV_BOND_DOWN("Bond -5 (whoever's listening)", Topic.DEVELOPER),
         DEV_COHESION("Band cohesion +10", Topic.DEVELOPER),
+        DEV_COHESION_DOWN("Band cohesion -10", Topic.DEVELOPER),
         DEV_TROOP_TRUST("Nearest troop: trusts you", Topic.DEVELOPER),
         DEV_TROOP_GRUDGE("Nearest troop: grudge", Topic.DEVELOPER),
         DEV_TICKS_UP("Ticks +3", Topic.DEVELOPER),
@@ -131,6 +137,14 @@ public final class Social {
             Developer.run(player, entityId, command);
             return;
         }
+        if (command == Command.CULTURE) {
+            if (!Mortuary.canAdopt(player)) {
+                say(player, "Your band has no ways of its own yet. (Erectus and later.)");
+                return;
+            }
+            Morals.send(player);
+            return;
+        }
         if (command == Command.TRAVEL && entityId < 0) {
             List<BandMember> other = nearestOtherBand(player);
             if (other.isEmpty()) {
@@ -160,8 +174,15 @@ public final class Social {
         }
         switch (command) {
             case GIVE -> nearestOf(player, listeners).receiveFromHand(player);
-            case NORM_DEAD -> Mortuary.adopt(player);
+            case CULTURE -> Morals.send(player);
             case TRIBE -> sendTribe(player);
+            case PROMISE -> Cohesion.promise(player);
+            case PASS_AROUND -> Mood.passAround(player);
+            case SHUN -> {
+                if (individual) {
+                    Mood.shun(player, first);
+                }
+            }
             case MAKE_MATE -> {
                 if (individual) {
                     Mating.makeMate(player, first);
@@ -188,6 +209,11 @@ public final class Social {
             case FOOD -> askForFood(player, listeners, individual, who);
             case ITEM -> askForItem(player, listeners, who, individual);
             case TRADE -> Trading.openTrade(player, nearestOf(player, listeners));
+            case KNAP -> {
+                if (individual) {
+                    Commissions.open(player, first);
+                }
+            }
             case HURT -> askForCare(player, listeners, who);
             case TRAVEL -> askToTravel(player, first);
             case HUNT -> {
@@ -293,8 +319,13 @@ public final class Social {
             return;
         }
         int handed = 0;
+        boolean tight = Morals.applies(player, Morals.Moral.TIGHT_TIMES);
         for (BandMember member : listeners) {
             if (member.isBaby()) {
+                continue;
+            }
+            // Times are tight, and the band holds that nobody has to share: only friends do.
+            if (tight && member.getBond() < Wants.GIFT_BOND) {
                 continue;
             }
             if (member.giveFoodTo(player)) {
@@ -578,8 +609,10 @@ public final class Social {
     private static void share(ServerPlayer player, List<BandMember> listeners) {
         long now = player.level().getGameTime();
         Long last = lastShare.get(player.getUUID());
-        if (last != null && now - last < SHARE_COOLDOWN) {
-            say(player, "You only just shared a meal. (" + (SHARE_COOLDOWN - (now - last)) / 20 + "s)");
+        boolean sharing = Morals.applies(player, Morals.Moral.ALWAYS_SHARE);
+        long cooldown = sharing ? SHARE_COOLDOWN / 2 : SHARE_COOLDOWN;
+        if (last != null && now - last < cooldown) {
+            say(player, "You only just shared a meal. (" + (cooldown - (now - last)) / 20 + "s)");
             return;
         }
         List<BandMember> diners = new ArrayList<>();
@@ -620,12 +653,15 @@ public final class Social {
             if (best.eatShared(food)) {
                 favourites++;
                 best.addBond(1);
+                Lines.say(best, "share_thanks");
             }
         }
         for (BandMember member : diners) {
-            member.addBond(1);
+            // Where sharing is the rule, a shared meal means more.
+            member.addBond(sharing ? 2 : 1);
         }
-        dev.hominin.evolution.EvolutionManager.incrementCriterion(player, Band.COHESION, diners.size());
+        Cohesion.addLimited(player, "share", Math.min(3, Math.max(1, diners.size() / 2)), 10 * 60 * 20L);
+        Mood.gave(player, 2);
         player.sendSystemMessage(Component.literal("The food goes round. " + pot.size()
                 + (pot.size() == 1 ? " thing" : " things") + " shared"
                 + (favourites > 0 ? ", and " + favourites + " went to someone who loves it." : "."))
@@ -686,7 +722,13 @@ public final class Social {
         lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
         lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
         lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
-        lines.add("Knapping: level " + member.getKnapLevel() + (member.getKnapLevel() == 1 ? " (master)" : ""));
+        if (member.isAntisocial()) {
+            lines.add("Antisocial: steals, hoards, begs, will not teach, picks fights (erectus: Shun them)");
+        }
+        lines.add("Knapping: level " + member.getKnapLevel() + " "
+                + dev.hominin.evolution.hunt.Persistence.knappingWord(member.getKnapLevel()));
+        lines.add("Persistence hunting: level " + member.getHuntLevel() + " "
+                + dev.hominin.evolution.hunt.Persistence.huntingWord(member.getHuntLevel()));
         List<String> knows = member.knownSkillTitles();
         lines.add("Knows: " + (knows.isEmpty() ? "nothing they were taught" : String.join(", ", knows)));
         lines.add("Ticks on them: " + (member.getTicksOnMe() == 0 ? "none" : String.valueOf(member.getTicksOnMe()))
@@ -707,27 +749,141 @@ public final class Social {
                 new dev.hominin.evolution.network.MemberInfoPayload(member.getName().getString(), lines));
     }
 
-    /** The whole band at a glance: who is with whom, how they feel about you and each other, what they want. */
+    /** A line in the band list that finds this member when clicked. See MemberInfoScreen. */
+    private static String link(BandMember member, String text) {
+        return "@" + member.getId() + "|" + text;
+    }
+
+    private static String header(String text) {
+        return "#" + text;
+    }
+
+    /**
+     * The whole band at a glance: who matters most to it, who is asking you for what, who is
+     * expecting and who the children are - and then everyone. Every name finds its owner.
+     */
     private static void sendTribe(ServerPlayer player) {
         List<BandMember> band = Band.all(player);
+        band.forEach(BandMember::ensureName);
         var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
         List<String> lines = new ArrayList<>();
-        lines.add("Cohesion: " + counters.getOrDefault(Band.COHESION, 0) + "    Members: " + band.size());
+        long children = band.stream().filter(BandMember::isBaby).count();
+        int cohesion = Cohesion.get(player);
+        lines.add("Cohesion: " + cohesion + "/" + Cohesion.MAX + " - " + Cohesion.label(cohesion)
+                + (Cohesion.promised(player) ? " (you promised to do better)" : ""));
+        String need = Needs.describe(player);
+        if (need != null) {
+            BandMember needy = Needs.needy(player);
+            lines.add(needy != null ? link(needy, "NEED: " + need) : "NEED: " + need);
+        }
+        lines.add("Members: " + band.size()
+                + " (" + (band.size() - children) + " grown, " + children + " children)");
         BandMember mine = Mating.mateOf(player);
         if (mine != null) {
-            mine.ensureName();
-            lines.add("Your mate: " + mine.getName().getString());
+            lines.add(link(mine, "Your mate: " + mine.getName().getString()));
         }
-        if (Mortuary.hasNorm(player)) {
-            lines.add("Norm: our dead stay with us");
+        for (Morals.Moral moral : Morals.Moral.values()) {
+            int state = Morals.state(player, moral);
+            if (state == Morals.HELD || state == Morals.FADING) {
+                lines.add("Way: " + moral.title() + (state == Morals.FADING ? " (fading)" : "")
+                        + (Morals.applies(player, moral) ? "" : " - not binding now"));
+            }
         }
+        lines.add("Season: " + dev.hominin.evolution.survival.Seasons.of(player.level()).label() + ", "
+                + dev.hominin.evolution.survival.Seasons.daysLeft(player.level()) + " days left"
+                + (dev.hominin.evolution.survival.Drought.isActive(player.level()) ? " (a dry day)" : ""));
+        float days = dev.hominin.evolution.hunt.Predation.daysOnGround(player);
+        lines.add(String.format(java.util.Locale.ROOT, "On this ground: %.1f days", days)
+                + (days >= 2.0F ? " - too long, everything here knows you. Move on 200 blocks."
+                        : days >= 1.5F ? " - move on soon (2 is too long)" : " (2 is too long)"));
+        lines.add("Your hands: knapping " + dev.hominin.evolution.knapping.Acheulean.level(player)
+                + ", persistence hunting " + dev.hominin.evolution.hunt.Persistence.level(player));
+
+        List<BandMember> gifted = new ArrayList<>(band.stream().filter(m -> !m.isBaby() && m.isGifted()).toList());
+        gifted.sort(java.util.Comparator.comparingInt(BandMember::talent).thenComparing(m -> -m.getBond()));
         lines.add("");
-        band.sort((a, b) -> Integer.compare(b.getBond(), a.getBond()));
+        lines.add(header("Most valuable"));
+        if (gifted.isEmpty()) {
+            lines.add("Nobody stands out yet - ordinary hands, all of them.");
+        }
+        for (BandMember member : gifted.subList(0, Math.min(5, gifted.size()))) {
+            StringBuilder line = new StringBuilder(member.getName().getString()).append(" - ");
+            if (member.getKnapLevel() <= 2) {
+                line.append("knapping ").append(member.getKnapLevel())
+                        .append(member.getKnapLevel() == 1 ? " (master)" : " (skilled)");
+            }
+            if (member.getHuntLevel() <= 2) {
+                line.append(member.getKnapLevel() <= 2 ? ", " : "").append("hunting ").append(member.getHuntLevel())
+                        .append(member.getHuntLevel() == 1 ? " (great tracker)" : " (good tracker)");
+            }
+            line.append(" - bond ").append(member.getBond());
+            if (member.getBond() >= Wants.HUNTS_FOR_YOU_BOND) {
+                line.append(" (looks after you)");
+            }
+            lines.add(link(member, line.toString()));
+        }
+
+        lines.add("");
+        lines.add(header("Asking you for"));
+        boolean anyAsk = false;
         for (BandMember member : band) {
-            member.ensureName();
+            if (member.isWantVoiced()) {
+                anyAsk = true;
+                lines.add(link(member, member.getName().getString() + " wants " + Wants.describeItem(member.getWant())
+                        + (member.getTradeOffer() != null ? " (offering " + Wants.describeItem(member.getTradeOffer()) + ")" : "")));
+            }
+            String job = Commissions.describe(member, player.getUUID());
+            if (job != null) {
+                anyAsk = true;
+                lines.add(link(member, member.getName().getString() + " " + job));
+            }
+        }
+        if (!anyAsk) {
+            lines.add("Nobody is asking for anything right now.");
+        }
+
+        List<BandMember> expecting = band.stream().filter(BandMember::isPregnant).toList();
+        if (!expecting.isEmpty() || Mating.isPregnant(player)) {
+            lines.add("");
+            lines.add(header("Expecting"));
+            if (Mating.isPregnant(player)) {
+                lines.add("You - " + Mating.describePregnancy(player));
+            }
+            for (BandMember member : expecting) {
+                String father = Mating.mateName(member, player.serverLevel());
+                lines.add(link(member, member.getName().getString() + (member.isInLabour() ? " - GIVING BIRTH, alone"
+                        : " - pregnant") + (father != null ? " (father: " + father + ")" : "")));
+            }
+        }
+
+        List<BandMember> young = band.stream().filter(BandMember::isBaby).toList();
+        if (!young.isEmpty()) {
+            lines.add("");
+            lines.add(header("Children"));
+            for (BandMember child : young) {
+                String minder = null;
+                if (child.getCaretaker() != null
+                        && player.serverLevel().getEntity(child.getCaretaker()) instanceof BandMember carer) {
+                    carer.ensureName();
+                    minder = carer.getName().getString();
+                }
+                lines.add(link(child, child.getName().getString() + (child.isFemale() ? " (girl)" : " (boy)")
+                        + (minder != null ? " - minded by " + minder : "")));
+            }
+        }
+
+        lines.add("");
+        lines.add(header("Everyone"));
+        band.sort((x, y) -> Integer.compare(y.getBond(), x.getBond()));
+        for (BandMember member : band) {
+            if (member.isBaby()) {
+                continue;
+            }
             StringBuilder line = new StringBuilder(member.getName().getString())
-                    .append(member.isBaby() ? " (child, " : " (").append(member.isFemale() ? "F)" : "M)")
-                    .append(" - bond ").append(member.getBond());
+                    .append(member.isFemale() ? " (F)" : " (M)")
+                    .append(member.isAntisocial() ? " ANTISOCIAL" : "")
+                    .append(" - bond ").append(member.getBond())
+                    .append(" - knap ").append(member.getKnapLevel()).append(", hunt ").append(member.getHuntLevel());
             String mate = Mating.mateName(member, player.serverLevel());
             if (mate != null) {
                 line.append(" - mate: ").append(mate);
@@ -735,20 +891,35 @@ public final class Social {
             var friend = member.closestFriend();
             if (friend != null && player.serverLevel().getEntity(friend.getKey()) instanceof BandMember close) {
                 close.ensureName();
-                line.append(" - closest to ").append(close.getName().getString()).append(" (").append(friend.getValue())
-                        .append(")");
+                line.append(" - closest to ").append(close.getName().getString());
             }
-            if (member.isPregnant()) {
-                line.append(member.isInLabour() ? " - GIVING BIRTH" : " - pregnant");
-            }
-            if (member.getWant() != null) {
-                line.append(" - wants ").append(Wants.describeItem(member.getWant()));
-            }
-            lines.add(line.toString());
+            lines.add(link(member, line.toString()));
         }
+        lines.add("");
+        lines.add("(Click a name to find them.)");
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new dev.hominin.evolution.network.MemberInfoPayload("Your band", lines));
     }
+
+    /** A name clicked in the band list: that member glows for a while, and you are told which way. */
+    public static void find(ServerPlayer player, int entityId) {
+        if (!(player.level().getEntity(entityId) instanceof BandMember member) || !member.isLedBy(player)) {
+            player.displayClientMessage(Component.literal("They are too far off to find from here."), true);
+            return;
+        }
+        member.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.GLOWING, FIND_GLOW_TICKS, 0, false, false));
+        member.ensureName();
+        double dx = member.getX() - player.getX();
+        double dz = member.getZ() - player.getZ();
+        int distance = (int) Math.round(Math.sqrt(dx * dx + dz * dz));
+        String[] compass = {"south", "south-west", "west", "north-west", "north", "north-east", "east", "south-east"};
+        int sector = Math.floorMod(Math.round((float) (Math.toDegrees(Math.atan2(-dx, dz)) / 45.0D)), 8);
+        player.displayClientMessage(Component.literal(member.getName().getString() + " - " + distance + " blocks "
+                + (distance < 3 ? "away, right here" : compass[sector])).withStyle(ChatFormatting.AQUA), true);
+    }
+
+    private static final int FIND_GLOW_TICKS = 15 * 20;
 
     /** Sends the player the list of what one member carries, to pick from. */
     private static void showInventory(ServerPlayer player, BandMember member) {
@@ -800,12 +971,18 @@ public final class Social {
             say(player, member.getName().getString() + " clutches the obsidian and won't let go of it.");
             return;
         }
+        if (member.isAntisocial() && member.getBond() < 6) {
+            say(player, member.getName().getString() + " pulls it back. \"Mine.\"");
+            return;
+        }
         ItemStack item = member.takeFromSlot(slot);
         if (item.isEmpty()) {
             say(player, member.getName().getString() + " doesn't have that any more.");
             return;
         }
         say(player, member.getName().getString() + " hands you " + item.getHoverName().getString() + ".");
+        Morals.tookFrom(player, member, item);
+        Mood.took(player, 1);
         if (!player.getInventory().add(item)) {
             player.drop(item, false);
         }

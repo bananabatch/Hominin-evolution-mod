@@ -32,7 +32,7 @@ public class BleedingEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Bypasses armour: the wound is already open.
-        entity.hurt(entity.damageSources().magic(), DAMAGE_PER_TICK);
+        entity.hurt(entity.damageSources().source(dev.hominin.evolution.combat.Bleeding.BLEEDING), DAMAGE_PER_TICK);
         return true;
     }
 }

@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/cleaver",
+  "textures": {
+    "stone": "hominin_evolution:item/stone/basalt_body",
+    "edge": "hominin_evolution:item/stone/basalt_edge",
+    "scar": "hominin_evolution:item/stone/basalt_scar",
+    "particle": "hominin_evolution:item/stone/basalt_body"
+  }
+}

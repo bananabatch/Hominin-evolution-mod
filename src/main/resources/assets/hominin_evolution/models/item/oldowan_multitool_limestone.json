@@ -1,0 +1,7 @@
+{
+  "parent": "hominin_evolution:item/oldowan_multitool",
+  "textures": {
+    "0": "hominin_evolution:item/oldowan_multitool_limestone",
+    "particle": "hominin_evolution:item/oldowan_multitool_limestone"
+  }
+}

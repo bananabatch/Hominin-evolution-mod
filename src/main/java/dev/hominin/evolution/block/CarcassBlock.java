@@ -2,7 +2,6 @@ package dev.hominin.evolution.block;
 
 import com.mojang.serialization.MapCodec;
 
-import dev.hominin.evolution.entity.Pachycrocuta;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -71,48 +70,26 @@ public class CarcassBlock extends HorizontalDirectionalBlock {
         return state.getValue(FACING).getAxis() == Direction.Axis.X ? SHAPE_X : SHAPE_Z;
     }
 
+    /** A carcass in the dry has been picked thin; one in the rains is fat. */
+    @Override
+    protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(BlockState state,
+            net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+        java.util.List<net.minecraft.world.item.ItemStack> drops = new java.util.ArrayList<>(super.getDrops(state, params));
+        net.minecraft.server.level.ServerLevel level = params.getLevel();
+        dev.hominin.evolution.survival.Seasons.adjust(level, drops, level.random);
+        return drops;
+    }
+
     @Override
     protected boolean isRandomlyTicking(BlockState state) {
         return true;
     }
 
-    /** A hyena that reaches it eats it, and there is nothing left for anyone. */
+    /** A clan that reaches it eats it, and there is nothing left for anyone. */
     @Override
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        // A hominin sitting at the kill is enough to keep a hyena off it.
-        for (dev.hominin.evolution.band.BandMember guard : level.getEntitiesOfClass(
-                dev.hominin.evolution.band.BandMember.class, new net.minecraft.world.phys.AABB(pos).inflate(6.0D))) {
-            if (guard.isAlive()) {
-                return;
-            }
-        }
-        for (Pachycrocuta hyena : level.getEntitiesOfClass(Pachycrocuta.class,
-                new net.minecraft.world.phys.AABB(pos).inflate(SCAVENGE_RANGE))) {
-            if (!hyena.isAlive()) {
-                continue;
-            }
-            // Later hominins take kills off other animals rather than the other way about.
-            Player claimant = level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), CLAIM_RANGE, false);
-            if (claimant != null && dev.hominin.evolution.hunt.Predation.standing(claimant) >= 3
-                    && dev.hominin.evolution.hunt.Predation.armed(claimant)) {
-                dev.hominin.evolution.combat.Scare.scare(hyena, claimant.position(), 400);
-                if (claimant instanceof net.minecraft.server.level.ServerPlayer server) {
-                    dev.hominin.evolution.EvolutionManager.incrementCriterion(server, "take_kill", 1);
-                }
-                claimant.displayClientMessage(Component.literal(
-                        "You walk up to the kill, and it gives ground."), true);
-                return;
-            }
-            level.removeBlock(pos, false);
-            level.playSound(null, pos, SoundEvents.GENERIC_EAT, SoundSource.HOSTILE, 1.0F, 0.7F);
-            level.sendParticles(net.minecraft.core.particles.ParticleTypes.ITEM_SLIME, pos.getX() + 0.5D,
-                    pos.getY() + 0.4D, pos.getZ() + 0.5D, 12, 0.3D, 0.2D, 0.3D, 0.0D);
-            Player nearest = level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 32.0D, false);
-            if (nearest != null) {
-                nearest.displayClientMessage(Component.literal(
-                        "The hyena drags the carcass apart. There is nothing left of it."), true);
-            }
-            return;
-        }
+        // Whoever is at it: a clan strips it if nobody is standing over it. The giant hyena
+        // does its own eating, and fights for the privilege.
+        dev.hominin.evolution.hunt.Carcasses.clanFeeds(level, pos);
     }
 }

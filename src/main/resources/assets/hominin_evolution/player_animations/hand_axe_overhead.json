@@ -1,0 +1,149 @@
+{
+  "version": 3,
+  "name": "hand_axe_overhead",
+  "description": "One arm: the hand axe raised back over the shoulder and brought over and down in an arc",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 14,
+    "stopTick": 14,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -80,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -175,
+          "yaw": -25,
+          "roll": -15
+        },
+        "leftArm": {
+          "pitch": -20,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 6,
+          "yaw": -10,
+          "roll": 0,
+          "x": -0.0064,
+          "y": -0.0019,
+          "z": 0.036
+        }
+      },
+      {
+        "tick": 5,
+        "easing": "easeInQuad",
+        "rightArm": {
+          "pitch": -110,
+          "yaw": 5,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -4,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0009,
+          "z": -0.0244
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -45,
+          "yaw": 22,
+          "roll": 10
+        },
+        "leftArm": {
+          "pitch": -8,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -12,
+          "yaw": 10,
+          "roll": 0,
+          "x": -0.0126,
+          "y": -0.0076,
+          "z": -0.0717
+        }
+      },
+      {
+        "tick": 8,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -30,
+          "yaw": 26,
+          "roll": 10
+        },
+        "leftArm": {
+          "pitch": -6,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 12,
+          "roll": 0,
+          "x": -0.0176,
+          "y": -0.0104,
+          "z": -0.0828
+        }
+      },
+      {
+        "tick": 14,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -80,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

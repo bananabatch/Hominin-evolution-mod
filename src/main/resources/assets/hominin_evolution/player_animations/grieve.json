@@ -16,7 +16,7 @@
         "tick": 0,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": 24,
+          "pitch": -24,
           "yaw": 0,
           "roll": 0
         },
@@ -36,12 +36,12 @@
           "roll": -14
         },
         "rightLeg": {
-          "pitch": -96,
+          "pitch": -120,
           "yaw": 0,
           "roll": -10
         },
         "leftLeg": {
-          "pitch": -96,
+          "pitch": -120,
           "yaw": 0,
           "roll": 10
         }
@@ -50,7 +50,7 @@
         "tick": 40,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": 30,
+          "pitch": -30,
           "yaw": 0,
           "roll": 0
         },
@@ -70,12 +70,12 @@
           "roll": -16
         },
         "rightLeg": {
-          "pitch": -98,
+          "pitch": -128,
           "yaw": 0,
           "roll": -10
         },
         "leftLeg": {
-          "pitch": -98,
+          "pitch": -128,
           "yaw": 0,
           "roll": 10
         }
@@ -84,7 +84,7 @@
         "tick": 80,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": 24,
+          "pitch": -24,
           "yaw": 0,
           "roll": 0
         },
@@ -104,12 +104,12 @@
           "roll": -14
         },
         "rightLeg": {
-          "pitch": -96,
+          "pitch": -120,
           "yaw": 0,
           "roll": -10
         },
         "leftLeg": {
-          "pitch": -96,
+          "pitch": -120,
           "yaw": 0,
           "roll": 10
         }

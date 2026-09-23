@@ -82,7 +82,8 @@ public class GroomGoal extends Goal {
     public void stop() {
         if (partner != null && grooming >= SESSION_TICKS) {
             Grooming.betweenMembers(member, partner);
-            Band.announce(member, " sits with " + partner.getName().getString() + ", picking through their hair.");
+            partner.ensureName();
+            dev.hominin.evolution.band.Lines.tell(member, "groom", partner.getName().getString());
         }
         partner = null;
         member.getNavigation().stop();

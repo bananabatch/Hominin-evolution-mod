@@ -90,7 +90,7 @@ public final class Hearths extends SavedData {
         if (stack.is(Items.STICK) || stack.is(ModItems.SHARPENED_STICK.get())) {
             return 1200;
         }
-        if (stack.is(ModItems.LONG_BRANCH.get())) {
+        if (ModItems.isLongBranch(stack)) {
             return 3000;
         }
         if (stack.is(net.minecraft.tags.ItemTags.LOGS)) {

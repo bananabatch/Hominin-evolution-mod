@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)The big hyena$() follows. Quietly, at a distance, for as long as it takes someone to stop looking.$(br2)Look behind you. If you see it, face it and make noise - it would rather eat someone who never turned round."
+      "text": "$(l)The giant hyena$() follows. Quietly, at a distance, for as long as it takes someone to stop looking - and then it takes one of the band and runs.$(br2)Look behind you. If you see it, face it. See $(l)Hyenas$() for the rest."
     },
     {
       "type": "patchouli:text",

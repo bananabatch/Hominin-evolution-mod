@@ -26,7 +26,8 @@ public final class Skills {
     public enum Skill {
         LOMEKWIAN("Lomekwian knapping",
                 "Bashing one stone against another until something with an edge comes off it.",
-                "Hold a rock with a hammerstone in your off hand, press P, and try for more than your hands can make yet.",
+                "Hold a rock with a hammerstone in your off hand, press P, and try for more than your hands can make yet. "
+                        + "Only the first hominins can pick this up - later kinds inherit it or never have it.",
                 "Your hands know where not to strike. A multi tool never shatters in them, and whatever you become starts ahead at knapping.",
                 true),
         TERMITE_FISHING("Termite fishing",
@@ -43,6 +44,11 @@ public final class Skills {
                 "Making fire, rather than waiting for one.",
                 "Two sticks in your hands and P makes a drill. Use it on dry ground.",
                 "Your drills last: half the time a fire you light leaves the drill fit to use again.",
+                true),
+        EARLY_TRACKING("Early tracking",
+                "The oldest hunting knowledge: holding an animal's flight in your head long enough to run it down.",
+                "As habilis, right after something runs from you, hold K. Only habilis can pick this up.",
+                "Whatever you evolve into starts a better persistence hunter - a level up.",
                 true),
         TRACKING("Tracking",
                 "Keeping hold of an animal that ran, by keeping its tracks in your head.",
@@ -95,6 +101,20 @@ public final class Skills {
             return effect;
         }
 
+        /**
+         * Some knowledge belongs to one moment in the line: Lomekwian knapping only to the first
+         * hominins, early tracking only to habilis. Missed then, it is missed for good - unless it
+         * was carried over.
+         */
+        public boolean learnableAs(net.minecraft.resources.ResourceLocation stage) {
+            String path = stage.getPath();
+            return switch (this) {
+                case LOMEKWIAN -> path.equals("ardipithecus") || path.startsWith("australopithecus");
+                case EARLY_TRACKING -> path.equals("homo_habilis") || path.equals("homo_rudolfensis");
+                default -> true;
+            };
+        }
+
         /** Knowledge that survives evolving, as opposed to something only this body can do. */
         public boolean carriesOver() {
             return carriesOver;
@@ -118,7 +138,8 @@ public final class Skills {
     public static boolean learn(ServerPlayer player, Skill skill) {
         // Every time you do it counts as showing it, for anyone watching to be taught.
         Teaching.demonstrated(player, skill);
-        if (knows(player, skill)) {
+        if (knows(player, skill)
+                || !skill.learnableAs(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
             return false;
         }
         player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().put(skill.key(), 1);
