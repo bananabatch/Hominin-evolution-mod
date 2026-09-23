@@ -112,6 +112,9 @@ public final class Mood {
             return;
         }
         band.forEach(Mood::rollTemper);
+        if (band.stream().anyMatch(m -> m.isAntisocial() && !m.isBaby())) {
+            dev.hominin.evolution.guide.Tips.antisocialAbout(player);
+        }
         reciprocity(player, band);
         hoarding(player, band);
         if (player.getRandom().nextInt(12) == 0) {
@@ -146,6 +149,7 @@ public final class Mood {
             counters.put(RECIPROCITY_WARNED, 1);
             say(player, speaker, "You keep asking us for things and you never give anything back. Even a bite of food "
                     + "would do. Keep this up and the whole band will hold it against you.", ChatFormatting.YELLOW);
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.RECIPROCITY);
         }
     }
 
@@ -180,6 +184,7 @@ public final class Mood {
                     ChatFormatting.YELLOW);
             player.sendSystemMessage(Component.literal("(Hold the food and choose \"Pass around what I'm holding\" under H.)")
                     .withStyle(ChatFormatting.DARK_GRAY));
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HOARDING);
             return;
         }
         if (minute(player) - warned >= HOARD_GRACE_MINUTES) {

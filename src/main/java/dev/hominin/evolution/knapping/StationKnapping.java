@@ -28,6 +28,7 @@ public final class StationKnapping {
     /** Oldowan multi tool: 8 chert, 2 obsidian, or one chert hammerstone. */
     private static final int MULTITOOL_CHERT = 8;
     private static final int MULTITOOL_OBSIDIAN = 2;
+    private static final int MULTITOOL_BASALT = 10;
 
     public static final List<KnappingChoice> OLDOWAN =
             List.of(KnappingChoice.FLAKE, KnappingChoice.CHOPPER, KnappingChoice.MULTITOOL, KnappingChoice.GRINDING_STONE);
@@ -111,8 +112,11 @@ public final class StationKnapping {
                 } else if (count(station, ModItems.CHERT_ROCK.get()) >= MULTITOOL_CHERT) {
                     take(station, ModItems.CHERT_ROCK.get(), MULTITOOL_CHERT);
                     material = dev.hominin.evolution.item.StoneMaterial.CHERT;
+                } else if (count(station, ModItems.BASALT_ROCK.get()) >= MULTITOOL_BASALT) {
+                    take(station, ModItems.BASALT_ROCK.get(), MULTITOOL_BASALT);
+                    material = dev.hominin.evolution.item.StoneMaterial.BASALT;
                 } else {
-                    say(player, "A multi tool takes 8 chert, 2 obsidian, or a chert hammerstone.");
+                    say(player, "A multi tool takes 8 chert, 10 basalt, 2 obsidian, or a chert hammerstone.");
                     return;
                 }
                 result = ModItems.OLDOWAN_MULTITOOL.get();

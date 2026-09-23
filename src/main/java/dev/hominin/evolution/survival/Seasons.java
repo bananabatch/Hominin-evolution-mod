@@ -174,6 +174,9 @@ public final class Seasons {
                 : "The rains have come back: a prosperous season. Everything is green, the herds are fat, "
                         + "foraging is easy and other bands are in a giving mood.";
         player.sendSystemMessage(Component.literal(news).withStyle(season.colour()));
+        if (season == Season.DRY) {
+            dev.hominin.evolution.guide.Tips.drySeason(player);
+        }
         player.sendSystemMessage(Component.literal("(" + season.label() + ": " + left
                 + (left == 1 ? " day" : " days") + " left.)").withStyle(ChatFormatting.DARK_GRAY));
         for (dev.hominin.evolution.band.BandMember member : dev.hominin.evolution.band.Band.ownNear(player, 32.0D)) {

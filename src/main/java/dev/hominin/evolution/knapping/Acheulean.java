@@ -24,8 +24,8 @@ import net.minecraft.world.item.ItemStack;
  * A flawless hand axe is the industry's multitool - see {@link AcheuleanToolItem}.
  *
  * <p>Two things decide how a tool comes out. The stone sets a ceiling - limestone never gets
- * past crude, quartzite only reaches strong in the best hands, chert can be flawless, and
- * obsidian is never worse than strong. The knapper's skill, level 4 (a beginner) down to
+ * past crude, quartzite only reaches strong in the best hands, basalt reaches excellent but never
+ * flawless, chert can be flawless, and obsidian is never worse than strong. The knapper's skill, level 4 (a beginner) down to
  * level 1, sets what they usually manage, with a chance of doing better. Skill comes from
  * making things: one tool leaves level 4, two more leave level 3, three more leave level 2.
  */
@@ -106,6 +106,9 @@ public final class Acheulean {
             ceiling = 4;
         } else if (stone.is(ModItems.GRANITE_ROCK.get())) {
             ceiling = level <= 1 ? 2 : 3;
+        } else if (stone.is(ModItems.BASALT_ROCK.get())) {
+            // A tier behind chert: a master gets an excellent edge out of it, never a perfect one.
+            ceiling = 1;
         } else if (chert || obsidian) {
             ceiling = 0;
         } else {
@@ -143,6 +146,7 @@ public final class Acheulean {
         }
         int ceiling = stone.is(ModItems.LIMESTONE_ROCK.get()) ? 4
                 : stone.is(ModItems.GRANITE_ROCK.get()) ? (level <= 1 ? 2 : 3)
+                : stone.is(ModItems.BASALT_ROCK.get()) ? 1
                 : chert || obsidian ? 0 : 3;
         double[] out = new double[5];
         for (int tier = 0; tier <= 4; tier++) {
@@ -202,6 +206,7 @@ public final class Acheulean {
             return;
         }
         boolean worthIt = held.is(ModItems.OBSIDIAN_ROCK.get()) || held.is(ModItems.CHERT_ROCK.get())
+                || held.is(ModItems.BASALT_ROCK.get())
                 || (held.getItem() instanceof AcheuleanToolItem && AcheuleanToolItem.qualityOf(held) <= 2);
         if (!worthIt && !(held.getItem() instanceof AcheuleanToolItem) && !held.is(ModTags.Items.KNAPPABLE_STONE)) {
             return;

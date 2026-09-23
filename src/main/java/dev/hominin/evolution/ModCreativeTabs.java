@@ -18,6 +18,7 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.FLAKE.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CHERT_ROCK.get());
+                        output.accept(ModItems.BASALT_ROCK.get());
                         output.accept(ModItems.GRANITE_ROCK.get());
                         output.accept(ModItems.LIMESTONE_ROCK.get());
                         output.accept(ModItems.OBSIDIAN_ROCK.get());

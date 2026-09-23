@@ -204,6 +204,7 @@ public final class ClimbingServer {
             event.setCanceled(true);
         } else if (target instanceof ServerPlayer player) {
             dev.hominin.evolution.band.Band.defend(player, hunter);
+            dev.hominin.evolution.guide.Tips.huntedBy(player, hunter);
         }
     }
 

@@ -154,6 +154,9 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         if (stone.is(ModItems.LIMESTONE_ROCK.get())) {
             graphics.drawString(font, "Limestone: crude only.", x, y + 2, 0x5A5A5A, false);
             y += 10;
+        } else if (stone.is(ModItems.BASALT_ROCK.get())) {
+            graphics.drawString(font, "Basalt: never flawless.", x, y + 2, 0x5A5A5A, false);
+            y += 10;
         }
         if (odds[0] > 0.0D) {
             graphics.drawString(font, "A flawless hand axe", x, y + 2, TIER_COLOURS[0], false);

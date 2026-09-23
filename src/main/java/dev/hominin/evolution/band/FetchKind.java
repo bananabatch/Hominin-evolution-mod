@@ -23,6 +23,7 @@ public enum FetchKind {
     FOOD("Some food", null, Source.FORAGE, 0.0F, 0),
     ANY_ROCK("Any rock", null, Source.ROCKS, 0.0F, 0),
     CHERT("Chert", ModItems.CHERT_ROCK, Source.ROCKS, 0.0F, 0),
+    BASALT("Basalt", ModItems.BASALT_ROCK, Source.ROCKS, 0.0F, 0),
     QUARTZITE("Quartzite", ModItems.GRANITE_ROCK, Source.ROCKS, 0.0F, 0),
     LIMESTONE("Limestone", ModItems.LIMESTONE_ROCK, Source.ROCKS, 0.0F, 0),
     OBSIDIAN("Obsidian", ModItems.OBSIDIAN_ROCK, Source.ROCKS, 0.0F, 0),

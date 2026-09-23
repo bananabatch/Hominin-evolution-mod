@@ -311,6 +311,7 @@ public final class Predation {
         int told = counters.getOrDefault(RANGE_TOLD, 0);
         if (stayed >= WARN_TICKS && told < 1) {
             counters.put(RANGE_TOLD, 1);
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HOME_RANGE);
             player.sendSystemMessage(Component.literal("A day and a half on this ground. The things that hunt here "
                     + "are starting to know your band's ways. Half a day more and they will act on it - move on "
                     + "(200 blocks) before then.").withStyle(ChatFormatting.GOLD));

@@ -43,6 +43,14 @@ public final class Attachments {
                     .copyOnDeath()
                     .build());
 
+    /** Which tips a player has seen, and whether they want them. Kept through death and evolving. */
+    public static final Supplier<AttachmentType<dev.hominin.evolution.guide.TipsData>> TIPS = ATTACHMENT_TYPES.register(
+            "tips",
+            () -> AttachmentType.builder(() -> new dev.hominin.evolution.guide.TipsData())
+                    .serialize(dev.hominin.evolution.guide.TipsData.CODEC)
+                    .copyOnDeath()
+                    .build());
+
     /**
      * Whether a player is up a tree right now. Never saved: a player who logs out
      * mid-climb comes back standing, not clinging. Both sides keep a copy, because

@@ -153,12 +153,15 @@ public final class Cohesion {
         if (after <= DIRE && before > DIRE) {
             message = "The band has had nearly enough of you. One more failing and they will drive you out.";
             style = ChatFormatting.DARK_RED;
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.COHESION_DIRE);
         } else if (after <= BORDERLINE && before > BORDERLINE) {
             message = "The band's patience is thin. They will not trade with you now, and they are saying so.";
             style = ChatFormatting.RED;
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.COHESION_BORDERLINE);
         } else if (after < NEUTRAL && before >= NEUTRAL) {
             message = "The band is watching you. They want to see you do better. (H: \"I'll do better\")";
             style = ChatFormatting.YELLOW;
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.COHESION_TIPPING);
         } else if (after >= MAX && before < MAX) {
             message = "The band is as close as a band can be. They would do anything for you.";
             style = ChatFormatting.LIGHT_PURPLE;

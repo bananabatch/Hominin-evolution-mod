@@ -68,6 +68,7 @@ public final class EvolutionManager {
         if (isGateReady(data, stage) && data.getNotifiedReadyStages().add(data.getStage())) {
             player.sendSystemMessage(Component.literal(
                     "You are ready to evolve — perform your milestone act: " + stage.milestone().description()));
+            dev.hominin.evolution.guide.Tips.readyToEvolve(player, stage.milestone().type());
         }
     }
 

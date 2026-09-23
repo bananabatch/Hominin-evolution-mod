@@ -166,6 +166,9 @@ public class Crocodile extends PathfinderMob {
         if (target instanceof Player player) {
             player.displayClientMessage(Component.literal("The crocodile has you! Hit it, hard, to break free.")
                     .withStyle(ChatFormatting.DARK_RED), true);
+            if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+                dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.CROCODILE);
+            }
         }
         Bleeding.inflict(target, Bleeding.Tier.EXTERNAL);
     }

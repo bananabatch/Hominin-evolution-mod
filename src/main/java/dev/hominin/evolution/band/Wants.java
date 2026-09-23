@@ -205,6 +205,9 @@ public final class Wants {
         member.setWant(want, member.level().getGameTime() + WANT_LASTS_TICKS);
         member.setWantVoiced(true);
         member.ensureName();
+        if (leader instanceof net.minecraft.server.level.ServerPlayer server) {
+            dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.WANT);
+        }
         String name = new ItemStack(want).getHoverName().getString();
 
         // They can see what you carry. If you have it, they may offer something like it back.
@@ -398,6 +401,9 @@ public final class Wants {
             thoughts.add("Chert is pretty, but quartzite doesn't snap on you.");
         } else if (preferred == ModItems.CHERT_ROCK.get()) {
             thoughts.add("Good chert breaks just how you want it to.");
+        } else if (preferred == ModItems.BASALT_ROCK.get()) {
+            thoughts.add("Basalt's heavy and it doesn't forgive a bad blow. Get it right and the edge lasts.");
+            thoughts.add("Where the black stone lies about, the ground once burned. Walk that way long enough and there's glass.");
         }
         if (member.count(ModItems.LIMESTONE_ROCK.get()) > 0) {
             thoughts.add("This limestone is useless. Crumbles the moment you hit it.");

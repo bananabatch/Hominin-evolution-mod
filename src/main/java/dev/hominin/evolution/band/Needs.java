@@ -142,6 +142,7 @@ public final class Needs {
                 + kind.what() + ".").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(" A need, not a want - it comes first, and the band will not forget if it "
                         + "goes unmet. (Hand it over with \"Here, take this\".)").withStyle(ChatFormatting.GRAY)));
+        dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.NEED);
     }
 
     private static boolean stillNeeds(BandMember member, Kind kind) {

@@ -41,7 +41,7 @@ public final class Trading {
             // 2 - worth a walk or a little work
             Map.entry("long_branch", 2), Map.entry("sharpened_stick", 2), Map.entry("bone_marrow", 2),
             Map.entry("long_bone", 2), Map.entry("termite_stick", 2), Map.entry("hammerstone", 2),
-            Map.entry("limestone_rock", 2), Map.entry("granite_rock", 2),
+            Map.entry("limestone_rock", 2), Map.entry("granite_rock", 2), Map.entry("basalt_rock", 2),
             // 3 - made, or good stone
             Map.entry("flake", 3), Map.entry("pointy_stick", 3), Map.entry("lomekwian_tool", 3),
             Map.entry("digging_stick", 3), Map.entry("grinding_rock", 3), Map.entry("chert_rock", 3),

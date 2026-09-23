@@ -182,6 +182,8 @@ public final class TroopRelations {
         int window = WINDOW_TICKS + (dev.hominin.evolution.mind.Skills.knows(player,
                 dev.hominin.evolution.mind.Skills.Skill.DEESCALATION) ? 60 : 0);
         pending.put(player.getUUID(), new Mistake(troop, player.level().getGameTime() + window, true, alpha));
+        // The only time anything says so: the first one is easy to miss for what it is.
+        dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.CHIMP_ALPHA);
     }
 
     /** Put right in time: a gift, or a show of submission. */

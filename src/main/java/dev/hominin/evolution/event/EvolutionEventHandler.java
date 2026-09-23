@@ -417,6 +417,7 @@ public final class EvolutionEventHandler {
         if (hammer == null) {
             player.displayClientMessage(
                     Component.literal("Your hands are not enough. You need a hammerstone."), true);
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HAMMERSTONE);
             return;
         }
         int count = advance(knapProgress, player.getUUID(), level.getGameTime(), pos, KNAP_COOLDOWN_TICKS);
@@ -799,6 +800,7 @@ public final class EvolutionEventHandler {
         nightTreeCoverSeen.remove(playerId);
         climbedTrees.remove(playerId);
         BlockBreakHandler.forget(playerId);
+        dev.hominin.evolution.guide.Tips.forget(playerId);
     }
 
     /** How far a lightning strike is noticeable from - it's the flash people react to, not proximity to the char mark. */
@@ -1098,6 +1100,7 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.survival.Hearths.tickPlayer(player);
         dev.hominin.evolution.stage.ErectusGoals.tick(player);
         dev.hominin.evolution.band.Mortuary.tick(player);
+        dev.hominin.evolution.guide.Tips.tick(player);
         dev.hominin.evolution.band.Morals.tick(player);
         dev.hominin.evolution.survival.Seasons.tick(player);
         dev.hominin.evolution.band.Territory.tickNeighbours(player);

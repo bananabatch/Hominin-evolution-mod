@@ -831,7 +831,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         ensureName();
         // Laid up, but not useless: a good stone to work, or time to think.
-        if (count(ModItems.CHERT_ROCK.get()) + count(ModItems.GRANITE_ROCK.get()) + count(ModItems.OBSIDIAN_ROCK.get()) > 0
+        if (count(ModItems.CHERT_ROCK.get()) + count(ModItems.GRANITE_ROCK.get()) + count(ModItems.OBSIDIAN_ROCK.get())
+                + count(ModItems.BASALT_ROCK.get()) > 0
                 && random.nextFloat() < 0.6F) {
             practiseKnapping();
             if (random.nextInt(3) == 0) {
@@ -865,7 +866,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         personalityRolled = true;
         float roll = random.nextFloat();
-        stonePreference = roll < 0.35F ? 1 : roll < 0.6F ? 2 : 0;
+        stonePreference = roll < 0.3F ? 1 : roll < 0.52F ? 2 : roll < 0.64F ? 3 : 0;
         obsidianObsession = random.nextFloat() < 0.2F;
         long now = level().getGameTime();
         nextWant = now + 1200 + random.nextInt(3600);
@@ -875,7 +876,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Nullable
     public Item preferredStone() {
         ensurePersonality();
-        return stonePreference == 1 ? ModItems.CHERT_ROCK.get() : stonePreference == 2 ? ModItems.GRANITE_ROCK.get() : null;
+        return stonePreference == 1 ? ModItems.CHERT_ROCK.get() : stonePreference == 2 ? ModItems.GRANITE_ROCK.get()
+                : stonePreference == 3 ? ModItems.BASALT_ROCK.get() : null;
     }
 
     public boolean isObsessedWithObsidian() {

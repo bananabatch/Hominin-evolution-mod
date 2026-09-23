@@ -23,6 +23,10 @@
     {
       "type": "patchouli:text",
       "text": "Climbing needs no key at all. Walk into a trunk and you go up it; look down and hold back to come down.$(br2)Sleep in a nest, not on the floor - and it has to be a finished one, six armfuls in a two-by-three."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Tips$() come when something new comes up - the first time your water runs low, the first time something hunts you - once each, as a card in the corner and a line in chat. Double-click the line in chat and this book opens at the page it is about.$(br2)$(l)/hominin tips off$() turns them off, $(l)on$() back on, and $(l)reset$() lets them all come again."
     }
   ]
 }

@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "Pay attention to what comes off a worked face. Now and then the stone gives up a piece that sits in the hand as if it had always meant to be held.$(br2)Some seams are rarer, and better, than others."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Basalt$() is lava that cooled: dark, heavy and fine-grained, a tier behind chert. It lies scattered for forty blocks around lava - out in the open, and down in caves - thinning out as you go.$(br2)So a scatter of dark cobbles is a sign. Follow it in: where lava ran and cooled fast it went to glass, and $(#b87333)obsidian$() lies at the lava's edge."
     }
   ]
 }

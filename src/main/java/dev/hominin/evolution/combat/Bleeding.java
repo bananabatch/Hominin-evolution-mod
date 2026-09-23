@@ -84,6 +84,9 @@ public final class Bleeding {
         int ticks = existing == null ? tier.ticks() : Math.max(existing.getDuration(), tier.ticks());
         target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, ticks, severity, false, true, true));
         dev.hominin.evolution.hunt.Quarry.wounded(target);
+        if (target instanceof ServerPlayer bleeder) {
+            dev.hominin.evolution.guide.Tips.offer(bleeder, tier == Tier.CATASTROPHIC ? dev.hominin.evolution.guide.Tips.Tip.CATASTROPHIC : dev.hominin.evolution.guide.Tips.Tip.BLEEDING);
+        }
 
         if (tier == Tier.INTERNAL) {
             Afflictions.afflict(target, Afflictions.Affliction.BLED_OUT, tier.ticks() * 3);

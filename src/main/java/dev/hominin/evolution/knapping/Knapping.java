@@ -52,6 +52,8 @@ public final class Knapping {
     /** Stone a multi tool takes. Chert flakes less cleanly than obsidian, so it needs more. */
     private static final int MULTITOOL_CHERT_COST = 8;
     private static final int MULTITOOL_OBSIDIAN_COST = 2;
+    /** Basalt is a tier behind chert: tougher to shape, so it takes more of it. */
+    private static final int MULTITOOL_BASALT_COST = 10;
 
     /** A chert hammerstone is one big nodule - it breaks down into this much stone. */
     private static final int SPLIT_CORE_YIELD = 4;
@@ -101,6 +103,7 @@ public final class Knapping {
             }
             player.displayClientMessage(Component.literal(
                     "You need something to strike with in your off hand."), true);
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HAMMERSTONE);
             return true;
         }
         PacketDistributor.sendToPlayer(player, new OpenKnappingPayload(
@@ -109,7 +112,7 @@ public final class Knapping {
         return true;
     }
 
-    /** Chert, quartzite and obsidian fracture predictably. Limestone does not. */
+    /** Chert, basalt, quartzite and obsidian fracture predictably. Limestone does not. */
     private static boolean isGoodStone(ItemStack stack) {
         return !stack.is(ModItems.LIMESTONE_ROCK.get());
     }
@@ -240,7 +243,7 @@ public final class Knapping {
         int cost = multitoolCost(main);
         if (cost == 0) {
             player.displayClientMessage(Component.literal(
-                    "This stone will not take an edge like that. It needs chert or obsidian."), true);
+                    "This stone will not take an edge like that. It needs chert, basalt or obsidian."), true);
             return;
         }
         // Chert stacks to four, and a multi tool takes eight. Demanding it all in one
@@ -275,6 +278,9 @@ public final class Knapping {
         if (stone.is(ModItems.OBSIDIAN_ROCK.get())) {
             return MULTITOOL_OBSIDIAN_COST;
         }
+        if (stone.is(ModItems.BASALT_ROCK.get())) {
+            return MULTITOOL_BASALT_COST;
+        }
         return stone.is(ModItems.CHERT_ROCK.get()) ? MULTITOOL_CHERT_COST : 0;
     }
 
@@ -294,6 +300,9 @@ public final class Knapping {
 
     private static void produceLomekwian(ServerPlayer player, PlayerEvolutionData data, boolean softStone) {
         give(player, new ItemStack(ModItems.LOMEKWIAN_TOOL.get()));
+        if (softStone) {
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.LIMESTONE);
+        }
         EvolutionManager.incrementCriterion(player, SKILL_KNAPPING, 1);
 
         player.displayClientMessage(Component.literal(softStone

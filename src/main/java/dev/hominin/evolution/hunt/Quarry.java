@@ -166,6 +166,11 @@ public final class Quarry {
         hunter.displayClientMessage(Component.literal(
                 "It breaks and runs, and you lose it among the grass. Hold K to think - pick its tracks up.")
                 .withStyle(ChatFormatting.YELLOW), true);
+        if (isErectus(hunter)) {
+            dev.hominin.evolution.guide.Tips.offer(hunter, dev.hominin.evolution.guide.Tips.Tip.PERSISTENCE);
+        } else if (!dev.hominin.evolution.mind.Skills.knows(hunter, dev.hominin.evolution.mind.Skills.Skill.EARLY_TRACKING)) {
+            dev.hominin.evolution.guide.Tips.offer(hunter, dev.hominin.evolution.guide.Tips.Tip.EARLY_TRACKING);
+        }
         return false;
     }
 
@@ -283,6 +288,7 @@ public final class Quarry {
         UUID before = quarryOf(hunter);
         boolean ran;
         if (isMegaGame(victim)) {
+            dev.hominin.evolution.guide.Tips.offer(hunter, dev.hominin.evolution.guide.Tips.Tip.MEGAFAUNA);
             // Broken megafauna does not scatter like a gazelle: one hard run for distance, then it
             // has to blow - and while it blows, it stands and takes what comes.
             ran = megaBolt(victim, hunter);

@@ -41,6 +41,13 @@ public final class ModBlocks {
     public static final DeferredBlock<LooseRockBlock> OBSIDIAN_ROCK = BLOCKS.registerBlock("obsidian_rock",
             LooseRockBlock::new, looseRock(MapColor.COLOR_BLACK));
 
+    /**
+     * Lava that cooled: dense, dark and fine-grained - a tier behind chert under the hammer. It lies
+     * scattered for tens of blocks around lava, so a trail of it is a sign there is obsidian ahead.
+     */
+    public static final DeferredBlock<LooseRockBlock> BASALT_ROCK = BLOCKS.registerBlock("basalt_rock",
+            LooseRockBlock::new, looseRock(MapColor.TERRACOTTA_GRAY));
+
     // Bedrock outcrops. Unlike the loose scatters these are solid stone you work
     // a face off, so each one is a source of its own material rather than a pickup,
     // and which type you found decides what the deposit gives up.

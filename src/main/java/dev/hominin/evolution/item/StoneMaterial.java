@@ -21,12 +21,13 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 /**
  * What a stone tool was knapped from. Every stone tool carries it, and it shows: each has a look
- * of its own. And it matters in the hand - chert holds a keener edge than rough stone, and obsidian
- * keener still: sharp enough that a cut from it will sometimes open a wound a tier deeper than the
- * blow alone would have.
+ * of its own. And it matters in the hand - basalt holds a better edge than rough stone, chert a
+ * keener one, and obsidian keener still: sharp enough that a cut from it will sometimes open a
+ * wound a tier deeper than the blow alone would have. Plain country rock is nothing in particular,
+ * and a tool knapped from it keeps the plain look.
  */
 public enum StoneMaterial {
-    BASALT("Basalt", ChatFormatting.DARK_GRAY, 0.0F, "rough, dark lava stone - the common cobble"),
+    BASALT("Basalt", ChatFormatting.DARK_GRAY, 0.25F, "dense, dark lava stone - a tier behind chert"),
     QUARTZITE("Quartzite", ChatFormatting.GRAY, 0.0F, "coarse and tough - it holds up to a beating"),
     CHERT("Chert", ChatFormatting.GOLD, 0.5F, "fine-grained and waxy - it takes a keener edge"),
     LIMESTONE("Limestone", ChatFormatting.WHITE, 0.0F, "soft and chalky - it barely holds an edge"),
@@ -72,7 +73,7 @@ public enum StoneMaterial {
         if (stone.is(ModItems.LIMESTONE_ROCK.get())) {
             return LIMESTONE;
         }
-        return stone.is(ModItems.ROCK.get()) ? BASALT : null;
+        return stone.is(ModItems.BASALT_ROCK.get()) ? BASALT : null;
     }
 
     /** What a stone tool is made of: what it was stamped with, or what the item always is. */
@@ -177,7 +178,7 @@ public enum StoneMaterial {
             return;
         }
         String effect = material == OBSIDIAN ? " (+1 damage; cuts can open a tier deeper)"
-                : material == CHERT ? " (+half a heart damage)" : "";
+                : material == CHERT ? " (+0.5 damage)" : material == BASALT ? " (+0.25 damage)" : "";
         tooltip.add(Math.min(1, tooltip.size()), Component.literal(material.title + " - " + material.about + effect)
                 .withStyle(material.colour));
     }

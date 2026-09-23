@@ -23,6 +23,10 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Sharing is always good$() - shared meals bond more and come twice as often, but an unmet want costs double.$(br2)It cannot be held alongside the tight-times rule. Without any rule, hungry members steal now and then, and the band frays a little each time."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Nobody lords it over the rest$() - always. The band keeps its bullies in line: most fights are stopped before they start, a thief who does not care is caught like anyone else, and those who stopped caring come round sooner.$(br2)It makes $(o)Shun them$() (under Social) far more likely to work: they bend, or they walk away for good."
     }
   ]
 }

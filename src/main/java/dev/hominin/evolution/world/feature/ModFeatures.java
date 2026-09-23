@@ -23,6 +23,10 @@ public final class ModFeatures {
     public static final DeferredHolder<Feature<?>, OutcropFeature> OUTCROP =
             FEATURES.register("outcrop", () -> new OutcropFeature(BlockStateConfiguration.CODEC));
 
+    /** Loose basalt for forty blocks round any lava, and a little obsidian at its edge. */
+    public static final DeferredHolder<Feature<?>, BasaltScatterFeature> BASALT_SCATTER =
+            FEATURES.register("basalt_scatter", () -> new BasaltScatterFeature(NoneFeatureConfiguration.CODEC));
+
     private ModFeatures() {
     }
 }

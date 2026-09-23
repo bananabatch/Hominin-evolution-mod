@@ -166,7 +166,7 @@ public class CraftGoal extends Goal {
         }
         if (member.hasMadeChopper() && !has(s -> s.is(ModItems.OLDOWAN_MULTITOOL.get()))
                 && (count(ModItems.CHERT_ROCK.get()) >= 8 || count(ModItems.CHERT_HAMMERSTONE.get()) >= 1
-                        || count(ModItems.OBSIDIAN_ROCK.get()) >= 2)) {
+                        || count(ModItems.OBSIDIAN_ROCK.get()) >= 2 || count(ModItems.BASALT_ROCK.get()) >= 10)) {
             return Plan.MULTITOOL;
         }
         return null;
@@ -258,8 +258,10 @@ public class CraftGoal extends Goal {
             }
             case MULTITOOL -> {
                 Item stone = count(ModItems.CHERT_HAMMERSTONE.get()) >= 1 ? ModItems.CHERT_HAMMERSTONE.get()
-                        : count(ModItems.OBSIDIAN_ROCK.get()) >= 2 ? ModItems.OBSIDIAN_ROCK.get() : ModItems.CHERT_ROCK.get();
-                int cost = stone == ModItems.CHERT_HAMMERSTONE.get() ? 1 : stone == ModItems.OBSIDIAN_ROCK.get() ? 2 : 8;
+                        : count(ModItems.OBSIDIAN_ROCK.get()) >= 2 ? ModItems.OBSIDIAN_ROCK.get()
+                        : count(ModItems.CHERT_ROCK.get()) >= 8 ? ModItems.CHERT_ROCK.get() : ModItems.BASALT_ROCK.get();
+                int cost = stone == ModItems.CHERT_HAMMERSTONE.get() ? 1 : stone == ModItems.OBSIDIAN_ROCK.get() ? 2
+                        : stone == ModItems.CHERT_ROCK.get() ? 8 : 10;
                 for (int i = 0; i < cost; i++) {
                     take(s -> s.is(stone));
                 }

@@ -27,6 +27,7 @@ public class HomininEvolutionClient {
         NeoForge.EVENT_BUS.addListener(ClientSync::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(ChecklistOverlay::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(LockedSlotOverlay::onRender);
+        NeoForge.EVENT_BUS.addListener(TipDisplay::onMouseClicked);
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, HomininModels.SPEC);
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);

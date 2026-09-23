@@ -89,11 +89,51 @@ public final class HomininCommand {
                                     "A wild band of " + size + " appears nearby."), false);
                             return 1;
                         }))
+                .then(Commands.literal("tips")
+                        .executes(ctx -> tips(ctx, null))
+                        .then(Commands.literal("on").executes(ctx -> tips(ctx, false)))
+                        .then(Commands.literal("off").executes(ctx -> tips(ctx, true)))
+                        .then(Commands.literal("reset").executes(ctx -> {
+                            dev.hominin.evolution.guide.Tips.reset(ctx.getSource().getPlayerOrException());
+                            return 1;
+                        }))
+                        .then(Commands.literal("read")
+                                .then(Commands.argument("entry", ResourceLocationArgument.id())
+                                        .then(Commands.argument("page",
+                                                        com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99))
+                                                .executes(HomininCommand::readTip)))))
                 .then(Commands.literal("dev")
                         .requires(src -> src.hasPermission(2))
                         .executes(ctx -> toggleDeveloperMode(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> toggleDeveloperMode(ctx, EntityArgument.getPlayer(ctx, "player"))))));
+    }
+
+    /**
+     * Tips on or off, or how things stand. No permission level: whether you want a word in your ear is
+     * yours to decide.
+     */
+    private static int tips(CommandContext<CommandSourceStack> ctx, @javax.annotation.Nullable Boolean off)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        if (off == null) {
+            dev.hominin.evolution.guide.Tips.status(player);
+        } else {
+            dev.hominin.evolution.guide.Tips.setOff(player, off);
+        }
+        return 1;
+    }
+
+    /** What double-clicking a tip runs: the guide, open at the tip's page. */
+    private static int readTip(CommandContext<CommandSourceStack> ctx)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        if (!dev.hominin.evolution.guide.Tips.openBook(player, ResourceLocationArgument.getId(ctx, "entry"),
+                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "page"))) {
+            ctx.getSource().sendFailure(Component.literal("The guide needs Patchouli installed."));
+            return 0;
+        }
+        return 1;
     }
 
     /** What season it is - and, for testing, which season it should be. */

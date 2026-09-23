@@ -92,6 +92,7 @@ public final class InventoryLimits {
         if (dropped) {
             player.sendSystemMessage(Component.literal("Your arms are full - you can only carry " + unlocked
                     + " things, and let the rest fall.").withStyle(ChatFormatting.GRAY));
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.ARMS_FULL);
         }
     }
 

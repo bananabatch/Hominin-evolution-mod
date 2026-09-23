@@ -297,6 +297,7 @@ public final class ItemInteractions {
      * ahead of the idea behind them.
      */
     private static void fumble(ServerPlayer player, ItemStack main, ItemStack off) {
+        dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.FUMBLE);
         if (player.getRandom().nextFloat() >= FUMBLE_CHANCE) {
             player.displayClientMessage(
                     Component.literal("You aren't sure what to do with what you're holding yet."), true);

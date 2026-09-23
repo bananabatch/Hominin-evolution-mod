@@ -1,0 +1,24 @@
+{
+  "name": "Wounds",
+  "icon": "minecraft:red_dye",
+  "category": "hominin_evolution:body",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A wound bleeds in one of three ways.$(br2)$(l)A cut$() - teeth, a flake - bleeds a little and stops.$(br)$(l)A deep wound$() - a spear, a hyena, a big cat - bleeds harder, and while it runs you do not heal.$(br)$(l)Catastrophic$() - it will not stop on its own."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Catastrophic bleeding is a clock: sixty seconds. The only thing that has ever worked is water, and a great deal of it - $(l)twenty-four$(): four drinks straight from the source, or three full eggshells.$(br2)Live through it and you are $(l)lacerated$() until dawn. Get hurt again, or eat raw meat, before then and it goes bad."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Infection$() stops all healing for two days, drains your hunger and makes you sick. Cooked meat never causes it.$(br2)Only one thing stops you mending at a time - blood loss, infection, lacerations or ticks. A worse one replaces a lesser one, and your journal ($(k:hominin_evolution.journal)) says which it is."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Ticks$() find you two a day at most. Past six, nothing heals until somebody grooms them off - and what they pick off, you can eat.$(br2)Ask with $(k:hominin_evolution.social): Social, $(o)Get these off me$(). Groom one of them first and they owe you the favour."
+    }
+  ]
+}

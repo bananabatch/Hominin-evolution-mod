@@ -23,11 +23,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Knapping$() is its own screen: hold a rock with a hammerstone in your off hand and press $(k:hominin_evolution.item_interact). It offers what you could try to strike off - a flake, a chopper, a multi tool - and good stone breaks better than bad."
+      "text": "$(l)Knapping$() is its own screen: hold a rock with a hammerstone in your off hand and press $(k:hominin_evolution.item_interact). It offers what you could try to strike off - a flake, a chopper, a multi tool - and good stone breaks better than bad.$(br2)A multi tool takes 8 chert, 10 basalt, 2 obsidian or a chert hammerstone."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)What the stone is worth$()$(li)Chert - the finest edge, the rarest find$(li)Quartzite - coarse, plentiful, dependable$(li)Obsidian - sharper than anything, and only up high$(li)Limestone - will not hold an edge. Good for grinding, nothing else."
+      "text": "$(l)What the stone is worth$()$(li)Chert - the finest edge, the rarest find$(li)Basalt - a tier behind chert, and always near lava$(li)Quartzite - coarse, plentiful, dependable$(li)Obsidian - sharper than anything, and only up high$(li)Limestone - will not hold an edge. Good for grinding, nothing else."
     }
   ]
 }

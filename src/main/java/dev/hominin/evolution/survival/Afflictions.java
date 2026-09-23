@@ -78,6 +78,13 @@ public final class Afflictions {
         if (!alreadyKnown && entity instanceof Player player && !entity.level().isClientSide()) {
             player.sendSystemMessage(Component.literal(affliction.explanation())
                     .withStyle(ChatFormatting.RED));
+            if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+                if (affliction == Affliction.LACERATED) {
+                    dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.LACERATED);
+                } else if (affliction == Affliction.INFECTED) {
+                    dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.INFECTED);
+                }
+            }
         }
         return true;
     }

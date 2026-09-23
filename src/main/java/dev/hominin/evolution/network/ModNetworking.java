@@ -53,6 +53,7 @@ public final class ModNetworking {
         registrar.playToClient(SkullPosePayload.TYPE, SkullPosePayload.STREAM_CODEC, SkullPosePayload::handle);
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);
+        registrar.playToClient(TipPayload.TYPE, TipPayload.STREAM_CODEC, TipPayload::handle);
     }
 
     private ModNetworking() {

@@ -255,6 +255,11 @@ public final class BlockBreakHandler {
             return;
         }
         lastBlockedMessageTick.put(player.getUUID(), gameTime);
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            // A rock face wants a hammerstone; anything else hard, the lesson that hands only take what is soft.
+            dev.hominin.evolution.guide.Tips.offer(server, isWorkedNotMined(state) && !state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get())
+                    ? dev.hominin.evolution.guide.Tips.Tip.HAMMERSTONE : dev.hominin.evolution.guide.Tips.Tip.BARE_HANDS);
+        }
         if (isWorkedNotMined(state)) {
             player.sendSystemMessage(Component.literal(
                     state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get())

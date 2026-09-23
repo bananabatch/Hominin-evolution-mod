@@ -1,0 +1,28 @@
+{
+  "name": "Holding Together",
+  "icon": "minecraft:campfire",
+  "category": "hominin_evolution:living",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A band's faith in you runs from 0 to 50, and a new band starts at $(l)30$() - neither for you nor against.$(br2)It rises when you share food, groom, play, keep your word and give them what they need. It falls with every death and every theft, and whenever you let them down. Tribe stats and your journal show where it stands."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Below 30$() they want to see you do better, and turn down half your trades. While it is 21 to 29 you can promise to ($(k:hominin_evolution.social), Social, $(o)I'll do better$()) - once.$(br)$(l)20 and under$(): no trades at all.$(br)$(l)10 and under$(): one more failing and they drive you out.$(br2)$(l)40 and up$() they listen and stand firm; at 50 they would do anything for you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Needs$() are not wants. There is at most one at a time, said out loud, and the one in need glows: a mother-to-be needs a real meal, someone laid up needs a good stone to work. You have ten minutes - hand it over with $(o)Here, take this$().$(br2)Met, the band saw you put them first. Ignored, they will not forget it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They keep count. Food handed over, things taken from their packs and errands run are $(l)taking$(); anything you hand them, and every want or need met, is giving back. Take far more than you give and they tell you - and then it costs you.$(br2)Carrying a heap of food past hungry people is noticed too. Hold it and choose $(o)Pass around what I'm holding$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Some do not care what the band thinks. They steal, hoard, never give, teach the young nothing, and now and then start a fight. A band coming apart grows more of them.$(br2)From erectus a band can stand up to them: $(l)Nobody lords it over the rest$(), in the Culture tab, or $(o)Shun them$() under Social - and they bend, or they go."
+    }
+  ]
+}

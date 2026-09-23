@@ -247,6 +247,8 @@ public final class ModItems {
             ModBlocks.LIMESTONE_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
     public static final DeferredItem<BlockItem> OBSIDIAN_ROCK = ITEMS.registerSimpleBlockItem(
             ModBlocks.OBSIDIAN_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
+    public static final DeferredItem<BlockItem> BASALT_ROCK = ITEMS.registerSimpleBlockItem(
+            ModBlocks.BASALT_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
 
     // The bedrock outcrops. Full blocks, so ordinary stack sizes.
     public static final DeferredItem<BlockItem> CHERT_DEPOSIT = ITEMS.registerSimpleBlockItem(

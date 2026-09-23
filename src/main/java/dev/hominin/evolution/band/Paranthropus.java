@@ -286,7 +286,7 @@ public final class Paranthropus {
             return state.is(ModBlocks.OBSIDIAN_ROCK.get()) || state.is(Blocks.OBSIDIAN);
         }
         return state.is(ModBlocks.CHERT_DEPOSIT.get()) || state.is(ModBlocks.QUARTZITE_DEPOSIT.get())
-                || state.is(ModBlocks.CHERT_ROCK.get());
+                || state.is(ModBlocks.CHERT_ROCK.get()) || state.is(ModBlocks.BASALT_ROCK.get());
     }
 
     private static void say(Player player, String text) {

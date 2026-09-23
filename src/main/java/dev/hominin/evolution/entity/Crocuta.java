@@ -248,6 +248,9 @@ public class Crocuta extends PathfinderMob {
             told.displayClientMessage(Component.literal("The hyenas bristle and bark at you over the kill. Back off, "
                     + "or they will come for you. (A threat display might break them - or might not.)")
                     .withStyle(ChatFormatting.GOLD), false);
+            if (told instanceof net.minecraft.server.level.ServerPlayer server) {
+                dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.HYENA_CLAN);
+            }
         }
     }
 
