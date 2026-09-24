@@ -21,6 +21,15 @@ public final class ModEntities {
                     .updateInterval(10)
                     .build("thrown_object"));
 
+    /** A burning torch, thrown: flies like a snowball, lands still burning. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.ThrownTorch>> THROWN_TORCH =
+            ENTITY_TYPES.register("thrown_torch", () -> EntityType.Builder.<dev.hominin.evolution.entity.ThrownTorch>of(
+                    dev.hominin.evolution.entity.ThrownTorch::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .build("thrown_torch"));
+
     /** A little shorter than a player, as the hominins it stands for were. */
     public static final Supplier<EntityType<BandMember>> BAND_MEMBER = ENTITY_TYPES.register("band_member",
             () -> EntityType.Builder.<BandMember>of(BandMember::new, MobCategory.CREATURE)
@@ -85,6 +94,22 @@ public final class ModEntities {
             ENTITY_TYPES.register("pelorovis", () -> EntityType.Builder.<dev.hominin.evolution.entity.Pelorovis>of(
                     dev.hominin.evolution.entity.Pelorovis::new, MobCategory.CREATURE)
                     .sized(1.9F, 1.9F).clientTrackingRange(10).build("pelorovis"));
+
+    /** The later megafauna: the first mammoth, the giant hartebeest, and the antelope with the voice. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Mammuthus>> MAMMUTHUS =
+            ENTITY_TYPES.register("mammuthus", () -> EntityType.Builder.<dev.hominin.evolution.entity.Mammuthus>of(
+                    dev.hominin.evolution.entity.Mammuthus::new, MobCategory.CREATURE)
+                    .sized(2.9F, 4.5F).clientTrackingRange(12).build("mammuthus"));
+
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Megalotragus>> MEGALOTRAGUS =
+            ENTITY_TYPES.register("megalotragus", () -> EntityType.Builder.<dev.hominin.evolution.entity.Megalotragus>of(
+                    dev.hominin.evolution.entity.Megalotragus::new, MobCategory.CREATURE)
+                    .sized(1.7F, 2.5F).clientTrackingRange(10).build("megalotragus"));
+
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.Rusingoryx>> RUSINGORYX =
+            ENTITY_TYPES.register("rusingoryx", () -> EntityType.Builder.<dev.hominin.evolution.entity.Rusingoryx>of(
+                    dev.hominin.evolution.entity.Rusingoryx::new, MobCategory.CREATURE)
+                    .sized(1.3F, 1.8F).clientTrackingRange(10).build("rusingoryx"));
 
     /** The bird that takes children out of the open. */
     public static final Supplier<EntityType<dev.hominin.evolution.entity.CrownedEagle>> CROWNED_EAGLE =

@@ -17,7 +17,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * A wall or a roof of bound thatch. Left as it is, weather takes it apart - abandon a
- * settlement and, sooner or later, this is what happens to it. Stretch hide over it and
+ * settlement (go more than 150 blocks from it) and, sooner or later, this is what happens to it. Stretch hide over it and
  * it stops caring: cured, it lasts as long as the block does.
  */
 public class ThatchBlock extends Block {
@@ -25,6 +25,8 @@ public class ThatchBlock extends Block {
     public static final BooleanProperty CURED = BooleanProperty.create("cured");
     /** How often an uncured block checks whether the weather has finally had it. */
     private static final float DECAY_CHANCE = 0.03F;
+    /** Anyone this close keeps it patched: only thatch left behind rots. */
+    private static final double TENDED_RANGE = 150.0D;
 
     public ThatchBlock(Properties properties) {
         super(properties);
@@ -49,7 +51,8 @@ public class ThatchBlock extends Block {
     @Override
     protected void randomTick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos,
             RandomSource random) {
-        if (!state.getValue(CURED) && random.nextFloat() < DECAY_CHANCE && !sheltered(level, pos)) {
+        if (!state.getValue(CURED) && random.nextFloat() < DECAY_CHANCE && !sheltered(level, pos)
+                && !level.hasNearbyAlivePlayer(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, TENDED_RANGE)) {
             level.destroyBlock(pos, false);
         }
     }

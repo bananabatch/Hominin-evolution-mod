@@ -784,6 +784,7 @@ public final class Band {
         baby.finalizeSpawn(level, level.getCurrentDifficultyAt(mother.blockPosition()), MobSpawnType.BREEDING, null);
         baby.setStage(mother.getStage());
         baby.setLeader(mother.getLeader());
+        baby.setMother(mother.getUUID());
         Player companion = mother.companionPlayer();
         if (mother.isGuest() && companion != null && hasRoomFor(companion)) {
             // Born while the bands were together: the child stays with the player's band.
@@ -818,7 +819,11 @@ public final class Band {
             dev.hominin.evolution.stage.StageSync.sync(player);
         }
         topUp(player, data.getStage());
+        Cohesion.reset(player);
+        dev.hominin.evolution.hunt.Predation.settle(player, player.blockPosition());
         player.sendSystemMessage(Component.literal("You are not alone out here. Your band is with you."));
+        Relations.ownBandFormed(player);
+        dev.hominin.evolution.world.Pois.newBandKnows(player);
     }
 
     /** Brings the band up to at least the size this stage starts at. */
@@ -882,7 +887,10 @@ public final class Band {
         // New people: no history with you, good or bad.
         Cohesion.reset(player);
         Needs.forget(player.getUUID());
+        dev.hominin.evolution.hunt.Predation.settle(player, player.blockPosition());
         player.sendSystemMessage(Component.literal("You wake among a new band.").withStyle(ChatFormatting.GREEN));
+        Relations.ownBandFormed(player);
+        dev.hominin.evolution.world.Pois.newBandKnows(player);
         Remembrance.carryInto(player);
         dev.hominin.evolution.hunt.Persistence.tellStartingSkills(player);
     }
@@ -905,6 +913,7 @@ public final class Band {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        dev.hominin.evolution.survival.TorchLight.douse(player);
         BandMember heir = null;
         double best = Double.MAX_VALUE;
         for (BandMember member : all(player)) {
@@ -941,6 +950,8 @@ public final class Band {
             return;
         }
         String name = member.getName().getString();
+        player.getData(Attachments.MIND).setBodyName(name);
+        dev.hominin.evolution.mind.Journal.setFemale(player, member.isFemale());
         player.teleportTo(level, member.getX(), member.getY(), member.getZ(), member.getYRot(), 0.0F);
         for (ItemStack stack : member.takeEverything()) {
             if (!player.getInventory().add(stack)) {
@@ -950,8 +961,121 @@ public final class Band {
         player.getFoodData().setFoodLevel(Math.max(6, member.getHunger()));
         member.discard();
         PacketDistributor.sendToPlayer(player, new RebirthPayload(name));
+        // The eyes are shut for a few seconds: nothing else plays over it, and nothing hurts you. If the one
+        // you became was the last of the band, the panic comes once you have opened your eyes.
+        dev.hominin.evolution.stage.CutsceneGuard.protect(player, REBIRTH_TICKS);
         player.sendSystemMessage(Component.literal("You carry on as " + name + ".").withStyle(ChatFormatting.GRAY));
     }
+
+    /** The bond a member needs with you before you can live as them for a while. */
+    public static final int SWAP_BOND = 3;
+    private static final Map<UUID, Long> lastSwap = new HashMap<>();
+    private static final long SWAP_GAP_TICKS = 2400L;
+
+    /**
+     * Living as somebody else for a while. Only somebody close to you (bond 3 and up) will let you in that
+     * far. You open your eyes where they stood, as hurt and as hungry as they were, holding in mind what
+     * they held; and the one you were carries on where you stood, with your name, your hurts and your
+     * places in mind. What you carry stays with you.
+     */
+    public static void swapInto(ServerPlayer player, BandMember member) {
+        if (!member.isLedBy(player) || member.isBaby() || !member.isAlive()) {
+            player.displayClientMessage(Component.literal("Only one of your own band's grown people."), true);
+            return;
+        }
+        if (member.getBond() < SWAP_BOND) {
+            member.ensureName();
+            player.displayClientMessage(Component.literal(member.getName().getString() + " is not close enough to you "
+                    + "for that. (Bond " + member.getBond() + " - it takes " + SWAP_BOND + ".)"), true);
+            return;
+        }
+        if (member.isMateOf(player.getUUID())) {
+            player.displayClientMessage(Component.literal("Not your own mate."), true);
+            return;
+        }
+        if (member.isPregnant() || member.getTarget() != null || member.inDanger()
+                || dev.hominin.evolution.stage.CutsceneGuard.isProtected(player)) {
+            player.displayClientMessage(Component.literal("Not now."), true);
+            return;
+        }
+        long now = player.level().getGameTime();
+        if (now - lastSwap.getOrDefault(player.getUUID(), -99999L) < SWAP_GAP_TICKS) {
+            player.displayClientMessage(Component.literal("You have only just settled into this body. ("
+                    + (SWAP_GAP_TICKS - (now - lastSwap.get(player.getUUID()))) / 20 + "s)"), true);
+            return;
+        }
+        lastSwap.put(player.getUUID(), now);
+        var mind = player.getData(Attachments.MIND);
+        member.ensureName();
+        String name = member.getName().getString();
+        // Who you were, before the bodies change hands.
+        String oldName = mind.bodyName();
+        boolean oldFemale = Mating.isFemale(player);
+        float oldHealth = player.getHealth() / player.getMaxHealth();
+        int oldHunger = player.getFoodData().getFoodLevel();
+        List<dev.hominin.evolution.mind.MindData.Memory> oldMemories = new java.util.ArrayList<>(mind.memories());
+        int oldSlots = mind.slots();
+        double x = player.getX();
+        double y = player.getY();
+        double z = player.getZ();
+        float yaw = player.getYRot();
+        // You, into them.
+        float theirHealth = member.getHealth() / member.getMaxHealth();
+        List<dev.hominin.evolution.mind.MindData.Memory> theirMemories = new java.util.ArrayList<>(member.memories());
+        int theirSlots = member.memorySlots();
+        player.teleportTo(player.serverLevel(), member.getX(), member.getY(), member.getZ(), member.getYRot(), 0.0F);
+        player.setHealth(Math.max(1.0F, player.getMaxHealth() * theirHealth));
+        player.getFoodData().setFoodLevel(Math.max(4, member.getHunger()));
+        dev.hominin.evolution.mind.Journal.setFemale(player, member.isFemale());
+        mind.setBodyName(name);
+        mind.memories().clear();
+        mind.memories().addAll(theirMemories);
+        mind.setSlots(theirSlots);
+        // Them, into you.
+        member.teleportTo(x, y, z);
+        member.setYRot(yaw);
+        member.getNavigation().stop();
+        member.takeOverBody(oldName, oldFemale, oldHealth, oldHunger, oldMemories, oldSlots);
+        member.ensureName();
+        PacketDistributor.sendToPlayer(player, new RebirthPayload(name));
+        dev.hominin.evolution.stage.CutsceneGuard.protect(player, REBIRTH_TICKS);
+        player.sendSystemMessage(Component.literal("You live as " + name + " for a while. The one you were - "
+                + member.getName().getString() + " - carries on where you stood.").withStyle(ChatFormatting.GRAY));
+        dev.hominin.evolution.mind.MentalMap.sync(player);
+    }
+
+    /** The bond a member needs before they will stay up all night for you. */
+    public static final int WATCH_BOND = 4;
+
+    /** "Keep watch with me tonight": someone close to you stays up and walks the camp till dawn. */
+    public static void keepWatch(ServerPlayer player, BandMember member) {
+        member.ensureName();
+        if (!member.isLedBy(player) || member.isBaby()) {
+            return;
+        }
+        if (member.getBond() < WATCH_BOND) {
+            player.displayClientMessage(Component.literal(member.getName().getString() + " would rather sleep. (Bond "
+                    + member.getBond() + " - it takes " + WATCH_BOND + ".)"), true);
+            return;
+        }
+        if (member.isInjured()) {
+            player.displayClientMessage(Component.literal(member.getName().getString() + " is laid up - they need the sleep."),
+                    true);
+            return;
+        }
+        long dayTime = player.level().getDayTime();
+        long dawn = (dayTime / 24000L + (dayTime % 24000L >= 23000L ? 1L : 0L)) * 24000L + 23500L;
+        member.setWatch(player.level().getGameTime() + (dawn - dayTime));
+        if (member.isSleeping()) {
+            member.stopSleeping();
+        }
+        player.sendSystemMessage(Component.literal("<" + member.getName().getString() + "> ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("I'll keep watch with you tonight. Nothing gets near us without me seeing it.")
+                        .withStyle(ChatFormatting.WHITE)));
+    }
+
+    /** How long the rebirth cutscene holds the screen: shut eyes, the name, the eyes opening. */
+    private static final int REBIRTH_TICKS = 120;
 
     /** Once a second: bring back stragglers, and deliver a new band when one is due. */
     public static void tickPlayer(ServerPlayer player) {
@@ -961,7 +1085,7 @@ public final class Band {
         if (player.tickCount % 40 == 0 && !player.isSpectator()) {
             keepTogether(player);
         }
-        if (player.tickCount % 100 == 20 && !player.isSpectator()) {
+        if (player.tickCount % 40 == 20 && !player.isSpectator()) {
             checkBandLost(player);
         }
         if (player.tickCount % 40 == 0) {
@@ -987,6 +1111,10 @@ public final class Band {
     private static void checkBandLost(ServerPlayer player) {
         if (dev.hominin.evolution.band.Panic.isPanicking(player) || !all(player).isEmpty()) {
             hadBand.add(player.getUUID());
+            return;
+        }
+        // Dead, or watching a cutscene (waking as someone else): the loss waits until you can take it in.
+        if (!player.isAlive() || dev.hominin.evolution.stage.CutsceneGuard.isProtected(player)) {
             return;
         }
         // Only for a player who had one a moment ago: a fresh world has no band yet either.
@@ -1018,6 +1146,10 @@ public final class Band {
     private static void keepTogether(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         for (BandMember member : all(player)) {
+            // Asleep in a nest is asleep in a nest: nobody is lifted out of it and put down somewhere else.
+            if (member.isSleeping() || member.isTurnedIn()) {
+                continue;
+            }
             if (!member.isOnExcursion() && member.distanceToSqr(player) > LOST_DISTANCE * LOST_DISTANCE) {
                 BlockPos pos = standingSpotNear(level, player.blockPosition(), member.getRandom().nextInt(3) + 2,
                         member.getRandom().nextFloat() * Mth.TWO_PI);
@@ -1030,14 +1162,27 @@ public final class Band {
 
     /** A member of a player's band died. If it was the last, the band is lost. */
     public static void onMemberDied(BandMember dead) {
+        // A roof they were given stands empty.
+        dev.hominin.evolution.build.Building.memberDied(dead);
+        // Whoever was close to them may take it hard.
+        Troubles.memberDied(dead);
         Player leader = dead.leaderPlayer();
         if (leader == null && dead.getLeader() != null && dead.level().getServer() != null) {
             // The leader may be in another dimension, or simply out of this level's player list.
             leader = dead.level().getServer().getPlayerList().getPlayer(dead.getLeader());
         }
+        if (leader instanceof ServerPlayer going && !dead.isBaby()) {
+            // A band going down in a fight: its allies hear it.
+            Fates.ownMemberDied(going);
+        }
         // One panic per band, however many of them go down together.
         if (!(leader instanceof ServerPlayer player) || !all(player).isEmpty()
                 || dev.hominin.evolution.band.Panic.isPanicking(player)) {
+            return;
+        }
+        // The last of them died while you were dead, or waking as someone else: not now. The check that
+        // runs every couple of seconds picks it up the moment you are alive and the screen is yours.
+        if (!player.isAlive() || dev.hominin.evolution.stage.CutsceneGuard.isProtected(player)) {
             return;
         }
         bandLost(player);
@@ -1073,6 +1218,8 @@ public final class Band {
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         int lost = data.getCriterionCounters().merge(BANDS_LOST, 1, Integer::sum);
+        // What the band knew of the country dies with it; the bands that stood with it remember you.
+        dev.hominin.evolution.world.Pois.bandLost(player);
         boolean onFallback = dev.hominin.evolution.stage.Fallbacks.isFallback(data.getStage());
         int limit = onFallback ? dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK : BANDS_TO_EXTINCTION;
         if (lost >= limit) {

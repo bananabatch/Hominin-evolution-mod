@@ -123,6 +123,20 @@ public class ThatchBeddingBlock extends HorizontalDirectionalBlock {
                     "Thatch bedding sleeps two side by side. This one is alone."), true);
             return net.minecraft.world.InteractionResult.SUCCESS;
         }
+        if (level instanceof net.minecraft.server.level.ServerLevel server) {
+            var refusal = dev.hominin.evolution.block.NestOwners.refusal(server, player, pos);
+            if (refusal.refused()) {
+                if (refusal.maker() != null) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<" + refusal.maker().getName().getString() + "> ")
+                            .withStyle(net.minecraft.ChatFormatting.GOLD).append(net.minecraft.network.chat.Component.literal(refusal.line())
+                                    .withStyle(net.minecraft.ChatFormatting.WHITE)));
+                    refusal.maker().getLookControl().setLookAt(player);
+                } else {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(refusal.line()), true);
+                }
+                return net.minecraft.world.InteractionResult.SUCCESS;
+            }
+        }
         player.startSleepInBed(pos).ifLeft(problem -> {
             if (problem.getMessage() != null) {
                 player.displayClientMessage(problem.getMessage(), true);

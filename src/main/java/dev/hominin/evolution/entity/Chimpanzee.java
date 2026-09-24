@@ -54,6 +54,10 @@ import net.minecraft.world.level.Level;
  */
 public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimber {
     private static final double RANGE = 24.0D;
+    /** Their ground: a hominin band's is twice as wide, and held far less fiercely. */
+    private static final double TERRITORY = ChimpRanges.RADIUS;
+    /** Strangers on the ground, and when they were first warned. */
+    private static final java.util.Map<String, Long> intruders = new java.util.HashMap<>();
     private static final int ANGER_TICKS = 300;
     /** How often the alpha feels the need to make a point. */
     private static final int CHECK_MIN = 1800;
@@ -255,9 +259,13 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
         if (tickCount % 20 != 0 || angerTicks > 0) {
             return;
         }
+        BlockPos heart = level() instanceof ServerLevel server ? ChimpRanges.note(server, communityId, home) : home;
         for (Player player : level().players()) {
             if (player.isCreative() || player.isSpectator()) {
                 continue;
+            }
+            if (isAlpha() && patrol(player, heart)) {
+                return;
             }
             // A grudge on their own ground: they come for you.
             if (TroopRelations.holdsGrudge(player, communityId) && distanceTo(player) < 12.0F
@@ -281,6 +289,52 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
                 }
             }
         }
+    }
+
+    /**
+     * The alpha's watch over the ground. A stranger on it is warned - hooting, drumming on trunks - and one
+     * who stays and comes further in has the whole community on them. Anyone the community trusts may pass.
+     * Returns true when the patrol went for someone.
+     */
+    private boolean patrol(Player player, BlockPos heart) {
+        if (!(player instanceof ServerPlayer server) || !heart.closerToCenterThan(player.position(), TERRITORY)) {
+            return false;
+        }
+        ChimpRanges.know(server.serverLevel(), communityId, player.getUUID());
+        if (TroopRelations.isTrusted(player, communityId)) {
+            return false;
+        }
+        String key = player.getUUID() + "|" + communityId;
+        long now = level().getGameTime();
+        Long since = intruders.get(key);
+        if (since == null || now - since > 1200L) {
+            if (intruders.size() > 512) {
+                intruders.clear();
+            }
+            intruders.put(key, now);
+            playSound(ModSounds.BABOON_ANGRY.get(), 2.0F, 0.6F);
+            for (Chimpanzee mate : communityNearby()) {
+                mate.getLookControl().setLookAt(player, 30.0F, 30.0F);
+            }
+            player.sendSystemMessage(Component.literal("You are on a chimpanzee community's ground. They are gathering - "
+                    + "hooting, drumming on the trunks. Go back the way you came, or win them over with food.")
+                    .withStyle(ChatFormatting.GOLD));
+            return false;
+        }
+        List<Chimpanzee> community = communityNearby();
+        if (now - since < 160L || !heart.closerToCenterThan(player.position(), TERRITORY * 0.7D) || community.size() < 2) {
+            return false;
+        }
+        intruders.put(key, now + 600L);
+        enrage(player, ANGER_TICKS);
+        for (Chimpanzee mate : community) {
+            if (!mate.isBaby()) {
+                mate.enrage(player, ANGER_TICKS);
+            }
+        }
+        player.displayClientMessage(Component.literal("You did not leave. The patrol comes for you!")
+                .withStyle(ChatFormatting.RED), true);
+        return true;
     }
 
     private void findCommunity() {

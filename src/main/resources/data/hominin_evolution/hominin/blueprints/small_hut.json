@@ -1,0 +1,26 @@
+{
+  "name": "Small hut",
+  "order": 1,
+  "description": "Walls to your shoulder all round, a roof on a centre post, and a doorway: one room, out of the wind and the rain.",
+  "key": {
+    "T": "hominin_evolution:thatch_block[cured=true]",
+    "P": "hominin_evolution:building_branch"
+  },
+  "layers": [
+    [" T_T ",
+     "T...T",
+     "T.P.T",
+     "T...T",
+     " TTT "],
+    [" T_T ",
+     "T...T",
+     "T.P.T",
+     "T...T",
+     " TTT "],
+    ["  T  ",
+     " TTT ",
+     " TTT ",
+     " TTT ",
+     "     "]
+  ]
+}

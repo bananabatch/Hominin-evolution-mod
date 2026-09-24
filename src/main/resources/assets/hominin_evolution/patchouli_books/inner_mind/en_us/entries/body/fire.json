@@ -1,20 +1,32 @@
 {
   "name": "Keeping Fire",
-  "icon": "minecraft:campfire",
+  "icon": "hominin_evolution:fire_pit",
   "category": "hominin_evolution:body",
   "sortnum": 4,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Habilis finds fire. Erectus keeps it. Work a fire drill against the ground and you have a hearth, not a flash of flame - and a hearth burns as long as somebody feeds it."
+      "text": "Habilis finds fire. Erectus keeps it - in a $(l)fire pit$(). At the work station, three logs along the bottom row and five sticks above them (a gap at the top middle), nothing in the slot. Set it down where the band sleeps. A drill worked on bare ground only makes a flash of flame."
     },
     {
       "type": "patchouli:text",
-      "text": "Sticks, branches, grass, logs: right-click the hearth with them. A few minutes' fire each, and up to twenty banked. Let it run dry and it goes to ash; the drill lights it again."
+      "text": "A pit burns what you put in it: sticks, branches (any kind), thatch or nest grass - right-click them in, sneak to put in up to eight. Right-click it empty-handed to see what is in it; sneak empty-handed to take the last thing back out.$(br2)To catch it needs $(l)three things in it$() at least, and something to take the spark: $(l)thatch$(), or warm embers."
     },
     {
       "type": "patchouli:text",
-      "text": "Meat laid on it comes off cooked, and cooked meat goes further and makes nobody ill.$(br2)At night nothing that hunts will come into the light of a hearth you are sitting by. Spend a whole night beside one - awake or asleep - and you are the kind of animal that owns the dark."
+      "text": "Then work a $(l)fire drill$() on it. It does not always catch - the more thatch in it the likelier, rain makes it hard, and knowing fire already helps. A burning torch catches it far more easily than a drill.$(br2)Lit, everything in it is fire. Feed it and it keeps: a stick is a minute, thatch half that, a branch two and a half - up to half an hour banked. Rain eats it four times as fast."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Left alone it burns down to $(l)embers$(), and they stay warm a whole day: fill it again and it catches on them easily. After that it is cold ash, which helps only a little.$(br2)Meat laid on a burning pit comes off cooked - or hang it over one (see The Cooking Rack). At night nothing that hunts will come into its light - and a fire kept on your own ground builds your band’s presence there."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)torch$(): a stick with thatch over the top of it, three twine in the slot. Light it at any fire. Held, it lights the ground round you; it burns down in about ten minutes, faster in rain, and water puts it out.$(br2)Use it on the ground or a wall and it stays there, lighting the camp twice as long. Use it at anything else and it is thrown: whatever it hits catches, and runs."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Thatch$() put in an unlit pit lies in the bottom of it, under the sticks, and a thread of smoke comes off it - thicker on the warm ashes of the last fire. Thrown on a burning fire, thatch goes up in a column of white smoke that can be seen a long way off."
     }
   ]
 }

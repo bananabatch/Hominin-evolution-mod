@@ -394,6 +394,155 @@ public final class WildAnimalLayers {
         return LayerDefinition.create(mesh, 128, 64);
     }
 
+    /**
+     * Mammuthus subplanifrons: the first mammoth, still an African animal. A great domed head held
+     * higher than the shoulders, a heavy body falling away to the rump, pillar legs, ears smaller than an
+     * elephant's, a trunk that curls at the tip, and tusks that go down and then sweep forward and up.
+     */
+    public static LayerDefinition mammuthus() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-7F, -7F, -10F, 14F, 14F, 22F), PartPose.offset(0F, 4F, 1F));
+        PartDefinition hump = body.addOrReplaceChild("hump", CubeListBuilder.create().texOffs(52, 55)
+                .addBox(-6F, -10F, -10F, 12F, 4F, 11F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition belly = body.addOrReplaceChild("belly", CubeListBuilder.create().texOffs(0, 36)
+                .addBox(-6F, 5F, -7F, 12F, 3F, 16F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(44, 73)
+                .addBox(-0.5F, 0F, 0F, 1F, 9F, 1F), PartPose.offsetAndRotation(0F, -4F, 12F, 0.3F, 0F, 0F));
+        PartDefinition tuft = tail.addOrReplaceChild("tuft", CubeListBuilder.create().texOffs(8, 84)
+                .addBox(-1F, 8F, -1F, 2F, 3F, 2F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(72, 0)
+                .addBox(-5F, -9F, -8F, 10F, 13F, 8F), PartPose.offset(0F, -1F, -9F));
+        PartDefinition dome = head.addOrReplaceChild("dome", CubeListBuilder.create().texOffs(96, 73)
+                .addBox(-4.5F, -11F, -7F, 9F, 2F, 6F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition leftEar = head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(20, 55)
+                .addBox(0F, 0F, 0F, 1F, 9F, 7F), PartPose.offsetAndRotation(5F, -7F, -4F, 0F, 0.45F, 0.08F));
+        PartDefinition rightEar = head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(36, 55)
+                .addBox(-1F, 0F, 0F, 1F, 9F, 7F), PartPose.offsetAndRotation(-5F, -7F, -4F, 0F, -0.45F, -0.08F));
+        PartDefinition trunk1 = head.addOrReplaceChild("trunk1", CubeListBuilder.create().texOffs(98, 55)
+                .addBox(-2F, 0F, -2F, 4F, 7F, 4F), PartPose.offsetAndRotation(0F, 1F, -8F, 0.15F, 0F, 0F));
+        PartDefinition trunk2 = trunk1.addOrReplaceChild("trunk2", CubeListBuilder.create().texOffs(48, 73)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 7F, 3F), PartPose.offsetAndRotation(0F, 6.5F, 0F, 0.12F, 0F, 0F));
+        PartDefinition trunk3 = trunk2.addOrReplaceChild("trunk3", CubeListBuilder.create().texOffs(0, 84)
+                .addBox(-1F, 0F, -1F, 2F, 4F, 2F), PartPose.offsetAndRotation(0F, 6.5F, 0F, -0.35F, 0F, 0F));
+        PartDefinition leftTusk = head.addOrReplaceChild("left_tusk", CubeListBuilder.create().texOffs(0, 73)
+                .addBox(-1F, -1F, -9F, 2F, 2F, 9F), PartPose.offsetAndRotation(3F, 2F, -7F, 0.95F, -0.12F, 0F));
+        PartDefinition leftTuskTip = leftTusk.addOrReplaceChild("left_tusk_tip", CubeListBuilder.create().texOffs(60, 73)
+                .addBox(-1F, -1F, -7F, 2F, 2F, 7F), PartPose.offsetAndRotation(0F, 0F, -8.5F, -1.05F, -0.3F, 0F));
+        PartDefinition rightTusk = head.addOrReplaceChild("right_tusk", CubeListBuilder.create().texOffs(22, 73)
+                .addBox(-1F, -1F, -9F, 2F, 2F, 9F), PartPose.offsetAndRotation(-3F, 2F, -7F, 0.95F, 0.12F, 0F));
+        PartDefinition rightTuskTip = rightTusk.addOrReplaceChild("right_tusk_tip", CubeListBuilder.create().texOffs(78, 73)
+                .addBox(-1F, -1F, -7F, 2F, 2F, 7F), PartPose.offsetAndRotation(0F, 0F, -8.5F, -1.05F, 0.3F, 0F));
+        PartDefinition rightFrontLeg = root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(56, 36)
+                .addBox(-2.5F, 0F, -2.5F, 5F, 13F, 5F), PartPose.offset(-4.5F, 11F, -6F));
+        PartDefinition leftFrontLeg = root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(76, 36)
+                .addBox(-2.5F, 0F, -2.5F, 5F, 13F, 5F), PartPose.offset(4.5F, 11F, -6F));
+        PartDefinition rightHindLeg = root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(96, 36)
+                .addBox(-2.5F, 0F, -2.5F, 5F, 13F, 5F), PartPose.offset(-4.5F, 11F, 8F));
+        PartDefinition leftHindLeg = root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(0, 55)
+                .addBox(-2.5F, 0F, -2.5F, 5F, 13F, 5F), PartPose.offset(4.5F, 11F, 8F));
+        return LayerDefinition.create(mesh, 128, 128);
+    }
+
+    /**
+     * Megalotragus: a hartebeest the size of a buffalo. High shoulders and a back that slopes away,
+     * a long, narrow face carried low, and long horns that rise from a raised base, sweep back and
+     * curve round - rufous, with a dark blaze down the face.
+     */
+    public static LayerDefinition megalotragus() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.5F, -4.5F, -9F, 9F, 9F, 18F), PartPose.offset(0F, 8F, 1F));
+        PartDefinition withers = body.addOrReplaceChild("withers", CubeListBuilder.create().texOffs(26, 27)
+                .addBox(-4F, -7.5F, -9F, 8F, 3F, 9F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(60, 27)
+                .addBox(-0.5F, 0F, 0F, 1F, 8F, 1F), PartPose.offsetAndRotation(0F, -3F, 9.5F, 0.35F, 0F, 0F));
+        PartDefinition tuft = tail.addOrReplaceChild("tuft", CubeListBuilder.create().texOffs(92, 27)
+                .addBox(-1F, 6F, -1F, 2F, 3F, 2F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(10, 40)
+                .addBox(-0.5F, -0.5F, -0.5F, 1F, 1F, 1F), PartPose.offset(0F, 2F, -7F));
+        PartDefinition neck = head.addOrReplaceChild("neck", CubeListBuilder.create().texOffs(102, 0)
+                .addBox(-2F, -8F, -3F, 4F, 9F, 5F), PartPose.offsetAndRotation(0F, 1F, 0F, 0.45F, 0F, 0F));
+        PartDefinition skull = neck.addOrReplaceChild("skull", CubeListBuilder.create().texOffs(0, 27)
+                .addBox(-2F, -3F, -9F, 4F, 4F, 9F), PartPose.offsetAndRotation(0F, -7F, -1F, 0.6F, 0F, 0F));
+        PartDefinition muzzle = skull.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(80, 27)
+                .addBox(-1.5F, -2.5F, -3F, 3F, 3F, 3F), PartPose.offset(0F, 0.5F, -8.5F));
+        PartDefinition pedicle = skull.addOrReplaceChild("pedicle", CubeListBuilder.create().texOffs(100, 27)
+                .addBox(-2F, -2F, -1F, 4F, 2F, 2F), PartPose.offset(0F, -3F, -1.5F));
+        PartDefinition leftHorn = pedicle.addOrReplaceChild("left_horn", CubeListBuilder.create().texOffs(64, 27)
+                .addBox(-0.5F, -6F, -0.5F, 1F, 6F, 1F), PartPose.offsetAndRotation(1.5F, -1.5F, 0F, -1.2F, 0F, 0.5F));
+        PartDefinition leftHornTip = leftHorn.addOrReplaceChild("left_horn_tip", CubeListBuilder.create().texOffs(68, 27)
+                .addBox(-0.5F, -6F, -0.5F, 1F, 6F, 1F), PartPose.offsetAndRotation(0F, -5.5F, 0F, -0.75F, 0F, -0.35F));
+        PartDefinition rightHorn = pedicle.addOrReplaceChild("right_horn", CubeListBuilder.create().texOffs(72, 27)
+                .addBox(-0.5F, -6F, -0.5F, 1F, 6F, 1F), PartPose.offsetAndRotation(-1.5F, -1.5F, 0F, -1.2F, 0F, -0.5F));
+        PartDefinition rightHornTip = rightHorn.addOrReplaceChild("right_horn_tip", CubeListBuilder.create().texOffs(76, 27)
+                .addBox(-0.5F, -6F, -0.5F, 1F, 6F, 1F), PartPose.offsetAndRotation(0F, -5.5F, 0F, -0.75F, 0F, 0.35F));
+        PartDefinition leftEar = skull.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(112, 27)
+                .addBox(0F, -1F, 0F, 3F, 1F, 2F), PartPose.offsetAndRotation(2F, -2F, -1.5F, 0F, 0F, -0.4F));
+        PartDefinition rightEar = skull.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(0, 40)
+                .addBox(-3F, -1F, 0F, 3F, 1F, 2F), PartPose.offsetAndRotation(-2F, -2F, -1.5F, 0F, 0F, 0.4F));
+        PartDefinition rightFrontLeg = root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(54, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 12F, 3F), PartPose.offset(-3F, 12F, -6F));
+        PartDefinition leftFrontLeg = root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(66, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 12F, 3F), PartPose.offset(3F, 12F, -6F));
+        PartDefinition rightHindLeg = root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(78, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 12F, 3F), PartPose.offset(-3F, 12F, 7.5F));
+        PartDefinition leftHindLeg = root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(90, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 12F, 3F), PartPose.offset(3F, 12F, 7.5F));
+        return LayerDefinition.create(mesh, 128, 64);
+    }
+
+    /**
+     * Rusingoryx: a wildebeest-sized antelope with a hollow dome swelling over its snout - a
+     * resonating chamber, so its calls carried. Grey-tawny, pale underneath, a dark face, faint bars
+     * over the shoulders, and short horns that curve back.
+     */
+    public static LayerDefinition rusingoryx() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4F, -4F, -8F, 8F, 8F, 16F), PartPose.offset(0F, 9F, 1F));
+        PartDefinition shoulders = body.addOrReplaceChild("shoulders", CubeListBuilder.create().texOffs(22, 24)
+                .addBox(-3.5F, -5.5F, -8F, 7F, 2F, 7F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(50, 24)
+                .addBox(-0.5F, 0F, 0F, 1F, 7F, 1F), PartPose.offsetAndRotation(0F, -2.5F, 8.5F, 0.3F, 0F, 0F));
+        PartDefinition tuft = tail.addOrReplaceChild("tuft", CubeListBuilder.create().texOffs(68, 24)
+                .addBox(-1F, 5F, -1F, 2F, 3F, 2F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(122, 24)
+                .addBox(-0.5F, -0.5F, -0.5F, 1F, 1F, 1F), PartPose.offset(0F, 5F, -6F));
+        PartDefinition neck = head.addOrReplaceChild("neck", CubeListBuilder.create().texOffs(96, 0)
+                .addBox(-1.5F, -7F, -3F, 3F, 8F, 4F), PartPose.offsetAndRotation(0F, 1F, 0F, 0.4F, 0F, 0F));
+        PartDefinition skull = neck.addOrReplaceChild("skull", CubeListBuilder.create().texOffs(0, 24)
+                .addBox(-2F, -3F, -7F, 4F, 4F, 7F), PartPose.offsetAndRotation(0F, -6F, -1F, 0.55F, 0F, 0F));
+        PartDefinition dome = skull.addOrReplaceChild("dome", CubeListBuilder.create().texOffs(54, 24)
+                .addBox(-1.5F, -2F, -3F, 3F, 2F, 4F), PartPose.offset(0F, -3F, -3F));
+        PartDefinition muzzle = skull.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(76, 24)
+                .addBox(-1.5F, -2.5F, -2F, 3F, 3F, 2F), PartPose.offset(0F, 0.5F, -6.5F));
+        PartDefinition leftHorn = skull.addOrReplaceChild("left_horn", CubeListBuilder.create().texOffs(86, 24)
+                .addBox(-0.5F, -4F, -0.5F, 1F, 4F, 1F), PartPose.offsetAndRotation(1.2F, -3F, -0.5F, -1.1F, 0F, 0.4F));
+        PartDefinition leftHornTip = leftHorn.addOrReplaceChild("left_horn_tip", CubeListBuilder.create().texOffs(94, 24)
+                .addBox(-0.5F, -3F, -0.5F, 1F, 3F, 1F), PartPose.offsetAndRotation(0F, -3.5F, 0F, -0.6F, 0F, -0.3F));
+        PartDefinition rightHorn = skull.addOrReplaceChild("right_horn", CubeListBuilder.create().texOffs(90, 24)
+                .addBox(-0.5F, -4F, -0.5F, 1F, 4F, 1F), PartPose.offsetAndRotation(-1.2F, -3F, -0.5F, -1.1F, 0F, -0.4F));
+        PartDefinition rightHornTip = rightHorn.addOrReplaceChild("right_horn_tip", CubeListBuilder.create().texOffs(98, 24)
+                .addBox(-0.5F, -3F, -0.5F, 1F, 3F, 1F), PartPose.offsetAndRotation(0F, -3.5F, 0F, -0.6F, 0F, 0.3F));
+        PartDefinition leftEar = skull.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(102, 24)
+                .addBox(0F, -1F, 0F, 3F, 1F, 2F), PartPose.offsetAndRotation(2F, -2F, -1F, 0F, 0F, -0.35F));
+        PartDefinition rightEar = skull.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(112, 24)
+                .addBox(-3F, -1F, 0F, 3F, 1F, 2F), PartPose.offsetAndRotation(-2F, -2F, -1F, 0F, 0F, 0.35F));
+        PartDefinition rightFrontLeg = root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(48, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 11F, 3F), PartPose.offset(-2.5F, 13F, -5F));
+        PartDefinition leftFrontLeg = root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(60, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 11F, 3F), PartPose.offset(2.5F, 13F, -5F));
+        PartDefinition rightHindLeg = root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(72, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 11F, 3F), PartPose.offset(-2.5F, 13F, 6.5F));
+        PartDefinition leftHindLeg = root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(84, 0)
+                .addBox(-1.5F, 0F, -1.5F, 3F, 11F, 3F), PartPose.offset(2.5F, 13F, 6.5F));
+        return LayerDefinition.create(mesh, 128, 64);
+    }
+
     private WildAnimalLayers() {
     }
 }

@@ -122,6 +122,17 @@ public final class BlockBreakHandler {
         }
         cutThatch(player, state, event.getPos());
         maybeDropLongBranch(player, state, event.getPos());
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            dev.hominin.evolution.survival.TreeFelling.broke(server, event.getPos(), state);
+        }
+        // Picking over a scatter of pebbles: once in a long while, one of them looks back at you.
+        if (state.getBlock() instanceof dev.hominin.evolution.block.LooseRockBlock && !player.isCreative()
+                && player instanceof net.minecraft.server.level.ServerPlayer server
+                && player.getRandom().nextFloat() < dev.hominin.evolution.band.RareFinds.PEBBLE_ROCK_CHANCE) {
+            dropAt(player.level(), event.getPos(), ModItems.FACE_PEBBLE.get());
+            dev.hominin.evolution.band.RareFinds.playerFound(server, new ItemStack(ModItems.FACE_PEBBLE.get()),
+                    "among the pebbles, one looks back at you");
+        }
     }
 
     /**
@@ -150,6 +161,7 @@ public final class BlockBreakHandler {
         return state.is(dev.hominin.evolution.ModBlocks.CHERT_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.QUARTZITE_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.LIMESTONE_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.BASALT_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.TERMITE_MOUND.get());
     }
 
@@ -230,8 +242,10 @@ public final class BlockBreakHandler {
         // and it is checked first so it cannot be crowded out by the branch roll.
         if (level.getRandom().nextFloat() < WOODEN_CLUB_LEAF_DROP_CHANCE) {
             dropAt(level, pos, ModItems.WOODEN_CLUB.get());
-            player.displayClientMessage(Component.literal(
-                    "A dead limb comes down with the leaves - heavy at one end."), true);
+            if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+                dev.hominin.evolution.band.RareFinds.playerFound(server, new ItemStack(ModItems.WOODEN_CLUB.get()),
+                        "a dead limb comes down with the leaves, heavy at one end");
+            }
             return;
         }
         float chance = player.getMainHandItem().is(ModTags.Items.CHOPPERS)

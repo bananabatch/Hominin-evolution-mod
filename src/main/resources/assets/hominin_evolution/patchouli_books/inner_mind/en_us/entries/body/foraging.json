@@ -7,6 +7,14 @@
     {
       "type": "patchouli:text",
       "text": "The ground is full of food. It is just very small, and it does not want to be found.$(br2)Get low. Search the soil more than once. Something with a point on it digs better than fingers do."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "An empty search tells you why: other primates or Paranthropus working the same ground, a dry day or a dry season, or ground your band has lived off for days - after three it gives less and less. Sometimes it is only bad luck."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Ground gives only so much. Forage one chunk of it successfully a dozen times or so - ten in the dry, eight on a dry day, fifteen in the rains, twenty-five on a $(l)prosperous day$() - and it is picked clean: five days to come back, two in the rains, overnight after a prosperous day.$(br2)$(l)Fertile$() ground gives around fifty and comes back in three days - but nothing marks it. You have to notice it."
     }
   ]
 }

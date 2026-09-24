@@ -155,8 +155,9 @@ public final class Predation {
         if (player.getHealth() < player.getMaxHealth() * 0.5F) {
             gain += 2.0F;
         }
-        // A big band is harder to creep up on, and knows it.
+        // A big band is harder to creep up on, and knows it; a band the country knows to leave alone, more so.
         gain -= Math.min(3.0F, Band.ownNear(player, 16.0D).size() * 0.5F);
+        gain -= Math.max(0, dev.hominin.evolution.band.Presence.get(player) - 20) * 0.08F;
         float pressure = Mth.clamp(camp.pressure() + Math.max(0.5F, gain), 0.0F, PRESSURE_MAX);
         boolean warned = camp.warned();
         if (!warned && pressure >= PRESSURE_WARN) {
@@ -246,17 +247,27 @@ public final class Predation {
     /**
      * The long view of the same argument. Camp pressure is a night or two in one spot; the home
      * range is days on the same country. Stay within 200 blocks of where you have been living
-     * for two whole days and everything that hunts there has learned you: it comes more often,
-     * it takes food out of the band's hands, and now and then it takes one of you.
+     * for four and a half days and everything that hunts there has learned you: it comes more often,
+     * it takes food out of the band's hands, and now and then it takes one of you - and the longer you
+     * stay, the more of them come. A band with a strong presence ({@link dev.hominin.evolution.band.Presence})
+     * turns most of that away. But nothing stops the ground itself wearing out: the foraging dries up
+     * after three days and the big herds stop coming, so holding ground is possible, and never free.
      */
     private static final String RANGE_X = "range_x";
     private static final String RANGE_Z = "range_z";
     private static final String RANGE_SINCE = "range_since_minute";
     private static final String RANGE_TOLD = "range_told";
     private static final String RANGE_NEXT = "range_next_minute";
+    /** 1 while the band is packed up and on the move, with no ground of its own. */
+    private static final String RANGE_PACKED = "range_packed";
+    private static final String RANGE_FAR_TOLD = "range_far_told";
+    /** Packed up, the camp goes where you go: this far and it is new country. */
     private static final int RANGE_RADIUS = 200;
-    private static final long WARN_TICKS = 36000L;
-    private static final long OVERSTAY_TICKS = 48000L;
+    /** Settled: this far from your ground and you are told; this far and the band settles wherever you are. */
+    public static final int FAR_WARN = 150;
+    public static final int FAR_MOVE = 250;
+    private static final long WARN_TICKS = 96000L;
+    private static final long OVERSTAY_TICKS = 108000L;
     /** Minutes between the country's reminders once you have overstayed. */
     private static final int INCIDENT_MINUTES = 3;
 
@@ -273,8 +284,104 @@ public final class Predation {
         return (player.level().getGameTime() / 1200L - since) * 1200L / 24000.0F;
     }
 
+    /**
+     * How much the ground still gives: nothing lost for three days, then less each day after - roots
+     * dug, bushes stripped, grubs taken - down to four tenths. Moving on is the only cure.
+     */
+    public static float groundFactor(ServerPlayer player) {
+        float days = daysOnGround(player);
+        return days <= 3.0F ? 1.0F : Math.max(0.4F, 1.0F - (days - 3.0F) * 0.15F);
+    }
+
+    /** The heart of the ground your band is living on: your camp, and the middle of your territory. */
+    public static BlockPos campOf(ServerPlayer player) {
+        var counters = counters(player);
+        if (!counters.containsKey(RANGE_X)) {
+            return player.blockPosition();
+        }
+        return new BlockPos(counters.get(RANGE_X), player.getBlockY(), counters.get(RANGE_Z));
+    }
+
     public static boolean overstayed(ServerPlayer player) {
         return daysOnGround(player) * 24000.0F >= OVERSTAY_TICKS;
+    }
+
+    /** Whether the band has ground of its own right now, rather than being packed up and on the move. */
+    public static boolean settled(ServerPlayer player) {
+        return counters(player).getOrDefault(RANGE_PACKED, 0) == 0;
+    }
+
+    /** How far your ground runs from its heart. */
+    public static int territoryRadius(ServerPlayer player) {
+        return dev.hominin.evolution.band.Bands.radiusFor(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
+    }
+
+    /** Whether this is your band's ground. */
+    public static boolean onOwnGround(ServerPlayer player, BlockPos pos) {
+        if (!settled(player) || !counters(player).containsKey(RANGE_X)) {
+            return false;
+        }
+        BlockPos camp = campOf(player);
+        double dx = pos.getX() - camp.getX();
+        double dz = pos.getZ() - camp.getZ();
+        int radius = territoryRadius(player);
+        return dx * dx + dz * dz <= (double) radius * radius;
+    }
+
+    /**
+     * The band makes this its ground: a new band waking here, a territory set from the map, or a band that
+     * went too far from the old one. Nothing here knows it yet.
+     */
+    public static void settle(ServerPlayer player, BlockPos at) {
+        var counters = counters(player);
+        counters.put(RANGE_X, at.getX());
+        counters.put(RANGE_Z, at.getZ());
+        counters.put(RANGE_SINCE, (int) (player.level().getGameTime() / 1200L));
+        counters.put(RANGE_TOLD, 0);
+        counters.remove(RANGE_NEXT);
+        counters.remove(RANGE_PACKED);
+        counters.remove(RANGE_FAR_TOLD);
+        dev.hominin.evolution.band.Presence.newGround(player);
+        // Settling on somebody else's ground is noticed.
+        dev.hominin.evolution.band.Bands.Record theirs = dev.hominin.evolution.band.Bands.groundAt(player.serverLevel(), at);
+        if (theirs != null && !dev.hominin.evolution.band.Claims.takeGround(player, theirs)
+                && dev.hominin.evolution.band.Relations.standing(player, theirs) < dev.hominin.evolution.band.Relations.ALLIED) {
+            dev.hominin.evolution.band.Relations.change(player, theirs, -5, "you made camp on their ground");
+        }
+    }
+
+    /** The band packs up: no ground of its own until it chooses some. The camp goes where you go. */
+    public static void packUp(ServerPlayer player) {
+        if (!settled(player)) {
+            player.displayClientMessage(Component.literal("You are already on the move."), true);
+            return;
+        }
+        var counters = counters(player);
+        counters.put(RANGE_PACKED, 1);
+        counters.put(RANGE_X, player.getBlockX());
+        counters.put(RANGE_Z, player.getBlockZ());
+        counters.remove(RANGE_FAR_TOLD);
+        player.sendSystemMessage(Component.literal("The band packs up. You are on the move now, with no ground of your "
+                + "own - and no presence building anywhere. When you find somewhere, open the map (J) and set your "
+                + "territory there.").withStyle(ChatFormatting.GOLD));
+    }
+
+    /** From the map: here is our ground now. */
+    public static void settleHere(ServerPlayer player) {
+        settle(player, player.blockPosition());
+        var land = dev.hominin.evolution.world.Land.ofPlayer(player);
+        player.sendSystemMessage(Component.literal("Your band makes this its ground: " + territoryRadius(player)
+                + " blocks round where you stand. Keep a fire and build here and the country learns to leave you alone.")
+                .withStyle(ChatFormatting.GREEN));
+        player.sendSystemMessage(Component.literal("Pressure " + land.total() + "/10 - "
+                + dev.hominin.evolution.world.Land.label(land.total()) + ": " + String.join(", ", land.describe(player)) + ".")
+                .withStyle(ChatFormatting.GRAY));
+        if (land.total() >= 5) {
+            dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.LAND_PRESSURE);
+        }
+        if (land.hidesSomethingFrom(player)) {
+            dev.hominin.evolution.mind.Insights.hint(player, "settle_" + player.blockPosition().asLong());
+        }
     }
 
     private static void tickRange(ServerPlayer player, ServerLevel level) {
@@ -282,39 +389,60 @@ public final class Predation {
         int minute = (int) (level.getGameTime() / 1200L);
         BlockPos here = player.blockPosition();
         if (!counters.containsKey(RANGE_SINCE)) {
-            counters.put(RANGE_X, here.getX());
-            counters.put(RANGE_Z, here.getZ());
-            counters.put(RANGE_SINCE, minute);
-            counters.put(RANGE_TOLD, 0);
+            settle(player, here);
             return;
         }
         int cx = counters.get(RANGE_X);
         int cz = counters.get(RANGE_Z);
         double dx = here.getX() - cx;
         double dz = here.getZ() - cz;
-        if (dx * dx + dz * dz > (double) RANGE_RADIUS * RANGE_RADIUS) {
-            if (counters.getOrDefault(RANGE_TOLD, 0) > 0) {
-                player.sendSystemMessage(Component.literal(
-                        "New country. Nothing here knows your band yet.").withStyle(ChatFormatting.GREEN));
+        double distance = Math.sqrt(dx * dx + dz * dz);
+        if (settled(player)) {
+            // Your ground stays where you made it. Wander far and you are told; too far and the band settles again.
+            if (distance > FAR_MOVE) {
+                settle(player, here);
+                player.sendSystemMessage(Component.literal("You have come too far from your ground to go back to it. "
+                        + "The band settles here instead - new ground, and nothing here knows you yet.")
+                        .withStyle(ChatFormatting.GOLD));
+                return;
             }
-            counters.put(RANGE_X, here.getX());
-            counters.put(RANGE_Z, here.getZ());
-            counters.put(RANGE_SINCE, minute);
-            counters.put(RANGE_TOLD, 0);
-            counters.remove(RANGE_NEXT);
-            return;
+            if (distance > FAR_WARN && counters.getOrDefault(RANGE_FAR_TOLD, 0) == 0) {
+                counters.put(RANGE_FAR_TOLD, 1);
+                player.sendSystemMessage(Component.literal("You are " + (int) distance + " blocks from your ground - too "
+                        + "far. Turn back, or go on past " + FAR_MOVE + " and the band will settle wherever you stop.")
+                        .withStyle(ChatFormatting.YELLOW));
+                dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.TERRITORY);
+            } else if (distance < FAR_WARN - 30) {
+                counters.remove(RANGE_FAR_TOLD);
+            }
+        } else {
+            if (distance > RANGE_RADIUS) {
+                if (counters.getOrDefault(RANGE_TOLD, 0) > 0) {
+                    player.sendSystemMessage(Component.literal(
+                            "New country. Nothing here knows your band yet.").withStyle(ChatFormatting.GREEN));
+                }
+                counters.put(RANGE_X, here.getX());
+                counters.put(RANGE_Z, here.getZ());
+                counters.put(RANGE_SINCE, minute);
+                counters.put(RANGE_TOLD, 0);
+                counters.remove(RANGE_NEXT);
+                dev.hominin.evolution.band.Presence.newGround(player);
+                return;
+            }
+            // On the move, the camp's heart drifts to wherever you actually spend your time.
+            counters.put(RANGE_X, cx + (int) Math.round(dx / 40.0D));
+            counters.put(RANGE_Z, cz + (int) Math.round(dz / 40.0D));
         }
-        // The range's heart drifts to wherever you actually spend your time.
-        counters.put(RANGE_X, cx + (int) Math.round(dx / 40.0D));
-        counters.put(RANGE_Z, cz + (int) Math.round(dz / 40.0D));
         long stayed = (long) (minute - counters.get(RANGE_SINCE)) * 1200L;
         int told = counters.getOrDefault(RANGE_TOLD, 0);
         if (stayed >= WARN_TICKS && told < 1) {
             counters.put(RANGE_TOLD, 1);
             dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HOME_RANGE);
-            player.sendSystemMessage(Component.literal("A day and a half on this ground. The things that hunt here "
-                    + "are starting to know your band's ways. Half a day more and they will act on it - move on "
-                    + "(200 blocks) before then.").withStyle(ChatFormatting.GOLD));
+            player.sendSystemMessage(Component.literal("Four days on this ground. The things that hunt here "
+                    + "are starting to know your band's ways. Half a day more and they will start testing you - make "
+                    + "your band felt here (presence " + dev.hominin.evolution.band.Presence.get(player) + ") - keep a fire, "
+                    + "build, kill what hunts here - or pack up and move on.")
+                    .withStyle(ChatFormatting.GOLD));
         }
         if (stayed < OVERSTAY_TICKS) {
             return;
@@ -322,15 +450,30 @@ public final class Predation {
         if (told < 2) {
             counters.put(RANGE_TOLD, 2);
             counters.put(RANGE_NEXT, minute + 1);
-            player.sendSystemMessage(Component.literal("Two days on the same ground. Everything that hunts here "
-                    + "knows your band now - where you sleep, where you eat, who lags behind. Move on.")
-                    .withStyle(ChatFormatting.RED));
+            player.sendSystemMessage(Component.literal("Four and a half days on the same ground. Everything that hunts "
+                    + "here knows your band now - where you sleep, where you eat, who lags behind. Hold it if you can: "
+                    + "the ground is wearing out under you all the same.").withStyle(ChatFormatting.RED));
         }
         if (minute < counters.getOrDefault(RANGE_NEXT, 0) || Bonobo.sanctuary(level, here)) {
             return;
         }
-        counters.put(RANGE_NEXT, minute + INCIDENT_MINUTES + level.random.nextInt(3));
+        // The longer you stay, the more of them there are, and the sooner they come again.
+        float over = daysOnGround(player) - OVERSTAY_TICKS / 24000.0F;
+        int gap = Math.max(1, INCIDENT_MINUTES + level.random.nextInt(3) - (int) over);
+        counters.put(RANGE_NEXT, minute + gap);
+        int presence = dev.hominin.evolution.band.Presence.get(player);
+        float turnedAway = presence >= 45 ? 0.7F : presence >= dev.hominin.evolution.band.Presence.STRONG ? 0.5F : 0.0F;
+        if (level.random.nextFloat() < turnedAway) {
+            if (level.random.nextInt(3) == 0) {
+                player.displayClientMessage(Component.literal("Something came to test the camp, saw whose it was, and "
+                        + "thought better of it.").withStyle(ChatFormatting.DARK_GREEN), true);
+            }
+            return;
+        }
         incident(player, level);
+        if (over >= 1.5F && level.random.nextBoolean()) {
+            sendVisitor(player, level);
+        }
     }
 
     /** The country reminds you: a visitor, a theft, or an ambush on whoever strays. */
@@ -349,6 +492,7 @@ public final class Predation {
                 player.sendSystemMessage(Component.literal("While nobody watched, something got into "
                         + robbed.getName().getString() + "'s food and made off with " + taken.getHoverName().getString()
                         + ". It knows this camp.").withStyle(ChatFormatting.RED));
+                dev.hominin.evolution.band.Presence.add(player, -2, "food stolen from the camp");
                 return;
             }
         }

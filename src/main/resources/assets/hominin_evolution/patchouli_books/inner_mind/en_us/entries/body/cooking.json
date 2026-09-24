@@ -1,0 +1,25 @@
+{
+  "name": "The Cooking Rack",
+  "icon": "hominin_evolution:cooking_rack",
+  "category": "hominin_evolution:body",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "hominin_evolution:cooking_rack",
+      "text": "At the work station: a $(l)workable branch$() and $(l)three sticks$(), anywhere in the grid, nothing in the slot. One forked stick, two blocks tall - and you need two."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Stand the two racks in a line with $(l)one or two blocks$() between them. Use a workable branch on one of them - two branches, for a two-block gap - and it lays across the forks: a $(l)spit$().$(br2)Set a fire pit on the ground under it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Right-click the spit with meat to hang it - sneak to hang up to four on a hook. Three hooks to each block of spit. Ribs, meat chunks, marrow, even hominin meat, and anything a campfire would cook.$(br2)Over a lit fire it cooks slowly and evenly, and nothing falls in the ashes. Empty-handed, take it down."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Leave it over the fire five minutes after it is done and it chars.$(br2)With no fire under it the spit is a larder: food hung there keeps, out of the dirt, and never turns. Take a rack away and the spit comes down - with everything on it."
+    }
+  ]
+}

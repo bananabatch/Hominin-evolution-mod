@@ -115,7 +115,9 @@ public final class HeadTraumaHandler {
         // Slowness VII takes movement speed to zero outright. The 6-arg constructor
         // separates `visible` from `showIcon`; particles key off `visible` alone, so
         // this is the only way to daze something without swirling particles round it.
-        if (profile.club()) {
+        // The great grazers' skulls are too heavy to ring: a club breaks their bones, and that is all.
+        boolean giant = target instanceof dev.hominin.evolution.entity.Megafauna;
+        if (profile.club() && !giant) {
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 6, false, false, true));
             target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_TICKS, 1, false, false, true));
         }
@@ -126,6 +128,9 @@ public final class HeadTraumaHandler {
 
         if (profile.club() && target.level().getRandom().nextFloat() < CLUB_FRACTURE_CHANCE) {
             fracture(target);
+        }
+        if (giant) {
+            return true;
         }
         // Hit often enough with a branch and it gives up the ground rather than the fight.
         if (!profile.club() && rout(player, target, trauma)) {
@@ -195,12 +200,16 @@ public final class HeadTraumaHandler {
         var random = target.level().getRandom();
         HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
         trauma.addBlow();
-        if (profile.club()) {
+        boolean giant = target instanceof dev.hominin.evolution.entity.Megafauna;
+        if (profile.club() && !giant) {
             target.addEffect(new MobEffectInstance(
                     MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS / 2, 6, false, false, true));
         }
         if (profile.club() && random.nextFloat() < CLUB_FRACTURE_CHANCE / 2.0F + bonus) {
             fracture(target);
+        }
+        if (giant) {
+            return;
         }
         // The band wears things down with branches the same way you do.
         if (!profile.club() && rout(attacker, target, trauma)) {
@@ -230,6 +239,61 @@ public final class HeadTraumaHandler {
         if (!trauma.isBleeding() && random.nextFloat() < profile.bleedChance() + bonus) {
             trauma.setBleeding(true);
             target.addEffect(new MobEffectInstance(ModEffects.BRAIN_BLEED, BLEED_TICKS, 0, false, true, true));
+        }
+    }
+
+    /** Chance a thrown hammerstone concusses what it hits - and, once concussed, starts a bleed. */
+    private static final float STONE_CONCUSS_CHANCE = 0.35F;
+    private static final float STONE_BLEED_CHANCE = 0.2F;
+
+    /**
+     * A hammerstone thrown into something's head. It staggers it; often enough it concusses it outright, and a
+     * skull already rung by a blow like that can start to bleed. A person struck feels it too: the world tilts,
+     * and they go slow and weak for a while.
+     */
+    public static void stoneToTheHead(@javax.annotation.Nullable net.minecraft.world.entity.Entity thrower,
+            LivingEntity target) {
+        var random = target.level().getRandom();
+        boolean giant = target instanceof dev.hominin.evolution.entity.Megafauna;
+        if (giant) {
+            return;
+        }
+        HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
+        trauma.addBlow();
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 3, false, false, true));
+        if (target instanceof Player struck) {
+            struck.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 8 * 20, 0, false, false));
+            struck.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 20, 0, false, false, true));
+            struck.displayClientMessage(Component.literal("A stone to the head - the world tilts."), true);
+            return;
+        }
+        LivingEntity attacker = thrower instanceof LivingEntity living ? living : null;
+        if (!trauma.isConcussed()) {
+            if (random.nextFloat() < STONE_CONCUSS_CHANCE) {
+                trauma.setConcussed(true);
+                if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(target) && target instanceof Mob mob
+                        && attacker != null) {
+                    dev.hominin.evolution.hunt.PredatorAppetite.drivenOff(mob, attacker);
+                } else if (target instanceof PathfinderMob mob) {
+                    mob.goalSelector.addGoal(0, new ConcussedGoal(mob, 1.0D));
+                }
+                if (random.nextFloat() < PACIFY_CHANCE) {
+                    pacify(target, trauma);
+                }
+                if (thrower instanceof Player player) {
+                    player.displayClientMessage(Component.literal("Square to the head - it staggers, and loses track "
+                            + "of you."), true);
+                }
+            }
+            return;
+        }
+        if (!trauma.isBleeding() && random.nextFloat() < STONE_BLEED_CHANCE) {
+            trauma.setBleeding(true);
+            target.addEffect(new MobEffectInstance(ModEffects.BRAIN_BLEED, BLEED_TICKS, 0, false, true, true));
+            if (thrower instanceof Player player) {
+                player.displayClientMessage(Component.literal("Something gives inside the skull. It will not last "
+                        + "the hour."), true);
+            }
         }
     }
 

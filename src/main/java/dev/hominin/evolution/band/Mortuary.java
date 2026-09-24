@@ -34,7 +34,8 @@ public final class Mortuary {
     private static final double WITH_THE_BAND = 16.0D;
 
     public static boolean isHomininFlesh(ItemStack stack) {
-        return stack.is(ModItems.HOMININ_MEAT.get()) || stack.is(ModItems.HOMININ_BRAIN.get());
+        return stack.is(ModItems.HOMININ_MEAT.get()) || stack.is(ModItems.COOKED_HOMININ_MEAT.get())
+                || stack.is(ModItems.HOMININ_BRAIN.get());
     }
 
     private static Map<String, Integer> counters(ServerPlayer player) {

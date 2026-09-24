@@ -136,6 +136,24 @@ public class MemberInfoScreen extends Screen {
         }
     }
 
+    /** On the band's own list: hover a name and press the work key to say you suspect them of using everyone. */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (ModKeyMappings.ITEM_INTERACT.matches(keyCode, scanCode) && title.getString().equals("Your band")) {
+            Minecraft mc = Minecraft.getInstance();
+            double mouseX = mc.mouseHandler.xpos() * width / mc.getWindow().getScreenWidth();
+            double mouseY = mc.mouseHandler.ypos() * height / mc.getWindow().getScreenHeight();
+            int index = lineAt(mouseX, mouseY);
+            if (index >= 0) {
+                PacketDistributor.sendToServer(new ChoosePayload(lines.get(index).entityId(),
+                        dev.hominin.evolution.band.Psychopaths.ACTION_SUSPECT, 0));
+                onClose();
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
     @Override
     public boolean isPauseScreen() {
         return false;

@@ -20,6 +20,12 @@ import net.neoforged.neoforge.common.NeoForge;
 public class HomininEvolutionClient {
     public HomininEvolutionClient(IEventBus modEventBus, ModContainer modContainer) {
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onRightClickEmpty);
+        NeoForge.EVENT_BUS.addListener(ToolPlacing::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(ToolPlacing::onLeftClickBlock);
+        NeoForge.EVENT_BUS.addListener(BuildPlanner::onRenderLevel);
+        NeoForge.EVENT_BUS.addListener(BuildPlanner::onInteract);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) ->
+                BuildPlanner.onLoggingOut());
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClimbController::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(TradeTierTooltip::onTooltip);
@@ -28,6 +34,12 @@ public class HomininEvolutionClient {
         NeoForge.EVENT_BUS.addListener(ChecklistOverlay::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(LockedSlotOverlay::onRender);
         NeoForge.EVENT_BUS.addListener(TipDisplay::onMouseClicked);
+        NeoForge.EVENT_BUS.addListener(ClientMapCache::tick);
+        NeoForge.EVENT_BUS.addListener(ClientMapCache::onLoggingIn);
+        NeoForge.EVENT_BUS.addListener(ClientMapCache::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Post event) -> NameBandScreen.showWaiting());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) ->
+                WaypointHud.clear());
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, HomininModels.SPEC);
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
@@ -70,6 +82,12 @@ public class HomininEvolutionClient {
                     dev.hominin.evolution.client.model.WildAnimalLayers::crownedEagle);
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pelorovis"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::pelorovis);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("mammuthus"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::mammuthus);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("megalotragus"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::megalotragus);
+            event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("rusingoryx"),
+                    dev.hominin.evolution.client.model.WildAnimalLayers::rusingoryx);
         });
         modEventBus.addListener(HomininModels::addLayers);
         // Lowest, so nothing cancels the render after the pose has been pushed.
@@ -79,6 +97,11 @@ public class HomininEvolutionClient {
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) ->
         {
             event.registerEntityRenderer(ModEntities.THROWN_OBJECT.get(), ThrownItemRenderer::new);
+            event.registerEntityRenderer(ModEntities.THROWN_TORCH.get(), ThrownItemRenderer::new);
+            event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.FIRE_PIT.get(), FirePitRenderer::new);
+            event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.TOOL_PILE.get(), ToolPileRenderer::new);
+            event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.COOKING_SPIT.get(),
+                    CookingSpitRenderer::new);
             event.registerEntityRenderer(ModEntities.BAND_MEMBER.get(), BandMemberRenderer::new);
             event.registerEntityRenderer(ModEntities.BABOON.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
@@ -111,6 +134,12 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.PELOROVIS.get(), ctx -> new dev.hominin.evolution.client.model
                     .WildAnimalRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("pelorovis"),
                             "pelorovis", 1.4F, 1.1F));
+            event.registerEntityRenderer(ModEntities.MAMMUTHUS.get(), ctx -> new dev.hominin.evolution.client.model
+                    .MegafaunaRenderer<>(ctx, "mammuthus", 2.3F, 2.4F));
+            event.registerEntityRenderer(ModEntities.MEGALOTRAGUS.get(), ctx -> new dev.hominin.evolution.client.model
+                    .MegafaunaRenderer<>(ctx, "megalotragus", 1.4F, 1.2F));
+            event.registerEntityRenderer(ModEntities.RUSINGORYX.get(), ctx -> new dev.hominin.evolution.client.model
+                    .MegafaunaRenderer<>(ctx, "rusingoryx", 1.3F, 0.9F));
             event.registerEntityRenderer(ModEntities.CROWNED_EAGLE.get(), ctx -> new dev.hominin.evolution.client.model
                     .BirdRenderer<>(ctx, dev.hominin.evolution.client.model.WildAnimalRenderer.layer("crowned_eagle"),
                             "crowned_eagle", 1.0F, 0.4F));
@@ -118,6 +147,7 @@ public class HomininEvolutionClient {
         modEventBus.addListener(ModKeyMappings::register);
         modEventBus.addListener(ChecklistOverlay::register);
         modEventBus.addListener(ThirstOverlay::register);
+        modEventBus.addListener(WaypointHud::register);
         modEventBus.addListener(ArmsRaceFlash::register);
         modEventBus.addListener(SkullPoseFlash::register);
         modEventBus.addListener(EvolutionCutscene::register);

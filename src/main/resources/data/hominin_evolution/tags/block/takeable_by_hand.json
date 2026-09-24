@@ -52,6 +52,9 @@
     "hominin_evolution:work_station",
     "hominin_evolution:thatch_block",
     "hominin_evolution:thatch_bedding",
-    "hominin_evolution:building_branch"
+    "hominin_evolution:building_branch",
+    "hominin_evolution:tool_pile",
+    "hominin_evolution:cooking_rack",
+    "hominin_evolution:cooking_spit"
   ]
 }

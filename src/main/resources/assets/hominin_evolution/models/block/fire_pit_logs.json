@@ -1,0 +1,222 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "hominin_evolution:block/fire_pit_log",
+    "log": "hominin_evolution:block/fire_pit_log"
+  },
+  "elements": [
+    {
+      "from": [
+        1.5,
+        0.5,
+        12
+      ],
+      "to": [
+        14.5,
+        3.5,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log",
+          "cullface": "down"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        0,
+        1.5
+      ],
+      "to": [
+        4,
+        3,
+        13.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log",
+          "rotation": 90,
+          "cullface": "down"
+        },
+        "north": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        0,
+        1.5
+      ],
+      "to": [
+        15,
+        3,
+        13.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#log",
+          "rotation": 90,
+          "cullface": "down"
+        },
+        "north": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            3,
+            7
+          ],
+          "texture": "#log"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

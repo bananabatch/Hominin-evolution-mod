@@ -11,6 +11,18 @@
     {
       "type": "patchouli:text",
       "text": "Wear it past half its strength and it breaks and runs - and then it is a persistence hunt like any other, with a great deal more at the end: meat, hides, bone, and a large carcass.$(br2)Erectus must bring down one of the megafauna - a Pelorovis, or one of the great predators - to go further."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From erectus, others graze near the water. $(l)Mammuthus$() - the first mammoth, in families of one to three. $(l)Megalotragus$() - a hartebeest the size of a buffalo, with horns swept back. $(l)Rusingoryx$() - a smaller antelope with a hollow dome over its nose, and a honk that carries."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A mammoth or a Megalotragus struck while strong comes for you - but it tells you first: the head comes up, a foot stamps, a trumpet or a snort. Get out of the line. Now and then it does not warn you. After a charge it has to stand and blow; that is when to strike.$(br2)Their hide turns a pointed stick. Bring a $(l)fire-hardened spear$(), a hand axe or a cleaver."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A club will not ring those skulls - it only breaks their bones. Rusingoryx never fights at all: it honks, and the herd goes, and it runs further than anything.$(br2)Stay on the same ground too long and the big herds stop coming - except to a $(l)breeding ground$(), where they come back whatever you do."
     }
   ]
 }

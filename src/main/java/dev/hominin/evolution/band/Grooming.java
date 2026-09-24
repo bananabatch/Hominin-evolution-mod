@@ -49,7 +49,7 @@ public final class Grooming {
         long now = player.level().getGameTime();
         // The cooldown is for the bond, not the ticks: somebody still crawling can always
         // be seen to again. Only a clean coat that was just done gets turned away.
-        if (member.getTicksOnMe() == 0
+        if (member.getTicksOnMe() == 0 && Needs.needy(player) != member
                 && now - lastGroomed.getOrDefault(member.getUUID(), -99999L) < COOLDOWN_TICKS) {
             player.displayClientMessage(Component.literal(member.getName().getString()
                     + " has been seen to already, and there is nothing left on them."), true);
@@ -120,6 +120,8 @@ public final class Grooming {
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HEART, member.getX(), member.getEyeY() + 0.3D,
                 member.getZ(), 5, 0.3D, 0.2D, 0.3D, 0.0D);
         Cohesion.addLimited(player, "groom", 1, 2 * 60 * 20L);
+        // Grooming someone grieving is looking after them; grooming a sour one is hanging out with them.
+        Needs.groomed(player, member);
         player.displayClientMessage(Component.literal(picksHair(member)
                 ? member.getName().getString() + " leans into it, and settles. They trust you a little more."
                 : member.getName().getString() + " lets you clean them up, and settles. They trust you a little more.")

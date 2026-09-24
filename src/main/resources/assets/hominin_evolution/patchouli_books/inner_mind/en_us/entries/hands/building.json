@@ -1,0 +1,32 @@
+{
+  "name": "Building",
+  "icon": "hominin_evolution:thatch_block",
+  "category": "hominin_evolution:hands",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "From erectus, press $(k:hominin_evolution.build) for what you know how to build: a $(l)small hut$() first, and once you have built one, a $(l)thatch tent$(). Each turns in front of you, with what it takes - thatch blocks and building branches from the work station.$(br2)Pick one and $(o)Plan it$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Its $(l)ghost$() follows where you look, its doorway facing you: pale where it fits, red where it does not - it wants solid, level ground under all of it and nothing in the way. $(k:hominin_evolution.item_interact) marks it out there; $(k:hominin_evolution.build) puts the plan away.$(br2)The ghost stays. Place the right block where it shows - or use one on a ghost block to set it straight in. The wrong block will not go."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When the last block is in, it stands, and the band asks: $(o)what do we do with this?$()$(br2)Raw thatch rots in the weather; stretch hide over it (the roof will do - it shelters the wall under it) and it lasts. You can have three builds marked out at once. Your map shows them all."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)$(l)A store$(): sneak-use its floor with food, bones or anything else you carry to lay it down - tools too. The hungry eat from it, bones get cracked for marrow, spare food is put by. No beds in it.$(li)$(l)Yours$(): nobody sleeps in it but you and your mate, and you wake rested.$(li)$(l)For the others$(): you choose who."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Giving someone a roof means more than anything you could hand them: bond +5. Give it to someone $(l)hurt$(), or $(l)carrying a child$(), and the whole band sees it - cohesion rises a long way.$(br2)They sleep in it - a nest of any size will do under a roof - and a hurt one mends twice as fast lying up in it. If they die, it stands empty, and you decide again."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Now and then one of the band will want something built - somewhere dry for someone hurt or with child, a store, a roof for you - and mark its $(l)ghost$() out on your ground, in yellow. Press $(k:hominin_evolution.build): $(o)Confirm$(), $(o)Move$() it, or $(o)Cancel$(). Until a block goes in, you can still move or cancel any plan."
+    }
+  ]
+}

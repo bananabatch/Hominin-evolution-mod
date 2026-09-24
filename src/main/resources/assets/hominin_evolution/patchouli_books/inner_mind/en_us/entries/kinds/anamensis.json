@@ -1,0 +1,20 @@
+{
+  "name": "Australopithecus anamensis",
+  "icon": "hominin_evolution:grub",
+  "category": "hominin_evolution:kinds",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)4.2 million years ago.$() The older, more ape-like australopithecine - the kind you fall back to from Australopithecus. Its own bands knap nothing at all, and have no idea there is anything inside a bone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Every kind$(): leafy twigs from a tree, one in each hand and $(k:hominin_evolution.item_interact) - a piece of $(l)nest$(). Two rocks in the crafting grid - a $(l)hammerstone$(). Hold $(k:hominin_evolution.item_interact) with a bare stick to gnaw a $(l)sharpened stick$(); fish a termite mound or dead wood with a plain stick for a $(l)termite stick$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Stone$(): a rock in hand, a hammerstone in the other, $(k:hominin_evolution.item_interact). Nothing shaped comes of it - every strike is a $(l)Lomekwian core$(), a mistake that happens to have an edge, and the hands need two minutes between. It still teaches them something."
+    }
+  ]
+}

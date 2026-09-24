@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:wooden_club"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.rescuer.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.rescuer.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

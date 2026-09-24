@@ -38,8 +38,8 @@ public final class Mood {
     /** Taking this many more than you have given gets you told; this many more costs cohesion. */
     private static final int OWED_WARN = 5;
     private static final int OWED_COST = 8;
-    /** Carrying this much food while people are hungry is hoarding. */
-    private static final int HOARD_FOOD = 12;
+    /** Carrying this much food is more than your share: the band asks you to split it - and splits its own. */
+    public static final int HOARD_FOOD = 20;
     private static final int HOARD_GRACE_MINUTES = 3;
 
     private static Map<String, Integer> counters(ServerPlayer player) {
@@ -70,13 +70,19 @@ public final class Mood {
 
     // ------------------------------------------------------------ antisocial
 
-    /** Rolled once for each member from habilis on: one in ten does not care what anyone thinks. */
+    /** Rolled once for each member from erectus on: one in ten does not care what anyone thinks. */
     public static void rollTemper(BandMember member) {
+        if (!Bands.erectusOn(member.getStage())) {
+            // Before erectus a band is too small, and too close, for anyone to stop caring.
+            if (member.isAntisocial()) {
+                member.clearTemper();
+            }
+            return;
+        }
         if (member.temperRolled()) {
             return;
         }
-        boolean canCraft = dev.hominin.evolution.band.goal.CraftGoal.canCraft(member);
-        member.setTemper(canCraft && !member.isBaby() && member.getRandom().nextFloat() < 0.1F);
+        member.setTemper(!member.isBaby() && member.getRandom().nextFloat() < 0.1F);
     }
 
     /** How much more theft there is: a band coming apart steals from itself. */
@@ -117,6 +123,7 @@ public final class Mood {
         }
         reciprocity(player, band);
         hoarding(player, band);
+        membersShare(player, band);
         if (player.getRandom().nextInt(12) == 0) {
             // Rarely: a fight is an event, not the weather.
             fight(player, band);
@@ -165,8 +172,10 @@ public final class Mood {
 
     private static void hoarding(ServerPlayer player, List<BandMember> band) {
         Map<String, Integer> counters = counters(player);
+        // Not only the starving: anyone who could eat something asks, when you are carrying that much.
         List<BandMember> hungry = new ArrayList<>(band.stream()
-                .filter(m -> !m.isBaby() && m.isHungry() && m.distanceToSqr(player) < 32.0D * 32.0D).toList());
+                .filter(m -> !m.isBaby() && m.getHunger() < BandMember.MAX_HUNGER - 2
+                        && m.distanceToSqr(player) < 32.0D * 32.0D).toList());
         if (foodCarried(player) < HOARD_FOOD || hungry.isEmpty()) {
             counters.remove(HOARD_WARNED);
             return;
@@ -180,10 +189,10 @@ public final class Mood {
                 beggar.getNavigation().moveTo(player, 1.0D);
                 beggar.attendTo(player, BandMember.ATTEND_TICKS);
             }
-            say(player, hungry.get(0), "You are carrying all that food, and some of us have had nothing. Pass it around.",
-                    ChatFormatting.YELLOW);
-            player.sendSystemMessage(Component.literal("(Hold the food and choose \"Pass around what I'm holding\" under H.)")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+            say(player, hungry.get(0), "That is more food than anyone can eat - " + foodCarried(player)
+                    + " of it. Split it with us.", ChatFormatting.YELLOW);
+            player.sendSystemMessage(Component.literal("(Hold the food and choose \"Split what I'm holding between you\" "
+                    + "under H, Food.)").withStyle(ChatFormatting.DARK_GRAY));
             dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HOARDING);
             return;
         }
@@ -191,6 +200,77 @@ public final class Mood {
             counters.put(HOARD_WARNED, minute(player));
             Cohesion.add(player, -2, "passed around the food you were carrying");
             say(player, hungry.get(0), "Still nothing? You eat well enough.", ChatFormatting.RED);
+        }
+    }
+
+    private static int foodCarried(BandMember member) {
+        int food = 0;
+        var pack = member.getInventory();
+        for (int slot = 0; slot < pack.getContainerSize(); slot++) {
+            if (pack.getItem(slot).has(DataComponents.FOOD)) {
+                food += pack.getItem(slot).getCount();
+            }
+        }
+        if (member.getOffhandItem().has(DataComponents.FOOD)) {
+            food += member.getOffhandItem().getCount();
+        }
+        return food;
+    }
+
+    /**
+     * Held to the same rule: one of the band carrying twenty or more splits it with everyone near - the rest of
+     * the band first, the least fed first, and you too if you could eat.
+     */
+    private static void membersShare(ServerPlayer player, List<BandMember> band) {
+        for (BandMember sharer : band) {
+            if (sharer.isBaby() || foodCarried(sharer) < HOARD_FOOD) {
+                continue;
+            }
+            List<BandMember> others = new ArrayList<>(band.stream().filter(m -> m != sharer && !m.isBaby()
+                    && m.distanceToSqr(sharer) < 16.0D * 16.0D).toList());
+            others.sort(Comparator.comparingInt(BandMember::getHunger));
+            int toSpare = foodCarried(sharer) - HOARD_FOOD / 2;
+            int given = 0;
+            int people = 0;
+            for (BandMember other : others) {
+                int share = 0;
+                while (share < 3 && given < toSpare) {
+                    ItemStack piece = sharer.takeFood();
+                    if (piece.isEmpty()) {
+                        break;
+                    }
+                    other.addToInventory(piece);
+                    share++;
+                    given++;
+                }
+                if (share > 0) {
+                    people++;
+                }
+            }
+            boolean toYou = false;
+            if (given < toSpare && sharer.distanceToSqr(player) < 16.0D * 16.0D && player.getFoodData().needsFood()) {
+                for (int i = 0; i < 2; i++) {
+                    ItemStack piece = sharer.takeFood();
+                    if (piece.isEmpty()) {
+                        break;
+                    }
+                    if (!player.getInventory().add(piece)) {
+                        player.drop(piece, false);
+                    }
+                    given++;
+                    toYou = true;
+                }
+            }
+            if (given == 0) {
+                continue;
+            }
+            sharer.ensureName();
+            sharer.swing(InteractionHand.MAIN_HAND);
+            player.sendSystemMessage(Component.literal(sharer.getName().getString() + " has more food than one person "
+                    + "needs, and shares it out: " + given + " pieces between " + (people + (toYou ? 1 : 0))
+                    + (toYou ? ", you among them." : ".")).withStyle(ChatFormatting.LIGHT_PURPLE));
+            Cohesion.addLimited(player, "member_share", 1, 5 * 60 * 20L);
+            return;
         }
     }
 
@@ -281,7 +361,7 @@ public final class Mood {
                 continue;
             }
             member.ensureName();
-            if (!member.isAntisocial() && !morals && cohesion < Cohesion.NEUTRAL
+            if (!member.isAntisocial() && !morals && cohesion < Cohesion.NEUTRAL && Bands.erectusOn(member.getStage())
                     && player.getRandom().nextFloat() < (Cohesion.NEUTRAL - cohesion) * 0.003F) {
                 member.setTemper(true);
                 player.sendSystemMessage(Component.literal(member.getName().getString()

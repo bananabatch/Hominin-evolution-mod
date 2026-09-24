@@ -205,6 +205,7 @@ public final class ClimbingServer {
         } else if (target instanceof ServerPlayer player) {
             dev.hominin.evolution.band.Band.defend(player, hunter);
             dev.hominin.evolution.guide.Tips.huntedBy(player, hunter);
+            dev.hominin.evolution.band.Relations.alliesJoin(player, hunter, false);
         }
     }
 

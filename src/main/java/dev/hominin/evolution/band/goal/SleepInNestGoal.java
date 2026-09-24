@@ -36,7 +36,7 @@ public class SleepInNestGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!night() || member.inDanger() || member.isUpATree() || member.isSleeping()) {
+        if (!night() || member.inDanger() || member.isUpATree() || member.isSleeping() || member.isOnWatch()) {
             return false;
         }
         nest = findNest();
@@ -45,11 +45,12 @@ public class SleepInNestGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (nest == null || !night() || member.inDanger()) {
+        if (nest == null || !night() || member.inDanger() || member.isOnWatch()) {
             return false;
         }
         // Somebody pulled the nest apart while they were in it.
-        return member.level().getBlockState(nest).is(ModBlocks.NEST.get())
+        return (member.level().getBlockState(nest).is(ModBlocks.NEST.get())
+                || member.level().getBlockState(nest).is(ModBlocks.THATCH_BEDDING.get()))
                 && (member.isSleeping() || ticks < GIVE_UP_TICKS);
     }
 
@@ -88,26 +89,56 @@ public class SleepInNestGoal extends Goal {
         member.getNavigation().moveTo(nest.getX() + 0.5D, nest.getY(), nest.getZ() + 0.5D, 1.0D);
     }
 
+    /** From dusk, once they have turned in; full dark otherwise. Till just before dawn. */
     private boolean night() {
-        return member.level().isNight();
+        long time = member.level().getDayTime() % 24000L;
+        return member.isTurnedIn() ? time >= 11500L && time < 23200L : member.level().isNight();
     }
 
-    /** The nearest finished nest nobody else is already lying in. */
+    /**
+     * The nearest finished nest of their own that nobody else is already lying in - their own, their mate's, or
+     * one nobody is about to claim. Your mate goes to yours, if you have one.
+     */
     @Nullable
     private BlockPos findNest() {
+        // A roof of their own comes before any nest out in the open.
+        if (member.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            dev.hominin.evolution.build.Sites.Site room = dev.hominin.evolution.build.Building.roomFor(member);
+            BlockPos bed = room != null ? dev.hominin.evolution.build.Building.bedIn(server, room, member) : null;
+            if (bed != null && !taken(bed)) {
+                return bed;
+            }
+        }
         BlockPos origin = member.blockPosition();
+        net.minecraft.world.entity.player.Player leader = member.leaderPlayer();
+        boolean mate = leader != null && member.isMateOf(leader.getUUID()) && member.distanceToSqr(leader) < 32.0D * 32.0D;
         BlockPos best = null;
         double bestDistance = Double.MAX_VALUE;
-        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-SEARCH_RADIUS, -4, -SEARCH_RADIUS),
-                origin.offset(SEARCH_RADIUS, 4, SEARCH_RADIUS))) {
-            if (!member.level().getBlockState(pos).is(ModBlocks.NEST.get())
-                    || !Nests.isComplete(member.level(), pos) || taken(pos)) {
-                continue;
-            }
-            double distance = pos.distSqr(origin);
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = pos.immutable();
+        java.util.List<BlockPos> around = new java.util.ArrayList<>();
+        around.add(origin);
+        if (mate) {
+            around.add(leader.blockPosition());
+        }
+        for (BlockPos centre : around) {
+            for (BlockPos pos : BlockPos.betweenClosed(centre.offset(-SEARCH_RADIUS, -4, -SEARCH_RADIUS),
+                    centre.offset(SEARCH_RADIUS, 4, SEARCH_RADIUS))) {
+                var state = member.level().getBlockState(pos);
+                // A finished nest - or thatch bedding, the erectus bed.
+                boolean bed = state.is(ModBlocks.THATCH_BEDDING.get()) || state.is(ModBlocks.NEST.get())
+                        && (Nests.isComplete(member.level(), pos) || dev.hominin.evolution.build.Building.inRoom(member.level(), pos));
+                if (!bed || taken(pos) || !dev.hominin.evolution.block.NestOwners.mayUse(member, pos)) {
+                    continue;
+                }
+                double distance = pos.distSqr(origin);
+                if (mate && member.level() instanceof net.minecraft.server.level.ServerLevel level
+                        && leader.getUUID().equals(dev.hominin.evolution.block.NestOwners.ownerOf(level, pos))) {
+                    // Beside you, whatever else is nearer.
+                    distance -= 100000.0D;
+                }
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = pos.immutable();
+                }
             }
         }
         return best;
@@ -121,6 +152,9 @@ public class SleepInNestGoal extends Goal {
                 return true;
             }
         }
-        return false;
+        // Nor the spot you are lying on yourself: a mate lies beside you, not on you.
+        return !member.level().getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
+                new net.minecraft.world.phys.AABB(pos).inflate(0.5D), net.minecraft.world.entity.player.Player::isSleeping)
+                .isEmpty();
     }
 }

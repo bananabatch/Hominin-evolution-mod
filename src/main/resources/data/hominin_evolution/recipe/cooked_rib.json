@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:rib"
+  },
+  "result": {
+    "id": "hominin_evolution:cooked_rib"
+  },
+  "experience": 0.1,
+  "cookingtime": 700
+}

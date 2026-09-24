@@ -55,9 +55,51 @@ public final class Seasons {
     /** Set by {@code /hominin season}, for testing; forgotten on restart. */
     @Nullable
     private static Season forced;
+    @Nullable
+    private static Boolean forcedExtreme;
 
     public static void force(@Nullable Season season) {
         forced = season;
+        forcedExtreme = season == null ? null : Boolean.FALSE;
+    }
+
+    /** Forces a season to its extreme: a super dry season, or a very prosperous one. */
+    public static void forceExtreme(Season season) {
+        forced = season;
+        forcedExtreme = Boolean.TRUE;
+    }
+
+    /**
+     * One season in five is out of the ordinary. A <b>super dry season</b>: dry days on three days in five, any
+     * day of it, and never a prosperous one. A <b>very prosperous season</b>: prosperous days three days in five,
+     * and never a dry one. Worked out from the seed, the same for everybody.
+     */
+    public static boolean extreme(Level level) {
+        if (forcedExtreme != null) {
+            return forcedExtreme;
+        }
+        if (!(level instanceof net.minecraft.server.level.ServerLevel server)) {
+            return false;
+        }
+        long block = Drought.dayOf(level) / DAYS;
+        long hash = server.getSeed() * 0x5DEECE66DL + block * 0x9E3779B97F4A7C15L;
+        hash ^= hash >>> 29;
+        hash *= 0xbf58476d1ce4e5b9L;
+        hash ^= hash >>> 32;
+        return Math.abs(hash % 1000L) < 200L;
+    }
+
+    public static boolean superDry(Level level) {
+        return isDry(level) && extreme(level);
+    }
+
+    public static boolean veryProsperous(Level level) {
+        return isProsperous(level) && extreme(level);
+    }
+
+    /** "Super dry season", "Prosperous season" and so on. */
+    public static String label(Level level) {
+        return superDry(level) ? "Super dry season" : veryProsperous(level) ? "Very prosperous season" : of(level).label();
     }
 
     public static Season of(Level level) {
@@ -159,6 +201,7 @@ public final class Seasons {
             // Heat and thin food: a dry season empties you faster.
             player.causeFoodExhaustion(0.15F);
         }
+        tellDay(player);
         long block = Drought.dayOf(player.level()) / DAYS + (forced == null ? 0 : 1000 + forced.ordinal());
         Long last = told.get(player.getUUID());
         if (last != null && last == block) {
@@ -173,11 +216,16 @@ public final class Seasons {
                         + "will keep what they have."
                 : "The rains have come back: a prosperous season. Everything is green, the herds are fat, "
                         + "foraging is easy and other bands are in a giving mood.";
+        if (superDry(player.level())) {
+            news += " And this one is a super dry season: dry days on most days, and not one good one to hope for.";
+        } else if (veryProsperous(player.level())) {
+            news += " And this one is a very prosperous season: good days on most days, and not a dry one among them.";
+        }
         player.sendSystemMessage(Component.literal(news).withStyle(season.colour()));
         if (season == Season.DRY) {
             dev.hominin.evolution.guide.Tips.drySeason(player);
         }
-        player.sendSystemMessage(Component.literal("(" + season.label() + ": " + left
+        player.sendSystemMessage(Component.literal("(" + label(player.level()) + ": " + left
                 + (left == 1 ? " day" : " days") + " left.)").withStyle(ChatFormatting.DARK_GRAY));
         for (dev.hominin.evolution.band.BandMember member : dev.hominin.evolution.band.Band.ownNear(player, 32.0D)) {
             if (!member.isBaby()) {
@@ -187,8 +235,34 @@ public final class Seasons {
         }
     }
 
+    private static final Map<UUID, Long> dayTold = new HashMap<>();
+
+    /** Once a day, when the day is anything but ordinary: a dry day, or a prosperous one. */
+    private static void tellDay(ServerPlayer player) {
+        long day = Drought.dayOf(player.level());
+        if (dayTold.getOrDefault(player.getUUID(), -1L) == day) {
+            return;
+        }
+        dayTold.put(player.getUUID(), day);
+        if (Drought.isActive(player.level())) {
+            player.sendSystemMessage(Component.literal("A dry day. The ground gives less and runs out sooner, and hungry "
+                    + "bands get desperate.").withStyle(ChatFormatting.GOLD));
+            if (isProsperous(player.level())) {
+                dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/bad_luck");
+            }
+        } else if (Drought.isProsperousDay(player.level())) {
+            if (isDry(player.level())) {
+                dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/miracle");
+            }
+            player.sendSystemMessage(Component.literal("A prosperous day. Everything is out and growing: foraging comes "
+                    + "easy, the ground gives twice what it usually would and is back by morning, and fewer hunters are "
+                    + "about.").withStyle(ChatFormatting.GREEN));
+        }
+    }
+
     public static void forget(UUID player) {
         told.remove(player);
+        dayTold.remove(player);
     }
 
     private Seasons() {

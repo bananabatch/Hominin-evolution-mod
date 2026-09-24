@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:bone_marrow"
+  },
+  "result": {
+    "id": "hominin_evolution:roasted_marrow"
+  },
+  "experience": 0.1,
+  "cookingtime": 300
+}

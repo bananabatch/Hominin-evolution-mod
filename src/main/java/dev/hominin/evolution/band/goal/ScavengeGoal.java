@@ -133,6 +133,10 @@ public class ScavengeGoal extends Goal {
 
     /** A bone and a stone to break it with: marrow. */
     private boolean crackBone() {
+        if (!dev.hominin.evolution.band.Species.cracksMarrow(member.getStage())) {
+            // Their kind never learned there was anything inside.
+            return false;
+        }
         SimpleContainer pack = member.getInventory();
         int boneSlot = -1;
         boolean hasStone = member.count(ModItems.ROCK.get()) > 0 || member.count(ModItems.HAMMERSTONE.get()) > 0

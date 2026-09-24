@@ -13,7 +13,9 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 
 /**
- * The one thing stopping you healing.
+ * The one thing holding your healing back. It does not stop it: it caps it - you mend, but only so far,
+ * until whatever it is has passed. (An animal's wound is different: a wounded animal does not mend at all
+ * while you follow it.)
  *
  * <p>Several systems have a reason to hold a body back from mending - blood already
  * lost, a gut full of something it should not have had, a coat full of ticks - and if
@@ -31,25 +33,39 @@ public final class Afflictions {
      * rule: anything further down this list overrides anything above it.
      */
     public enum Affliction {
-        INFESTED("Ticks", "You are too bitten up to mend. Get somebody to groom you."),
-        BLED_OUT("Blood loss", "You lost too much blood. It will be a while before you mend."),
-        INFECTED("Infection", "The wound has gone bad. Nothing is healing until it passes."),
-        LACERATED("Lacerations", "You are opened up too badly to heal. Drink, and keep drinking.");
+        INFESTED("Ticks", "You are too bitten up to mend past %s hearts. Get somebody to groom you.", 0.8F),
+        SICK("Food-borne illness", "Your gut is too sick for you to mend past %s hearts. Drink, keep drinking, and "
+                + "eat small.", 0.7F),
+        BLED_OUT("Blood loss", "You lost too much blood. You will not mend past %s hearts for a while.", 0.6F),
+        INFECTED("Infection", "The wound has gone bad. You will not mend past %s hearts until it passes.", 0.5F),
+        LACERATED("Lacerations", "You are opened up too badly to mend past %s hearts. Drink, and keep drinking.", 0.35F);
 
         private final String label;
         private final String explanation;
+        /** How much of full health you can still mend to while it runs. */
+        private final float ceiling;
 
-        Affliction(String label, String explanation) {
+        Affliction(String label, String explanation, float ceiling) {
             this.label = label;
             this.explanation = explanation;
+            this.ceiling = ceiling;
         }
 
         public String label() {
             return label;
         }
 
-        public String explanation() {
-            return explanation;
+        public float ceiling() {
+            return ceiling;
+        }
+
+        /** How many hearts a body this healthy can get back to while it runs. */
+        public int hearts(LivingEntity entity) {
+            return Math.max(1, Math.round(entity.getMaxHealth() * ceiling / 2.0F));
+        }
+
+        public String explanation(LivingEntity entity) {
+            return String.format(explanation, hearts(entity));
         }
     }
 
@@ -76,7 +92,7 @@ public final class Afflictions {
         // not worth telling anyone about again, twenty times a second.
         boolean alreadyKnown = running && current.affliction() == affliction;
         if (!alreadyKnown && entity instanceof Player player && !entity.level().isClientSide()) {
-            player.sendSystemMessage(Component.literal(affliction.explanation())
+            player.sendSystemMessage(Component.literal(affliction.explanation(player))
                     .withStyle(ChatFormatting.RED));
             if (player instanceof net.minecraft.server.level.ServerPlayer server) {
                 if (affliction == Affliction.LACERATED) {
@@ -127,8 +143,21 @@ public final class Afflictions {
 
     /** The single veto. Everything that wants to stop healing comes through here. */
     public static void onHeal(LivingHealEvent event) {
-        if (current(event.getEntity()) != null) {
+        LivingEntity entity = event.getEntity();
+        Affliction affliction = current(entity);
+        if (affliction == null) {
+            return;
+        }
+        if (!(entity instanceof Player)) {
+            // A wounded animal does not mend while it is being followed.
             event.setCanceled(true);
+            return;
+        }
+        float room = entity.getMaxHealth() * affliction.ceiling() - entity.getHealth();
+        if (room <= 0.0F) {
+            event.setCanceled(true);
+        } else if (event.getAmount() > room) {
+            event.setAmount(room);
         }
     }
 

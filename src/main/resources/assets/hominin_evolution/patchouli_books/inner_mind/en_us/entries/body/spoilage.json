@@ -1,0 +1,20 @@
+{
+  "name": "Meat That Turns",
+  "icon": "minecraft:rotten_flesh",
+  "category": "hominin_evolution:body",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Raw meat left lying on the ground $(l)turns$(): three minutes is all it takes, two in the heat. It still looks like food - $(o)Spoiled Meat Chunk$() - and it no longer stacks with fresh.$(br2)Carried, hung on a cooking rack or laid by in a store, it keeps. Pick up what you kill."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Eat meat that has turned and you will be ill: $(l)food-borne illness$(). Your gut cramps and empties; it runs straight through you, so you are always thirsty; now and then everything comes back up. And you will not mend past most of your hearts until it passes."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The way through is $(l)water$() - a lot of it, more than you want: sick, you can drink past thirst - and $(l)small meals$(): a grub, a handful of berries, a chunk of meat. A big meal will not stay down. Left alone it passes too, slowly.$(br2)Cooking spoiled meat kills most of what is in it. Not all: three times in ten it still lays you out."
+    }
+  ]
+}

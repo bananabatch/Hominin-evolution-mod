@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "A $(l)threat display$() at a clan is a bluff, and they know it. With the band shouting behind you it breaks them more often - they scatter giggling off the kill - but it can fail, and then they call it and come at once. Kill one and the rest may lose their nerve. Either way, running a clan off a kill counts."
+      "text": "A $(l)threat display$() at a clan is a bluff, and they know it. With the band shouting behind you it breaks them more often - they scatter giggling off the kill - but it can fail, and then they call it and come.$(br2)A clan fights for food, not to the death: kill one and the rest lose their nerve and run, and your band lets them go. Fire - a thrown torch - scatters the lot."
     },
     {
       "type": "patchouli:text",

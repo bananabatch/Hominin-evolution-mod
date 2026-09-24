@@ -62,6 +62,7 @@ public final class TipDisplay {
     private static String keys(String text) {
         return text.replace("{P}", key(ModKeyMappings.ITEM_INTERACT))
                 .replace("{K}", key(ModKeyMappings.THINK))
+                .replace("{O}", key(ModKeyMappings.BUILD))
                 .replace("{H}", key(ModKeyMappings.SOCIAL))
                 .replace("{G}", key(ModKeyMappings.THREAT_DISPLAY))
                 .replace("{J}", key(ModKeyMappings.JOURNAL))
@@ -95,11 +96,13 @@ public final class TipDisplay {
         event.setCanceled(true);
     }
 
-    /** The corner card: a book, the tip's title, and what it says. */
+    /** The corner card: a book, the tip's title, and what it says - small, so it does not cover the world. */
     private static final class TipToast implements Toast {
-        private static final int WIDTH = 230;
-        private static final int TEXT_X = 28;
-        private static final int MAX_LINES = 6;
+        private static final int WIDTH = 170;
+        private static final int TEXT_X = 22;
+        private static final int MAX_LINES = 5;
+        /** The body is set smaller than the title. */
+        private static final float TEXT_SCALE = 0.75F;
 
         private final Component title;
         private final List<FormattedCharSequence> lines;
@@ -110,12 +113,12 @@ public final class TipDisplay {
         TipToast(String title, String text, boolean urgent, boolean linked) {
             Font font = Minecraft.getInstance().font;
             this.title = Component.literal("Tip: " + title);
-            List<FormattedCharSequence> split = font.split(Component.literal(text), WIDTH - TEXT_X - 8);
+            List<FormattedCharSequence> split = font.split(Component.literal(text), (int) ((WIDTH - TEXT_X - 6) / TEXT_SCALE));
             this.lines = split.size() > MAX_LINES ? split.subList(0, MAX_LINES) : split;
             this.urgent = urgent;
             this.linked = linked;
             // Long enough to read at an unhurried pace, and longer still when it matters.
-            this.showFor = (urgent ? 9000L : 5000L) + 1300L * lines.size();
+            this.showFor = (urgent ? 8000L : 4500L) + 1100L * lines.size();
         }
 
         @Override
@@ -125,24 +128,32 @@ public final class TipDisplay {
 
         @Override
         public int height() {
-            return 22 + lines.size() * 10 + (linked ? 10 : 0);
+            return 18 + (int) Math.ceil(lines.size() * 9 * TEXT_SCALE) + (linked ? 8 : 0);
         }
 
         @Override
         public Visibility render(GuiGraphics graphics, ToastComponent toasts, long timeSinceLastVisible) {
             Font font = Minecraft.getInstance().font;
-            graphics.fill(0, 0, width(), height(), 0xEE15120E);
+            graphics.fill(0, 0, width(), height(), 0xE615120E);
             graphics.renderOutline(0, 0, width(), height(), urgent ? 0xFFB23A2E : 0xFF9C7A3C);
-            graphics.renderFakeItem(new ItemStack(urgent ? Items.REDSTONE : Items.BOOK), 6, 6);
-            graphics.drawString(font, title, TEXT_X, 7, urgent ? 0xFFFF7A6A : 0xFFFFD27A, false);
-            int y = 19;
+            graphics.pose().pushPose();
+            graphics.pose().translate(4.0F, 4.0F, 0.0F);
+            graphics.pose().scale(0.75F, 0.75F, 1.0F);
+            graphics.renderFakeItem(new ItemStack(urgent ? Items.REDSTONE : Items.BOOK), 0, 0);
+            graphics.pose().popPose();
+            graphics.drawString(font, title, TEXT_X, 5, urgent ? 0xFFFF7A6A : 0xFFFFD27A, false);
+            graphics.pose().pushPose();
+            graphics.pose().translate(TEXT_X, 16.0F, 0.0F);
+            graphics.pose().scale(TEXT_SCALE, TEXT_SCALE, 1.0F);
+            int y = 0;
             for (FormattedCharSequence line : lines) {
-                graphics.drawString(font, line, TEXT_X, y, 0xFFE6E0D6, false);
-                y += 10;
+                graphics.drawString(font, line, 0, y, 0xFFE6E0D6, false);
+                y += 9;
             }
             if (linked) {
-                graphics.drawString(font, "Double-click it in chat to read more.", TEXT_X, y + 1, 0xFF8C8578, false);
+                graphics.drawString(font, "Double-click it in chat to read more.", 0, y + 1, 0xFF8C8578, false);
             }
+            graphics.pose().popPose();
             return timeSinceLastVisible >= showFor * toasts.getNotificationDisplayTimeMultiplier()
                     ? Visibility.HIDE : Visibility.SHOW;
         }

@@ -43,6 +43,14 @@ public final class Attachments {
                     .copyOnDeath()
                     .build());
 
+    /** The mental map: places held in mind, what the band told you, your band's name, where you are heading. */
+    public static final Supplier<AttachmentType<dev.hominin.evolution.mind.MindData>> MIND = ATTACHMENT_TYPES.register(
+            "mind",
+            () -> AttachmentType.builder(() -> new dev.hominin.evolution.mind.MindData())
+                    .serialize(dev.hominin.evolution.mind.MindData.CODEC)
+                    .copyOnDeath()
+                    .build());
+
     /** Which tips a player has seen, and whether they want them. Kept through death and evolving. */
     public static final Supplier<AttachmentType<dev.hominin.evolution.guide.TipsData>> TIPS = ATTACHMENT_TYPES.register(
             "tips",

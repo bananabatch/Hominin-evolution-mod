@@ -123,8 +123,8 @@ public final class Tips {
         COHESION_DIRE("One more failing", "The band is at the edge. Ignore nothing they ask and break none of your "
                 + "ways; share and groom to climb out. A death or a theft will not do it - your own failings will.",
                 "living/cohesion", 0, true),
-        HOARDING("Pass it around", "Carrying a lot of food while they go hungry costs cohesion. Hold the food and "
-                + "choose {H}, Tools and things, Pass around what I'm holding.", "living/cohesion", 3),
+        HOARDING("Split it between them", "Carrying a lot of food while they go hungry costs cohesion. Hold the food "
+                + "and choose {H}, Food, Split what I'm holding between you.", "living/cohesion", 3),
         RECIPROCITY("Give back", "The band counts what you take against what you give. Hand them things, meet their "
                 + "wants and needs, share food - or it costs cohesion.", "living/cohesion", 3),
         ANTISOCIAL("Someone who does not care", "Some members do not care what the band thinks: they steal, hoard "
@@ -133,13 +133,64 @@ public final class Tips {
         ANTISOCIAL_WAYS("Keeping them in line", "Adopt Nobody lords it over the rest ({H}, Culture) to stop most "
                 + "fights and catch thieves - or have the band shun one ({H}, Social, Shun them): they bend or they "
                 + "go.", "living/culture", 5),
+        THINK_DEEPER("Something deeper", "When you feel something deeper could be going on, stop and hold {K} where "
+                + "you are - there is something here to work out. It costs nothing.", "living/others", 8),
+        SOIL_DRY("Picked clean", "Ground gives only so much: forage one spot too often and it runs out for days. Move "
+                + "a little way off. Fertile ground lasts far longer.", "body/foraging", 2),
+        LAND_PRESSURE("Ground worth having", "Your ground's pressure (J, Map) is what it is worth: good stone, termites, "
+                + "herds. Rich ground draws other bands - offers, demands, raids. Hold it with presence and allies.",
+                "living/others", 8),
+        DESPERATE("Someone hungry", "A desperate band is on its way to you. Stand your ground with the band round you, "
+                + "pay - or pack up and hide, and let them find your camp empty (on rich ground they may move onto it).",
+                "living/others", 10),
+        NIGHT_WATCH("Keep watch", "From erectus, desperate bands raid at night. Ask someone close to you (bond 4+) to "
+                + "keep watch - {H}, Danger - and they stay up, walk the camp and wake everyone when trouble comes.",
+                "living/others", 10),
+        PLACES("Places worth knowing", "Walk into a place worth knowing and hold {K} to think on it: the band remembers "
+                + "it, on your map, and it passes down when you evolve. Allies close by share theirs.", "living/places", 2),
+        TOOL_PILE("The band's tools", "On your own ground, sneak-use the ground with a stone tool or a bone to lay it "
+                + "down. The band takes what it needs from the pile. Hit a pile to see what is in it.", "living/places", 5),
+        TROUBLED("Someone is grieving", "Somebody close to the one who died has taken it hard. Look after them - sit "
+                + "with them, groom them, give them a stone - or they may stop caring what anyone thinks.",
+                "living/troubles", 0),
+        FOOD_ILLNESS("Sick from bad meat", "Meat that lay on the ground too long had turned. Drink - a lot, past "
+                + "thirst - and eat small: a big meal will not stay down. Hang meat on a rack, or carry it.",
+                "body/spoilage", 1),
+        COOKING_RACK("The cooking rack", "Meat hung over a lit fire cooks slowly and evenly; take it down empty-handed "
+                + "when it is done, or it chars. With no fire under it, food hung there keeps.", "body/cooking", 2),
+        BUILDING("Building", "Fill the ghost in: place the right block where it shows, or use one on a ghost block "
+                + "to set it straight in. Wrong blocks will not go in. {O} to put a plan away.", "hands/building", 1),
+        BUILT("What it is for", "A store keeps food, bones and tools for the band. Yours is for you and your mate. "
+                + "Given to someone - more still if they are hurt or with child - it means a great deal.",
+                "hands/building", 3),
+        ALLY_PLIGHT("An ally in trouble", "An ally's alarm gives you 150 seconds to reach their camp - follow the "
+                + "pointer. Drive off what is attacking them and they live, and they will come for you in turn.",
+                "living/others", 13),
+        ENCOUNTER("They want something", "A band has come to you with an offer or a threat. Accept or decline an "
+                + "offer; to a threat, give in, fight - or flee, dropping some of what you carry.", "living/others", 9),
+        FIRE_PIT("A fire that keeps", "Fire on bare ground does not keep. At the work station, three logs along the "
+                + "bottom and five sticks above make a fire pit: fill it with thatch and sticks, then drill it.",
+                "body/fire", 0),
+        TORCH("Torches", "A stick and thatch at the work station, three twine in the slot: a torch. Light it at any "
+                + "fire, and throw it at anything that hunts - fire sends every one of them running.", "body/fire", 4),
         DRY_SEASON("The dry season", "Five hard days: foraging pays less, hunger runs faster, carcasses are thin and "
                 + "people steal. Eat meat and marrow, and stay near water.", "body/seasons", 1),
         DRY_SEASON_WAYS("The dry season", "Hard times: hunger runs faster and people steal. Your band can decide how "
                 + "to live through it - {H}, Culture: a rule against theft, or that it is fine not to share.",
                 "living/culture", 1),
-        HOME_RANGE("Keep moving", "Two days within 200 blocks of the same ground and everything that hunts there "
-                + "learns your band. Move 200 blocks into new country and it starts over.", "hunting/neighbours", 5),
+        HOME_RANGE("Hold your ground - or move on", "Four and a half days on the same ground and everything that hunts "
+                + "there starts testing your band. Kill predators, keep a fire and build there to raise presence and hold "
+                + "it - or pack up (J, Map) and start over somewhere new.", "living/others", 4),
+        TERRITORY("Your ground", "Your ground stays where it was made. 150 blocks from it you are warned; past 250 the "
+                + "band settles wherever you are. Pack up, then Set territory here, on the map (J).", "living/others", 3),
+        RAIDING("Raiding another band", "A weak band that does not hold together breaks fast and drops what it "
+                + "carries. A strong, close-knit one stands - and the standing you lose with them does not come back "
+                + "quickly.", "living/others", 6),
+        OTHER_BANDS("Other bands", "Every band has a name, ground of its own and a standing with you. Taking from their "
+                + "ground costs it; trades and gifts earn it. {H}, The others - and J, Map to see where they are.",
+                "living/others", 0),
+        MIND_FULL("A full mind", "You can only hold so many places in mind. Let one go on the map (J) to make room - "
+                + "and ask the band what they remember: {H}, Social.", "living/mental_map", 1),
         // ------------------------------------------------ danger and hunting
         PREDATOR("Something is hunting you", "Double-tap {G} for a threat display - louder with your band behind "
                 + "you - or climb: walk into a trunk and hold jump. Most hunters cannot follow you up.",

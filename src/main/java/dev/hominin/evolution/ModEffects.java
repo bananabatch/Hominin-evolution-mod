@@ -24,6 +24,10 @@ public final class ModEffects {
     public static final Holder<MobEffect> KURU =
             MOB_EFFECTS.register("kuru", dev.hominin.evolution.effect.KuruEffect::new);
 
+    /** Sick from meat that had turned. See survival.FoodIllness. */
+    public static final Holder<MobEffect> FOOD_ILLNESS =
+            MOB_EFFECTS.register("food_illness", dev.hominin.evolution.effect.FoodIllnessEffect::new);
+
     private ModEffects() {
     }
 }

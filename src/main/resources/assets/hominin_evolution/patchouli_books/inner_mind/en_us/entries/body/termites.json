@@ -12,6 +12,14 @@
       "type": "patchouli:spotlight",
       "item": "hominin_evolution:termite_stick",
       "text": "Eat what the stick brings back, and you will find you still have the stick. A tool you keep is a technique you can learn."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A mound is not bottomless. Fish it fifteen times and the soldiers seal every hole: it will not open again for two days. Your band and any Paranthropus nearby fish the same mounds.$(br2)Now and then one colony raises three $(l)great mounds$() together, redder and far taller. They never run dry, and every stick comes out heavier."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A colony that size needs its ground left alone. Every block built within thirty blocks of it wears it down, and more every day the building stands - until the colony fails and the great mounds are only mounds.$(br2)A dead tree has two logs worth cracking for grubs, whatever its branches; about half come apart hollow."
     }
   ]
 }

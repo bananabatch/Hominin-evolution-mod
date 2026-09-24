@@ -93,6 +93,18 @@ public final class ModItems {
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.PELOROVIS,
                     0x4A3E34, 0xC8BCA0, new Item.Properties()));
 
+    public static final DeferredItem<Item> MAMMUTHUS_SPAWN_EGG = ITEMS.register("mammuthus_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MAMMUTHUS,
+                    0x5E554D, 0xE2D6B8, new Item.Properties()));
+
+    public static final DeferredItem<Item> MEGALOTRAGUS_SPAWN_EGG = ITEMS.register("megalotragus_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MEGALOTRAGUS,
+                    0xB27A4A, 0x483224, new Item.Properties()));
+
+    public static final DeferredItem<Item> RUSINGORYX_SPAWN_EGG = ITEMS.register("rusingoryx_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.RUSINGORYX,
+                    0xA08868, 0x3A2E26, new Item.Properties()));
+
     public static final DeferredItem<Item> SABERTOOTH_SPAWN_EGG = ITEMS.register("sabertooth_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.SABERTOOTH,
                     0xB08A52, 0xEEE6CC, new Item.Properties()));
@@ -144,6 +156,23 @@ public final class ModItems {
     public static final DeferredItem<Item> CHERT_HAMMERSTONE =
             ITEMS.registerSimpleItem("chert_hammerstone", new Item.Properties());
 
+    /** Three logs round a bed of sticks. Made at the work station; lit with a drill. */
+    public static final DeferredItem<Item> FIRE_PIT = ITEMS.register("fire_pit",
+            () -> new BlockItem(ModBlocks.FIRE_PIT.get(), new Item.Properties()));
+
+    /** A stick with thatch bound round its head. Light it at a fire. */
+    public static final DeferredItem<Item> TORCH = ITEMS.register("torch",
+            () -> new dev.hominin.evolution.item.TorchItem(new Item.Properties().stacksTo(16)));
+
+    /** A torch, burning. It burns down; thrown, it sends anything that hunts running. */
+    public static final DeferredItem<Item> LIT_TORCH = ITEMS.register("lit_torch",
+            () -> new dev.hominin.evolution.item.LitTorchItem(new Item.Properties()
+                    .durability(dev.hominin.evolution.item.LitTorchItem.BURN_POINTS)));
+
+    /** Meat left in the fire too long: black outside, still food inside. Better than nothing. */
+    public static final DeferredItem<Item> CHARRED_MEAT = ITEMS.registerSimpleItem("charred_meat",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.15F).build()));
+
     public static final DeferredItem<Item> DIGGING_STICK = ITEMS.registerSimpleItem("digging_stick", new Item.Properties());
 
     /**
@@ -162,7 +191,24 @@ public final class ModItems {
      */
     public static final DeferredItem<Item> WOODEN_CLUB = ITEMS.registerItem("wooden_club",
             WoodenWeaponItem::new,
-            new Item.Properties().durability(140).attributes(weapon(2.5D, 0.8D, 1.0D)));
+            new Item.Properties().durability(140).attributes(weapon(2.5D, 0.8D, 1.0D))
+                    .rarity(net.minecraft.world.item.Rarity.UNCOMMON));
+
+    /**
+     * A reddish pebble worn by water into something with a face - two hollows for eyes, a groove of a mouth.
+     * The Makapansgat cobble: an australopithecine carried one like it kilometres from where it lay, three
+     * million years ago. It does nothing. It is the most treasured thing a band owns.
+     */
+    public static final DeferredItem<Item> FACE_PEBBLE = ITEMS.registerSimpleItem("face_pebble",
+            new Item.Properties().stacksTo(8).rarity(net.minecraft.world.item.Rarity.RARE));
+
+    /** A pile of tools gathered up whole, to be set down somewhere else. */
+    public static final DeferredItem<Item> PILE_BUNDLE = ITEMS.register("pile_bundle",
+            () -> new dev.hominin.evolution.item.PileBundleItem(new Item.Properties().stacksTo(1)));
+
+    /** A clear quartz crystal out of a split face of stone: the Wonderwerk crystals, carried for their own sake. */
+    public static final DeferredItem<Item> QUARTZ_CRYSTAL = ITEMS.registerSimpleItem("quartz_crystal",
+            new Item.Properties().stacksTo(8).rarity(net.minecraft.world.item.Rarity.RARE));
 
     /**
      * Savannah chimps sharpen sticks to jab small prey out of tree hollows - the
@@ -255,6 +301,8 @@ public final class ModItems {
             ModBlocks.CHERT_DEPOSIT, new Item.Properties());
     public static final DeferredItem<BlockItem> QUARTZITE_DEPOSIT = ITEMS.registerSimpleBlockItem(
             ModBlocks.QUARTZITE_DEPOSIT, new Item.Properties());
+    public static final DeferredItem<BlockItem> BASALT_DEPOSIT = ITEMS.registerSimpleBlockItem(
+            ModBlocks.BASALT_DEPOSIT, new Item.Properties());
     public static final DeferredItem<BlockItem> LIMESTONE_DEPOSIT = ITEMS.registerSimpleBlockItem(
             ModBlocks.LIMESTONE_DEPOSIT, new Item.Properties());
 
@@ -340,6 +388,10 @@ public final class ModItems {
     public static final DeferredItem<Item> BUILDING_BRANCH = ITEMS.register("building_branch",
             () -> new BlockItem(ModBlocks.BUILDING_BRANCH.get(), new Item.Properties()));
 
+    /** A forked stick, two blocks tall. Two of them, a branch across, and a fire between: meat cooks right. */
+    public static final DeferredItem<Item> COOKING_RACK = ITEMS.register("cooking_rack",
+            () -> new BlockItem(ModBlocks.COOKING_RACK.get(), new Item.Properties().stacksTo(16)));
+
     public static final DeferredItem<Item> THATCH_BLOCK = ITEMS.register("thatch_block",
             () -> new BlockItem(ModBlocks.THATCH_BLOCK.get(), new Item.Properties()));
 
@@ -393,6 +445,14 @@ public final class ModItems {
     public static final DeferredItem<Item> COOKED_MEAT_CHUNK = ITEMS.registerSimpleItem("cooked_meat_chunk",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(3).saturationModifier(0.6F).build()));
 
+    /** Marrow roasted in its own fat: rich enough to live on. */
+    public static final DeferredItem<Item> ROASTED_MARROW = ITEMS.registerSimpleItem("roasted_marrow",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.8F).build()));
+
+    /** Meat from one of our own kind, cooked. The fire does not change what it was. */
+    public static final DeferredItem<Item> COOKED_HOMININ_MEAT = ITEMS.registerSimpleItem("cooked_hominin_meat",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(7).saturationModifier(0.8F).build()));
+
     public static final DeferredItem<Item> GRUB = ITEMS.registerSimpleItem("grub",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
 
@@ -422,6 +482,18 @@ public final class ModItems {
             () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
                     .nutrition(5)
                     .saturationModifier(0.7F)
+                    .usingConvertsTo(LONG_BONE.get())
+                    .build())));
+
+    /**
+     * A rib turned over a fire until the fat runs: the best meal there is, and the bone still to crack. Registered
+     * after the long bone it leaves behind - items register in the order they are declared, and asking for one
+     * that comes later reads an unbound registry.
+     */
+    public static final DeferredItem<Item> COOKED_RIB = ITEMS.register("cooked_rib",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(7)
+                    .saturationModifier(0.9F)
                     .usingConvertsTo(LONG_BONE.get())
                     .build())));
 

@@ -107,7 +107,12 @@ public final class Teaching {
     /** Words: it works, just not for everyone. */
     private static void tell(ServerPlayer player, Skills.Skill skill, List<BandMember> pupils) {
         List<BandMember> understood = new ArrayList<>();
+        List<BandMember> cannot = new ArrayList<>();
         for (BandMember member : pupils) {
+            if (!member.canLearnSkill(skill)) {
+                cannot.add(member);
+                continue;
+            }
             if (member.getRandom().nextFloat() < TOLD_CHANCE) {
                 member.learnSkill(skill);
                 understood.add(member);
@@ -118,6 +123,16 @@ public final class Teaching {
                 : "You explain " + skill.title().toLowerCase() + " as well as you can. " + names(understood)
                         + (understood.size() == 1 ? " understands." : " understand."))
                 .withStyle(ChatFormatting.AQUA));
+        notInThem(player, skill, cannot);
+    }
+
+    /** Some kinds never had it in them: they watch, and nothing takes. */
+    private static void notInThem(ServerPlayer player, Skills.Skill skill, List<BandMember> cannot) {
+        if (!cannot.isEmpty()) {
+            player.sendSystemMessage(Component.literal(names(cannot) + (cannot.size() == 1 ? " watches" : " watch")
+                    + ", but " + skill.title().toLowerCase() + " does not take - it is not in their kind.")
+                    .withStyle(ChatFormatting.GRAY));
+        }
     }
 
     /**
@@ -134,13 +149,19 @@ public final class Teaching {
             return;
         }
         List<BandMember> learned = new ArrayList<>();
+        List<BandMember> cannot = new ArrayList<>();
         for (UUID id : lesson.watchers()) {
             if (player.serverLevel().getEntity(id) instanceof BandMember member && member.isAlive()
                     && member.distanceToSqr(player) < RANGE * RANGE) {
+                if (!member.canLearnSkill(skill)) {
+                    cannot.add(member);
+                    continue;
+                }
                 member.learnSkill(skill);
                 learned.add(member);
             }
         }
+        notInThem(player, skill, cannot);
         if (!learned.isEmpty()) {
             player.sendSystemMessage(Component.literal(names(learned) + (learned.size() == 1 ? " has" : " have")
                     + " learned " + skill.title().toLowerCase() + " from you.").withStyle(ChatFormatting.AQUA));

@@ -243,6 +243,7 @@ public class Baboon extends PathfinderMob implements TroopAnimal, TreeClimber {
             playSound(ModSounds.BABOON_ANGRY.get(), 1.4F, 0.9F + getRandom().nextFloat() * 0.3F);
         }
         tickRelations();
+        tickWallClimb();
         // The troop leader keeps watch: a predator that comes close is mobbed and driven off.
         if (tickCount % 40 == 0 && troopId != null && troopLeader == null && angerTicks == 0) {
             List<net.minecraft.world.entity.Mob> predators = level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
@@ -441,12 +442,78 @@ public class Baboon extends PathfinderMob implements TroopAnimal, TreeClimber {
 
     @Override
     public boolean onClimbable() {
-        return (climbing && horizontalCollision) || super.onClimbable();
+        return (climbing && horizontalCollision) || wallClimbing || super.onClimbable();
     }
 
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
-        return !climbing && super.causeFallDamage(distance, multiplier, source);
+        return !climbing && safeLanding <= 0 && super.causeFallDamage(distance, multiplier, source);
+    }
+
+    // ------------------------------------------------------------ walls
+
+    /** Hauling itself up a wall or a bank, the way a hominin does - and no higher than one can. */
+    private boolean wallClimbing;
+    private double wallClimbStartY;
+    private int stuck;
+    private int wallCooldown;
+    private int safeLanding;
+
+    public boolean isWallClimbing() {
+        return wallClimbing;
+    }
+
+    /**
+     * Blocked, and still trying to get somewhere - after you, away from something, back to the troop: climb.
+     * Four blocks of anything, like a hominin; a pit deeper than that holds a baboon as well as it holds you.
+     */
+    private void tickWallClimb() {
+        if (safeLanding > 0) {
+            safeLanding--;
+        }
+        if (climbing || isInWater() || isPassenger()) {
+            stopWallClimb(false);
+            return;
+        }
+        net.minecraft.world.phys.Vec3 ahead = net.minecraft.world.phys.Vec3.directionFromRotation(0.0F, getYRot());
+        if (wallClimbing) {
+            resetFallDistance();
+            getMoveControl().setWantedPosition(getX() + ahead.x * 2.0D, getY() + 1.0D, getZ() + ahead.z * 2.0D, 1.0D);
+            if (!horizontalCollision) {
+                // Over the top: a last scramble onto the ledge.
+                setDeltaMovement(ahead.x * 0.25D, Math.max(getDeltaMovement().y, 0.1D), ahead.z * 0.25D);
+                stopWallClimb(false);
+            } else if (getY() - wallClimbStartY >= dev.hominin.evolution.climb.Climbing.WALL_CLIMB_LIMIT) {
+                stopWallClimb(true);
+            }
+            return;
+        }
+        if (wallCooldown > 0) {
+            wallCooldown--;
+            stuck = 0;
+            return;
+        }
+        boolean trying = !getNavigation().isDone() || getMoveControl().hasWanted() || getTarget() != null;
+        if (trying && horizontalCollision && onGround()) {
+            if (++stuck >= 10) {
+                wallClimbing = true;
+                wallClimbStartY = getY();
+                stuck = 0;
+            }
+        } else if (stuck > 0) {
+            stuck--;
+        }
+    }
+
+    private void stopWallClimb(boolean gaveUp) {
+        if (!wallClimbing) {
+            return;
+        }
+        wallClimbing = false;
+        safeLanding = 40;
+        if (gaveUp) {
+            wallCooldown = 200;
+        }
     }
 
     /** Keeping company with a friend: close, but not underfoot. */

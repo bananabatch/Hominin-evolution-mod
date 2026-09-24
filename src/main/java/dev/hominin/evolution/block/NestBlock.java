@@ -93,10 +93,25 @@ public class NestBlock extends HorizontalDirectionalBlock {
             return InteractionResult.PASS;
         }
         int filled = Nests.largestAround(level, pos);
-        if (filled < Nests.SIZE) {
+        // Under a roof, a nest of any size will do.
+        if (filled < Nests.SIZE && !dev.hominin.evolution.build.Building.inRoom(level, pos)) {
             player.displayClientMessage(Component.literal("This is only the start of a nest (" + filled + "/"
                     + Nests.SIZE + "). It needs to be two wide and three long to sleep in."), true);
             return InteractionResult.SUCCESS;
+        }
+        if (level instanceof net.minecraft.server.level.ServerLevel server) {
+            var refusal = NestOwners.refusal(server, player, pos);
+            if (refusal.refused()) {
+                if (refusal.maker() != null) {
+                    player.sendSystemMessage(Component.literal("<" + refusal.maker().getName().getString() + "> ")
+                            .withStyle(net.minecraft.ChatFormatting.GOLD).append(Component.literal(refusal.line())
+                                    .withStyle(net.minecraft.ChatFormatting.WHITE)));
+                    refusal.maker().getLookControl().setLookAt(player);
+                } else {
+                    player.displayClientMessage(Component.literal(refusal.line()), true);
+                }
+                return InteractionResult.SUCCESS;
+            }
         }
         player.startSleepInBed(pos).ifLeft(problem -> {
             if (problem.getMessage() != null) {

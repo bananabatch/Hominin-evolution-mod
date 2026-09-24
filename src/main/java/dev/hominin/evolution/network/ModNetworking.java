@@ -4,7 +4,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class ModNetworking {
-    private static final String VERSION = "6";
+    private static final String VERSION = "8";
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(VERSION);
@@ -14,6 +14,13 @@ public final class ModNetworking {
                 SocialCommandPayload::handle);
         registrar.playToServer(FetchRequestPayload.TYPE, FetchRequestPayload.STREAM_CODEC, FetchRequestPayload::handle);
         registrar.playToServer(TakeItemPayload.TYPE, TakeItemPayload.STREAM_CODEC, TakeItemPayload::handle);
+        registrar.playToServer(PlaceToolPayload.TYPE, PlaceToolPayload.STREAM_CODEC, PlaceToolPayload::handle);
+        registrar.playToServer(BuildActionPayload.TYPE, BuildActionPayload.STREAM_CODEC, BuildActionPayload::handle);
+        registrar.playToServer(PileActionPayload.TYPE, PileActionPayload.STREAM_CODEC, PileActionPayload::handle);
+        registrar.playToClient(PilePayload.TYPE, PilePayload.STREAM_CODEC, PilePayload::handle);
+        registrar.playToClient(BuildMenuPayload.TYPE, BuildMenuPayload.STREAM_CODEC, BuildMenuPayload::handle);
+        registrar.playToClient(BlueprintsPayload.TYPE, BlueprintsPayload.STREAM_CODEC, BlueprintsPayload::handle);
+        registrar.playToClient(SitesPayload.TYPE, SitesPayload.STREAM_CODEC, SitesPayload::handle);
         registrar.playToServer(ChoosePayload.TYPE, ChoosePayload.STREAM_CODEC, ChoosePayload::handle);
         registrar.playToServer(TradeRequestPayload.TYPE, TradeRequestPayload.STREAM_CODEC, TradeRequestPayload::handle);
         registrar.playToServer(OpenJournalPayload.TYPE, OpenJournalPayload.STREAM_CODEC, OpenJournalPayload::handle);
@@ -54,6 +61,20 @@ public final class ModNetworking {
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);
         registrar.playToClient(TipPayload.TYPE, TipPayload.STREAM_CODEC, TipPayload::handle);
+        registrar.playToClient(MapPayload.TYPE, MapPayload.STREAM_CODEC, MapPayload::handle);
+        registrar.playToServer(MapActionPayload.TYPE, MapActionPayload.STREAM_CODEC, MapActionPayload::handle);
+        registrar.playToClient(WaypointPayload.TYPE, WaypointPayload.STREAM_CODEC, WaypointPayload::handle);
+        registrar.playToClient(OthersPayload.TYPE, OthersPayload.STREAM_CODEC, OthersPayload::handle);
+        registrar.playToServer(OthersActionPayload.TYPE, OthersActionPayload.STREAM_CODEC, OthersActionPayload::handle);
+        registrar.playToClient(GiftStockPayload.TYPE, GiftStockPayload.STREAM_CODEC, GiftStockPayload::handle);
+        registrar.playToServer(GiftOfferPayload.TYPE, GiftOfferPayload.STREAM_CODEC, GiftOfferPayload::handle);
+        registrar.playToClient(CohesionPayload.TYPE, CohesionPayload.STREAM_CODEC, CohesionPayload::handle);
+        registrar.playToClient(EncounterPayload.TYPE, EncounterPayload.STREAM_CODEC, EncounterPayload::handle);
+        registrar.playToServer(EncounterChoicePayload.TYPE, EncounterChoicePayload.STREAM_CODEC,
+                EncounterChoicePayload::handle);
+        registrar.playBidirectional(BandNamePayload.TYPE, BandNamePayload.STREAM_CODEC,
+                new net.neoforged.neoforge.network.handling.DirectionalPayloadHandler<>(
+                        BandNamePayload::handleOnClient, BandNamePayload::handleOnServer));
     }
 
     private ModNetworking() {

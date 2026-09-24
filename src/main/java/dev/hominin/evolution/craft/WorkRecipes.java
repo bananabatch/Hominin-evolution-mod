@@ -17,8 +17,8 @@ import net.minecraft.world.item.ItemStack;
  * the tool is what makes the difference: a log with a hand axe beside it becomes branches, the
  * same branches with a hammerstone become a club.
  *
- * <p>Grids are exact: a {@code null} cell must be empty. Recipes with one ingredient accept it
- * anywhere in the grid.
+ * <p>Grids are exact: a {@code null} cell must be empty - unless the recipe is shapeless, when each
+ * ingredient listed goes anywhere in the grid, and nothing else may be in it.
  */
 public final class WorkRecipes {
     /** How the tool pays for the job: worn by one use, or spent - so many twine used up. */
@@ -36,14 +36,18 @@ public final class WorkRecipes {
 
     private static final Predicate<ItemStack> LOG = stack -> stack.is(ItemTags.LOGS);
     private static final Predicate<ItemStack> BRANCH = is(ModItems.WORKABLE_BRANCH);
+    /** Any rock at all - the same kind or a mix, the band's stone or ordinary cobble. */
     private static final Predicate<ItemStack> ROCK = stack -> stack.is(ModTags.Items.ROCKS)
-            || stack.is(ModTags.Items.KNAPPABLE_STONE);
+            || stack.is(ModTags.Items.KNAPPABLE_STONE) || stack.is(net.neoforged.neoforge.common.Tags.Items.COBBLESTONES)
+            || stack.is(net.neoforged.neoforge.common.Tags.Items.STONES)
+            || stack.is(net.minecraft.world.item.Items.FLINT);
     private static final Predicate<ItemStack> THATCH = is(ModItems.THATCH);
     private static final Predicate<ItemStack> HIDE = is(ModItems.HIDE);
     private static final Predicate<ItemStack> HAND_AXE = stack -> stack.is(ModTags.Items.HAND_AXE_TOOLS);
     private static final Predicate<ItemStack> HAMMER = stack -> stack.is(ModTags.Items.HAMMERSTONES);
     private static final Predicate<ItemStack> CLEAVER = is(ModItems.CLEAVER);
     private static final Predicate<ItemStack> TWINE = is(ModItems.TWINE);
+    private static final Predicate<ItemStack> STICK = stack -> stack.is(net.minecraft.world.item.Items.STICK);
 
     private static List<Predicate<ItemStack>> grid(Predicate<ItemStack>... cells) {
         return java.util.Arrays.asList(cells);
@@ -63,11 +67,12 @@ public final class WorkRecipes {
                     null, null, null,
                     null, BRANCH, null,
                     null, BRANCH, null), false, ModItems.WOODEN_CLUB, 1),
-            // A branch set upright in a base of rocks: something to build with.
-            new WorkRecipe("building_branch", stack -> true, ToolUse.WEAR, 0, grid(
-                    null, null, null,
-                    null, BRANCH, null,
-                    ROCK, ROCK, ROCK), false, ModItems.BUILDING_BRANCH, 2),
+            // A branch set upright in a base of rocks - any three, anywhere: something to build with.
+            new WorkRecipe("building_branch", stack -> true, ToolUse.WEAR, 0, List.of(BRANCH, ROCK, ROCK, ROCK), true,
+                    ModItems.BUILDING_BRANCH, 2),
+            // A branch forked at the top, stood on three sticks: one end of a cooking rack.
+            new WorkRecipe("cooking_rack", stack -> true, ToolUse.WEAR, 0, List.of(BRANCH, STICK, STICK, STICK), true,
+                    ModItems.COOKING_RACK, 1),
             // A grid of thatch bound with twine: thatch blocks.
             new WorkRecipe("thatch_block", TWINE, ToolUse.SPEND, 4, grid(
                     THATCH, THATCH, THATCH,
@@ -78,6 +83,16 @@ public final class WorkRecipes {
                     HIDE, HIDE, HIDE,
                     THATCH, THATCH, THATCH,
                     null, null, null), false, ModItems.THATCH_BEDDING, 2),
+            // Three logs laid round, five sticks piled in the middle: a fire pit. Nothing needed in the slot.
+            new WorkRecipe("fire_pit", stack -> true, ToolUse.WEAR, 0, grid(
+                    STICK, null, STICK,
+                    STICK, STICK, STICK,
+                    LOG, LOG, LOG), false, ModItems.FIRE_PIT, 1),
+            // Thatch over the end of a stick, three twine wound round to hold it: a torch.
+            new WorkRecipe("torch", TWINE, ToolUse.SPEND, 3, grid(
+                    null, THATCH, null,
+                    null, STICK, null,
+                    null, null, null), false, ModItems.TORCH, 1),
             // A branch and a hammerstone side by side, lashed with twine: a proper digging stick.
             new WorkRecipe("digging_stick", TWINE, ToolUse.SPEND, 10, grid(
                     null, null, null,
@@ -112,18 +127,32 @@ public final class WorkRecipes {
         return true;
     }
 
+    /** Shapeless: every ingredient matched by exactly one thing in the grid, and nothing left over. */
     private static boolean matchesAnywhere(WorkRecipe recipe, List<ItemStack> grid) {
-        int found = 0;
+        List<ItemStack> present = new java.util.ArrayList<>();
         for (ItemStack stack : grid) {
-            if (stack.isEmpty()) {
-                continue;
+            if (!stack.isEmpty()) {
+                present.add(stack);
             }
-            if (!recipe.grid().get(0).test(stack)) {
-                return false;
-            }
-            found++;
         }
-        return found == 1;
+        return present.size() == recipe.grid().size()
+                && assign(recipe.grid(), 0, present, new boolean[present.size()]);
+    }
+
+    private static boolean assign(List<Predicate<ItemStack>> wanted, int next, List<ItemStack> present, boolean[] used) {
+        if (next == wanted.size()) {
+            return true;
+        }
+        for (int i = 0; i < present.size(); i++) {
+            if (!used[i] && wanted.get(next).test(present.get(i))) {
+                used[i] = true;
+                if (assign(wanted, next + 1, present, used)) {
+                    return true;
+                }
+                used[i] = false;
+            }
+        }
+        return false;
     }
 
     private WorkRecipes() {

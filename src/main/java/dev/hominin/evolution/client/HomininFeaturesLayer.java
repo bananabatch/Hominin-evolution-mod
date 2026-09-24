@@ -71,6 +71,54 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
     }
 
     /**
+     * Anamensis, the older form behind Australopithecus: a lower brow, and a muzzle that pushes out further and
+     * deeper than Lucy's, over a heavy jaw.
+     */
+    public static LayerDefinition anamensis() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -5.5F, -5.0F, 8, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-3.0F, -4.0F, -7.0F, 6, 4, 3), PartPose.ZERO);
+        root.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(18, 2)
+                .addBox(-2.5F, -0.5F, -6.5F, 5, 1, 2), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
+    /**
+     * Rudolfensis: a long face, broad and flat - not pushed forward like a muzzle but tall and wide - under a brow
+     * set low, and a skull a size bigger than habilis's: the vault stands up over the head.
+     */
+    public static LayerDefinition rudolfensis() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -5.8F, -4.7F, 8, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("face", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-3.0F, -4.8F, -4.9F, 6, 5, 1), PartPose.ZERO);
+        root.addOrReplaceChild("vault", CubeListBuilder.create().texOffs(0, 8)
+                .addBox(-3.5F, -8.8F, -3.5F, 7, 1, 7), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
+    /**
+     * Ergaster: much like erectus, but lighter built - a thinner brow ridge, a longer, narrower nose, and a smaller
+     * mouth.
+     */
+    public static LayerDefinition ergaster() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-3.5F, -6.0F, -4.4F, 7, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-1.0F, -5.0F, -4.9F, 2, 3, 1), PartPose.ZERO);
+        root.addOrReplaceChild("mouth", CubeListBuilder.create().texOffs(0, 6)
+                .addBox(-2.5F, -2.2F, -4.3F, 5, 2, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
+    /**
      * Paranthropus boisei, "Nutcracker Man": a ridge of bone along the top of the skull for
      * the chewing muscles to anchor on, cheekbones flaring out to the sides, and a broad,
      * flat, deep face with a jaw built for grinding.

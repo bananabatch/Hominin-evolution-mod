@@ -15,7 +15,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * How the band feels about you as its leader: 0 to 50, and a new band starts at 30.
+ * How the band feels about you as its leader: 0 to 55, and a new band starts at 35 - with ten minutes'
+ * grace, in which only a real failing costs anything (unless it is the dry season, when nothing is let go).
+ * Good things count for a little more than they used to - until 40: past that, every gain is harder won, and
+ * past 48 harder still. In the dry season bad things count for more.
  *
  * <ul>
  * <li><b>10 and under - dire.</b> One more failing of yours and they drive you out (and sometimes
@@ -27,14 +30,27 @@ import net.minecraft.world.entity.player.Player;
  * <li><b>30 to 39 - neutral.</b> Life as usual.
  * <li><b>40 to 49 - positive.</b> They listen to you more, warm to you faster, give now and then,
  * and hold their nerve better when something comes for them.
- * <li><b>50 - perfect.</b> Everyone treats you at bond 2 at the least, warms to you fast, gives
+ * <li><b>50 to 55 - perfect.</b> Everyone treats you at bond 2 at the least, warms to you fast, gives
  * often, forages and gathers better, and comes at once when you are hurt.
  * </ul>
  */
 public final class Cohesion {
     public static final int MIN = 0;
-    public static final int MAX = 50;
+    public static final int MAX = 55;
+    /** Where perfect starts: the last few points above it are the hardest won of all. */
+    public static final int PERFECT = 50;
+    /** Gains count for this many tenths each: generous below 40, grudging above it, more so near the top. */
+    private static final int GAIN_TENTHS_LOW = 14;
+    private static final int GAIN_TENTHS_HIGH = 7;
+    private static final int GAIN_TENTHS_TOP = 4;
+    private static final int HARD_FROM = 48;
     public static final int NEUTRAL = 30;
+    /** Where a new band starts with you. */
+    public static final int START = 35;
+    /** How long a new band gives you before small failings count. */
+    private static final int GRACE_MINUTES = 10;
+    /** In the grace, a loss this size or bigger still counts: a real failing. */
+    private static final int ROYAL_FAILING = 5;
     public static final int DIRE = 10;
     public static final int BORDERLINE = 20;
     public static final int POSITIVE = 40;
@@ -45,6 +61,9 @@ public final class Cohesion {
     private static final String PROMISE_FROM = "cohesion_promise_from";
     private static final String NEXT_WORD = "cohesion_next_word_minute";
     private static final String UPKEEP_DAY = "cohesion_upkeep_day";
+    private static final String GRACE_UNTIL = "cohesion_grace_minute";
+    /** Gains count for 1.4 each: the tenths carried over. */
+    private static final String GAIN_TENTHS = "cohesion_gain_tenths";
     /** A promise to do better is judged after a day: it has to have risen by this much. */
     private static final int PROMISE_MINUTES = 20;
     private static final int PROMISE_RISE = 3;
@@ -69,7 +88,7 @@ public final class Cohesion {
             counters.put(Band.COHESION, Math.min(POSITIVE + 5, NEUTRAL + old / 3));
             counters.put(SCALED, 1);
         }
-        return Math.max(MIN, Math.min(MAX, counters.getOrDefault(Band.COHESION, NEUTRAL)));
+        return Math.max(MIN, Math.min(MAX, counters.getOrDefault(Band.COHESION, START)));
     }
 
     public static String label(int cohesion) {
@@ -77,7 +96,7 @@ public final class Cohesion {
                 : cohesion <= BORDERLINE ? "borderline - no trades, and they say why"
                 : cohesion < NEUTRAL ? "tipping - they want to see you do better"
                 : cohesion < POSITIVE ? "neutral"
-                : cohesion < MAX ? "positive - they listen to you" : "perfect - they would do anything for you";
+                : cohesion < PERFECT ? "positive - they listen to you" : "perfect - they would do anything for you";
     }
 
     public static boolean positive(@Nullable Player player) {
@@ -85,7 +104,7 @@ public final class Cohesion {
     }
 
     public static boolean perfect(@Nullable Player player) {
-        return player != null && get(player) >= MAX;
+        return player != null && get(player) >= PERFECT;
     }
 
     // ------------------------------------------------------------ changing it
@@ -94,10 +113,26 @@ public final class Cohesion {
     public static void reset(Player player) {
         Map<String, Integer> counters = counters(player);
         counters.put(SCALED, 1);
-        counters.put(Band.COHESION, NEUTRAL);
+        counters.put(Band.COHESION, START);
+        counters.put(GRACE_UNTIL, (int) (player.level().getGameTime() / 1200L) + GRACE_MINUTES);
         counters.remove(PROMISE_UNTIL);
         counters.remove(PROMISE_FROM);
+        counters.remove(GAIN_TENTHS);
         lastFault.remove(player.getUUID());
+        if (player instanceof ServerPlayer server) {
+            sync(server);
+        }
+    }
+
+    /** Whether a new band is still giving you the benefit of the doubt. */
+    public static boolean inGrace(Player player) {
+        return player.level().getGameTime() / 1200L < counters(player).getOrDefault(GRACE_UNTIL, 0);
+    }
+
+    /** Tells the H menu where things stand, so it offers only what fits. */
+    public static void sync(ServerPlayer player) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new dev.hominin.evolution.network.CohesionPayload(get(player), promised(player)));
     }
 
     /**
@@ -107,6 +142,29 @@ public final class Cohesion {
     public static void add(ServerPlayer player, int delta, @Nullable String fault) {
         if (delta == 0) {
             return;
+        }
+        boolean dry = dev.hominin.evolution.survival.Seasons.isDry(player.level());
+        if (delta < 0) {
+            if (inGrace(player) && !dry && delta > -ROYAL_FAILING) {
+                // Early days: they let the small things go.
+                player.displayClientMessage(Component.literal("The band lets it go - it is early days with you.")
+                        .withStyle(ChatFormatting.GRAY), true);
+                return;
+            }
+            if (dry) {
+                // Hungry and short-tempered: everything counts for more.
+                delta = -Math.round(-delta * 1.4F);
+            }
+        } else {
+            Map<String, Integer> counters = counters(player);
+            int now = get(player);
+            int rate = now >= HARD_FROM ? GAIN_TENTHS_TOP : now >= POSITIVE ? GAIN_TENTHS_HIGH : GAIN_TENTHS_LOW;
+            int tenths = counters.getOrDefault(GAIN_TENTHS, 0) + delta * rate;
+            delta = tenths / 10;
+            counters.put(GAIN_TENTHS, tenths % 10);
+            if (delta == 0) {
+                return;
+            }
         }
         int before = get(player);
         int after = Math.max(MIN, Math.min(MAX, before + delta));
@@ -127,7 +185,9 @@ public final class Cohesion {
         }
         if (after != before) {
             player.displayClientMessage(Component.literal("Band cohesion " + (delta > 0 ? "+" : "") + delta + ": "
-                    + after + "/" + MAX).withStyle(delta > 0 ? ChatFormatting.GREEN : ChatFormatting.RED), true);
+                    + after + "/" + MAX + (delta < 0 && dry ? " (the dry season makes everything worse)" : ""))
+                    .withStyle(delta > 0 ? ChatFormatting.GREEN : ChatFormatting.RED), true);
+            sync(player);
         }
         announceCrossing(player, before, after);
     }
@@ -162,11 +222,12 @@ public final class Cohesion {
             message = "The band is watching you. They want to see you do better. (H: \"I'll do better\")";
             style = ChatFormatting.YELLOW;
             dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.COHESION_TIPPING);
-        } else if (after >= MAX && before < MAX) {
+        } else if (after >= PERFECT && before < PERFECT) {
             message = "The band is as close as a band can be. They would do anything for you.";
             style = ChatFormatting.LIGHT_PURPLE;
         } else if (after >= POSITIVE && before < POSITIVE) {
-            message = "The band trusts you. They listen more, and hold together under pressure.";
+            message = "The band trusts you. They listen more, and hold together under pressure. (Every gain from "
+                    + "here is harder won.)";
             style = ChatFormatting.GREEN;
         } else if (after >= NEUTRAL && before < NEUTRAL) {
             message = "The band settles back into its ways with you.";
@@ -233,6 +294,7 @@ public final class Cohesion {
         int minute = (int) (player.level().getGameTime() / 1200L);
         counters(player).put(PROMISE_UNTIL, minute + PROMISE_MINUTES);
         counters(player).put(PROMISE_FROM, cohesion);
+        sync(player);
         player.sendSystemMessage(Component.literal("You promise the band you will do better. They will hold you to it: "
                 + "a day to show it (cohesion up by " + PROMISE_RISE + ", and no new failings). Until then they will "
                 + "trade with you.").withStyle(ChatFormatting.AQUA));
@@ -265,7 +327,7 @@ public final class Cohesion {
     /** How many more come when you go after something: they listen to a leader they trust. */
     public static int extraHelpers(Player player) {
         int cohesion = get(player);
-        return cohesion >= MAX ? 2 : cohesion >= POSITIVE ? 1 : 0;
+        return cohesion >= PERFECT ? 2 : cohesion >= POSITIVE ? 1 : 0;
     }
 
     /** Bond gained on top of what was earned: warmer, faster. */
@@ -274,7 +336,7 @@ public final class Cohesion {
             return 0;
         }
         int cohesion = get(player);
-        return cohesion >= MAX ? 1 : cohesion >= POSITIVE && random.nextBoolean() ? 1 : 0;
+        return cohesion >= PERFECT ? 1 : cohesion >= POSITIVE && random.nextBoolean() ? 1 : 0;
     }
 
     /** How much more often a member gives unasked. */
@@ -283,7 +345,7 @@ public final class Cohesion {
             return 1.0F;
         }
         int cohesion = get(player);
-        return cohesion >= MAX ? 2.0F : cohesion >= POSITIVE ? 1.5F : cohesion <= BORDERLINE ? 0.3F : 1.0F;
+        return cohesion >= PERFECT ? 2.0F : cohesion >= POSITIVE ? 1.5F : cohesion <= BORDERLINE ? 0.3F : 1.0F;
     }
 
     /**
@@ -295,7 +357,7 @@ public final class Cohesion {
             return 0.0F;
         }
         int cohesion = get(player);
-        return cohesion >= MAX ? 0.25F : cohesion >= POSITIVE ? 0.15F : cohesion >= NEUTRAL ? 0.0F
+        return cohesion >= PERFECT ? 0.25F : cohesion >= POSITIVE ? 0.15F : cohesion >= NEUTRAL ? 0.0F
                 : cohesion > BORDERLINE ? -0.08F : cohesion > DIRE ? -0.15F : -0.25F;
     }
 
@@ -303,7 +365,11 @@ public final class Cohesion {
 
     /** Every ten seconds, per player: promises judged, words said, and the upkeep of a close band. */
     public static void tick(ServerPlayer player) {
-        if (player.tickCount % 200 != 60 || Band.all(player).isEmpty()) {
+        if (player.tickCount % 200 != 60) {
+            return;
+        }
+        sync(player);
+        if (Band.all(player).isEmpty()) {
             return;
         }
         Map<String, Integer> counters = counters(player);
@@ -328,7 +394,7 @@ public final class Cohesion {
         int day = (int) (player.level().getDayTime() / 24000L);
         if (counters.getOrDefault(UPKEEP_DAY, -1) != day) {
             counters.put(UPKEEP_DAY, day);
-            if (cohesion > POSITIVE) {
+            if (cohesion > POSITIVE + 5) {
                 counters.put(Band.COHESION, cohesion - 1);
             }
         }

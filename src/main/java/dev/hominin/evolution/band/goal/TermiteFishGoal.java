@@ -100,7 +100,9 @@ public class TermiteFishGoal extends Goal {
             member.level().playSound(null, mound, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.NEUTRAL, 0.5F, 1.3F);
         }
         if (working >= WORK_TICKS) {
-            if (member.level().getBlockState(mound).is(ModTags.Blocks.TERMITE_SOURCE) && takeStick()) {
+            boolean open = !(member.level() instanceof net.minecraft.server.level.ServerLevel server)
+                    || dev.hominin.evolution.survival.Termites.fish(server, mound) != dev.hominin.evolution.survival.Termites.Catch.DRIED;
+            if (open && member.level().getBlockState(mound).is(ModTags.Blocks.TERMITE_SOURCE) && takeStick()) {
                 member.addToInventory(new ItemStack(ModItems.TERMITE_STICK.get()));
             }
             mound = null;
@@ -119,7 +121,8 @@ public class TermiteFishGoal extends Goal {
         double bestDistance = Double.MAX_VALUE;
         for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-SEARCH_RADIUS, -3, -SEARCH_RADIUS),
                 origin.offset(SEARCH_RADIUS, 3, SEARCH_RADIUS))) {
-            if (level.getBlockState(pos).is(ModTags.Blocks.TERMITE_SOURCE)) {
+            if (level.getBlockState(pos).is(ModTags.Blocks.TERMITE_SOURCE)
+                    && !(level instanceof net.minecraft.server.level.ServerLevel server && dev.hominin.evolution.survival.Termites.isDried(server, pos))) {
                 double distance = pos.distSqr(origin);
                 if (distance < bestDistance) {
                     bestDistance = distance;

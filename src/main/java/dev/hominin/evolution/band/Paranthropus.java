@@ -89,6 +89,12 @@ public final class Paranthropus {
                 || player.getRandom().nextFloat() >= SPAWN_CHANCE) {
             return;
         }
+        // One troop in any stretch of country: the registry remembers the ones nobody is near.
+        boolean known = Bands.all(player.serverLevel()).stream().anyMatch(b -> b.nomadic()
+                && Bands.horizontal(b.home, player.blockPosition()) < CROWDING_RADIUS * CROWDING_RADIUS);
+        if (known) {
+            return;
+        }
         WildBands.spawnNear(player, 64, 150, STAGE, false);
     }
 
@@ -114,6 +120,25 @@ public final class Paranthropus {
             share *= 0.35F;
         }
         return share;
+    }
+
+    /** Which other primates are working the ground near the player, by name - or null if none. */
+    @Nullable
+    public static String primatesNear(ServerPlayer player) {
+        java.util.Set<String> kinds = new java.util.LinkedHashSet<>();
+        for (net.minecraft.world.entity.Mob mob : player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                player.getBoundingBox().inflate(PRIMATE_FORAGE_RADIUS), net.minecraft.world.entity.Mob::isAlive)) {
+            if (mob instanceof dev.hominin.evolution.entity.Baboon) {
+                kinds.add("baboons");
+            } else if (mob instanceof dev.hominin.evolution.entity.Chimpanzee) {
+                kinds.add("chimpanzees");
+            } else if (mob instanceof dev.hominin.evolution.entity.Bonobo) {
+                kinds.add("bonobos");
+            } else if (mob instanceof dev.hominin.evolution.entity.Dinopithecus) {
+                kinds.add("giant baboons");
+            }
+        }
+        return kinds.isEmpty() ? null : String.join(" and ", kinds);
     }
 
     /** Why the ground came up empty, if somebody else is to blame. */

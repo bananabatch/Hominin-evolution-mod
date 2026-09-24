@@ -1,0 +1,43 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "hominin_evolution:block/fire_pit_log",
+    "ash": "hominin_evolution:block/fire_pit_log"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        2.5
+      ],
+      "to": [
+        13,
+        0.5,
+        12.5
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            8,
+            13,
+            16
+          ],
+          "texture": "#ash"
+        },
+        "down": {
+          "uv": [
+            3,
+            8,
+            13,
+            16
+          ],
+          "texture": "#ash",
+          "cullface": "down"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

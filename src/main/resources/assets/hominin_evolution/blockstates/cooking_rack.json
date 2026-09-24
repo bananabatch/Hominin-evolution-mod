@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,half=lower": {
+      "model": "hominin_evolution:block/cooking_rack_lower"
+    },
+    "facing=north,half=upper": {
+      "model": "hominin_evolution:block/cooking_rack_upper"
+    },
+    "facing=east,half=lower": {
+      "model": "hominin_evolution:block/cooking_rack_lower",
+      "y": 90
+    },
+    "facing=east,half=upper": {
+      "model": "hominin_evolution:block/cooking_rack_upper",
+      "y": 90
+    },
+    "facing=south,half=lower": {
+      "model": "hominin_evolution:block/cooking_rack_lower",
+      "y": 180
+    },
+    "facing=south,half=upper": {
+      "model": "hominin_evolution:block/cooking_rack_upper",
+      "y": 180
+    },
+    "facing=west,half=lower": {
+      "model": "hominin_evolution:block/cooking_rack_lower",
+      "y": 270
+    },
+    "facing=west,half=upper": {
+      "model": "hominin_evolution:block/cooking_rack_upper",
+      "y": 270
+    }
+  }
+}

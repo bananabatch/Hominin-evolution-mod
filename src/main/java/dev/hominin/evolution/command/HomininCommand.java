@@ -71,6 +71,18 @@ public final class HomininCommand {
                         .then(Commands.literal("prosperous").requires(src -> src.hasPermission(2))
                                 .executes(ctx -> season(ctx,
                                         dev.hominin.evolution.survival.Seasons.Season.PROSPEROUS, true)))
+                        .then(Commands.literal("superdry").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> {
+                                    dev.hominin.evolution.survival.Seasons.forceExtreme(
+                                            dev.hominin.evolution.survival.Seasons.Season.DRY);
+                                    return season(ctx, null, false);
+                                }))
+                        .then(Commands.literal("veryprosperous").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> {
+                                    dev.hominin.evolution.survival.Seasons.forceExtreme(
+                                            dev.hominin.evolution.survival.Seasons.Season.PROSPEROUS);
+                                    return season(ctx, null, false);
+                                }))
                         .then(Commands.literal("natural").requires(src -> src.hasPermission(2))
                                 .executes(ctx -> season(ctx, null, true))))
                 .then(Commands.literal("unlockadvancements")
@@ -89,6 +101,60 @@ public final class HomininCommand {
                                     "A wild band of " + size + " appears nearby."), false);
                             return 1;
                         }))
+                .then(Commands.literal("lead")
+                        .then(Commands.literal("band").then(Commands.argument("id", StringArgumentType.word())
+                                .executes(ctx -> band(ctx, false))))
+                        .then(Commands.literal("stop").executes(ctx -> {
+                            dev.hominin.evolution.mind.MentalMap.stop(ctx.getSource().getPlayerOrException());
+                            return 1;
+                        }))
+                        .then(Commands.literal("place").then(Commands.argument("x",
+                                com.mojang.brigadier.arguments.IntegerArgumentType.integer()).then(Commands.argument("z",
+                                com.mojang.brigadier.arguments.IntegerArgumentType.integer()).executes(ctx -> {
+                                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                                    int x = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "x");
+                                    int z = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "z");
+                                    String label = "that place";
+                                    for (var poi : dev.hominin.evolution.world.Pois.known(player)) {
+                                        if (poi.pos().getX() == x && poi.pos().getZ() == z) {
+                                            label = poi.label();
+                                        }
+                                    }
+                                    dev.hominin.evolution.mind.MentalMap.lead(player,
+                                            new net.minecraft.core.BlockPos(x, player.getBlockY(), z), label, "");
+                                    return 1;
+                                })))))
+                .then(Commands.literal("ransom").then(Commands.argument("id", StringArgumentType.word())
+                        .executes(ctx -> band(ctx, true))))
+                .then(Commands.literal("map").executes(ctx -> {
+                    dev.hominin.evolution.mind.MentalMap.send(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("answer").then(Commands.argument("choice",
+                        com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 5)).executes(ctx -> {
+                            dev.hominin.evolution.band.Claims.answer(ctx.getSource().getPlayerOrException(),
+                                    com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "choice"));
+                            return 1;
+                        })))
+                .then(Commands.literal("territory")
+                        .then(Commands.literal("pack").executes(ctx -> {
+                            dev.hominin.evolution.hunt.Predation.packUp(ctx.getSource().getPlayerOrException());
+                            return 1;
+                        }))
+                        .then(Commands.literal("set").executes(ctx -> {
+                            dev.hominin.evolution.hunt.Predation.settleHere(ctx.getSource().getPlayerOrException());
+                            return 1;
+                        })))
+                .then(Commands.literal("others").executes(ctx -> {
+                    dev.hominin.evolution.band.Relations.sendOthers(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("nameband").then(Commands.argument("name", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            dev.hominin.evolution.band.Relations.nameOwnBand(ctx.getSource().getPlayerOrException(),
+                                    StringArgumentType.getString(ctx, "name"));
+                            return 1;
+                        })))
                 .then(Commands.literal("tips")
                         .executes(ctx -> tips(ctx, null))
                         .then(Commands.literal("on").executes(ctx -> tips(ctx, false)))
@@ -102,11 +168,77 @@ public final class HomininCommand {
                                         .then(Commands.argument("page",
                                                         com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99))
                                                 .executes(HomininCommand::readTip)))))
+                .then(Commands.literal("blueprint")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.literal("capture")
+                                .then(Commands.argument("name", StringArgumentType.word())
+                                        .then(Commands.argument("from", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos())
+                                                .then(Commands.argument("to", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos())
+                                                        .then(Commands.argument("door", StringArgumentType.word())
+                                                                .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider
+                                                                        .suggest(new String[] {"north", "south", "east", "west"}, builder))
+                                                                .executes(HomininCommand::captureBlueprint))))))
+                        .then(Commands.literal("reset")
+                                .then(Commands.argument("name", StringArgumentType.word())
+                                        .executes(HomininCommand::resetBlueprint)))
+                        .then(Commands.literal("list").executes(HomininCommand::listBlueprints)))
                 .then(Commands.literal("dev")
                         .requires(src -> src.hasPermission(2))
                         .executes(ctx -> toggleDeveloperMode(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> toggleDeveloperMode(ctx, EntityArgument.getPlayer(ctx, "player"))))));
+    }
+
+    /**
+     * Writes what stands between two corners as a blueprint (over the one of that name), its door on the given
+     * side - build it by hand exactly as it should be, then make it the blueprint.
+     */
+    private static int captureBlueprint(CommandContext<CommandSourceStack> ctx)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        String name = StringArgumentType.getString(ctx, "name").toLowerCase(java.util.Locale.ROOT);
+        net.minecraft.core.Direction door = net.minecraft.core.Direction.byName(StringArgumentType.getString(ctx, "door"));
+        if (door == null || !door.getAxis().isHorizontal() || !name.matches("[a-z0-9_]+")) {
+            ctx.getSource().sendFailure(Component.literal("Name it with a-z, 0-9 and _, and give the door as north, "
+                    + "south, east or west."));
+            return 0;
+        }
+        try {
+            dev.hominin.evolution.build.Blueprint made = dev.hominin.evolution.build.Blueprints.capture(
+                    ctx.getSource().getLevel(),
+                    net.minecraft.commands.arguments.coordinates.BlockPosArgument.getLoadedBlockPos(ctx, "from"),
+                    net.minecraft.commands.arguments.coordinates.BlockPosArgument.getLoadedBlockPos(ctx, "to"), door, name);
+            dev.hominin.evolution.build.Building.syncBlueprintsToAll(ctx.getSource().getServer());
+            ctx.getSource().sendSuccess(() -> Component.literal("Blueprint " + name + " captured: " + made.width() + " wide, "
+                    + made.depth() + " deep, " + made.height() + " high - " + made.materialsText() + ". Saved to "
+                    + dev.hominin.evolution.build.Blueprints.overrideDir().resolve(name + ".json")), true);
+            return 1;
+        } catch (java.io.IOException | RuntimeException e) {
+            ctx.getSource().sendFailure(Component.literal("Could not capture it: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int resetBlueprint(CommandContext<CommandSourceStack> ctx) {
+        String name = StringArgumentType.getString(ctx, "name").toLowerCase(java.util.Locale.ROOT);
+        try {
+            boolean gone = dev.hominin.evolution.build.Blueprints.reset(name);
+            dev.hominin.evolution.build.Building.syncBlueprintsToAll(ctx.getSource().getServer());
+            ctx.getSource().sendSuccess(() -> Component.literal(gone ? "Blueprint " + name + " is the mod's own again."
+                    : "There was no captured " + name + " to take away."), true);
+            return 1;
+        } catch (java.io.IOException e) {
+            ctx.getSource().sendFailure(Component.literal("Could not reset it: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int listBlueprints(CommandContext<CommandSourceStack> ctx) {
+        for (dev.hominin.evolution.build.Blueprint blueprint : dev.hominin.evolution.build.Blueprints.list()) {
+            ctx.getSource().sendSuccess(() -> Component.literal(blueprint.id().getPath() + ": " + blueprint.name() + ", "
+                    + blueprint.width() + "x" + blueprint.depth() + "x" + blueprint.height() + " - "
+                    + blueprint.materialsText()), false);
+        }
+        return 1;
     }
 
     /**
@@ -120,6 +252,29 @@ public final class HomininCommand {
             dev.hominin.evolution.guide.Tips.status(player);
         } else {
             dev.hominin.evolution.guide.Tips.setOff(player, off);
+        }
+        return 1;
+    }
+
+    /** Following a band's call, or paying one off: what the links in chat run. */
+    private static int band(CommandContext<CommandSourceStack> ctx, boolean ransom)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        dev.hominin.evolution.band.Bands.Record band;
+        try {
+            band = dev.hominin.evolution.band.Bands.get(player.serverLevel(),
+                    java.util.UUID.fromString(StringArgumentType.getString(ctx, "id")));
+        } catch (IllegalArgumentException e) {
+            band = null;
+        }
+        if (band == null) {
+            ctx.getSource().sendFailure(Component.literal("That band is gone."));
+            return 0;
+        }
+        if (ransom) {
+            dev.hominin.evolution.band.Relations.payRansom(player, band);
+        } else {
+            dev.hominin.evolution.band.Relations.lead(player, band);
         }
         return 1;
     }
@@ -146,7 +301,8 @@ public final class HomininCommand {
         var now = dev.hominin.evolution.survival.Seasons.of(level);
         int left = dev.hominin.evolution.survival.Seasons.daysLeft(level);
         boolean dry = dev.hominin.evolution.survival.Drought.isActive(level);
-        ctx.getSource().sendSuccess(() -> Component.literal(now.label() + (set && season != null ? " (forced)" : "")
+        ctx.getSource().sendSuccess(() -> Component.literal(dev.hominin.evolution.survival.Seasons.label(level)
+                + (set && season != null ? " (forced)" : "")
                 + ", " + left + (left == 1 ? " day" : " days") + " left" + (dry ? " - and today is a dry day." : ".")),
                 false);
         return 1;

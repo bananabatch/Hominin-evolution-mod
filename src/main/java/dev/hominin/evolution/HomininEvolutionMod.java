@@ -51,6 +51,24 @@ public class HomininEvolutionMod {
         ModGameRules.bootstrap();
 
         NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent event) -> event.addListener(new StageDefinitionReloadListener()));
+        NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent event) -> event.addListener(
+                new dev.hominin.evolution.build.Blueprints()));
+        // Early, so a block refused by a blueprint never reaches presence, termites and the rest.
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, dev.hominin.evolution.build.Building::onPlace);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onBreak);
+        // A pile is not broken by hitting it: that opens its menu, on the client.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) -> {
+            if (!event.getLevel().isClientSide() && event.getLevel().getBlockState(event.getPos()).is(ModBlocks.TOOL_PILE.get())) {
+                event.setCanceled(true);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onWakeUp);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onDatapackSync);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                dev.hominin.evolution.build.Building.syncSites(player);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinishUsingItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onItemCrafted);
@@ -58,9 +76,23 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) -> {
             if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
                 dev.hominin.evolution.survival.Hearths.tickLevel(level);
+                dev.hominin.evolution.survival.Soils.tidy(level);
+                dev.hominin.evolution.survival.Termites.tick(level);
+                dev.hominin.evolution.survival.TreeFelling.tick(level);
+                dev.hominin.evolution.food.Spoilage.tickLevel(level);
             }
         });
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Hides::onDrops);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.Hearths::onDrops);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                dev.hominin.evolution.band.Presence.built(player, event.getPos(), event.getPlacedBlock());
+                // A nest or a bed you lay down is yours.
+                if (event.getPlacedBlock().is(ModBlocks.NEST.get()) || event.getPlacedBlock().is(ModBlocks.THATCH_BEDDING.get())) {
+                    dev.hominin.evolution.block.NestOwners.set(player.serverLevel(), event.getPos(), player.getUUID());
+                }
+            }
+        });
         // After everything else has added its drops, so the season scales the lot.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW,
                 dev.hominin.evolution.survival.Seasons::onDrops);
@@ -73,6 +105,13 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockBreak);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockPlace);
+        // Building on a super colony's ground wears the colony down.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent event) -> {
+            if (!event.isCanceled() && event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+                dev.hominin.evolution.survival.Termites.builtNear(level, event.getPos(),
+                        event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player ? player : null);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(HomelandSpawn::onCreateSpawnPosition);
         NeoForge.EVENT_BUS.addListener(GuideBook::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerLoggedIn);
@@ -83,8 +122,18 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
         NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHurt);
+        // Anything hurt by anything runs - properly, and far.
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.entity.WoundedFleeGoal::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Persistence::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.item.StoneMaterial::onHurt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.band.Relations::onHurt);
+        // Coming back: the pointer, and a band still waiting for its name.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                dev.hominin.evolution.mind.MentalMap.sync(player);
+                dev.hominin.evolution.band.Relations.promptName(player);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Carcasses::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.Afflictions::onHeal);
         // High, so a wrestle is cancelled before anything treats it as a real blow.
@@ -106,6 +155,9 @@ public class HomininEvolutionMod {
             event.put(ModEntities.HOMOTHERIUM.get(), dev.hominin.evolution.entity.Homotherium.createAttributes().build());
             event.put(ModEntities.CROWNED_EAGLE.get(), dev.hominin.evolution.entity.CrownedEagle.createAttributes().build());
             event.put(ModEntities.PELOROVIS.get(), dev.hominin.evolution.entity.Pelorovis.createAttributes().build());
+            event.put(ModEntities.MAMMUTHUS.get(), dev.hominin.evolution.entity.Mammuthus.createAttributes().build());
+            event.put(ModEntities.MEGALOTRAGUS.get(), dev.hominin.evolution.entity.Megalotragus.createAttributes().build());
+            event.put(ModEntities.RUSINGORYX.get(), dev.hominin.evolution.entity.Rusingoryx.createAttributes().build());
         });
         NeoForge.EVENT_BUS.addListener(HomininAdvancements::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(StageSync::onPlayerLoggedIn);

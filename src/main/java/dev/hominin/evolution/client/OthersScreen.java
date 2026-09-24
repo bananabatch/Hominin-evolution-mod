@@ -1,0 +1,207 @@
+package dev.hominin.evolution.client;
+
+import java.util.List;
+
+import dev.hominin.evolution.network.OthersActionPayload;
+import dev.hominin.evolution.network.OthersPayload;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+/**
+ * "The others": the bands you know of, one at a time - nearest first, the arrows cycling through the
+ * rest. What they are, where they are, how they stand with you, and what can be done: follow them,
+ * and, when some of them are close, trade, ask them along, give them something, or pay what they ask.
+ */
+public class OthersScreen extends Screen {
+    private static final int WIDTH = 240;
+
+    private final List<OthersPayload.View> bands;
+    private int index;
+    /** The top of the buttons: the details scroll in the space above them. */
+    private int linesBottom;
+    private int linesScroll;
+    private int linesHeight;
+
+    private OthersScreen(List<OthersPayload.View> bands, int index) {
+        super(Component.literal("The others"));
+        this.bands = bands;
+        this.index = index;
+    }
+
+    public static void open(OthersPayload payload) {
+        Minecraft.getInstance().setScreen(new OthersScreen(payload.bands(), 0));
+    }
+
+    @Override
+    protected void init() {
+        int left = (width - WIDTH) / 2;
+        int bottom = height - 30;
+        linesBottom = bottom - 6;
+        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
+                .bounds(width / 2 - 50, bottom, 100, 20).build());
+        if (bands.isEmpty()) {
+            return;
+        }
+        if (bands.size() > 1) {
+            addRenderableWidget(Button.builder(Component.literal("<"), b -> cycle(-1)).bounds(left, 36, 20, 20).build());
+            addRenderableWidget(Button.builder(Component.literal(">"), b -> cycle(1)).bounds(left + WIDTH - 20, 36, 20, 20).build());
+        }
+        OthersPayload.View band = bands.get(index);
+        int y = bottom - 26;
+        int half = (WIDTH - 4) / 2;
+        addRenderableWidget(Button.builder(Component.literal("Lead me there"), b -> act(band, OthersActionPayload.LEAD))
+                .bounds(left, y, half, 20).build());
+        linesBottom = y - 6;
+        if (band.ransom()) {
+            addRenderableWidget(Button.builder(Component.literal("Pay them"), b -> act(band, OthersActionPayload.RANSOM))
+                    .bounds(left + half + 4, y, half, 20).build());
+        }
+        if (band.near()) {
+            y -= 24;
+            linesBottom = y - 6;
+            Button gift = Button.builder(Component.literal("Offer a gift..."), b -> act(band, OthersActionPayload.GIFT))
+                    .bounds(left, y, half, 20).build();
+            addRenderableWidget(gift);
+            Button trade = Button.builder(Component.literal("Trade"), b -> act(band, OthersActionPayload.TRADE))
+                    .bounds(left + half + 4, y, half, 20).build();
+            addRenderableWidget(trade);
+            if (!band.nomadic()) {
+                y -= 24;
+                linesBottom = y - 6;
+                Button travel = Button.builder(Component.literal("Travel with us"),
+                        b -> act(band, OthersActionPayload.TRAVEL)).bounds(left, y, half, 20).build();
+                travel.active = band.canTravel();
+                addRenderableWidget(travel);
+                // What you know of the country is worth something to them.
+                Button tell = Button.builder(Component.literal("Tell of places"),
+                        b -> act(band, OthersActionPayload.TELL_PLACES)).bounds(left + half + 4, y, half, 20).build();
+                tell.active = band.standing() > 20;
+                addRenderableWidget(tell);
+                // Leaning on them: only worth offering to a band that does not already count you a friend.
+                if (band.standing() < 35) {
+                    y -= 24;
+                    linesBottom = y - 6;
+                    addRenderableWidget(Button.builder(Component.literal("Demand tribute"),
+                            b -> act(band, OthersActionPayload.DEMAND)).bounds(left, y, half, 20).build());
+                    addRenderableWidget(Button.builder(Component.literal(raidArmed ? "Again - no going back"
+                            : "Raid them").withStyle(ChatFormatting.RED),
+                            b -> confirmRaid(band)).bounds(left + half + 4, y, half, 20).build());
+                }
+            }
+        }
+    }
+
+    /** A raid is not something to click by accident: the button asks once. */
+    private boolean raidArmed;
+
+    private void confirmRaid(OthersPayload.View band) {
+        if (!raidArmed) {
+            raidArmed = true;
+            rebuildWidgets();
+            return;
+        }
+        raidArmed = false;
+        act(band, OthersActionPayload.RAID);
+    }
+
+    private void cycle(int step) {
+        raidArmed = false;
+        linesScroll = 0;
+        index = Math.floorMod(index + step, bands.size());
+        rebuildWidgets();
+    }
+
+    private void act(OthersPayload.View band, int action) {
+        PacketDistributor.sendToServer(new OthersActionPayload(band.id(), action));
+        if (action != OthersActionPayload.GIFT) {
+            onClose();
+        }
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        graphics.drawCenteredString(font, title, width / 2, 14, 0xE9D8A6);
+        if (bands.isEmpty()) {
+            graphics.drawCenteredString(font, Component.literal("You know of no other band yet."), width / 2, 60, 0xFFFFFF);
+            graphics.drawCenteredString(font, Component.literal("Listen for their calls, and walk the country."), width / 2,
+                    74, 0xBBBBBB);
+            return;
+        }
+        OthersPayload.View band = bands.get(index);
+        int left = (width - WIDTH) / 2;
+        String name = Character.toUpperCase(band.name().charAt(0)) + band.name().substring(1);
+        graphics.drawCenteredString(font, Component.literal(name), width / 2, 42, colour(band.standing()));
+        if (bands.size() > 1) {
+            graphics.drawCenteredString(font, Component.literal((index + 1) + " of " + bands.size()), width / 2, 54, 0x8C8578);
+        }
+        // Standing, as a bar: dire red to allied blue.
+        int barY = 68;
+        graphics.fill(left, barY, left + WIDTH, barY + 5, 0xFF2A2A2A);
+        graphics.fill(left, barY, left + WIDTH * band.standing() / 50, barY + 5, 0xFF000000 | colour(band.standing()));
+        for (int mark : new int[] {10, 20, 30, 35, 45}) {
+            int x = left + WIDTH * mark / 50;
+            graphics.fill(x, barY - 1, x + 1, barY + 6, 0xFF8C8578);
+        }
+        int y = barY + 12;
+        int boxTop = y;
+        graphics.enableScissor(left - 2, boxTop - 2, left + WIDTH + 2, linesBottom);
+        y -= linesScroll;
+        if (!band.nomadic()) {
+            // How desperate they are: five boxes, filling up red.
+            graphics.drawString(font, "Desperation", left, y, 0xBBBBBB);
+            for (int i = 0; i < 5; i++) {
+                int x = left + 66 + i * 12;
+                graphics.fill(x, y, x + 9, y + 8, 0xFF2A2A2A);
+                if (i < band.desperation()) {
+                    graphics.fill(x + 1, y + 1, x + 8, y + 7, 0xFF000000 | (0x70 + i * 0x20) << 16 | (0x90 - i * 0x18) << 8 | 0x30);
+                }
+            }
+            y += 14;
+        }
+        for (String line : band.lines()) {
+            for (FormattedCharSequence part : font.split(Component.literal(line), WIDTH)) {
+                graphics.drawString(font, part, left, y, 0xDDDDDD);
+                y += 10;
+            }
+            y += 2;
+        }
+        graphics.disableScissor();
+        linesHeight = y + linesScroll - boxTop;
+        int room = linesBottom - boxTop;
+        if (linesHeight > room) {
+            if (linesScroll < linesHeight - room) {
+                graphics.drawString(font, "v more (scroll)", left + WIDTH - 80, linesBottom - 9, 0x8C8578);
+            }
+            if (linesScroll > 0) {
+                graphics.drawString(font, "^", left + WIDTH - 8, boxTop, 0x8C8578);
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        int room = linesBottom - 80;
+        if (linesHeight > room) {
+            linesScroll = Math.max(0, Math.min(linesHeight - room, linesScroll - (int) (scrollY * 20)));
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    private static int colour(int standing) {
+        return standing <= 10 ? 0xC03030 : standing <= 20 ? 0xE06040 : standing < 35 ? 0xC8C8C8 : standing < 45 ? 0x7CD07C
+                : 0x7CC8FF;
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+}

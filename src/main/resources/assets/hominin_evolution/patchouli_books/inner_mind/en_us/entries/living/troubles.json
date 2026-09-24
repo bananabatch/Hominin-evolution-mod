@@ -1,0 +1,32 @@
+{
+  "name": "Grief, and Worse",
+  "icon": "minecraft:bone",
+  "category": "hominin_evolution:living",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "When one of the band dies, whoever was closest - their $(l)mate$(), their $(l)child$(), their $(l)mother$(), a friend they groomed every day - may take it hard. A $(l)troubled$() member goes quiet, talks about who they lost, and wants a good stone to keep their mind off it. Working it, their hands get good."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The band notices first: $(o)\"We need you to look after them.\"$() It is a need. Sit with them a while, groom them, or give them a good stone or something to eat.$(br2)Leave them to it and they may go $(l)sour$(): stop caring what anyone thinks - antisocial.$(br2)No more than two of a band grieve like this at once."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Then it is $(o)\"hang out with them\"$(). While you do, their wants come first: they want $(l)grooming$() - and will groom you back - then $(l)something big to eat$(): a grub, a termite stick, a meat chunk, a rib. Give them that, and they come back to the fire."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Some of the band are not what they seem. A $(l)psychopath$() is charming: first to groom whoever matters, first to bring someone what they wanted, generous with the pile - to those close to them. They talk others out of their best tools. It is all for them.$(br2)There is only ever one in a band, and you never know which. There are only signs."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They are useful: bring one when you trade with another band, or give it a gift, and the deal goes your way.$(br2)But when times are desperate and your band looks weak - low presence, low cohesion - they go in the night, to a stronger band, and tell it things about you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Suspect someone: in $(l)Tribe stats$(), hover their name and press $(k:hominin_evolution.item_interact). Wrong, and it hurts them and the band. Right, and you choose: $(l)exile$() them - they will find a band you have not met and talk there - or $(l)kill$() them, which the band will feel. Or let it be, and watch."
+    }
+  ]
+}

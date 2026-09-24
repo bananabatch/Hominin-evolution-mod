@@ -47,6 +47,8 @@ public final class Thirst {
         // every mouthful goes on that count whether or not they needed the water.
         if (amount > 0) {
             dev.hominin.evolution.combat.Bleeding.drank(player, amount);
+            // And somebody sick from bad meat needs every drop of it.
+            FoodIllness.drank(player, amount);
         }
     }
 

@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "With a branch or a stone in hand, the same gesture throws it. Something that hurts from a distance is a far better argument than noise.$(br2)Go and pick it up again afterwards. Good stones are not so easy to come by."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)hammerstone$() throws harder than any cobble - half again, and more from an arm that can aim. To the head, it staggers what it hits and can concuss it outright; a skull already rung can start to bleed.$(br2)Stone that dense does not always survive the landing. Now and then it $(l)shatters$(), and all you get back is a flake - if that."
     }
   ]
 }

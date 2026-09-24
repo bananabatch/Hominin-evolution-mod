@@ -23,6 +23,10 @@
     {
       "type": "patchouli:text",
       "text": "Tear at a tree and handfuls of leafy twigs come away. One in each hand and $(k:hominin_evolution.item_interact) makes a piece of nest. Lay six of them, two wide and three long, and you can sleep the night away in it.$(br2)Old nests mean a band slept there."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A tree cut through at the trunk comes $(l)down$() - the way you are facing, away from you. The trunk lands lying along the ground, to be worked where it fell, and the crown breaks up into sticks and saplings. Do not be where it lands.$(br2)A tree with another trunk beside the one you cut stays up until that goes too."
     }
   ]
 }

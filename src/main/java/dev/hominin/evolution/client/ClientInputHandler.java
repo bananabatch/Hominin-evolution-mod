@@ -79,9 +79,33 @@ public final class ClientInputHandler {
                 SocialScreen.open();
             }
         }
+        while (ModKeyMappings.BUILD.consumeClick()) {
+            if (mc.screen != null) {
+                continue;
+            }
+            if (BuildPlanner.planning()) {
+                BuildPlanner.stop(false);
+            } else {
+                PacketDistributor.sendToServer(dev.hominin.evolution.network.BuildActionPayload.simple(
+                        dev.hominin.evolution.network.BuildActionPayload.OPEN, 0));
+            }
+        }
         while (ModKeyMappings.ITEM_INTERACT.consumeClick()) {
+            // Planning a build, the work key marks it out instead.
+            if (BuildPlanner.planning() && mc.screen == null) {
+                BuildPlanner.place();
+                continue;
+            }
+            // Looking at a pile, it shows what is in it.
+            if (mc.screen == null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit
+                    && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+                    && mc.level.getBlockState(hit.getBlockPos()).is(dev.hominin.evolution.ModBlocks.TOOL_PILE.get())) {
+                PileScreen.request(hit.getBlockPos());
+                continue;
+            }
             PacketDistributor.sendToServer(new ItemInteractPayload());
         }
+        BuildPlanner.tick(mc);
         tickThink(mc);
         tickSharpen(mc);
     }
@@ -98,7 +122,7 @@ public final class ClientInputHandler {
      * two-handed job; only a sustained hold with a bare stick sharpens.
      */
     private static void tickSharpen(Minecraft mc) {
-        if (!ModKeyMappings.ITEM_INTERACT.isDown() || mc.screen != null
+        if (!ModKeyMappings.ITEM_INTERACT.isDown() || mc.screen != null || BuildPlanner.planning()
                 || !mc.player.getMainHandItem().is(Items.STICK)) {
             sharpenHeld = 0;
             return;

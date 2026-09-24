@@ -54,6 +54,9 @@ public final class WildAnimals {
     /** A herd of giant buffalo out on the grass. Common enough to hunt; big enough to regret it. */
     private static final float PELOROVIS_CHANCE = 0.3F;
 
+    /** The later megafauna, from erectus on, grazing near water. */
+    private static final float GRAZER_CHANCE = 0.3F;
+
     /** A crocodile in any warm water worth drinking from - and twice as likely in a drought. */
     private static final float CROCODILE_CHANCE = 0.3F;
 
@@ -93,8 +96,16 @@ public final class WildAnimals {
         }
         float crocodile = dev.hominin.evolution.survival.Seasons.strained(player.level())
                 ? CROCODILE_CHANCE * 2.0F : CROCODILE_CHANCE;
-        if (none(player, Pelorovis.class, 160.0D) && random.nextFloat() < PELOROVIS_CHANCE) {
+        // Ground lived on for days has been hunted out: the big herds stay away from it.
+        boolean huntedOut = dev.hominin.evolution.hunt.Predation.groundFactor(player) < 1.0F;
+        if (!huntedOut && none(player, Pelorovis.class, 160.0D) && random.nextFloat() < PELOROVIS_CHANCE) {
             spawnHerd(player, random);
+        }
+        BlockPos breeding = dev.hominin.evolution.world.Land.breedingGroundNear(player.serverLevel(),
+                player.blockPosition(), 160);
+        if ((!huntedOut || breeding != null) && !stillAround(player) && none(player, Megafauna.class, 160.0D)
+                && random.nextFloat() < (breeding != null ? GRAZER_CHANCE * 2.5F : GRAZER_CHANCE)) {
+            spawnGrazers(player, random);
         }
         if (none(player, Crocodile.class, 96.0D) && random.nextFloat() < crocodile) {
             spawnCrocodile(player, random);
@@ -200,6 +211,66 @@ public final class WildAnimals {
         for (int i = 0; i < size; i++) {
             place(level, ModEntities.PELOROVIS.get(), site, 2 + random.nextInt(5));
         }
+    }
+
+    /**
+     * One of the later megafauna, somewhere near water: a family of mammoths (one to three), a few
+     * Megalotragus, or a herd of Rusingoryx.
+     */
+    private static void spawnGrazers(ServerPlayer player, RandomSource random) {
+        ServerLevel level = player.serverLevel();
+        BlockPos site = null;
+        BlockPos breeding = dev.hominin.evolution.world.Land.breedingGroundNear(level, player.blockPosition(), 160);
+        for (int attempt = 0; attempt < 6 && site == null && breeding != null; attempt++) {
+            BlockPos candidate = findSite(level, breeding, 0, 30, random, false);
+            if (candidate != null && candidate.distSqr(player.blockPosition()) > 24 * 24) {
+                site = candidate;
+            }
+        }
+        for (int attempt = 0; attempt < 6 && site == null; attempt++) {
+            BlockPos candidate = findSite(level, player.blockPosition(), 50, 100, random, false);
+            if (candidate != null && waterWithin(level, candidate, 14)) {
+                site = candidate;
+            }
+        }
+        if (site == null) {
+            return;
+        }
+        float roll = random.nextFloat();
+        if (roll < 0.25F) {
+            int size = 1 + random.nextInt(3);
+            for (int i = 0; i < size; i++) {
+                place(level, ModEntities.MAMMUTHUS.get(), site, 3 + random.nextInt(6));
+            }
+        } else if (roll < 0.6F) {
+            int size = 2 + random.nextInt(2);
+            for (int i = 0; i < size; i++) {
+                place(level, ModEntities.MEGALOTRAGUS.get(), site, 2 + random.nextInt(5));
+            }
+        } else {
+            int size = 2 + random.nextInt(3);
+            for (int i = 0; i < size; i++) {
+                place(level, ModEntities.RUSINGORYX.get(), site, 2 + random.nextInt(5));
+            }
+        }
+    }
+
+    private static boolean waterWithin(ServerLevel level, BlockPos site, int reach) {
+        for (int ring = 3; ring <= reach; ring += 3) {
+            for (int point = 0; point < 12; point++) {
+                float angle = point * Mth.TWO_PI / 12.0F;
+                int x = site.getX() + Math.round(Mth.cos(angle) * ring);
+                int z = site.getZ() + Math.round(Mth.sin(angle) * ring);
+                if (!level.hasChunk(x >> 4, z >> 4)) {
+                    continue;
+                }
+                int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                if (level.getFluidState(new BlockPos(x, y, z)).is(net.minecraft.tags.FluidTags.WATER)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether there is jungle within this many blocks - sampled in rings, not searched block by block. */
@@ -315,8 +386,52 @@ public final class WildAnimals {
         return count;
     }
 
+    /** One animal set down here, whatever holds the ground: for things that are meant to be here. */
+    @Nullable
+    public static <T extends Mob> T spawnAt(ServerLevel level, EntityType<T> type, BlockPos site, int spread) {
+        T mob = type.create(level);
+        if (mob == null) {
+            return null;
+        }
+        BlockPos pos = Band.standingSpotNear(level, site, spread, level.getRandom().nextFloat() * Mth.TWO_PI);
+        mob.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, level.getRandom().nextFloat() * 360.0F, 0.0F);
+        mob.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        level.addFreshEntity(mob);
+        return mob;
+    }
+
+    /**
+     * The grazers keep their hours at a spring (at dusk, to drink) and a salt lick (at first light): a few of
+     * them turn up, out of sight of whoever is watching. Before erectus, horses and donkeys; after, antelope
+     * and the odd Megalotragus.
+     */
+    public static void gatherAt(ServerPlayer player, BlockPos place, boolean spring) {
+        ServerLevel level = player.serverLevel();
+        RandomSource random = player.getRandom();
+        if (!level.hasChunk(place.getX() >> 4, place.getZ() >> 4)) {
+            return;
+        }
+        BlockPos site = findSite(level, place, 5, 12, random, false);
+        if (site == null) {
+            return;
+        }
+        boolean later = erectusOrLater(player);
+        int count = 2 + random.nextInt(3);
+        for (int i = 0; i < count; i++) {
+            EntityType<? extends Mob> type = later
+                    ? (spring && random.nextFloat() < 0.3F ? ModEntities.MEGALOTRAGUS.get() : ModEntities.RUSINGORYX.get())
+                    : (random.nextBoolean() ? EntityType.HORSE : EntityType.DONKEY);
+            spawnAt(level, type, site, 2 + random.nextInt(4));
+        }
+    }
+
     @Nullable
     private static <T extends Mob> T place(ServerLevel level, EntityType<T> type, BlockPos site, int spread) {
+        // Strongly held ground, and a prosperous day, keep some of what hunts away altogether.
+        if (type.is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)
+                && level.random.nextFloat() < dev.hominin.evolution.band.Presence.predatorsKeptOff(level, site)) {
+            return null;
+        }
         T mob = type.create(level);
         if (mob == null) {
             return null;

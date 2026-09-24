@@ -157,7 +157,8 @@ public class CraftGoal extends Goal {
             return Plan.HAND_AXE;
         }
         // Good stone gets knapped whenever there is some; limestone only rarely, and grudgingly.
-        boolean workable = goodStones() >= 2 || (stones() >= 2 && limestoneAnyway());
+        boolean workable = (goodStones() >= 2 || (stones() >= 2 && limestoneAnyway()))
+                && dev.hominin.evolution.band.Species.knaps(member.getStage());
         if (count(ModItems.FLAKE.get()) < 2 && workable) {
             return Plan.FLAKE;
         }
@@ -165,6 +166,7 @@ public class CraftGoal extends Goal {
             return Plan.CHOPPER;
         }
         if (member.hasMadeChopper() && !has(s -> s.is(ModItems.OLDOWAN_MULTITOOL.get()))
+                && dev.hominin.evolution.band.Species.makesMultitool(member.getStage())
                 && (count(ModItems.CHERT_ROCK.get()) >= 8 || count(ModItems.CHERT_HAMMERSTONE.get()) >= 1
                         || count(ModItems.OBSIDIAN_ROCK.get()) >= 2 || count(ModItems.BASALT_ROCK.get()) >= 10)) {
             return Plan.MULTITOOL;
@@ -248,8 +250,8 @@ public class CraftGoal extends Goal {
                 if (!take(s -> s.is(kind.getItem()))) {
                     takeStone();
                 }
-                int quality = dev.hominin.evolution.knapping.Acheulean.rollQuality(member.getKnapLevel(), kind,
-                        member.getRandom());
+                int quality = dev.hominin.evolution.band.Species.capQuality(member.getStage(),
+                        dev.hominin.evolution.knapping.Acheulean.rollQuality(member.getKnapLevel(), kind, member.getRandom()));
                 member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stampFrom(
                         ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.HAND_AXE.get()).make(quality), kind));
                 member.practiseKnapping();

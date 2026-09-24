@@ -92,6 +92,9 @@ public class BasaltScatterFeature extends Feature<NoneFeatureConfiguration> {
         if (surface != null) {
             scatterAround(level, random, chunk, surface);
             glassAtTheEdge(level, random, chunk, surface);
+            if (random.nextFloat() < 0.2F) {
+                columns(level, random, chunk, surface);
+            }
         }
         if (cave != null) {
             scatterInCave(level, random, chunk, cave);
@@ -135,6 +138,36 @@ public class BasaltScatterFeature extends Feature<NoneFeatureConfiguration> {
             if (ground != null && besideLava(level, ground) && put(level, ground,
                     ModBlocks.OBSIDIAN_ROCK.get().defaultBlockState().setValue(LooseRockBlock.ROCKS, 1 + random.nextInt(2)))) {
                 wanted--;
+            }
+        }
+    }
+
+    /**
+     * A low outcrop of basalt columns a few blocks back from the lava: where the flow cooled slowly enough
+     * to crack into pillars. Worked with a hammerstone like any deposit.
+     */
+    private static void columns(WorldGenLevel level, RandomSource random, ChunkPos chunk, BlockPos lava) {
+        double angle = random.nextDouble() * Math.PI * 2.0D;
+        int cx = lava.getX() + (int) Math.round(Math.cos(angle) * (6 + random.nextInt(5)));
+        int cz = lava.getZ() + (int) Math.round(Math.sin(angle) * (6 + random.nextInt(5)));
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx * dx + dz * dz > 5 || random.nextFloat() < 0.25F) {
+                    continue;
+                }
+                int x = cx + dx;
+                int z = cz + dz;
+                if (!writable(chunk, x, z)) {
+                    continue;
+                }
+                BlockPos ground = groundAt(level, x, z);
+                if (ground == null) {
+                    continue;
+                }
+                int height = 1 + random.nextInt(dx == 0 && dz == 0 ? 3 : 2);
+                for (int y = -1; y < height; y++) {
+                    level.setBlock(ground.above(y), ModBlocks.BASALT_DEPOSIT.get().defaultBlockState(), 2);
+                }
             }
         }
     }

@@ -1,0 +1,28 @@
+{
+  "name": "Homo habilis",
+  "icon": "hominin_evolution:flake",
+  "category": "hominin_evolution:kinds",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)2.4 million years ago.$() The Oldowan: stone worked on purpose, and every tool that makes possible."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Every kind$(): leafy twigs from a tree, one in each hand and $(k:hominin_evolution.item_interact) - a piece of $(l)nest$(). Two rocks in the crafting grid - a $(l)hammerstone$(). Hold $(k:hominin_evolution.item_interact) with a bare stick to gnaw a $(l)sharpened stick$(); fish a termite mound or dead wood with a plain stick for a $(l)termite stick$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Stone$() - a rock in hand, a hammerstone in the other, $(k:hominin_evolution.item_interact): a $(l)flake$(), a $(l)chopper$(), a $(l)grinding stone$(), or the $(l)multi tool$() (8 chert, 10 basalt, 2 obsidian, or a chert hammerstone). Limestone will not take an edge: soft stone makes Lomekwian cores."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Two hands$() ($(k:hominin_evolution.item_interact)): a stick and a flake - a $(l)pointy stick$(). A long branch and a flake - a $(l)sharpened spear$(). A rock and a flake - a $(l)chopper$(). A long branch and a chopper - a $(l)digging stick$(). Two sticks - a $(l)fire drill$(). Each has to be worked out first."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Raw meat in hand, a flake in the other: $(l)four chunks$(). A worn stone tool in hand, a grinding stone in the other: an edge put back. Right-click a bone with a flake in your pack: $(l)marrow$(). An egg with a sharpened stick in the other hand: drink it, and keep the $(l)eggshell$() for water."
+    }
+  ]
+}

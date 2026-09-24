@@ -11,6 +11,14 @@
     {
       "type": "patchouli:text",
       "text": "In the $(l)dry$() the grass burns off. Foraging is hard, kills and carcasses give up far less, and most second days are dry days - never two in a row. Other bands keep what they have, trade dearer, and tell you to keep walking.$(br2)Tribe stats shows the season and how long is left."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Some days are not ordinary. A $(l)dry day$(): foraging gives less, ground runs out sooner, and hungry bands get desperate. A $(l)prosperous day$() - often in the rains, rarely in the dry - is the opposite: foraging comes easy, fewer hunters are about, and ground gives far more and is back by morning."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "One season in five is out of the ordinary. A $(l)super dry season$(): dry days on most days, and not one prosperous day. A $(l)very prosperous season$(): prosperous days on most days, and not one dry.$(br2)In an ordinary season either kind of day can still come out of turn - a good day in the dry, a dry day in the rains."
     }
   ]
 }

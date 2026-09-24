@@ -1,0 +1,68 @@
+{
+  "name": "Other Bands",
+  "icon": "hominin_evolution:band_member_spawn_egg",
+  "category": "hominin_evolution:living",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Every band out there has a name, and ground of its own: eighty blocks round its camp from erectus on, less before. Hear one calling and you know them - the call says how far and which way, and $(l)Lead me there$() puts a pointer at the top of your screen.$(br2)You name your own band when it forms."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each band has a $(l)standing$() with you, 0 to 50, and starts at 30. Take water, food or stone from their ground and it falls. Trades, travelling together and killing a predator beside them raise it - and gifts: choose how much of what you and your band carry, and the more food in it, the more it counts."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)10 and under: when things go badly for you, they come raiding.$(li)20 and under: catch you on their ground and they come straight at you - leave, pay, or be driven off.$(li)35 and up: welcome on their ground; they travel with you. In hard times only friends of 40 are welcome.$(li)45 and up: allies. They stand with you against raiders, join your hunts on their ground, and now and then bring you something."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Your own ground stays where it was made - where your band woke, or where you set it. Wander $(l)150$() blocks from it and you are told; go past $(l)250$() and the band settles wherever you are.$(br2)To move on deliberately, open the map (J), $(l)Pack up$(), and when you have found somewhere, $(l)Set territory here$(). Packed up, you have no ground and no presence building anywhere."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Stay on the same ground four and a half days and everything that hunts there starts testing your band. $(l)Presence$() is how well the country knows to leave you alone: kill predators and take kills off scavengers, keep a fire burning on your ground, and build there - and it rises. Lose people or food to the country and it falls. A strong presence turns most of them away."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Nothing stops the ground wearing out: after three days the foraging dries up, and the big herds stop coming.$(br2)Raids follow weakness. A band with little presence, or one that does not hold together (low cohesion), is one a hungry neighbour might raid. Fight them off - a close band breaks raiders faster - or pay: $(k:hominin_evolution.social), $(l)The others$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Other bands have a $(l)presence$() and a $(l)cohesion$() of their own, drifting day to day: a strong band keeps predators away from its ground. Hover over their ground on the map to see.$(br2)A weak band coming apart is easy to lean on. Near them, $(l)Demand tribute$() - they may pay, or stare you down - or $(l)Raid them$(): your band falls on theirs, and if they break they drop what they carry. It costs a great deal of standing."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(k:hominin_evolution.social), $(l)The others$() shows every band you know of - arrows to cycle - and what you can do about each.$(br2)You hear them, too. Their names are coloured by where you stand: $(l)blue$() allies, $(l)green$() friends, grey strangers, $(l)red$() bad blood - and what they say follows. Paranthropus hold no ground, and move on every day.$(br2)Evolve, and a long time passes: every band you knew is gone, and the map is clean."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Every stretch of ground has a $(l)pressure$(), 1 to 10: what it is worth. Workable stone 1 (more do not add up), a chert seam 2 or a large one 3; a termite super colony 4; grass and water the big herds come to 3; a $(l)breeding ground$() 4; $(l)fertile soil$() 2. The map and journal show yours.$(br2)Some of it nobody tells you. When $(o)you feel like something deeper could be going on$(), hold $(k:hominin_evolution.think) and work it out."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Rich ground draws other bands. Friends offer to pay to forage on it; enemies want paying, or want it. Neutral bands might do any of it - and keep doing whatever they tried first, until it fails. They come to you and say it: accept or decline an offer; to a threat $(l)give in$(), $(l)fight$(), or $(l)flee$() - dropping some of what you carry, with them after you. Each band has a $(l)desperation$() of 1 to 5 that climbs in hard times."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A desperate band warns you: $(o)someone hungry has decided a different route to provide$(). A strong presence and allies put most off - allies lend you presence too. Pack up and hide, and they take what is lying about your camp; on rich ground they may move onto it.$(br2)In hard times friends ask you to raid with them, for a share. Break a band yourself, then set your territory on their ground within a day, and it is yours."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When most bands are desperate at once it is $(l)desperate times$(): everyone gets hungrier, patrols watch every ground, and demands and raids come twice as often. Bands have allies of their own - raid one and its allies turn on you. Every band you break earns you a name that keeps others off - but they may band together against it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From erectus a desperate band may come in the $(l)night$(), while everyone sleeps. Ask someone close to you (bond 4 and up) to $(o)keep watch with me tonight$() - $(k:hominin_evolution.social), Danger - and they stay up and walk the camp, and wake everyone when anything comes. Nobody watching, and the raiders are in and out with the food.$(br2)Allies drop by to trade, too."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bands $(l)die$(): hunger, sickness, something in the night. What they knew goes with them, and from erectus their tools lie where their camp was. An $(l)ally$() in trouble screams for you: you have $(l)150 seconds$() to reach their camp - the pointer leads. Drive off what came for them and they live. Lose much of your own band in a fight, and your allies come to you - in ten seconds."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Not every band is your kind. Beside each species stands a marginal cousin, with hands of its own: $(l)anamensis$() knaps nothing and never cracks a bone; $(l)rudolfensis$() makes flakes and choppers but no multi tool, and no marrow; $(l)ergaster$() knaps only rough hand axes, and has never made fire. Hover a band on the map to see its kind."
+    }
+  ]
+}

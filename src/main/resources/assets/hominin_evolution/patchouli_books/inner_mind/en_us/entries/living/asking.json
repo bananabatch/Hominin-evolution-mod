@@ -6,15 +6,15 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say.$(br2)Right-click one of them beforehand and the whole menu speaks to that one alone. Right-click one while holding $(l)food$() and they simply take it from your hand."
+      "text": "Press $(k:hominin_evolution.social) near your band. It asks what you want to talk about first, then what to say - and only offers what fits the moment.$(br2)Right-click one of them beforehand to speak to that one alone. With another band near too, click $(l)Talk to your band$() at the top to talk to them instead."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Food$()$(li)Let's forage$(li)I'm hungry$(br2)$(l)Tools and things$()$(li)Here, take this - whatever you are holding: food, what they asked for, anything for their pack$(li)Trade$(li)I need an item$(li)Get me..."
+      "text": "$(l)Food$()$(li)Let's forage$(li)I'm hungry (when you are)$(li)Split what I'm holding between you (food in hand)$(li)Let's share food$(br2)$(l)Tools and things$()$(li)Here, take this$(li)Trade$(li)I need an item$(li)Get me..."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Danger$()$(li)I'm hurt$(li)Let's hunt together / Don't$(li)Let's climb a tree$(br2)$(l)Social$()$(li)Groom them, Get these off me$(li)Let's play, Let's share food$(li)Info, Tribe stats$(li)Be my mate, Let's have a child$(li)Let's stick together today, to another band$(br2)$(l)Culture$() - your people's ways (erectus on)"
+      "text": "$(l)Danger$()$(li)I'm hurt (when you are)$(li)Let's hunt together / Don't$(li)Let's climb a tree$(li)Keep watch with me tonight (bond 4+)$(br2)$(l)Social$()$(li)Groom them, Get these off me$(li)Let's play$(li)Info, Tribe stats$(li)Be my mate, Let's have a child$(li)Let me live as you for a while (bond 3+)$(li)Let's stick together today, to another band$(br2)$(l)Culture$() - your people's ways (erectus on)"
     },
     {
       "type": "patchouli:text",
@@ -31,6 +31,10 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Tribe stats$(), asked of the whole band: cohesion, who is mated to whom, who is closest to whom, how each of them feels about you, who is pregnant, and what each one wants."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Living as another.$() Someone of your band close to you - bond 3 and up - will let you live as them for a while. You open your eyes where they stood, as hurt and as hungry as they were, holding in mind what they held; the one you were carries on where you stood. What you carry stays with you."
     }
   ]
 }

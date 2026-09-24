@@ -144,8 +144,8 @@ public final class Knapping {
         // Before the flake exists as an idea, nothing shaped comes out of a rock - not
         // even a flake, until the band is ready for the one that changes everything.
         // Every attempt until then is the mistake that produces the Lomekwian core.
-        boolean earlyStage = (AUSTRALOPITHECUS.equals(data.getStage()) || ARDIPITHECUS.equals(data.getStage()))
-                && !data.isDeveloperMode();
+        boolean earlyStage = (AUSTRALOPITHECUS.equals(data.getStage()) || ARDIPITHECUS.equals(data.getStage())
+                || data.getStage().getPath().equals("australopithecus_anamensis")) && !data.isDeveloperMode();
         boolean overreaching = earlyStage && (choice != KnappingChoice.FLAKE
                 || !EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.STRIKE_FLAKE));
 

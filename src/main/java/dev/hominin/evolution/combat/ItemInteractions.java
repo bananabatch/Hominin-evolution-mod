@@ -52,6 +52,20 @@ public final class ItemInteractions {
     private static final ResourceLocation AUSTRALOPITHECUS = id("australopithecus");
     private static final ResourceLocation HABILIS = id("homo_habilis");
     private static final ResourceLocation ERECTUS = id("homo_erectus");
+    private static final ResourceLocation ANAMENSIS = id("australopithecus_anamensis");
+    private static final ResourceLocation RUDOLFENSIS = id("homo_rudolfensis");
+    private static final ResourceLocation ERGASTER = id("homo_ergaster");
+    private static final ResourceLocation HEIDELBERGENSIS = id("homo_heidelbergensis");
+
+    /**
+     * Who can do what, by kind. The marginal kinds stand beside the ones they are named with: anamensis with
+     * Australopithecus, rudolfensis with habilis, ergaster with erectus - and heidelbergensis comes after erectus.
+     */
+    private static final List<ResourceLocation> EVERY_KIND = List.of(ARDIPITHECUS, ANAMENSIS, AUSTRALOPITHECUS,
+            RUDOLFENSIS, HABILIS, ERGASTER, ERECTUS, HEIDELBERGENSIS);
+    private static final List<ResourceLocation> FROM_HABILIS = List.of(RUDOLFENSIS, HABILIS, ERGASTER, ERECTUS,
+            HEIDELBERGENSIS);
+    private static final List<ResourceLocation> FROM_ERECTUS = List.of(ERGASTER, ERECTUS, HEIDELBERGENSIS);
 
     /** Chance a blind attempt ruins something, and which hand pays when it does. */
     private static final float FUMBLE_CHANCE = 0.2F;
@@ -72,46 +86,46 @@ public final class ItemInteractions {
     private static final List<HandRecipe> RECIPES = List.of(
             // Every stage: a nest is older than any of them. Great apes build one every night.
             new HandRecipe(id("nest"), ModItems.NESTING_MATERIAL, ModItems.NESTING_MATERIAL, ModItems.NEST,
-                    List.of(ARDIPITHECUS, AUSTRALOPITHECUS, HABILIS, ERECTUS), false, true, false,
+                    EVERY_KIND, false, true, false,
                     "You bend and weave the twigs into a rough nest.",
                     ""),
             // Habilis: finishing a gnawed point with a flake. No idea needed - it is
             // the same job the teeth were already doing, with a better tool.
             new HandRecipe(id("pointy_stick"), ModItems.SHARPENED_STICK, ModItems.FLAKE, ModItems.POINTY_STICK,
-                    List.of(HABILIS, ERECTUS), false, false, false,
+                    FROM_HABILIS, false, false, false,
                     "You pare the point down with the flake until it is fine and even.",
                     ""),
             // A plain stick works just as well: the flake does both jobs at once.
             new HandRecipe(id("pointy_stick"), () -> net.minecraft.world.item.Items.STICK, ModItems.FLAKE,
-                    ModItems.POINTY_STICK, List.of(HABILIS, ERECTUS), false, false, false,
+                    ModItems.POINTY_STICK, FROM_HABILIS, false, false, false,
                     "You whittle the stick to a fine, even point with the flake.",
                     ""),
             // Habilis: a flake is sharp enough to whittle a branch to a point.
             new HandRecipe(id("sharpened_spear"), ModItems.LONG_BRANCH, ModItems.FLAKE, ModItems.SHARPENED_SPEAR,
-                    List.of(HABILIS, ERECTUS), false, false, true,
+                    FROM_HABILIS, false, false, true,
                     "You work the branch to a point with the flake.",
                     "A point. The branch wants to be a point, and the flake is what cuts it."),
             // Habilis: a flake against a cobble trims it down to a working edge. This
             // and the digging stick are what give habilis three separate things to
             // work out, which is what the stage asks for.
             new HandRecipe(id("chopper"), ModItems.ROCK, ModItems.FLAKE, ModItems.CHOPPER,
-                    List.of(HABILIS, ERECTUS), false, false, true,
+                    FROM_HABILIS, false, false, true,
                     "You trim the cobble down until one side will cut.",
                     "The edge does not have to be thin. It has to be an edge."),
             // Habilis: a chopper is the first tool that can shape another tool.
             new HandRecipe(id("digging_stick"), ModItems.LONG_BRANCH, ModItems.CHOPPER, ModItems.DIGGING_STICK,
-                    List.of(HABILIS, ERECTUS), false, false, true,
+                    FROM_HABILIS, false, false, true,
                     "You hack the branch down to a blunt, strong point.",
                     "Not everything worth eating is above the ground."),
             // Erectus: beating the end of a branch with a stone leaves the weight at one end.
             new HandRecipe(id("wooden_club"), ModItems.LONG_BRANCH, ModItems.ROCK, ModItems.WOODEN_CLUB,
-                    List.of(ERECTUS), false, false, true,
+                    FROM_ERECTUS, false, false, true,
                     "You batter the end of the branch until it carries its own weight.",
                     "Weight at the far end. It would land harder if it were heavier where it lands."),
             // Erectus: grass twisted against itself until it holds. Two hands and no
             // tool at all - the material is the idea.
             new HandRecipe(id("twine"), ModItems.THATCH, ModItems.THATCH, ModItems.TWINE,
-                    List.of(ERECTUS), false, true, true,
+                    FROM_ERECTUS, false, true, true,
                     "You twist the stems against each other until they bind into cord.",
                     "Twisted the other way, it holds itself together. That will tie anything."),
             // Habilis: the drill. Spinning one stick against another is the only way to
@@ -119,13 +133,13 @@ public final class ItemInteractions {
             // what lets a habilis stop waiting for lightning.
             new HandRecipe(id("fire_drill"), () -> net.minecraft.world.item.Items.STICK,
                     () -> net.minecraft.world.item.Items.STICK, ModItems.FIRE_DRILL,
-                    List.of(HABILIS, ERECTUS), false, true, true,
+                    FROM_HABILIS, false, true, true,
                     "You spin one stick against the other until the dust smoulders.",
                     "Rubbing it makes it hot. Rub it hard enough, for long enough, and hot becomes fire."),
             // Erectus: turning the point in a fire case-hardens the wood. Needs a free
             // hand rather than a second ingredient - the fire is the other half.
             new HandRecipe(id("fire_hardened_spear"), ModItems.SHARPENED_SPEAR, null, ModItems.FIRE_HARDENED_SPEAR,
-                    List.of(ERECTUS), true, false, true,
+                    FROM_ERECTUS, true, false, true,
                     "You turn the point in the embers until the wood darkens and hardens.",
                     "Fire does something to wood short of burning it. The point could be harder."));
 
@@ -262,11 +276,11 @@ public final class ItemInteractions {
     }
 
     /**
-     * The primitive work station: a branch driven into a base of rocks, hide lashed round it.
-     * Two hide in the main hand, four rocks of any kind in the off hand.
+     * The primitive work station: a log stood on end, a hide lashed over the top of it to work on.
+     * A log in the main hand, a hide in the off hand.
      */
     private static boolean tryWorkStation(ServerPlayer player, ItemStack main, ItemStack off) {
-        if (!main.is(ModItems.HIDE.get()) || !(off.is(ModTags.Items.ROCKS) || off.is(ModTags.Items.KNAPPABLE_STONE))) {
+        if (!main.is(net.minecraft.tags.ItemTags.LOGS) || !off.is(ModItems.HIDE.get())) {
             return false;
         }
         if (!dev.hominin.evolution.knapping.Acheulean.canUse(player)) {
@@ -274,20 +288,15 @@ public final class ItemInteractions {
                     true);
             return true;
         }
-        if (main.getCount() < 2 || off.getCount() < 4) {
-            player.displayClientMessage(Component.literal("A work station takes two hide and four rocks of any kind."),
-                    true);
-            return true;
-        }
-        main.shrink(2);
-        off.shrink(4);
+        main.shrink(1);
+        off.shrink(1);
         ItemStack station = new ItemStack(ModItems.WORK_STATION.get());
         if (!player.getInventory().add(station)) {
             player.drop(station, false);
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 0.9F, 0.8F);
-        player.displayClientMessage(Component.literal("You drive a branch into a base of rocks and lash hide round "
-                + "it. Somewhere to work more than stone now."), true);
+        player.displayClientMessage(Component.literal("You stand the log on end and lash the hide over it. "
+                + "Somewhere to work more than stone now."), true);
         return true;
     }
 
@@ -317,7 +326,8 @@ public final class ItemInteractions {
                 origin.offset(FIRE_RADIUS, 2, FIRE_RADIUS))) {
             var state = level.getBlockState(pos);
             if (state.is(BlockTags.FIRE) || state.is(Blocks.CAMPFIRE) || state.is(Blocks.SOUL_CAMPFIRE)
-                    || state.is(Blocks.LAVA) || state.is(Blocks.MAGMA_BLOCK)) {
+                    || state.is(Blocks.LAVA) || state.is(Blocks.MAGMA_BLOCK)
+                    || dev.hominin.evolution.survival.Hearths.isLitHearth(state)) {
                 return true;
             }
         }

@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "colony=false": {
       "model": "hominin_evolution:block/termite_mound"
+    },
+    "colony=true": {
+      "model": "hominin_evolution:block/termite_mound_colony"
     }
   }
 }

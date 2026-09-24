@@ -115,8 +115,9 @@ public final class Wants {
         // Two people asking you for things is a band; six is a queue, and you stop listening to a
         // queue. So only the two who want it most say so - the rest keep it to themselves (Info
         // still shows it) until one of the two is settled.
+        // Hanging out with a sour one, their wants come first: nobody else's are said meanwhile.
         if (member.getWant() != null && !member.isWantVoiced() && asking(leader) < MAX_OPEN_WANTS
-                && mostUrgentUnsaid(member, leader)) {
+                && mostUrgentUnsaid(member, leader) && !Needs.hangingOut(leader, member)) {
             voice(member, leader);
         }
         if (now >= member.getNextThought()) {
@@ -194,6 +195,11 @@ public final class Wants {
             member.setWant(member.favouriteFood(), now + WANT_LASTS_TICKS);
             urgency = 0.75F;
         }
+        if (member.getTrouble() == Troubles.TROUBLED) {
+            // Something to keep their hands busy.
+            member.setWant(Troubles.comfort(member).getItem(), now + WANT_LASTS_TICKS);
+            urgency = 0.8F;
+        }
         member.setWantUrgency(urgency + member.getRandom().nextFloat() * 0.3F);
     }
 
@@ -222,7 +228,9 @@ public final class Wants {
                 return;
             }
         }
-        String line = want == ModItems.OBSIDIAN_ROCK.get() ? "Obsidian... I keep thinking about obsidian. If you ever find some..."
+        String line = member.getTrouble() == Troubles.TROUBLED && isGoodStone(new ItemStack(want))
+                ? "I need a good rock to keep my mind off everything..."
+                : want == ModItems.OBSIDIAN_ROCK.get() ? "Obsidian... I keep thinking about obsidian. If you ever find some..."
                 : want == preferred ? "I'd really like some " + name.toLowerCase() + ", if you come across it."
                 : want == ModItems.LONG_BRANCH.get() ? "I've got nothing to hold on to. A good branch would do."
                 : "I could really go for " + name.toLowerCase() + " right now.";
@@ -268,6 +276,10 @@ public final class Wants {
         member.addToInventory(taken);
         member.clearWant();
         member.addBond(2);
+        if (isGoodStone(taken)) {
+            // Somebody grieving gets something to do with their hands.
+            Troubles.gotStone(member);
+        }
         member.playSound(SoundEvents.ITEM_PICKUP, 0.7F, 1.1F);
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HEART, member.getX(), member.getEyeY() + 0.3D,
                 member.getZ(), 4, 0.3D, 0.2D, 0.3D, 0.0D);

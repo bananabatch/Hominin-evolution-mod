@@ -248,6 +248,9 @@ public final class Quarry {
         if (target instanceof dev.hominin.evolution.entity.Pelorovis pelorovis) {
             return pelorovis.standsGround();
         }
+        if (target instanceof dev.hominin.evolution.entity.Megafauna giant) {
+            return giant.standsGround();
+        }
         return target instanceof dev.hominin.evolution.entity.Baboon baboon && baboon.hasTroopBehindIt();
     }
 
@@ -304,6 +307,8 @@ public final class Quarry {
             }
         }
         if (isBigGame(victim)) {
+            // On an ally's ground, their hunters join in.
+            dev.hominin.evolution.band.Relations.alliesJoin(hunter, victim, true);
             if (firstBlood.size() > 2048) {
                 firstBlood.clear();
             }

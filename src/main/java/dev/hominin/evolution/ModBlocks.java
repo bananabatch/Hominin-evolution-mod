@@ -52,6 +52,10 @@ public final class ModBlocks {
     // a face off, so each one is a source of its own material rather than a pickup,
     // and which type you found decides what the deposit gives up.
 
+    /** Columns of cooled lava by a lava pool: a face of basalt, a tier behind chert. */
+    public static final DeferredBlock<Block> BASALT_DEPOSIT = BLOCKS.registerSimpleBlock("basalt_deposit",
+            deposit(MapColor.COLOR_BLACK));
+
     /** The knapper's bedrock. Scarce on purpose - chert is what you go looking for. */
     public static final DeferredBlock<Block> CHERT_DEPOSIT = BLOCKS.registerSimpleBlock("chert_deposit",
             deposit(MapColor.DEEPSLATE));
@@ -84,6 +88,47 @@ public final class ModBlocks {
                             .strength(2.0F)
                             .noOcclusion());
 
+    /** Three logs round a bed of sticks: where fire is kept. Lit, it lights the country round it. */
+    public static final DeferredBlock<dev.hominin.evolution.block.FirePitBlock> FIRE_PIT =
+            BLOCKS.registerBlock("fire_pit", dev.hominin.evolution.block.FirePitBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.PODZOL)
+                            .strength(1.5F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .lightLevel(state -> state.getValue(dev.hominin.evolution.block.FirePitBlock.LIT) ? 15 : 0));
+
+    /** A burning torch stood in the ground. */
+    /** Tools laid on the ground: a band's shared store, or an old deposit nobody owns. */
+    public static final DeferredBlock<dev.hominin.evolution.block.ToolPileBlock> TOOL_PILE =
+            BLOCKS.registerBlock("tool_pile", dev.hominin.evolution.block.ToolPileBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .noOcclusion()
+                            .instabreak()
+                            .sound(SoundType.STONE)
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
+    public static final DeferredBlock<dev.hominin.evolution.block.PlacedTorchBlock> PLACED_TORCH =
+            BLOCKS.registerBlock("placed_torch", dev.hominin.evolution.block.PlacedTorchBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .noCollission()
+                            .instabreak()
+                            .lightLevel(state -> 14)
+                            .sound(SoundType.WOOD)
+                            .randomTicks()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
+    /** A burning torch wedged into a wall. */
+    public static final DeferredBlock<dev.hominin.evolution.block.WallPlacedTorchBlock> WALL_PLACED_TORCH =
+            BLOCKS.registerBlock("wall_placed_torch", dev.hominin.evolution.block.WallPlacedTorchBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .noCollission()
+                            .instabreak()
+                            .lightLevel(state -> 14)
+                            .sound(SoundType.WOOD)
+                            .randomTicks()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
     /** An upright post in a ring of rocks: what a thatch shelter is framed with. */
     public static final DeferredBlock<dev.hominin.evolution.block.BuildingBranchBlock> BUILDING_BRANCH =
             BLOCKS.registerBlock("building_branch", dev.hominin.evolution.block.BuildingBranchBlock::new,
@@ -93,6 +138,26 @@ public final class ModBlocks {
                             .sound(SoundType.WOOD)
                             .noOcclusion()
                             .ignitedByLava());
+
+    /** A forked stick two blocks tall: one end of a cooking rack. */
+    public static final DeferredBlock<dev.hominin.evolution.block.CookingRackBlock> COOKING_RACK =
+            BLOCKS.registerBlock("cooking_rack", dev.hominin.evolution.block.CookingRackBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(1.0F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
+    /** The branch laid across two racks, that meat hangs from. */
+    public static final DeferredBlock<dev.hominin.evolution.block.CookingSpitBlock> COOKING_SPIT =
+            BLOCKS.registerBlock("cooking_spit", dev.hominin.evolution.block.CookingSpitBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(0.5F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
 
     /** Bound thatch: a wall or a roof, unless the weather gets to it first. */
     public static final DeferredBlock<dev.hominin.evolution.block.ThatchBlock> THATCH_BLOCK =
@@ -148,8 +213,8 @@ public final class ModBlocks {
      * a primate can build a routine around - chimps at Gombe fish them with stripped
      * twigs, and it is one of the clearest tool traditions outside our own line.
      */
-    public static final DeferredBlock<Block> TERMITE_MOUND = BLOCKS.registerSimpleBlock("termite_mound",
-            deposit(MapColor.COLOR_BROWN));
+    public static final DeferredBlock<dev.hominin.evolution.block.TermiteMoundBlock> TERMITE_MOUND = BLOCKS.registerBlock(
+            "termite_mound", dev.hominin.evolution.block.TermiteMoundBlock::new, deposit(MapColor.COLOR_BROWN));
 
     /**
      * A standing dead trunk, bleached and dried out but not yet eaten through. Most

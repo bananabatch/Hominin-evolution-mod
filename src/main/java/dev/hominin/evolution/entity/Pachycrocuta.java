@@ -314,12 +314,18 @@ public class Pachycrocuta extends PathfinderMob {
         unwatchedTicks = 0;
         setTarget(null);
         getNavigation().stop();
+        dev.hominin.evolution.band.Band.standDown(this);
+    }
+
+    public boolean isFleeing() {
+        return fleeTicks > 0;
     }
 
     /** Driven off. It will not be back for a good while. */
     public void scare(LivingEntity scarer) {
         if (meal != null && scarer instanceof ServerPlayer player) {
             dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "take_kill", 1);
+            dev.hominin.evolution.band.Presence.add(player, 4, "you drove the giant hyena off a kill");
         }
         flee(scarer.position());
         playSound(ModSounds.PACHYCROCUTA_HURT.get(), 1.2F, 1.3F);

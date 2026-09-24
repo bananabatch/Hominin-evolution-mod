@@ -53,7 +53,15 @@ public final class ModKeyMappings {
             InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_J),
             CATEGORY);
 
+    /** What you know how to build. Planning a build, press it again to put the plan away. */
+    public static final KeyMapping BUILD = new KeyMapping(
+            "key.hominin_evolution.build",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_O),
+            CATEGORY);
+
     public static void register(RegisterKeyMappingsEvent event) {
+        event.register(BUILD);
         event.register(JOURNAL);
         event.register(THREAT_DISPLAY);
         event.register(SOCIAL);

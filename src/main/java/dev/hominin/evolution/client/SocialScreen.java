@@ -40,6 +40,9 @@ public class SocialScreen extends Screen {
     /** Which list is open, or null while the topics themselves are showing. */
     @Nullable
     private Social.Topic topic;
+    /** Inside the Developer tab: which section is open, or null while the sections are showing. */
+    @Nullable
+    private Social.DevSection devSection;
 
     public static void open() {
         Minecraft mc = Minecraft.getInstance();
@@ -60,13 +63,83 @@ public class SocialScreen extends Screen {
         }
         BandMember nearest = nearest(mc.player);
         if (nearest == null) {
-            mc.player.displayClientMessage(Component.literal("There is nobody near enough to talk to."), true);
+            // Alone: nobody to talk to but the others, far off - what you know of them.
+            PacketDistributor.sendToServer(new dev.hominin.evolution.network.OthersActionPayload("",
+                    dev.hominin.evolution.network.OthersActionPayload.OPEN));
             return;
         }
         boolean paranthropus = dev.hominin.evolution.band.Paranthropus.is(nearest);
         mc.setScreen(new SocialScreen(-1, Component.literal(paranthropus ? "the Paranthropus"
                 : nearest.isOtherBand() ? "the other band" : "your band"),
                 nearest.isOtherBand(), otherBandNear(mc.player), paranthropus));
+    }
+
+    /** The nearest of another band's people, hominins before Paranthropus - who "the other band" means. */
+    @Nullable
+    private static BandMember nearestOther(LocalPlayer player) {
+        BandMember best = null;
+        for (BandMember member : player.level().getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(16.0D),
+                BandMember::isOtherBand)) {
+            boolean troop = dev.hominin.evolution.band.Paranthropus.is(member);
+            boolean bestTroop = best != null && dev.hominin.evolution.band.Paranthropus.is(best);
+            if (best == null || (bestTroop && !troop)
+                    || (bestTroop == troop && member.distanceToSqr(player) < best.distanceToSqr(player))) {
+                best = member;
+            }
+        }
+        return best;
+    }
+
+    private static boolean ownBandNear(LocalPlayer player) {
+        return !player.level().getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(16.0D),
+                m -> !m.isOtherBand()).isEmpty();
+    }
+
+    /**
+     * Whether the title can be clicked to talk to the other side instead: your band and another are both
+     * here, and you are talking to one of them as a whole.
+     */
+    private boolean swappable() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return player != null && targetId < 0 && ownBandNear(player) && nearestOther(player) != null;
+    }
+
+    /** "Talk to your band" becomes "Talk to the other band", and back. */
+    private void swap() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        if (otherBand) {
+            minecraft.setScreen(new SocialScreen(-1, Component.literal("your band"), false, otherBandNear(player), false));
+            return;
+        }
+        BandMember other = nearestOther(player);
+        if (other == null) {
+            return;
+        }
+        boolean troop = dev.hominin.evolution.band.Paranthropus.is(other);
+        minecraft.setScreen(new SocialScreen(Social.OTHER_BAND, Component.literal(troop ? "the Paranthropus" : "the other band"),
+                true, !troop, troop));
+    }
+
+    private int titleY() {
+        return top() - 30;
+    }
+
+    private boolean overTitle(double mouseX, double mouseY) {
+        int half = font.width(title) / 2 + 4;
+        return mouseX >= width / 2.0D - half && mouseX <= width / 2.0D + half && mouseY >= titleY() - 3
+                && mouseY <= titleY() + 11;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && overTitle(mouseX, mouseY) && swappable()) {
+            swap();
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Nullable
@@ -114,14 +187,36 @@ public class SocialScreen extends Screen {
         if (guiding) {
             return false;
         }
-        if (command == Social.Command.TRIBE || command == Social.Command.PROMISE) {
+        if (command == Social.Command.PROMISE) {
+            // Only worth saying when they want to hear it: tipping, not past promises, not already promised.
+            return targetId < 0 && !otherBand && ClientSync.cohesion < 30 && ClientSync.cohesion > 20 && !ClientSync.promised;
+        }
+        if (command == Social.Command.TRIBE || command == Social.Command.ASK_MEMORIES) {
             return targetId < 0 && !otherBand;
+        }
+        LocalPlayer self = Minecraft.getInstance().player;
+        if (command == Social.Command.FOOD) {
+            return self != null && self.getFoodData().needsFood();
+        }
+        if (command == Social.Command.HURT) {
+            return !otherBand && self != null && self.getHealth() < self.getMaxHealth();
+        }
+        if (command == Social.Command.CLIMB) {
+            var stage = self == null ? null : ClientSync.stageOf(self.getUUID());
+            String path = stage == null ? "" : stage.getPath();
+            if (!path.equals("ardipithecus") && !path.equals("australopithecus") && !path.equals("homo_habilis")) {
+                return false;
+            }
+        }
+        if (command == Social.Command.SHARE) {
+            return !otherBand;
         }
         if (command == Social.Command.SHUN) {
             return targetId >= 0 && !otherBand;
         }
         if (command == Social.Command.PASS_AROUND) {
-            return !otherBand;
+            // Splitting food: only with food in hand.
+            return !otherBand && self != null && self.getMainHandItem().has(net.minecraft.core.component.DataComponents.FOOD);
         }
         if (command == Social.Command.KNAP) {
             // Asked of one member of your own band, picked out.
@@ -129,6 +224,18 @@ public class SocialScreen extends Screen {
         }
         if (command == Social.Command.HAVE_CHILD || command == Social.Command.MAKE_MATE) {
             return targetId >= 0 && !otherBand;
+        }
+        if (command == Social.Command.WATCH) {
+            // Only someone close to you stays up for you: bond 4 and up.
+            return targetId >= 0 && !otherBand && Minecraft.getInstance().level != null
+                    && Minecraft.getInstance().level.getEntity(targetId) instanceof BandMember member
+                    && member.getBond() >= 4 && !member.isBaby();
+        }
+        if (command == Social.Command.SWAP) {
+            // Only someone close to you: bond 3 and up.
+            return targetId >= 0 && !otherBand && Minecraft.getInstance().level != null
+                    && Minecraft.getInstance().level.getEntity(targetId) instanceof BandMember member
+                    && member.getBond() >= 3 && !member.isBaby();
         }
         if (command == Social.Command.CULTURE) {
             // A rule for your own band, and only for a mind that can hold one: erectus on.
@@ -186,7 +293,8 @@ public class SocialScreen extends Screen {
         int y = top();
         if (topic == null) {
             for (Social.Topic candidate : Social.Topic.values()) {
-                if (commandsIn(candidate).isEmpty() && !hasFetch(candidate)) {
+                // The others are always there to ask about, near or far.
+                if (candidate != Social.Topic.OTHERS && commandsIn(candidate).isEmpty() && !hasFetch(candidate)) {
                     continue;
                 }
                 addRenderableWidget(Button.builder(Component.literal(candidate.label()), b -> {
@@ -195,11 +303,21 @@ public class SocialScreen extends Screen {
                         PacketDistributor.sendToServer(new SocialCommandPayload(-1, Social.Command.CULTURE.ordinal()));
                         return;
                     }
+                    if (candidate == Social.Topic.OTHERS) {
+                        PacketDistributor.sendToServer(new dev.hominin.evolution.network.OthersActionPayload("",
+                                dev.hominin.evolution.network.OthersActionPayload.OPEN));
+                        return;
+                    }
                     topic = candidate;
+                    devSection = null;
                     rebuildWidgets();
                 }).bounds(x, y, BUTTON_WIDTH, 20).build());
                 y += ROW;
             }
+            return;
+        }
+        if (topic == Social.Topic.DEVELOPER) {
+            initDeveloper(x, y);
             return;
         }
         for (Social.Command command : commandsIn(topic)) {
@@ -207,18 +325,6 @@ public class SocialScreen extends Screen {
                 PacketDistributor.sendToServer(new SocialCommandPayload(targetId, command.ordinal()));
                 onClose();
             }).bounds(x, y, BUTTON_WIDTH, 20).build();
-            if (player != null) {
-                if (command == Social.Command.FOOD) {
-                    button.active = player.getFoodData().needsFood();
-                } else if (command == Social.Command.HURT) {
-                    button.active = player.getHealth() < player.getMaxHealth();
-                } else if (command == Social.Command.CLIMB) {
-                    var stage = ClientSync.stageOf(player.getUUID());
-                    String path = stage == null ? "" : stage.getPath();
-                    button.active = path.equals("ardipithecus") || path.equals("australopithecus")
-                            || path.equals("homo_habilis");
-                }
-            }
             addRenderableWidget(button);
             y += ROW;
         }
@@ -234,6 +340,47 @@ public class SocialScreen extends Screen {
         }).bounds(x, y + 6, BUTTON_WIDTH, 20).build());
     }
 
+    /**
+     * The Developer tab: the sections, then the chosen section's commands in two columns of small buttons - there
+     * are too many for one list.
+     */
+    private void initDeveloper(int x, int y) {
+        if (devSection == null) {
+            for (Social.DevSection section : Social.DevSection.values()) {
+                addRenderableWidget(Button.builder(Component.literal(section.label()), b -> {
+                    devSection = section;
+                    rebuildWidgets();
+                }).bounds(x, y, BUTTON_WIDTH, 20).build());
+                y += ROW;
+            }
+        } else {
+            int column = 150;
+            int left = width / 2 - column - 3;
+            int i = 0;
+            for (Social.Command command : Social.Command.values()) {
+                if (command.section() != devSection) {
+                    continue;
+                }
+                int cx = left + (i % 2) * (column + 6);
+                int cy = y + (i / 2) * 20;
+                addRenderableWidget(Button.builder(Component.literal(command.label()), b -> {
+                    PacketDistributor.sendToServer(new SocialCommandPayload(targetId, command.ordinal()));
+                    // Left open: trying things is several clicks in a row.
+                }).bounds(cx, cy, column, 18).build());
+                i++;
+            }
+            y += ((i + 1) / 2) * 20;
+        }
+        addRenderableWidget(Button.builder(Component.literal("Back"), b -> {
+            if (devSection != null) {
+                devSection = null;
+            } else {
+                topic = null;
+            }
+            rebuildWidgets();
+        }).bounds(x, y + 6, BUTTON_WIDTH, 20).build());
+    }
+
     private int top() {
         return Math.max(40, height / 2 - 80);
     }
@@ -241,9 +388,17 @@ public class SocialScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, top() - 30, 0xE9D8A6);
+        boolean swap = swappable();
+        boolean over = swap && overTitle(mouseX, mouseY);
+        graphics.drawCenteredString(font, over ? title.copy().withStyle(net.minecraft.ChatFormatting.UNDERLINE) : title,
+                width / 2, titleY(), swap ? (over ? 0xFFF3B0 : 0x9FD8FF) : 0xE9D8A6);
+        if (swap && topic == null) {
+            graphics.drawCenteredString(font, Component.literal(otherBand ? "(click to talk to your band)"
+                    : "(click to talk to the other band)"), width / 2, titleY() + 11, 0x8C8578);
+        }
         if (topic != null) {
-            graphics.drawCenteredString(font, Component.literal(topic.label()), width / 2, top() - 16, 0xBFBFBF);
+            graphics.drawCenteredString(font, Component.literal(topic.label() + (devSection != null ? " - "
+                    + devSection.label() : "")), width / 2, top() - 16, 0xBFBFBF);
         }
     }
 
@@ -251,7 +406,11 @@ public class SocialScreen extends Screen {
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         // Backspace goes up a level rather than out of the menu entirely.
         if (key == 259 && topic != null) {
-            topic = null;
+            if (devSection != null) {
+                devSection = null;
+            } else {
+                topic = null;
+            }
             rebuildWidgets();
             return true;
         }

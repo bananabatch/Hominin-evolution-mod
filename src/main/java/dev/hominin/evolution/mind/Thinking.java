@@ -71,6 +71,10 @@ public final class Thinking {
         if (dev.hominin.evolution.hunt.Quarry.trySeed(player)) {
             return;
         }
+        // Something about this place you could not put your finger on: now you can.
+        if (Insights.tryReveal(player)) {
+            return;
+        }
         Long last = lastThought.get(player.getUUID());
         int cooldown = COOLDOWN_TICKS - (dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.LONG_VIEW) ? 1200 : 0);
         if (last != null && now - last < cooldown) {

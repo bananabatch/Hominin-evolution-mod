@@ -142,6 +142,8 @@ public final class EvolutionManager {
         announceEvolution(player, nextStage);
         // A new body, new hands: erectus on, what you start able to do is rolled, and told once the
         // new band is round you.
+        // A new body, and a new mind to hold places in.
+        dev.hominin.evolution.mind.MentalMap.newBody(player);
         if (dev.hominin.evolution.hunt.Persistence.rollsSkills(nextStageId)) {
             dev.hominin.evolution.hunt.Persistence.rollFor(player);
         }
@@ -149,6 +151,15 @@ public final class EvolutionManager {
         HomininAdvancements.awardStages(player);
         Band.evolveWith(player, nextStageId);
         dev.hominin.evolution.band.WildBands.cullExtinct(player);
+        if (previousStage != null) {
+            // A long time later: every band you knew is gone, and nothing you held in mind is where it was.
+            dev.hominin.evolution.band.Bands.newEra(player);
+            // The places the band knew are still there, and the band still knows them.
+            dev.hominin.evolution.world.Pois.passDown(player);
+            player.getData(Attachments.MIND).wipe();
+            player.getData(Attachments.MIND).setBodyName("");
+            dev.hominin.evolution.mind.MentalMap.sync(player);
+        }
         if (previousStage != null && Band.ARDIPITHECUS.equals(previousStageId)) {
             HomininAdvancements.award(player, "hominin/survivor");
         }

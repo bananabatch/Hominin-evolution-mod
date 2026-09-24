@@ -9,6 +9,7 @@
     "minecraft:tuff",
     "hominin_evolution:chert_deposit",
     "hominin_evolution:quartzite_deposit",
-    "hominin_evolution:limestone_deposit"
+    "hominin_evolution:limestone_deposit",
+    "hominin_evolution:basalt_deposit"
   ]
 }

@@ -159,6 +159,9 @@ public class QuarryGoal extends Goal {
         } else if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
             stone = ModItems.GRANITE_ROCK.get();
             count = 3;
+        } else if (state.is(ModBlocks.BASALT_DEPOSIT.get())) {
+            stone = ModItems.BASALT_ROCK.get();
+            count = 2;
         } else {
             stone = ModItems.LIMESTONE_ROCK.get();
             count = 2;
@@ -169,6 +172,9 @@ public class QuarryGoal extends Goal {
                     new ItemStack(ModItems.HAMMERSTONE.get()), new ItemStack(stone)));
         }
         afterGetting(stone);
+        if (stone != ModItems.LIMESTONE_ROCK.get()) {
+            dev.hominin.evolution.band.RareFinds.memberQuarried(member);
+        }
         target = null;
     }
 
@@ -230,6 +236,9 @@ public class QuarryGoal extends Goal {
         }
         if (state.is(ModBlocks.LIMESTONE_DEPOSIT.get())) {
             return ModItems.LIMESTONE_ROCK.get();
+        }
+        if (state.is(ModBlocks.BASALT_DEPOSIT.get())) {
+            return ModItems.BASALT_ROCK.get();
         }
         return null;
     }

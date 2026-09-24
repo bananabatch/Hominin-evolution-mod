@@ -53,6 +53,7 @@ final class SurfaceSite {
         return state.is(ModBlocks.TERMITE_MOUND.get())
                 || state.is(ModBlocks.QUARTZITE_DEPOSIT.get())
                 || state.is(ModBlocks.LIMESTONE_DEPOSIT.get())
+                || state.is(ModBlocks.BASALT_DEPOSIT.get())
                 || state.is(ModBlocks.CHERT_DEPOSIT.get());
     }
 

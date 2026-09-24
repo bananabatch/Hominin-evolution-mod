@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "A wound bleeds in one of three ways.$(br2)$(l)A cut$() - teeth, a flake - bleeds a little and stops.$(br)$(l)A deep wound$() - a spear, a hyena, a big cat - bleeds harder, and while it runs you do not heal.$(br)$(l)Catastrophic$() - it will not stop on its own."
+      "text": "A wound bleeds in one of three ways.$(br2)$(l)A cut$() - teeth, a flake - bleeds a little and stops.$(br)$(l)A deep wound$() - a spear, a hyena, a big cat - bleeds harder, and while it runs you heal only so far.$(br)$(l)Catastrophic$() - it will not stop on its own."
     },
     {
       "type": "patchouli:text",
@@ -14,11 +14,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Infection$() stops all healing for two days, drains your hunger and makes you sick. Cooked meat never causes it.$(br2)Only one thing stops you mending at a time - blood loss, infection, lacerations or ticks. A worse one replaces a lesser one, and your journal ($(k:hominin_evolution.journal)) says which it is."
+      "text": "$(l)Infection$() lasts two days: you mend only to half your hearts, it drains your hunger and makes you sick. Cooked meat never causes it.$(br2)Only one thing holds your healing back at a time - ticks (to 8 hearts), blood loss (6), infection (5), lacerations (4) - the worst one wins, and your journal ($(k:hominin_evolution.journal)) says which."
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Ticks$() find you two a day at most. Past six, nothing heals until somebody grooms them off - and what they pick off, you can eat.$(br2)Ask with $(k:hominin_evolution.social): Social, $(o)Get these off me$(). Groom one of them first and they owe you the favour."
+      "text": "$(l)Ticks$() find you two a day at most. Past six, you mend only so far until somebody grooms them off - and what they pick off, you can eat.$(br2)Ask with $(k:hominin_evolution.social): Social, $(o)Get these off me$(). Groom one of them first and they owe you the favour."
     }
   ]
 }

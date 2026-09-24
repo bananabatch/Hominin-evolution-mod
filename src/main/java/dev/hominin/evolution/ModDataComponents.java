@@ -22,6 +22,11 @@ public final class ModDataComponents {
             COMPONENTS.registerComponentType("material",
                     builder -> builder.persistent(Codec.intRange(0, 4)).networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    /** Meat that lay on the ground too long. See food.Spoilage. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SPOILED =
+            COMPONENTS.registerComponentType("spoiled",
+                    builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
+
     private ModDataComponents() {
     }
 }

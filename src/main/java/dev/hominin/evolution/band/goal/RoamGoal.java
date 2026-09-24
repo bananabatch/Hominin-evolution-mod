@@ -37,6 +37,18 @@ public class RoamGoal extends Goal {
         }
         float angle = member.getRandom().nextFloat() * Mth.TWO_PI;
         int distance = MIN_DISTANCE + member.getRandom().nextInt(MAX_DISTANCE - MIN_DISTANCE + 1);
+        if (member.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            var band = dev.hominin.evolution.band.Bands.get(server, member.getBandId());
+            if (band != null) {
+                // Back towards camp when straying past the middle of their ground (a troop: towards today's camp).
+                double keep = band.nomadic() ? 24.0D : band.radius() * 0.55D;
+                double dx = band.home.getX() - member.getX();
+                double dz = band.home.getZ() - member.getZ();
+                if (dx * dx + dz * dz > keep * keep) {
+                    angle = (float) Math.atan2(dz, dx) + (member.getRandom().nextFloat() - 0.5F) * 0.6F;
+                }
+            }
+        }
         int x = member.getBlockX() + Math.round(Mth.cos(angle) * distance);
         int z = member.getBlockZ() + Math.round(Mth.sin(angle) * distance);
         if (!member.level().hasChunk(x >> 4, z >> 4)) {

@@ -50,7 +50,7 @@ public final class Trading {
             Map.entry("chopper", 4), Map.entry("sharpened_spear", 4), Map.entry("wooden_club", 4),
             // 5 - rare, or skill a band may not have
             Map.entry("obsidian_rock", 5), Map.entry("chert_hammerstone", 5), Map.entry("oldowan_multitool", 5),
-            Map.entry("fire_hardened_spear", 5),
+            Map.entry("fire_hardened_spear", 5), Map.entry("face_pebble", 5), Map.entry("quartz_crystal", 5),
             // Erectus work. An Acheulean tool's tier is then set by its quality - see qualityPenalty.
             Map.entry("hand_axe", 5), Map.entry("cleaver", 5), Map.entry("hide", 2),
             Map.entry("workable_branch", 2), Map.entry("workable_shaft", 3), Map.entry("twine", 2),
@@ -283,6 +283,10 @@ public final class Trading {
             offerTier++;
         }
         int wantedTier = tierOf(wanted, era);
+        if (player instanceof net.minecraft.server.level.ServerPlayer server && offerTier > 0 && wantedTier > offerTier) {
+            // One of yours who knows how to talk: what you offer is worth more, the way they tell it.
+            offerTier = Psychopaths.talkUp(server, member, offerTier);
+        }
         if (offerTier <= 0) {
             say(player, dry ? name + " shakes their head. Nobody trades that cheaply while the land is this dry."
                     : name + " turns it over and hands it back. No use to them.");
@@ -338,6 +342,16 @@ public final class Trading {
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<" + member.getName().getString()
                     + "> \"What's mine stays mine.\"").withStyle(net.minecraft.ChatFormatting.GOLD));
             return;
+        }
+        if (member.isWild() && member.getBandId() != null) {
+            Bands.Record band = Bands.get(player.serverLevel(), member.getBandId());
+            if (band != null && band.desperation >= 3 && member.getRandom().nextFloat() < (band.desperation - 2) * 0.3F) {
+                member.ensureName();
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<" + member.getName().getString()
+                        + "> \"We have nothing to spare. Nothing.\" (" + band.name + " are "
+                        + Claims.desperationLabel(band.desperation) + ".)").withStyle(net.minecraft.ChatFormatting.GOLD));
+                return;
+            }
         }
         if (member.isLedBy(player)) {
             String refusal = Cohesion.refusesTrade(player, member);

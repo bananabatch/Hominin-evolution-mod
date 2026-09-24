@@ -39,7 +39,8 @@ public final class Drinking {
             return;
         }
         lastDrink.put(player.getUUID(), now);
-        if (Thirst.get(player) >= Thirst.MAX) {
+        // Sick from bad meat, you drink past thirst: it is going straight through you.
+        if (Thirst.get(player) >= Thirst.MAX && !FoodIllness.has(player)) {
             player.displayClientMessage(Component.literal("You have drunk your fill."), true);
             return;
         }

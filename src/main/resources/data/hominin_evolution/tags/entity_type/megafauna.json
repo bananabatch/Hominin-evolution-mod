@@ -1,6 +1,9 @@
 {
   "values": [
     "hominin_evolution:pelorovis",
+    "hominin_evolution:rusingoryx",
+    "hominin_evolution:megalotragus",
+    "hominin_evolution:mammuthus",
     "hominin_evolution:sabertooth",
     "hominin_evolution:homotherium",
     "hominin_evolution:pachycrocuta",

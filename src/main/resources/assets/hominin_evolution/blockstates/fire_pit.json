@@ -1,0 +1,294 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs_lit"
+      }
+    },
+    {
+      "when": {
+        "fuelled": "true",
+        "lit": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks"
+      }
+    },
+    {
+      "when": {
+        "ashes": "true",
+        "lit": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_ash"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_embers"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_fire"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs_lit",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "fuelled": "true",
+        "lit": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "ashes": "true",
+        "lit": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_ash",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_embers",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_fire",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs_lit",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "fuelled": "true",
+        "lit": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "ashes": "true",
+        "lit": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_ash",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_embers",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_fire",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_logs_lit",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "fuelled": "true",
+        "lit": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_sticks",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "ashes": "true",
+        "lit": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_ash",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_embers",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_fire",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "thatch": "true",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/fire_pit_thatch"
+      }
+    }
+  ]
+}

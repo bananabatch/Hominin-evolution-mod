@@ -66,9 +66,7 @@ public final class WoundHandler {
         Bleeding.inflict(target, tierOf(edge, target));
 
         // A saber-toothed cat does not run from a cut, and a baboon with its troop behind it attacks instead.
-        boolean standsGround = target.getType().is(ModTags.EntityTypes.FEARLESS)
-                || (target instanceof dev.hominin.evolution.entity.Baboon baboon && baboon.hasTroopBehindIt())
-                || (target instanceof dev.hominin.evolution.entity.Pelorovis pelorovis && pelorovis.standsGround());
+        boolean standsGround = WoundedFleeGoal.standsGround(target);
         if (target instanceof PathfinderMob mob && !(target instanceof Enemy) && !standsGround) {
             fleeFrom(mob, player);
         }

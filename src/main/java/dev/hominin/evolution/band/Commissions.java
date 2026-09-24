@@ -62,7 +62,7 @@ public final class Commissions {
 
     /** What they would usually turn out, for the choice labels. */
     private static int usualTier(BandMember member) {
-        return Math.max(1, member.getKnapLevel());
+        return Species.capQuality(member.getStage(), Math.max(1, member.getKnapLevel()));
     }
 
     /** The list of what you could ask this member to make. */
@@ -312,7 +312,8 @@ public final class Commissions {
         if (second.isEmpty()) {
             member.takeFirst(Wants::isGoodStone);
         }
-        int quality = Acheulean.rollQuality(member.getKnapLevel(), first, member.getRandom());
+        int quality = Species.capQuality(member.getStage(), Acheulean.rollQuality(member.getKnapLevel(), first,
+                member.getRandom()));
         member.practiseKnapping();
         Item tool = kind == HAND_AXE ? ModItems.HAND_AXE.get() : ModItems.CLEAVER.get();
         return dev.hominin.evolution.item.StoneMaterial.stampFrom(((AcheuleanToolItem) tool).make(quality), first);

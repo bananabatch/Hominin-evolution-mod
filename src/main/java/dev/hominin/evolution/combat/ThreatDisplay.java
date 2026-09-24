@@ -68,6 +68,9 @@ public final class ThreatDisplay {
     private record Throw(float speed, float inaccuracy, float rockDamage, float branchDamage) {
     }
 
+    /** A hammerstone is denser than any cobble: it lands half again as hard, and more besides. */
+    private static final float HAMMERSTONE_EXTRA = 2.0F;
+
     private static final int POINTLESS_DISPLAYS = 3;
     private static final long POINTLESS_WINDOW_TICKS = 60 * 20;
 
@@ -81,7 +84,13 @@ public final class ThreatDisplay {
     public static boolean isThrowable(ItemStack stack) {
         return ModItems.isLongBranch(stack)
                 || stack.is(ModItems.ROCK.get())
-                || stack.is(ModTags.Items.KNAPPABLE_STONE);
+                || stack.is(ModTags.Items.KNAPPABLE_STONE)
+                || isHammerstone(stack);
+    }
+
+    /** The hammerstones proper - not the cores and multi tools that also strike. */
+    public static boolean isHammerstone(ItemStack stack) {
+        return stack.is(ModItems.HAMMERSTONE.get()) || stack.is(ModItems.CHERT_HAMMERSTONE.get());
     }
 
     private static boolean displays(ServerPlayer player) {
@@ -152,7 +161,8 @@ public final class ThreatDisplay {
 
         ThrownObject thrown = new ThrownObject(player.level(), player);
         thrown.setItem(held.copyWithCount(1));
-        thrown.setDamage(branch ? style.branchDamage() : style.rockDamage());
+        thrown.setDamage(branch ? style.branchDamage() : isHammerstone(held)
+                ? style.rockDamage() * 1.5F + (displaying ? 0.0F : HAMMERSTONE_EXTRA) : style.rockDamage());
         thrown.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, style.speed(), style.inaccuracy());
         player.level().addFreshEntity(thrown);
 

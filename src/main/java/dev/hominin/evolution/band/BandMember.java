@@ -327,6 +327,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
         // Just above building one: once the nest exists, getting into it is the priority.
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SleepInNestGoal(this));
+        goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SentryGoal(this));
+        goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ToolPileGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.StoreGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.PlayGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TinkerGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CraftGoal(this));
@@ -553,6 +556,73 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     // ------------------------------------------------------------ pairing up
 
+    // ------------------------------------------------------------ grief, and worse
+
+    /** 0 all right; 1 troubled - grieving someone close; 2 gone sour after nobody looked after them. See Troubles. */
+    private int trouble;
+    private String grievingFor = "";
+    private String griefKind = "";
+    /** Charming, attentive, and all of it for themselves. See Psychopaths. Nobody knows - there are only signs. */
+    private boolean psychopath;
+    private boolean psychopathRolled;
+    private boolean psychopathKnown;
+    /** Whoever gave birth to this one, if it was one of the band. */
+    @Nullable
+    private UUID mother;
+
+    public int getTrouble() {
+        return trouble;
+    }
+
+    public void setTrouble(int trouble, String grievingFor, String griefKind) {
+        this.trouble = trouble;
+        this.grievingFor = grievingFor == null ? "" : grievingFor;
+        this.griefKind = griefKind == null ? "" : griefKind;
+    }
+
+    public String getGrievingFor() {
+        return grievingFor;
+    }
+
+    public String getGriefKind() {
+        return griefKind;
+    }
+
+    public boolean isPsychopath() {
+        return psychopath;
+    }
+
+    public boolean psychopathRolled() {
+        return psychopathRolled;
+    }
+
+    public void setPsychopath(boolean psychopath) {
+        this.psychopath = psychopath;
+        this.psychopathRolled = true;
+    }
+
+    public boolean isPsychopathKnown() {
+        return psychopathKnown;
+    }
+
+    public void setPsychopathKnown(boolean known) {
+        this.psychopathKnown = known;
+    }
+
+    @Nullable
+    public UUID getMother() {
+        return mother;
+    }
+
+    public void setMother(@Nullable UUID mother) {
+        this.mother = mother;
+    }
+
+    /** How close this one is to another of the band, from grooming each other. */
+    public int affinityWith(UUID other) {
+        return affinity.getOrDefault(other, 0);
+    }
+
     // ------------------------------------------------------------ temper
 
     /** Does not care what the band thinks: steals, hoards, begs, will not teach, picks fights. See Mood. */
@@ -570,6 +640,64 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     public void setTemper(boolean antisocial) {
         this.antisocial = antisocial;
         this.temperRolled = true;
+    }
+
+    /**
+     * Becoming the body the leader has just left: their name, their sex, how hurt and how hungry they were,
+     * and what they had in mind. The leader has gone into this one's body; this one is them now.
+     */
+    public void takeOverBody(String name, boolean female, float healthFraction, int hunger,
+            java.util.List<dev.hominin.evolution.mind.MindData.Memory> memories, int slots) {
+        setCustomName(name.isEmpty() ? null : Component.literal(name));
+        ensureName();
+        this.female = female;
+        setHealth(Math.max(1.0F, getMaxHealth() * healthFraction));
+        this.hunger = Math.max(0, Math.min(MAX_HUNGER, hunger));
+        this.memories.clear();
+        this.memories.addAll(memories);
+        this.memorySlots = slots;
+    }
+
+    /** How many places this mind holds - rolled the first time anyone asks. */
+    public int memorySlots() {
+        if (memorySlots == 0) {
+            String era = getStage().getPath();
+            boolean later = !era.startsWith("australopithecus") && !era.equals("ardipithecus")
+                    && !era.equals("homo_habilis") && !era.equals("homo_rudolfensis");
+            memorySlots = later ? 4 + random.nextInt(4) : 2 + random.nextInt(3);
+        }
+        return memorySlots;
+    }
+
+    // ------------------------------------------------------------ night: turned in, or on watch
+
+    /** Game time until which this member is keeping watch - awake, walking the camp. */
+    private long watchUntil;
+    /** The day this member turned in for the night: nest made, no more wandering. */
+    private long turnedInDay = -1L;
+
+    public void setWatch(long until) {
+        this.watchUntil = until;
+    }
+
+    public boolean isOnWatch() {
+        return watchUntil > level().getGameTime();
+    }
+
+    /** Evening, and this one has said goodnight: they go to their nest and stay by it. */
+    public boolean isTurnedIn() {
+        long time = level().getDayTime() % 24000L;
+        return turnedInDay == level().getDayTime() / 24000L && time >= 11500L && time < 23200L && !isOnWatch();
+    }
+
+    public void turnIn() {
+        turnedInDay = level().getDayTime() / 24000L;
+    }
+
+    /** Back to not yet decided: rolled again if the band ever reaches erectus. */
+    public void clearTemper() {
+        this.antisocial = false;
+        this.temperRolled = false;
     }
 
     /** Game time from which this member begins to look for a mate; -1 until first decided. */
@@ -763,6 +891,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     public void addBond(int amount) {
         bond += amount;
+        if (amount > 0 && psychopath) {
+            // They are very good at being liked.
+            bond += 1;
+        }
         if (amount > 0) {
             // A band that trusts its leader warms to them faster.
             bond += Cohesion.bondBonus(leaderPlayer(), random);
@@ -813,6 +945,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         var speed = getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
         boolean injured = isInjured();
+        if (injured && dev.hominin.evolution.build.Building.inOwnRoom(this)) {
+            // Lying up under a roof of their own: it mends twice as fast.
+            injuredUntil -= 20L;
+        }
         if (speed != null) {
             if (injured && !speed.hasModifier(INJURED_ID)) {
                 speed.addTransientModifier(new AttributeModifier(INJURED_ID, -0.35D,
@@ -1409,9 +1545,15 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     @Override
     protected void pickUpItem(ItemEntity itemEntity) {
+        // Found, not handed over: a rare thing lying about is news.
+        ItemStack found = RareFinds.isRare(itemEntity.getItem()) && itemEntity.getOwner() == null
+                ? itemEntity.getItem().copy() : ItemStack.EMPTY;
         makeRoomFor(itemEntity.getItem());
         InventoryCarrier.pickUpItem(this, this, itemEntity);
         equipBestWeapon();
+        if (!found.isEmpty() && itemEntity.isRemoved()) {
+            RareFinds.memberFound(this, found);
+        }
     }
 
     public void addToInventory(ItemStack stack) {
@@ -1629,6 +1771,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             return;
         }
         if (isLedBy(player) && Wants.receive(this, player, held)) {
+            return;
+        }
+        if (isLedBy(player) && player instanceof net.minecraft.server.level.ServerPlayer giver
+                && RareFinds.treasured(this, giver, held)) {
             return;
         }
         FoodProperties food = held.get(DataComponents.FOOD);
@@ -2093,6 +2239,16 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private UUID gaveUpOn;
     private int gaveUpUntil;
 
+    /** A predator on its way out: frightened off, scattering, or fleeing. */
+    public static boolean backingOff(LivingEntity target) {
+        if (!target.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)) {
+            return false;
+        }
+        return (target instanceof net.minecraft.world.entity.Mob mob && dev.hominin.evolution.combat.Scare.isScared(mob))
+                || (target instanceof dev.hominin.evolution.entity.Crocuta hyena && hyena.isScattering())
+                || (target instanceof dev.hominin.evolution.entity.Pachycrocuta giant && giant.isFleeing());
+    }
+
     /** Whether this thing is actually attacking us - which is never something to walk away from. */
     private boolean isComingFor(LivingEntity target) {
         if (!(target instanceof net.minecraft.world.entity.Mob mob) || mob.getTarget() == null) {
@@ -2125,6 +2281,16 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         if (!target.isAlive()) {
             setTarget(null);
+            return;
+        }
+        if (backingOff(target)) {
+            // It has given up; so do we. Nobody follows a predator into the grass.
+            gaveUpOn = target.getUUID();
+            gaveUpUntil = tickCount + LET_IT_GO_TICKS;
+            setTarget(null);
+            defendTicks = 0;
+            huntTicks = 0;
+            getNavigation().stop();
             return;
         }
         if (isComingFor(target)) {
@@ -2290,10 +2456,31 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private final java.util.Set<String> knownSkills = new java.util.HashSet<>();
 
     public boolean knowsSkill(dev.hominin.evolution.mind.Skills.Skill skill) {
-        return knownSkills.contains(skill.name());
+        return knownSkills.contains(skill.name()) && Species.canLearn(getStage(), skill);
+    }
+
+    /** Whether this one could ever be taught it: some kinds never had it in them. */
+    public boolean canLearnSkill(dev.hominin.evolution.mind.Skills.Skill skill) {
+        return Species.canLearn(getStage(), skill);
+    }
+
+    /** A wild band's people come knowing what their kind knows. */
+    private boolean nativeSkillsGiven;
+
+    private void giveNativeSkills() {
+        if (nativeSkillsGiven || level().isClientSide() || !isWild()) {
+            return;
+        }
+        nativeSkillsGiven = true;
+        for (dev.hominin.evolution.mind.Skills.Skill skill : Species.nativeSkills(getStage())) {
+            knownSkills.add(skill.name());
+        }
     }
 
     public void learnSkill(dev.hominin.evolution.mind.Skills.Skill skill) {
+        if (!Species.canLearn(getStage(), skill)) {
+            return;
+        }
         knownSkills.add(skill.name());
         if (level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.ENCHANT, getX(), getEyeY() + 0.4D, getZ(),
@@ -2762,9 +2949,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         if (tickCount % 20 == 0) {
             complainIfHungry();
+            giveNativeSkills();
             tickInjury();
             Wants.tick(this);
             Commissions.tick(this);
+            if (!level().isClientSide() && !isWild() && (tickCount + getId()) % 600 < 20) {
+                dev.hominin.evolution.mind.MentalMap.memberNotices(this);
+            }
         }
         fleeTicks = Math.max(0, fleeTicks - 1);
         if (fleeTicks == 0) {
@@ -2886,18 +3077,60 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                         .withStyle(ChatFormatting.WHITE)));
     }
 
+    // ------------------------------------------------------------ what they remember
+
+    /** Places this member holds in mind: as many as their own mind has room for. */
+    private final java.util.List<dev.hominin.evolution.mind.MindData.Memory> memories = new java.util.ArrayList<>();
+    private int memorySlots;
+
+    public java.util.List<dev.hominin.evolution.mind.MindData.Memory> memories() {
+        return memories;
+    }
+
+    /** Remembers a place, unless it already knows it; with no room left, the oldest goes. */
+    public void remember(dev.hominin.evolution.mind.MindData.Memory memory) {
+        if (memorySlots == 0) {
+            String era = getStage().getPath();
+            boolean later = !era.startsWith("australopithecus") && !era.equals("ardipithecus")
+                    && !era.equals("homo_habilis") && !era.equals("homo_rudolfensis");
+            memorySlots = later ? 4 + random.nextInt(4) : 2 + random.nextInt(3);
+        }
+        for (var held : memories) {
+            if (held.kind().equals(memory.kind()) && held.pos().distSqr(memory.pos()) < 24.0D * 24.0D) {
+                return;
+            }
+        }
+        while (memories.size() >= memorySlots && !memories.isEmpty()) {
+            memories.remove(0);
+        }
+        memories.add(memory);
+    }
+
     // ------------------------------------------------------------ saving
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.put("Memories", dev.hominin.evolution.mind.MindData.Memory.listTag(memories));
+        tag.putInt("MemorySlots", memorySlots);
         tag.putInt("KnapLevel", knapLevel);
         tag.putInt("KnapPractice", knapPractice);
         tag.putInt("HuntLevel", huntLevel);
         tag.putBoolean("Antisocial", antisocial);
         tag.putBoolean("TemperRolled", temperRolled);
+        tag.putBoolean("NativeSkills", nativeSkillsGiven);
+        tag.putInt("Trouble", trouble);
+        tag.putString("GrievingFor", grievingFor);
+        tag.putString("GriefKind", griefKind);
+        tag.putBoolean("Psychopath", psychopath);
+        tag.putBoolean("PsychopathRolled", psychopathRolled);
+        tag.putBoolean("PsychopathKnown", psychopathKnown);
+        if (mother != null) {
+            tag.putUUID("Mother", mother);
+        }
         tag.putLong("InjuredUntil", injuredUntil);
         tag.putBoolean("ThoughtWhileDown", thoughtWhileDown);
+        tag.putLong("WatchUntil", watchUntil);
         tag.put("Commission", commission);
         tag.putLong("PairReadyAt", pairReadyAt);
         if (mate != null) {
@@ -2986,13 +3219,25 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        memories.clear();
+        memories.addAll(dev.hominin.evolution.mind.MindData.Memory.fromList(tag.getList("Memories", net.minecraft.nbt.Tag.TAG_COMPOUND)));
+        memorySlots = tag.getInt("MemorySlots");
         knapLevel = tag.getInt("KnapLevel");
         knapPractice = tag.getInt("KnapPractice");
         huntLevel = tag.getInt("HuntLevel");
         antisocial = tag.getBoolean("Antisocial");
         temperRolled = tag.getBoolean("TemperRolled");
+        nativeSkillsGiven = tag.getBoolean("NativeSkills");
+        trouble = tag.getInt("Trouble");
+        grievingFor = tag.getString("GrievingFor");
+        griefKind = tag.getString("GriefKind");
+        psychopath = tag.getBoolean("Psychopath");
+        psychopathRolled = tag.getBoolean("PsychopathRolled");
+        psychopathKnown = tag.getBoolean("PsychopathKnown");
+        mother = tag.hasUUID("Mother") ? tag.getUUID("Mother") : null;
         injuredUntil = tag.getLong("InjuredUntil");
         thoughtWhileDown = tag.getBoolean("ThoughtWhileDown");
+        watchUntil = tag.getLong("WatchUntil");
         commission = tag.getCompound("Commission");
         pairReadyAt = tag.contains("PairReadyAt") ? tag.getLong("PairReadyAt") : -1L;
         mate = tag.hasUUID("Mate") ? tag.getUUID("Mate") : null;

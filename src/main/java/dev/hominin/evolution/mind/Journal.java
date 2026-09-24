@@ -40,6 +40,9 @@ public final class Journal {
         stats.add("Ticks: " + Infestation.describe(player));
         stats.add("Knapping: " + dev.hominin.evolution.knapping.Acheulean.describe(player));
         stats.add("Persistence hunting: " + dev.hominin.evolution.hunt.Persistence.describe(player));
+        if (dev.hominin.evolution.survival.FoodIllness.has(player)) {
+            stats.add("Illness: " + dev.hominin.evolution.survival.FoodIllness.describe(player));
+        }
         if (dev.hominin.evolution.survival.Kuru.has(player)) {
             stats.add("Illness: " + dev.hominin.evolution.survival.Kuru.describe(player));
         }
@@ -55,8 +58,13 @@ public final class Journal {
             stats.add("Norm: your dead stay with you");
         }
         Afflictions.Affliction affliction = Afflictions.current(player);
-        stats.add("Healing: " + (affliction == null ? "nothing is stopping you"
-                : "held back by " + affliction.label().toLowerCase() + " (" + Afflictions.secondsLeft(player) + "s)"));
+        stats.add("Healing: " + (affliction == null ? "nothing is holding it back"
+                : "only to " + affliction.hearts(player) + " hearts - " + affliction.label().toLowerCase() + " ("
+                        + Afflictions.secondsLeft(player) + "s)"));
+        String body = player.getData(dev.hominin.evolution.Attachments.MIND).bodyName();
+        if (!body.isEmpty()) {
+            stats.add("You are: " + body);
+        }
         stats.add("");
 
         List<BandMember> band = Band.all(player);
@@ -66,6 +74,33 @@ public final class Journal {
                 + dev.hominin.evolution.band.Cohesion.MAX);
         stats.add(left == 0 ? "This band is the last one your species has."
                 : "You can lose " + left + " more " + (left == 1 ? "band" : "bands") + " before your species dies out.");
+        stats.add("Your band: " + dev.hominin.evolution.band.BandNames.capital(dev.hominin.evolution.band.Relations.ownName(player))
+                + "    Presence here: " + dev.hominin.evolution.band.Presence.get(player) + "/50");
+        if (dev.hominin.evolution.hunt.Predation.settled(player)) {
+            var land = dev.hominin.evolution.world.Land.ofPlayer(player);
+            stats.add("Your ground: pressure " + land.total() + "/10 - " + dev.hominin.evolution.world.Land.label(land.total()));
+        } else {
+            stats.add("Your ground: none - packed up and on the move");
+        }
+        int desperate = dev.hominin.evolution.band.Claims.ownDesperation(player);
+        stats.add("Desperation: " + desperate + "/5 - " + dev.hominin.evolution.band.Claims.desperationLabel(desperate));
+        int feared = dev.hominin.evolution.band.Claims.feared(player);
+        if (feared > 0) {
+            stats.add("Your name: " + feared + "/10 - bands think twice before trying you");
+        }
+        if (dev.hominin.evolution.band.Bands.desperateTimes(player.serverLevel())) {
+            stats.add("Desperate times: nearly every band out there is going hungry");
+        }
+        MindData mind = MentalMap.mind(player);
+        stats.add("Places held in mind: " + mind.memories().size() + "/" + mind.slots() + " (see Map)");
+        int places = dev.hominin.evolution.world.Pois.known(player).size();
+        int handed = dev.hominin.evolution.world.Pois.passedDown(player);
+        stats.add("Places the band knows: " + places + (handed > 0 ? " - handed down " + handed
+                + (handed == 1 ? " time" : " times") : "") + " (diamonds on the map)");
+        if (dev.hominin.evolution.band.ToolPiles.store(player.serverLevel(), player.getUUID()) != null) {
+            stats.add("The band's tools: " + dev.hominin.evolution.band.ToolPiles.toolsIn(player.serverLevel(),
+                    player.getUUID()) + " lying in its piles");
+        }
         if (!band.isEmpty()) {
             int total = 0;
             for (BandMember member : band) {
@@ -124,6 +159,12 @@ public final class Journal {
      */
     public static int gender(ServerPlayer player, PlayerEvolutionData data) {
         return data.getCriterionCounters().computeIfAbsent(GENDER, key -> 1 + player.getRandom().nextInt(2));
+    }
+
+    /** The body you are in now is this sex: waking as a member, or living as one for a while. */
+    public static void setFemale(ServerPlayer player, boolean female) {
+        player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters()
+                .put(GENDER, female ? 2 : 1);
     }
 
     /** Skills earned before the journal existed are credited the first time it opens. */

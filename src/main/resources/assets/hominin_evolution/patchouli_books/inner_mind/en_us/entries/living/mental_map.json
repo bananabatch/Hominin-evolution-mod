@@ -1,0 +1,24 @@
+{
+  "name": "The Mental Map",
+  "icon": "minecraft:map",
+  "category": "hominin_evolution:living",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Your journal ($(k:hominin_evolution.journal)) keeps a map of the country you have walked through. Your ground is orange; every band you know of has its ground in red. Bands, Paranthropus troops and troops of apes that trust you are always on it. Drag to look around; scroll to zoom."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A mind holds only so many places: two to four before erectus, four to seven after - new with each body. Stand somewhere and $(l)remember this place$(): a seam of stone, a lava pool, termite mounds, a hyena clan, or anywhere at all under a name of your own. Sneak-use a stone deposit and it is kept too, if there is room."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Your band remember places of their own. Ask them - $(k:hominin_evolution.social), Social, $(o)What do you remember?$() - and what they know is on your map for the rest of the day.$(br2)Pick anything on the map and follow it: the pointer at the top of your screen leads the way."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When it rains on a lava pool open to the sky, its edges cool to glass: obsidian comes back beside it, a piece at a time."
+    }
+  ]
+}

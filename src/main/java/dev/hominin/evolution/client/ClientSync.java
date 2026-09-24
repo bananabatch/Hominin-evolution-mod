@@ -20,6 +20,9 @@ public final class ClientSync {
     private static final Map<UUID, ResourceLocation> STAGES = new HashMap<>();
     /** Whether the server says this player is in developer mode. */
     public static boolean devMode;
+    /** The band's cohesion with you, and whether you have promised to do better: what the H menu offers. */
+    public static int cohesion = 35;
+    public static boolean promised;
 
     @Nullable
     public static ResourceLocation stageOf(UUID player) {

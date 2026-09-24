@@ -91,6 +91,9 @@ public final class ModTags {
         /** Anything with a worked edge that will cut rather than crush. */
         public static final TagKey<Item> CUTTING_EDGE = item("cutting_edge");
 
+        /** What gets through the hide of the biggest game: a fire-hardened spear or better. */
+        public static final TagKey<Item> BIG_GAME_WEAPONS = item("big_game_weapons");
+
         /** Meat a flake can portion. Vanilla's meat, plus the common tags other mods use. */
         public static final TagKey<Item> SPLITTABLE_MEAT = item("splittable_meat");
 

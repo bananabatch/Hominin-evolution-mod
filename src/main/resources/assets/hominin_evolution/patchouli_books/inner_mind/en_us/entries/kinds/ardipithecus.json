@@ -1,0 +1,20 @@
+{
+  "name": "Ardipithecus",
+  "icon": "minecraft:acacia_sapling",
+  "category": "hominin_evolution:kinds",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)4.4 million years ago.$() Still more at home in the trees than out of them. The hands are an ape's hands, and they make what an ape makes."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Every kind$(): leafy twigs from a tree, one in each hand and $(k:hominin_evolution.item_interact) - a piece of $(l)nest$(). Two rocks in the crafting grid - a $(l)hammerstone$(). Hold $(k:hominin_evolution.item_interact) with a bare stick to gnaw a $(l)sharpened stick$(); fish a termite mound or dead wood with a plain stick for a $(l)termite stick$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Stone$(): a rock in hand, a hammerstone in the other, $(k:hominin_evolution.item_interact). Nothing shaped comes of it - every strike is a $(l)Lomekwian core$(), a mistake that happens to have an edge, and the hands need two minutes between. It still teaches them something."
+    }
+  ]
+}

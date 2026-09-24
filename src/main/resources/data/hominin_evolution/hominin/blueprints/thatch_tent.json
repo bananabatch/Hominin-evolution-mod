@@ -1,0 +1,32 @@
+{
+  "name": "Thatch tent",
+  "order": 2,
+  "after": "hominin_evolution:small_hut",
+  "description": "A long A-frame of thatch stepped up to a ridge on a front post, closed at the back: open to the fire at the front, and room for more than one to sleep.",
+  "key": {
+    "T": "hominin_evolution:thatch_block[cured=true]",
+    "P": "hominin_evolution:building_branch"
+  },
+  "layers": [
+    ["T..P..T",
+     "T.....T",
+     "T.....T",
+     "T.....T",
+     " TTTTT "],
+    [" T.P.T ",
+     " T...T ",
+     " T...T ",
+     " T...T ",
+     "  TTT  "],
+    ["  TPT  ",
+     "  T.T  ",
+     "  T.T  ",
+     "  T.T  ",
+     "   T   "],
+    ["   T   ",
+     "   T   ",
+     "   T   ",
+     "   T   ",
+     "       "]
+  ]
+}

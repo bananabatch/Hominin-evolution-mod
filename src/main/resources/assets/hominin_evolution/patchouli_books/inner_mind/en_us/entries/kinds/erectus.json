@@ -1,0 +1,36 @@
+{
+  "name": "Homo erectus",
+  "icon": "hominin_evolution:hand_axe",
+  "category": "hominin_evolution:kinds",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)1.9 million years ago.$() Kept fire, the Acheulean, shelter: everything so far, and the first things made to make other things."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Stone$() - a rock in hand, a hammerstone in the other, $(k:hominin_evolution.item_interact): a $(l)flake$(), a $(l)chopper$(), a $(l)grinding stone$(), or the $(l)multi tool$() (8 chert, 10 basalt, 2 obsidian, or a chert hammerstone). Limestone will not take an edge: soft stone makes Lomekwian cores."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Everything habilis makes, and more. $(l)Two hands$(): a long branch and a rock - a $(l)club$(). Thatch and thatch - $(l)twine$(). A sharpened spear held in a fire, the other hand empty - a $(l)fire-hardened spear$(). Four sticks and a hide - a $(l)knapping station$(). A log and a hide - a $(l)work station$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At the $(l)knapping station$(): stone laid out on the mat, worked into a $(l)hand axe$() or a $(l)cleaver$() - the Acheulean. Good stone and practised hands make it finer: a tier from rough (4) to flawless (0). See The Language of Stone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At the $(l)work station$(), the tool slot is the recipe: a log or long branch with a hand axe - $(l)workable branches$(); one with a cleaver - a $(l)shaft$(); two down the middle with a hammerstone - a $(l)club$(); a branch and any three rocks - $(l)building branches$(); a branch and three sticks - a $(l)cooking rack$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Nine thatch, four twine in the slot - $(l)thatch blocks$(). Three hide over three thatch, ten twine - $(l)bedding$(). Three logs along the bottom, five sticks above, nothing in the slot - a $(l)fire pit$(). Thatch over a stick, three twine - a $(l)torch$(). A branch and a hammerstone side by side, ten twine - a $(l)digging stick$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Fire$(): a fire pit, filled and lit with a drill - meat laid on it cooks. Two cooking racks with a branch across and a fire under it: ribs, chunks, marrow and the rest $(l)hung to cook$(). Blueprints ($(k:hominin_evolution.build)): a small hut, then a thatch tent."
+    }
+  ]
+}

@@ -57,13 +57,53 @@ public class NestBuildGoal extends Goal {
             return false;
         }
         BlockPos origin = withLeader ? leader.blockPosition() : member.blockPosition();
+        // A roof of their own - given to them, or their mate's: the nest goes in there, or there is one already.
+        if (level instanceof net.minecraft.server.level.ServerLevel server) {
+            dev.hominin.evolution.build.Sites.Site room = dev.hominin.evolution.build.Building.roomFor(member);
+            if (room != null) {
+                if (dev.hominin.evolution.build.Building.bedIn(server, room, member) != null) {
+                    lastNestDay = day;
+                    return false;
+                }
+                BlockPos floor = dev.hominin.evolution.build.Building.floorIn(server, room);
+                if (floor != null) {
+                    cells = new BlockPos[] {floor};
+                    return true;
+                }
+            }
+        }
         // A wild band shares one nest; your own band each make their own, close around you.
         if (!withLeader && Nests.nestNearby(level, origin, SHARE_RADIUS)) {
             lastNestDay = day;
             return false;
         }
-        cells = Nests.siteNear(level, origin, withLeader ? 9 : 5, member.getRandom());
+        boolean mate = withLeader && member.isMateOf(leader.getUUID());
+        if (mate && level instanceof net.minecraft.server.level.ServerLevel server && leaderHasNest(server, leader)) {
+            // Your mate sleeps in yours.
+            lastNestDay = day;
+            return false;
+        }
+        // A mate makes theirs right beside you.
+        cells = Nests.siteNear(level, origin, mate ? 4 : withLeader ? 9 : 5, member.getRandom());
+        // Not in anyone's building - a store least of all.
+        if (cells != null && level instanceof net.minecraft.server.level.ServerLevel server
+                && dev.hominin.evolution.build.Building.anyBuilt(server, cells)) {
+            cells = null;
+        }
         return cells != null;
+    }
+
+    /** Whether the leader has a finished nest or bed of their own close by. */
+    private static boolean leaderHasNest(net.minecraft.server.level.ServerLevel level, Player leader) {
+        BlockPos at = leader.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(at.offset(-12, -3, -12), at.offset(12, 3, 12))) {
+            var state = level.getBlockState(pos);
+            if ((state.is(ModBlocks.NEST.get()) && Nests.isComplete(level, pos) || state.is(ModBlocks.THATCH_BEDDING.get()))
+                    && leader.getUUID().equals(dev.hominin.evolution.block.NestOwners.ownerOf(level, pos))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -81,6 +121,11 @@ public class NestBuildGoal extends Goal {
 
     @Override
     public void stop() {
+        if (cells != null && placed >= cells.length && !member.isWild() && !member.isOnWatch()) {
+            // The nest is made: that is the day done. No more wandering off.
+            member.turnIn();
+            dev.hominin.evolution.band.Lines.say(member, "turn_in");
+        }
         cells = null;
         member.getNavigation().stop();
     }
@@ -105,6 +150,10 @@ public class NestBuildGoal extends Goal {
                 cells.length > 2 && cells[2].getX() != cells[0].getX() ? Direction.EAST : Direction.SOUTH);
         if (level.getBlockState(next).canBeReplaced() && state.canSurvive(level, next)) {
             level.setBlock(next, state, 3);
+            if (level instanceof net.minecraft.server.level.ServerLevel server) {
+                // Theirs: nobody else lies down in it.
+                dev.hominin.evolution.block.NestOwners.set(server, next, member.getUUID());
+            }
             level.playSound(null, next, SoundEvents.GRASS_PLACE, SoundSource.NEUTRAL, 0.8F, 0.9F);
             member.swing(InteractionHand.MAIN_HAND);
         }

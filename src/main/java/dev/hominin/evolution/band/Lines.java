@@ -44,6 +44,8 @@ public final class Lines {
 
     static {
         // ---------------------------------------------------------------- said aloud
+        pool("built", "Look at it. Out of the rain at last.", "We made that. All of us.",
+                "A roof! I've never slept under one.", "Now that is a place to come back to.");
         pool("bone", "Sweet, a bone!", "There is still marrow in this one!", "Bones! Nobody has cracked these yet.",
                 "Look what the hyenas left us.", "This one still has meat on it.", "Plenty of bone here. Bring a stone.",
                 "Somebody else did the killing. We get the best part.", "Good heavy bones. Full ones.",
@@ -60,10 +62,23 @@ public final class Lines {
                 "I had food. I know I had food.", "Who took it? Who?");
         pool("season_dry", "Everything is dry. We have to be careful now.", "The water holes are shrinking.",
                 "It's going to be a hard few days.", "The herds are moving off. The rain has gone with them.");
+        pool("turn_in", "I'm going to sleep. I won't be wandering further.",
+                "I'm going to sleep now. I won't be wandering any further tonight.",
+                "That's me for the night. I'm going to sleep - I won't wander.");
         pool("season_green", "The rain is back! Look at it all.", "Everything is green again.",
                 "There will be plenty now. Eat while you can.", "Good days. Finally.");
 
         // ---------------------------------------------------------------- narrated: " <does something>"
+        pool("pile_take", " takes a %s from the band's tool pile.", " goes to the pile and picks out a %s.",
+                " has nothing to work with, and fetches a %s from the pile.");
+        pool("pile_put", " puts a spare tool back on the pile.", " lays what they do not need on the tool pile.",
+                " adds a tool to the pile for whoever needs it next.");
+        pool("store_take", " goes to the store and takes a few mouthfuls.", " helps themselves from the store.",
+                " is hungry, and eats from what the band put by.");
+        pool("store_put", " puts what they cannot eat by in the store.", " lays spare food in the store for later.",
+                " adds to the store - more than they can carry, let alone eat.");
+        pool("store_marrow", " takes a bone from the store and cracks it for the marrow.",
+                " finds nothing to eat in the store but a bone, and breaks it open on a stone.");
         pool("scavenge_go", " has smelled a kill, and goes to find it.",
                 " catches the smell of something dead on the wind and slips off after it.",
                 " has seen vultures circling, and goes to look.",

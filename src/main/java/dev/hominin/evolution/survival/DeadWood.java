@@ -24,18 +24,20 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 /**
  * Cracking a dead trunk for grubs. A decaying log pulled open by hand has beetle larvae in the
- * soft wood - up to three - and is left hollowed out. A dead tree only has so much in it: two logs'
- * worth, and then it has given everything it had.
+ * soft wood - up to three - and a little under half the time it comes apart into a hollow log. A dead
+ * tree only has so much in it: two logs' worth within a few blocks of each other, branches and all,
+ * and then it has given everything it had.
  */
 public final class DeadWood extends SavedData {
     private static final String NAME = "hominin_evolution_dead_wood";
-    /** Logs worth cracking in one dead tree. */
+    /** Logs worth cracking in one dead tree - counted over everything within a few blocks, not per trunk. */
     private static final int PER_TREE = 2;
-    /** How far down to look for the foot of the trunk. */
-    private static final int TRUNK_REACH = 32;
+    private static final int TREE_REACH = 5;
+    /** How often a cracked log comes apart into a hollow one; otherwise it stays as it was. */
+    private static final float HOLLOW_CHANCE = 0.45F;
     private static final float EMPTY_CHANCE = 0.2F;
 
-    /** Per tree, by the position of the foot of its trunk: how many logs have been cracked. */
+    /** Every log cracked, by position, and how many times (old saves counted per trunk foot). */
     private final Map<Long, Integer> cracked = new HashMap<>();
 
     private static DeadWood of(ServerLevel level) {
@@ -66,17 +68,17 @@ public final class DeadWood extends SavedData {
         return tag;
     }
 
-    private static boolean isDeadWood(BlockState state) {
-        return state.is(ModBlocks.DECAYING_LOG.get()) || state.is(ModBlocks.DECAYED_LOG.get());
-    }
-
-    /** The foot of the dead trunk this log belongs to. */
-    private static BlockPos footOf(ServerLevel level, BlockPos pos) {
-        BlockPos.MutableBlockPos at = pos.mutable();
-        for (int i = 0; i < TRUNK_REACH && isDeadWood(level.getBlockState(at.below())); i++) {
-            at.move(net.minecraft.core.Direction.DOWN);
+    /** How many logs have been cracked within a few blocks of this one: the whole tree, branches and all. */
+    private int crackedNear(BlockPos pos) {
+        int count = 0;
+        for (var entry : cracked.entrySet()) {
+            BlockPos at = BlockPos.of(entry.getKey());
+            if (Math.abs(at.getX() - pos.getX()) <= TREE_REACH && Math.abs(at.getZ() - pos.getZ()) <= TREE_REACH
+                    && Math.abs(at.getY() - pos.getY()) <= TREE_REACH * 2) {
+                count += entry.getValue();
+            }
         }
-        return at.immutable();
+        return count;
     }
 
     /** Pulls a decaying log open. Returns true if that is what the click did. */
@@ -87,20 +89,21 @@ public final class DeadWood extends SavedData {
             return false;
         }
         DeadWood data = of(level);
-        long tree = footOf(level, pos).asLong();
-        int done = data.cracked.getOrDefault(tree, 0);
+        int done = data.crackedNear(pos);
         if (done >= PER_TREE) {
             player.displayClientMessage(Component.literal(
                     "You have had everything this tree had to give. Find another dead one."), true);
             return true;
         }
-        data.cracked.put(tree, done + 1);
+        data.cracked.merge(pos.asLong(), 1, Integer::sum);
         data.setDirty();
-        BlockState hollow = ModBlocks.DECAYED_LOG.get().defaultBlockState();
-        if (state.hasProperty(RotatedPillarBlock.AXIS)) {
-            hollow = hollow.setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
+        if (level.random.nextFloat() < HOLLOW_CHANCE) {
+            BlockState hollow = ModBlocks.DECAYED_LOG.get().defaultBlockState();
+            if (state.hasProperty(RotatedPillarBlock.AXIS)) {
+                hollow = hollow.setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
+            }
+            level.setBlock(pos, hollow, 3);
         }
-        level.setBlock(pos, hollow, 3);
         level.playSound(null, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0F, 0.8F);
         level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D,
                 pos.getZ() + 0.5D, 16, 0.3D, 0.3D, 0.3D, 0.05D);

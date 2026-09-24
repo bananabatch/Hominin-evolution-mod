@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_torch",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "torch": "hominin_evolution:block/placed_torch"
+  }
+}

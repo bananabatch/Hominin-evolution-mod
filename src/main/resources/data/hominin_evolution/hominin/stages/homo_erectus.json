@@ -27,6 +27,11 @@
         "id": "knapping_level_2",
         "description": "Become a level 2 knapper (make Acheulean tools).",
         "count": 1
+      },
+      {
+        "id": "build_structure",
+        "description": "Build a structure from a blueprint (O).",
+        "count": 1
       }
     ],
     "optional_pool": [

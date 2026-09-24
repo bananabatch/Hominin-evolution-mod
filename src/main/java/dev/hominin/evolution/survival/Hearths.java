@@ -30,12 +30,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
 /**
- * Fire as something kept, not found. From erectus a fire drill lights a hearth rather than a
- * flash of flame, and a hearth burns for as long as somebody feeds it: sticks, branches, grass,
- * logs. Let it go and it dies to ash; relight it with a drill.
+ * Fire as something kept, not found. A hearth is a fire pit (see
+ * {@link dev.hominin.evolution.block.FirePitBlockEntity}) - or, in a world from before there were fire pits,
+ * a campfire - and it burns for as long as somebody feeds it.
  *
- * <p>It cooks - a hearth is a campfire, and meat laid on it comes off cooked - and at night
- * nothing that hunts will come into its light.
+ * <p>It cooks, and at night nothing that hunts will come into its light.
  */
 public final class Hearths extends SavedData {
     private static final String NAME = "hominin_hearths";
@@ -83,6 +82,29 @@ public final class Hearths extends SavedData {
         Hearths hearths = of(level);
         hearths.burnsOutAt.put(pos.immutable(), level.getGameTime() + LIGHT_FUEL);
         hearths.setDirty();
+    }
+
+    /** A fire pit has caught: it is a hearth for as long as it burns. The pit keeps its own time. */
+    public static void pitLit(ServerLevel level, BlockPos pos) {
+        Hearths hearths = of(level);
+        hearths.burnsOutAt.put(pos.immutable(), Long.MAX_VALUE);
+        hearths.setDirty();
+    }
+
+    public static void pitOut(ServerLevel level, BlockPos pos) {
+        Hearths hearths = of(level);
+        if (hearths.burnsOutAt.remove(pos) != null) {
+            hearths.setDirty();
+        }
+    }
+
+    /** A campfire or fire pit, burning. */
+    public static boolean isLitHearth(BlockState state) {
+        if (state.is(Blocks.CAMPFIRE)) {
+            return state.getValue(CampfireBlock.LIT);
+        }
+        return state.is(dev.hominin.evolution.ModBlocks.FIRE_PIT.get())
+                && state.getValue(dev.hominin.evolution.block.FirePitBlock.LIT);
     }
 
     /** How long this feeds a fire for, in ticks; zero if it does not burn. */
@@ -157,6 +179,14 @@ public final class Hearths extends SavedData {
                 continue;
             }
             BlockState state = level.getBlockState(pos);
+            if (state.is(dev.hominin.evolution.ModBlocks.FIRE_PIT.get())) {
+                // A pit keeps its own time; it only has to still be burning.
+                if (!isLitHearth(state)) {
+                    it.remove();
+                    changed = true;
+                }
+                continue;
+            }
             if (!state.is(Blocks.CAMPFIRE)) {
                 it.remove();
                 changed = true;
@@ -188,8 +218,7 @@ public final class Hearths extends SavedData {
         BlockPos best = null;
         for (BlockPos pos : hearths.burnsOutAt.keySet()) {
             if (pos.closerToCenterThan(player.position(), radius) && level.isLoaded(pos)
-                    && level.getBlockState(pos).is(Blocks.CAMPFIRE)
-                    && level.getBlockState(pos).getValue(CampfireBlock.LIT)) {
+                    && isLitHearth(level.getBlockState(pos))) {
                 if (best == null || pos.distToCenterSqr(player.position()) < best.distToCenterSqr(player.position())) {
                     best = pos;
                 }
@@ -252,5 +281,52 @@ public final class Hearths extends SavedData {
 
     public static void forget(UUID player) {
         nights.remove(player);
+    }
+
+    // ------------------------------------------------------------ what dies burning
+
+    /**
+     * Anything a thrown torch set burning that dies of it comes apart cooked - mostly. Four pieces in ten
+     * were in the flames too long.
+     */
+    public static void onDrops(net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) {
+        net.minecraft.world.entity.LivingEntity dead = event.getEntity();
+        if (dead.level().isClientSide()) {
+            return;
+        }
+        long torched = dead.getPersistentData().getLong(dev.hominin.evolution.entity.ThrownTorch.TORCHED);
+        if (torched <= 0L || dead.level().getGameTime() - torched > 600L) {
+            return;
+        }
+        java.util.List<net.minecraft.world.entity.item.ItemEntity> charred = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.item.ItemEntity drop : event.getDrops()) {
+            ItemStack stack = drop.getItem();
+            if (!isRawMeat(stack)) {
+                continue;
+            }
+            int burnt = 0;
+            for (int i = 0; i < stack.getCount(); i++) {
+                if (dead.getRandom().nextFloat() < 0.4F) {
+                    burnt++;
+                }
+            }
+            int cooked = stack.getCount() - burnt;
+            if (cooked > 0) {
+                drop.setItem(new ItemStack(ModItems.COOKED_MEAT_CHUNK.get(), cooked));
+                if (burnt > 0) {
+                    charred.add(new net.minecraft.world.entity.item.ItemEntity(dead.level(), drop.getX(), drop.getY(),
+                            drop.getZ(), new ItemStack(ModItems.CHARRED_MEAT.get(), burnt)));
+                }
+            } else {
+                drop.setItem(new ItemStack(ModItems.CHARRED_MEAT.get(), burnt));
+            }
+        }
+        event.getDrops().addAll(charred);
+    }
+
+    private static boolean isRawMeat(ItemStack stack) {
+        return stack.is(ModItems.MEAT_CHUNK.get()) || stack.is(net.neoforged.neoforge.common.Tags.Items.FOODS_RAW_MEAT)
+                || stack.is(Items.BEEF) || stack.is(Items.PORKCHOP) || stack.is(Items.MUTTON) || stack.is(Items.CHICKEN)
+                || stack.is(Items.RABBIT);
     }
 }

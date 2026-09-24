@@ -31,11 +31,32 @@ public final class Social {
         DANGER("Danger"),
         TOGETHER("Social"),
         CULTURE("Culture"),
+        OTHERS("The others"),
         DEVELOPER("Developer");
 
         private final String label;
 
         Topic(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+    }
+
+    /** The Developer tab is too long for one list: it is split up by what the commands are about. */
+    public enum DevSection {
+        BAND("Your band"),
+        YOU("You"),
+        WORLD("The world"),
+        OTHERS("Other bands"),
+        PLACES("Places and tools"),
+        BUILDING("Building");
+
+        private final String label;
+
+        DevSection(String label) {
             this.label = label;
         }
 
@@ -50,7 +71,7 @@ public final class Social {
         ITEM("I need an item...", Topic.THINGS),
         TRADE("Trade...", Topic.THINGS),
         KNAP("Knap me a tool...", Topic.THINGS),
-        PASS_AROUND("Pass around what I'm holding", Topic.THINGS),
+        PASS_AROUND("Split what I'm holding between you", Topic.FOOD),
         GIVE("Here, take this (what I'm holding)", Topic.THINGS),
         LEAD_STONE("Show me good stone", Topic.THINGS),
         LEAD_OBSIDIAN("Show me obsidian", Topic.THINGS),
@@ -59,38 +80,106 @@ public final class Social {
         HUNT("Let's hunt together", Topic.DANGER),
         NO_HUNT("Don't hunt with me", Topic.DANGER),
         CLIMB("Let's climb a tree / All clear", Topic.DANGER),
+        WATCH("Keep watch with me tonight", Topic.DANGER),
         GROOM("Groom them", Topic.TOGETHER),
         GROOM_ME("Get these off me", Topic.TOGETHER),
         PLAY("Let's play", Topic.TOGETHER),
         TEACH("Teach...", Topic.TOGETHER),
-        SHARE("Let's share food", Topic.TOGETHER),
+        SHARE("Let's share food", Topic.FOOD),
         INFO("Info", Topic.TOGETHER),
         TRIBE("Tribe stats", Topic.TOGETHER),
         PROMISE("I'll do better", Topic.TOGETHER),
+        ASK_MEMORIES("What do you remember?", Topic.TOGETHER),
         SHUN("Shun them", Topic.TOGETHER),
         MAKE_MATE("Be my mate", Topic.TOGETHER),
+        SWAP("Let me live as you for a while", Topic.TOGETHER),
         HAVE_CHILD("Let's have a child", Topic.TOGETHER),
         CULTURE("Our ways: morals and norms", Topic.CULTURE),
-        DEV_BOND_UP("Bond +5 (whoever's listening)", Topic.DEVELOPER),
-        DEV_BOND_DOWN("Bond -5 (whoever's listening)", Topic.DEVELOPER),
-        DEV_COHESION("Band cohesion +10", Topic.DEVELOPER),
-        DEV_COHESION_DOWN("Band cohesion -10", Topic.DEVELOPER),
-        DEV_TROOP_TRUST("Nearest troop: trusts you", Topic.DEVELOPER),
-        DEV_TROOP_GRUDGE("Nearest troop: grudge", Topic.DEVELOPER),
-        DEV_TICKS_UP("Ticks +3", Topic.DEVELOPER),
-        DEV_HEAL_CLEAR("Clear ticks and afflictions", Topic.DEVELOPER),
-        DEV_WATER("Fill water", Topic.DEVELOPER),
-        DEV_SKILLS_ALL("Learn every skill", Topic.DEVELOPER),
-        DEV_SKILLS_NONE("Forget every skill", Topic.DEVELOPER),
-        DEV_TRAINING("Max play training", Topic.DEVELOPER),
-        DEV_TEACH_BAND("Teach the band every skill", Topic.DEVELOPER);
+        // ------------------------------------------------ developer: your band
+        DEV_BOND_UP("Bond +5", DevSection.BAND),
+        DEV_BOND_DOWN("Bond -5", DevSection.BAND),
+        DEV_COHESION("Cohesion +10", DevSection.BAND),
+        DEV_COHESION_DOWN("Cohesion -10", DevSection.BAND),
+        DEV_SPAWN_MEMBER("Add a member", DevSection.BAND),
+        DEV_KILL_MEMBER("Kill one member", DevSection.BAND),
+        DEV_MAKE_MATE("Make them my mate", DevSection.BAND),
+        DEV_MEMBER_FOOD("Give a member 24 food", DevSection.BAND),
+        DEV_TRAINING("Max play training", DevSection.BAND),
+        DEV_TEACH_BAND("Teach band every skill", DevSection.BAND),
+        DEV_TROUBLED("Make one troubled", DevSection.BAND),
+        DEV_SOUR("Make one gone sour", DevSection.BAND),
+        DEV_PSYCHOPATH("Make one a psychopath", DevSection.BAND),
+        DEV_WHO_PSYCHOPATH("Who is the psychopath?", DevSection.BAND),
+        DEV_PSYCHOPATH_LEAVES("Psychopath leaves now", DevSection.BAND),
+        // ------------------------------------------------ developer: you
+        DEV_TICKS_UP("Ticks +3", DevSection.YOU),
+        DEV_HEAL_CLEAR("Clear ticks, afflictions", DevSection.YOU),
+        DEV_SPOIL_HELD("Spoil the meat I hold", DevSection.YOU),
+        DEV_FOOD_ILL("Make me sick (bad meat)", DevSection.YOU),
+        DEV_WATER("Fill water", DevSection.YOU),
+        DEV_FEED("Fill food", DevSection.YOU),
+        DEV_FOOD_PILE("Give me 24 food", DevSection.YOU),
+        DEV_PRESENCE_UP("Presence +10", DevSection.YOU),
+        DEV_PRESENCE_DOWN("Presence -10", DevSection.YOU),
+        DEV_NAME_UP("Your name +2", DevSection.YOU),
+        DEV_SKILLS_ALL("Learn every skill", DevSection.YOU),
+        DEV_SKILLS_NONE("Forget every skill", DevSection.YOU),
+        DEV_RARE("Give me the rare things", DevSection.YOU),
+        DEV_TOOLS("Give me stone tools", DevSection.YOU),
+        // ------------------------------------------------ developer: the world
+        DEV_DUSK("Time: dusk", DevSection.WORLD),
+        DEV_MORNING("Time: morning", DevSection.WORLD),
+        DEV_SEASON_NEXT("Other season", DevSection.WORLD),
+        DEV_SUPER_DRY("Super dry season", DevSection.WORLD),
+        DEV_VERY_PROSPEROUS("Very prosperous season", DevSection.WORLD),
+        DEV_DESPERATE("Desperate times on/off", DevSection.WORLD),
+        DEV_TROOP_TRUST("Nearest troop: trust", DevSection.WORLD),
+        DEV_TROOP_GRUDGE("Nearest troop: grudge", DevSection.WORLD),
+        DEV_SPAWN_TROOP("Baboon troop nearby", DevSection.WORLD),
+        DEV_SPAWN_HERD("Megafauna herd nearby", DevSection.WORLD),
+        // ------------------------------------------------ developer: other bands
+        DEV_SPAWN_BAND("A new band nearby", DevSection.OTHERS),
+        DEV_ALLY("Nearest band: allies", DevSection.OTHERS),
+        DEV_HOSTILE("Nearest band: hostile", DevSection.OTHERS),
+        DEV_DESPERATION("Nearest: desperation +1", DevSection.OTHERS),
+        DEV_NIGHT_RAID("Night raid now", DevSection.OTHERS),
+        DEV_FOOD_RAID("Food raid now", DevSection.OTHERS),
+        DEV_TRADE_VISIT("Ally trade visit now", DevSection.OTHERS),
+        DEV_KILL_BAND("A band dies", DevSection.OTHERS),
+        DEV_PLIGHT("An ally is attacked", DevSection.OTHERS),
+        DEV_RESCUE("Allies come to you", DevSection.OTHERS),
+        // ------------------------------------------------ developer: places and tools
+        DEV_REVEAL_PLACES("Know places in 400", DevSection.PLACES),
+        DEV_FORGET_PLACES("Forget all places", DevSection.PLACES),
+        DEV_LOSE_PLACES("Lose places as band", DevSection.PLACES),
+        DEV_NEXT_PLACE("Lead: nearest unknown", DevSection.PLACES),
+        DEV_PLACE_SPRING("A spring here", DevSection.PLACES),
+        DEV_PLACE_LICK("A salt lick here", DevSection.PLACES),
+        DEV_PLACE_DEPOSIT("A tool deposit here", DevSection.PLACES),
+        DEV_TOOL_PILE("A full tool pile here", DevSection.PLACES),
+        // ------------------------------------------------ developer: building
+        DEV_BUILD_FINISH("Finish nearest build", DevSection.BUILDING),
+        DEV_BUILD_MATERIALS("Thatch, posts and hide", DevSection.BUILDING),
+        DEV_BUILD_UNLOCK("Unlock every blueprint", DevSection.BUILDING),
+        DEV_BUILD_ASK("Ask what it's for again", DevSection.BUILDING),
+        DEV_BUILD_CLEAR("Forget my builds", DevSection.BUILDING),
+        DEV_BUILD_SUGGEST("Someone suggests a build", DevSection.BUILDING);
 
         private final String label;
         private final Topic topic;
+        @Nullable
+        private final DevSection section;
 
         Command(String label, Topic topic) {
             this.label = label;
             this.topic = topic;
+            this.section = null;
+        }
+
+        Command(String label, DevSection section) {
+            this.label = label;
+            this.topic = Topic.DEVELOPER;
+            this.section = section;
         }
 
         public String label() {
@@ -99,6 +188,11 @@ public final class Social {
 
         public Topic topic() {
             return topic;
+        }
+
+        @Nullable
+        public DevSection section() {
+            return section;
         }
 
         @Nullable
@@ -177,6 +271,7 @@ public final class Social {
             case CULTURE -> Morals.send(player);
             case TRIBE -> sendTribe(player);
             case PROMISE -> Cohesion.promise(player);
+            case ASK_MEMORIES -> dev.hominin.evolution.mind.MentalMap.askAround(player);
             case PASS_AROUND -> Mood.passAround(player);
             case SHUN -> {
                 if (individual) {
@@ -186,6 +281,16 @@ public final class Social {
             case MAKE_MATE -> {
                 if (individual) {
                     Mating.makeMate(player, first);
+                }
+            }
+            case SWAP -> {
+                if (individual) {
+                    Band.swapInto(player, first);
+                }
+            }
+            case WATCH -> {
+                if (individual) {
+                    Band.keepWatch(player, first);
                 }
             }
             case HAVE_CHILD -> {
@@ -269,7 +374,13 @@ public final class Social {
         }
     }
 
+    /** Said to the other band as a whole, even with your own band standing round you. */
+    public static final int OTHER_BAND = -2;
+
     private static List<BandMember> listeners(ServerPlayer player, int entityId) {
+        if (entityId == OTHER_BAND) {
+            return nearestOtherBand(player);
+        }
         if (entityId >= 0) {
             if (player.level().getEntity(entityId) instanceof BandMember member && member.isAlive()
                     && member.distanceToSqr(player) <= INDIVIDUAL_RADIUS * INDIVIDUAL_RADIUS) {
@@ -725,6 +836,19 @@ public final class Social {
         if (member.isAntisocial()) {
             lines.add("Antisocial: steals, hoards, begs, will not teach, picks fights (erectus: Shun them)");
         }
+        if (member.getTrouble() == Troubles.TROUBLED) {
+            lines.add("Grieving " + (member.getGrievingFor().isEmpty() ? "someone" : member.getGrievingFor())
+                    + " - they have not been the same since. Look after them.");
+        } else if (member.getTrouble() == Troubles.SOUR) {
+            lines.add("Gone sour since " + (member.getGrievingFor().isEmpty() ? "they lost someone"
+                    : member.getGrievingFor() + " died") + ". Hang out with them.");
+        }
+        String sign = Psychopaths.signOf(member);
+        if (sign != null) {
+            lines.add(sign);
+        }
+        lines.add(Relations.speciesName(member.getStage()) + (Species.abilities(member.getStage()).isEmpty() ? ""
+                : " - " + Species.abilities(member.getStage())));
         lines.add("Knapping: level " + member.getKnapLevel() + " "
                 + dev.hominin.evolution.hunt.Persistence.knappingWord(member.getKnapLevel()));
         lines.add("Persistence hunting: level " + member.getHuntLevel() + " "
@@ -769,6 +893,7 @@ public final class Social {
         List<String> lines = new ArrayList<>();
         long children = band.stream().filter(BandMember::isBaby).count();
         int cohesion = Cohesion.get(player);
+        lines.add(BandNames.capital(Relations.ownName(player)));
         lines.add("Cohesion: " + cohesion + "/" + Cohesion.MAX + " - " + Cohesion.label(cohesion)
                 + (Cohesion.promised(player) ? " (you promised to do better)" : ""));
         String need = Needs.describe(player);
@@ -794,8 +919,18 @@ public final class Social {
                 + (dev.hominin.evolution.survival.Drought.isActive(player.level()) ? " (a dry day)" : ""));
         float days = dev.hominin.evolution.hunt.Predation.daysOnGround(player);
         lines.add(String.format(java.util.Locale.ROOT, "On this ground: %.1f days", days)
-                + (days >= 2.0F ? " - too long, everything here knows you. Move on 200 blocks."
-                        : days >= 1.5F ? " - move on soon (2 is too long)" : " (2 is too long)"));
+                + (days >= 4.5F ? " - everything here knows you; hold it, or move on 200 blocks"
+                        : days >= 4.0F ? " - they will start testing you at 4.5" : " (at 4.5 they start testing you)"));
+        int presence = Presence.get(player);
+        lines.add("Presence: " + presence + "/" + Presence.MAX + " - " + Presence.label(presence));
+        if (dev.hominin.evolution.hunt.Predation.settled(player)) {
+            var land = dev.hominin.evolution.world.Land.ofPlayer(player);
+            lines.add("Your ground's pressure: " + land.total() + "/10 - " + String.join(", ", land.describe(player)));
+        }
+        int desperate = Claims.ownDesperation(player);
+        lines.add("Desperation: " + desperate + "/5 - " + Claims.desperationLabel(desperate));
+        long known = Bands.all(player.serverLevel()).stream().filter(b -> b.knownTo(player.getUUID())).count();
+        lines.add("Other bands you know of: " + known + " (H: The others)");
         lines.add("Your hands: knapping " + dev.hominin.evolution.knapping.Acheulean.level(player)
                 + ", persistence hunting " + dev.hominin.evolution.hunt.Persistence.level(player));
 
@@ -882,6 +1017,8 @@ public final class Social {
             StringBuilder line = new StringBuilder(member.getName().getString())
                     .append(member.isFemale() ? " (F)" : " (M)")
                     .append(member.isAntisocial() ? " ANTISOCIAL" : "")
+                    .append(member.getTrouble() == Troubles.TROUBLED ? " - grieving" : "")
+                    .append(member.isPsychopathKnown() ? " - you know what they are" : "")
                     .append(" - bond ").append(member.getBond())
                     .append(" - knap ").append(member.getKnapLevel()).append(", hunt ").append(member.getHuntLevel());
             String mate = Mating.mateName(member, player.serverLevel());
@@ -896,7 +1033,7 @@ public final class Social {
             lines.add(link(member, line.toString()));
         }
         lines.add("");
-        lines.add("(Click a name to find them.)");
+        lines.add("(Click a name to find them. Hover one and press P if you think they are using everyone.)");
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new dev.hominin.evolution.network.MemberInfoPayload("Your band", lines));
     }
@@ -1071,7 +1208,7 @@ public final class Social {
                 .withStyle(ChatFormatting.GOLD), true);
     }
 
-    private static void askToTravel(ServerPlayer player, BandMember member) {
+    static void askToTravel(ServerPlayer player, BandMember member) {
         if (Paranthropus.is(member)) {
             say(player, "Paranthropus go their own way. They will show you the way somewhere, but not walk with you.");
             return;
@@ -1089,13 +1226,12 @@ public final class Social {
             return;
         }
         if (!Territory.willTravelWith(member, player)) {
-            say(player, member.getName().getString() + "'s band keep their distance. You have been taking from their ground.");
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "(Trade them something worth having, and they will share it with you.)")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Relations.travelRefusal(player, member))
+                    .withStyle(ChatFormatting.GOLD));
             return;
         }
         Territory.grantAccess(member, player);
+        Relations.travelled(player, member);
         UUID band = member.getBandId();
         BandMember alpha = member;
         for (BandMember other : Band.near(member, 32.0D)) {

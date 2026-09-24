@@ -1,0 +1,40 @@
+{
+  "name": "Places and Tools",
+  "icon": "hominin_evolution:quartz_crystal",
+  "category": "hominin_evolution:living",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Some places are worth knowing, and your $(l)band$() knows them - not your head. They take up no room in mind, they are on your map as $(l)diamonds$() for as long as the band lives, and when you evolve they are handed down to the next kind of you.$(br2)Every place adds to the pressure on the ground it lies in: settle by one and others will want your ground."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)$(l)Fertile ground$() and $(l)breeding grounds$(): hidden - you work out what they are.$(li)A $(l)termite super colony$().$(li)An $(l)obsidian pool$(): lava, and glass at its edge.$(li)A $(l)spring$(): it never runs dry.$(li)A $(l)salt lick$().$(li)An $(l)old tool deposit$() (after habilis): a dead band's tools, or somebody's from long ago."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Walk into a place your band does not know and you will get the feeling: $(o)this place is worth keeping in mind$(). Hold $(k:hominin_evolution.think) where you are to think on it - it costs nothing - and the band knows it from then on.$(br2)A new band always knows one place of its own; so does every band out there - one or two."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Allies share.$() Stand with a band (allies, 45 and up) and be near its people, and it tells you everywhere it knows - and learns everywhere you do.$(br2)Or tell them: $(o)Tell of places$() in The others (near them, not unfriendly). Knowing where things are is worth more to a band than food, and it thinks better of you for it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When your band dies, what it knew dies with it: the diamonds are gone from your map. But a band that stood with yours will still know you - a familiar face, 15 standing down, not a stranger. Win it round (friendly will do) and it remembers the places your old band showed it; stand with it again and you get everything it knows besides."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "On your own ground, $(l)sneak-use the ground$() with a stone tool - or a $(l)bone$(), put by for its marrow - and it is laid down there. The first one is where the band keeps its tools, marked on your map. Eight to a pile, any mix, and the rest go beside it.$(br2)$(l)Hit a pile$() (or look at it and press $(k:hominin_evolution.item_interact)) to see what is in it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The menu shows each thing: its stone, quality, wear, who laid it, and who laid the pile first. Mark yours for everyone, you alone, or those close to you (bond 4+). $(l)Relocate$() gathers the whole pile up to set down elsewhere - soon, if any of it is others', or the band minds. Keep two of a kind that are not yours and they notice."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)spring$() gives twice the water, clean, even on the driest day - and at dusk the grazers come to drink. At a $(l)salt lick$() they come at first light; use the pale crust bare-handed for a lick of salt yourself, once a day. An $(l)old tool deposit$() is anybody's: worn tools, but stone is stone."
+    }
+  ]
+}

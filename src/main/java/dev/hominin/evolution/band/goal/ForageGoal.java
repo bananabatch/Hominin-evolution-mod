@@ -137,6 +137,7 @@ public class ForageGoal extends Goal {
             int finds = dev.hominin.evolution.band.Cohesion.perfect(member.leaderPlayer()) ? 2 : 1;
             member.addToInventory(new ItemStack(insects[member.getRandom().nextInt(insects.length)], finds));
             dev.hominin.evolution.band.Band.contribute(member, "forage_biomes");
+            dev.hominin.evolution.band.RareFinds.memberForaged(member);
         }
         spot = null;
     }

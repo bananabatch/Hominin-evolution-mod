@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "minecraft:dead_bush"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.bad_luck.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.bad_luck.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

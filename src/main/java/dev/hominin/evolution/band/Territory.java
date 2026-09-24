@@ -90,6 +90,12 @@ public final class Territory {
             if (claim != null && claim.granted()) {
                 continue;
             }
+            Bands.Record record = Bands.get(player.serverLevel(), band);
+            int standing = record == null ? Relations.NEUTRAL : Relations.standing(player, record);
+            // A band that likes you does not turn you away in hard times; one that does not like you gives nothing.
+            if ((hard && standing >= 40) || (!hard && standing < Relations.NEUTRAL)) {
+                continue;
+            }
             UUID key = new UUID(band.getMostSignificantBits() ^ player.getUUID().getMostSignificantBits(),
                     band.getLeastSignificantBits() ^ season);
             if (metThisSeason.containsKey(key)) {
@@ -133,9 +139,8 @@ public final class Territory {
         if (claim == null || claim.granted()) {
             return;
         }
+        // Whether they share their ground is a matter of standing now (see Relations.welcomes).
         claims.put(band, new Claim(claim.home(), 0, true, claim.lastWord()));
-        player.sendSystemMessage(Component.literal(member.getName().getString()
-                + "'s band will share their water and stone with you now.").withStyle(ChatFormatting.GREEN));
     }
 
     /**
@@ -143,26 +148,8 @@ public final class Territory {
      * will have noticed.
      */
     public static void usedResource(ServerPlayer player, BlockPos where) {
-        for (BandMember member : Band.near(player, HOME_RADIUS)) {
-            UUID band = member.getBandId();
-            // Paranthropus do not claim ground by word - they just strip it (see Paranthropus.forageShare).
-            if (!member.isWild() || band == null || member.isGuestOf(player) || Paranthropus.is(member)) {
-                continue;
-            }
-            Claim claim = claims.get(band);
-            BlockPos home = claim == null ? member.blockPosition() : claim.home();
-            if (home.distSqr(where) > HOME_RADIUS * HOME_RADIUS) {
-                continue;
-            }
-            boolean granted = claim != null && claim.granted();
-            long lastWord = claim == null ? 0L : claim.lastWord();
-            int uses = (claim == null ? 0 : claim.uses()) + (granted ? 0 : 1);
-            claims.put(band, new Claim(home, uses, granted, lastWord));
-            if (!granted) {
-                maybeSpeak(player, member, band, uses);
-            }
-            return;
-        }
+        // Every band's ground is its own now, with a standing for everyone who uses it: see Relations.
+        Relations.usedResource(player, where);
     }
 
     private static void maybeSpeak(ServerPlayer player, BandMember member, UUID band, int uses) {
@@ -210,6 +197,7 @@ public final class Territory {
 
     /** Something offered in trade settles the debt, if it was worth enough. */
     public static void offered(BandMember member, ServerPlayer player, ItemStack offered) {
+        Relations.traded(player, member, offered);
         UUID band = member.getBandId();
         if (band == null || !claims.containsKey(band)) {
             return;
@@ -221,11 +209,8 @@ public final class Territory {
 
     /** Whether this band will walk with the player today. */
     public static boolean willTravelWith(BandMember member, ServerPlayer player) {
-        // In the rains nobody minds company. In hard times, only those who have paid their way.
-        if (dev.hominin.evolution.survival.Seasons.plentiful(player.level())) {
-            return true;
-        }
-        return hasAccess(member);
+        // Company has to be earned: see Relations.willTravel.
+        return Relations.willTravel(player, member);
     }
 
     /** Forgets bands that are gone, so the map does not grow forever. */

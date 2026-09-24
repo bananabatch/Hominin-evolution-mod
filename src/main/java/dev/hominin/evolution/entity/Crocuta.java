@@ -84,7 +84,7 @@ public class Crocuta extends PathfinderMob {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 22.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.34D)
-                .add(Attributes.ATTACK_DAMAGE, 4.0D)
+                .add(Attributes.ATTACK_DAMAGE, 3.0D)
                 .add(Attributes.FOLLOW_RANGE, 24.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.2D);
     }
@@ -94,7 +94,7 @@ public class Crocuta extends PathfinderMob {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new ScatterGoal());
         // In and out, in and out - several of them at once is the danger, not any one bite.
-        goalSelector.addGoal(2, new PredatorAttackGoal(this, 1.4D, 30, 10));
+        goalSelector.addGoal(2, new PredatorAttackGoal(this, 1.4D, 50, 20));
         goalSelector.addGoal(3, new HoldTheKillGoal());
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 10.0F));
@@ -288,6 +288,16 @@ public class Crocuta extends PathfinderMob {
         warnTicks = 0;
         setTarget(null);
         getNavigation().stop();
+        // Nobody chases a hyena into the grass once it has given up.
+        dev.hominin.evolution.band.Band.standDown(this);
+    }
+
+    /** The whole clan breaks and runs - fire, or one of them dead. */
+    public void scatterClan(Vec3 from) {
+        for (Crocuta member : clanNear()) {
+            member.scatter(from);
+        }
+        playSound(ModSounds.CROCUTA_GIGGLE.get(), 1.4F, 1.2F);
     }
 
     /**
@@ -322,6 +332,7 @@ public class Crocuta extends PathfinderMob {
                         .withStyle(ChatFormatting.GREEN), true);
                 if (hadKill) {
                     dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "take_kill", 1);
+                    dev.hominin.evolution.band.Presence.add(player, 3, "you took a kill off the hyenas");
                 }
             } else {
                 for (Crocuta hyena : clan) {
@@ -355,24 +366,32 @@ public class Crocuta extends PathfinderMob {
         }
         if (claim != null && source.getEntity() instanceof ServerPlayer player) {
             dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "take_kill", 1);
+            dev.hominin.evolution.band.Presence.add(player, 3, "you took a kill off the hyenas");
         }
+        // A clan fights for food, not to the death: lose one of them and the rest know when to quit.
         Vec3 from = source.getEntity() != null ? source.getEntity().position() : position();
         int broke = 0;
         for (Crocuta member : clanNear()) {
-            if (member != this && member.random.nextFloat() < 0.4F) {
+            if (member != this && !member.isScattering()) {
                 member.scatter(from);
                 broke++;
             }
         }
-        if (broke > 0 && source.getEntity() instanceof Player player) {
-            player.displayClientMessage(Component.literal("Some of the clan lose their nerve and run."), true);
+        if (broke > 0) {
+            playSound(ModSounds.CROCUTA_GIGGLE.get(), 1.4F, 1.1F);
+            Player told = source.getEntity() instanceof Player player ? player
+                    : source.getEntity() instanceof BandMember member ? member.companionPlayer() : null;
+            if (told != null) {
+                told.displayClientMessage(Component.literal("One of them down - the rest of the clan lose their nerve "
+                        + "and run.").withStyle(ChatFormatting.GREEN), true);
+            }
         }
     }
 
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
         boolean hit = super.doHurtTarget(target);
-        if (hit && target instanceof LivingEntity bitten && random.nextFloat() < 0.35F) {
+        if (hit && target instanceof LivingEntity bitten && random.nextFloat() < 0.2F) {
             dev.hominin.evolution.combat.Bleeding.inflict(bitten, dev.hominin.evolution.combat.Bleeding.Tier.EXTERNAL);
         }
         return hit;

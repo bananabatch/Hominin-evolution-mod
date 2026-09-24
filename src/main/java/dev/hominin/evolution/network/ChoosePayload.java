@@ -31,6 +31,14 @@ public record ChoosePayload(int entityId, int action, int value) implements Cust
             dev.hominin.evolution.mind.Teaching.choose(player, payload.entityId(), payload.value());
         } else if (payload.action() == dev.hominin.evolution.band.Commissions.ACTION_KNAP) {
             dev.hominin.evolution.band.Commissions.choose(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.build.Building.ACTION_USE) {
+            dev.hominin.evolution.build.Building.choose(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.build.Building.ACTION_GIVE) {
+            dev.hominin.evolution.build.Building.give(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Psychopaths.ACTION_SUSPECT) {
+            dev.hominin.evolution.band.Psychopaths.suspect(player, payload.entityId());
+        } else if (payload.action() == dev.hominin.evolution.band.Psychopaths.ACTION_VERDICT) {
+            dev.hominin.evolution.band.Psychopaths.verdict(player, payload.entityId(), payload.value());
         } else if (payload.action() == ACTION_FIND) {
             dev.hominin.evolution.band.Social.find(player, payload.entityId());
         }

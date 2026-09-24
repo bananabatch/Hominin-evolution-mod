@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "From erectus, two hide in hand and four rocks of any kind in the other, then $(k:hominin_evolution.item_interact): a branch driven into a base of rocks, hide lashed round it. Somewhere to work more than stone."
+      "text": "From erectus, a $(l)log$() in your hand and a $(l)hide$() in the other, then $(k:hominin_evolution.item_interact): the log stood on end, the hide lashed over the top of it. Somewhere to work more than stone."
     },
     {
       "type": "patchouli:text",
@@ -18,11 +18,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "A branch on a base of three rocks makes a $(l)building branch$() - raw stock for whatever gets built on top of the Acheulean, once there is something to build.$(br2)Ten twine, a branch and a hammerstone side by side make a proper $(l)digging stick$()."
+      "text": "A branch with any $(l)three rocks$() - one kind or a mix, anywhere in the grid - makes two $(l)building branches$(): the posts a hut or a tent stands on. A branch with $(l)three sticks$() makes a $(l)cooking rack$() (see The Cooking Rack).$(br2)Ten twine, a branch and a hammerstone side by side make a proper $(l)digging stick$()."
     },
     {
       "type": "patchouli:text",
       "text": "A grid of $(l)thatch$(), four twine in the tool slot, makes a thatch block. Left as it is, the weather takes it apart - stretch hide over it and it stops caring.$(br2)Three hide over a row of thatch, ten twine in the slot, makes two pieces of $(l)bedding$(). Lay them side by side to sleep in - a real bed, and unlike a nest it does not leave you with ticks."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Three logs along the bottom row, sticks in the rest but the top middle, nothing in the slot: a $(l)fire pit$() (see Keeping Fire).$(br2)Thatch over a stick - thatch in the top middle, the stick under it - with three twine in the slot: a $(l)torch$().$(br2)Planks are not a thing anyone here would make: wood is split, not sawn."
     }
   ]
 }

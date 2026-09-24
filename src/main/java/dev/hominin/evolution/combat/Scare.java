@@ -9,7 +9,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
-import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 
@@ -111,11 +110,15 @@ public final class Scare {
             }
         }
 
+        /** Keeps its line: a frightened animal runs away, not round and round. */
+        private Vec3 heading;
+
         private void run() {
             Vec3 from = SCARED_OF.getOrDefault(mob, mob.position());
-            Vec3 away = DefaultRandomPos.getPosAway(mob, 20, 7, from);
-            if (away != null) {
-                mob.getNavigation().moveTo(away.x, away.y, away.z, LEAVING_AT.getOrDefault(mob, RUN_SPEED));
+            Vec3 took = dev.hominin.evolution.entity.FleeRoute.run(mob, from, heading, 16,
+                    LEAVING_AT.getOrDefault(mob, RUN_SPEED));
+            if (took != null) {
+                heading = took;
             }
         }
     }
