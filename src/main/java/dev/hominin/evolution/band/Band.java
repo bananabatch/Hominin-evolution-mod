@@ -1039,7 +1039,8 @@ public final class Band {
         dev.hominin.evolution.combat.Bleeding.carryOver(player);
         BandMember heir = null;
         double best = Double.MAX_VALUE;
-        for (BandMember member : all(player)) {
+        List<BandMember> band = all(player);
+        for (BandMember member : band) {
             if (member.isBaby()) {
                 continue;
             }
@@ -1055,6 +1056,17 @@ public final class Band {
                     heir.isFemale(), heir.getHunger(), heir.position(), heir.getYRot()));
         } else {
             heirs.remove(player.getUUID());
+            // Nobody grown left to carry on as: only little ones, and they cannot keep a band going on their own. Left
+            // led, a child would hold the band open forever and you would wake as yourself again and again - so they
+            // are lost with you, and the band is lost. The check that runs once you are alive again counts it.
+            if (!band.isEmpty() && !event.isCanceled()) {
+                for (BandMember child : band) {
+                    child.discard();
+                }
+                hadBand.add(player.getUUID());
+                player.sendSystemMessage(Component.literal("There is nobody grown left to carry on. The little ones "
+                        + "will not last alone.").withStyle(ChatFormatting.DARK_RED));
+            }
         }
     }
 
