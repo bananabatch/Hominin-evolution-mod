@@ -83,6 +83,10 @@ public record ChoosePayload(int entityId, int action, int value) implements Cust
             dev.hominin.evolution.band.BandRoles.setRole(player, payload.entityId(), payload.value());
         } else if (payload.action() == dev.hominin.evolution.band.BandRoles.ACTION_CONFIRM) {
             dev.hominin.evolution.band.BandRoles.confirm(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandViews.ACTION_LIST) {
+            dev.hominin.evolution.band.BandViews.chooseBand(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandViews.ACTION_SET) {
+            dev.hominin.evolution.band.BandViews.set(player, payload.value());
         } else if (payload.action() == ACTION_FIND) {
             dev.hominin.evolution.band.Social.find(player, payload.entityId());
         }

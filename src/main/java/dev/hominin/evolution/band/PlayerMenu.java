@@ -414,6 +414,7 @@ public final class PlayerMenu {
             }
         }
         text.append(" Knows ").append(known).append(known == 1 ? " skill." : " skills.");
+        text.append(BandViews.describe(player, other));
         PacketDistributor.sendToPlayer(player, new ChoicesPayload(other.getId(), ACTION_INFO, text.toString(),
                 List.of("OK"), List.of(0)));
     }

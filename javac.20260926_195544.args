@@ -1,0 +1,8 @@
+-proc:none
+--release
+21
+-Xmaxerrs
+1000000
+-d
+/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/out
+@/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/all.txt

@@ -271,6 +271,8 @@ public final class Band {
             }
             Social.onLeaderHit(player);
             defend(player, attacker);
+            // Bands that see this one as allied, with people close by, stand with them too.
+            BandViews.allyAttacked(player, attacker);
             if (Cohesion.perfect(player)) {
                 // A band that would do anything for you does not wait to be asked.
                 for (BandMember member : ownNear(player, 32.0D)) {

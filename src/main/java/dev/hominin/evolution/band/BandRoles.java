@@ -41,6 +41,7 @@ public final class BandRoles {
     private static final int CIVIL = -4;
     private static final int CANCEL = -5;
     private static final int OK = -6;
+    private static final int VIEWS = -7;
     private static final int ALLOW = 1;
 
     /** Bond at which a member follows someone without a second thought. */
@@ -206,6 +207,10 @@ public final class BandRoles {
             }
         }
         listed.put(player.getUUID(), people);
+        if (role == Role.CO_LEADER && player.server.getPlayerList().getPlayerCount() > 1) {
+            labels.add("How we see other players' bands...");
+            values.add(VIEWS);
+        }
         String title;
         if (leader) {
             title = people.isEmpty() ? "You lead your band. Nobody else leads it with you."
@@ -229,6 +234,10 @@ public final class BandRoles {
 
     public static void choose(ServerPlayer player, int value) {
         if (value == OK || value == CANCEL) {
+            return;
+        }
+        if (value == VIEWS) {
+            BandViews.open(player);
             return;
         }
         if (value == SPLIT || value == CIVIL) {
