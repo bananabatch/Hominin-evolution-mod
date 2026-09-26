@@ -32,6 +32,12 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
     private static final int PANEL_X = 180;
     private static final int PANEL_WIDTH = 102;
     private static final int[] TIER_COLOURS = {0xE08CFF, 0x7FE8FF, 0x8CE07A, 0xE8D86A, 0xB0B0B0};
+    // Lettering on the tanned hide, and on the dark leather of the reading panel.
+    private static final int LABEL = 0x2E1B0C;
+    private static final int LABEL_HINT = 0x5A3C24;
+    private static final int PANEL_TEXT = 0xEAD9B8;
+    private static final int PANEL_HINT = 0xBFA67E;
+    private static final int PANEL_WARN = 0xFF8A70;
 
     private enum Industry {
         OLDOWAN("Oldowan"),
@@ -71,23 +77,22 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         toolButtons.clear();
         int x = leftPos + PANEL_X;
         // One button, cycling: every industry you could work, one after the next.
-        Button cycle = Button.builder(Component.literal(industry.label + "  \u00BB"), b -> {
-            industry = Industry.values()[(industry.ordinal() + 1) % Industry.values().length];
-            rebuild();
-        }).bounds(x, topPos + 4, PANEL_WIDTH, 16)
-                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
-                        "Industry: " + (industry == Industry.LEVALLOIS ? "Acheulean - the Levallois technique"
-                                : industry.label) + ". Click for the next one.")))
-                .build();
+        Button cycle = new LeatherButton(x, topPos + 4, PANEL_WIDTH, 16, Component.literal(industry.label + "  \u00BB"),
+                b -> {
+                    industry = Industry.values()[(industry.ordinal() + 1) % Industry.values().length];
+                    rebuild();
+                });
+        cycle.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Industry: " + (industry == Industry.LEVALLOIS ? "Acheulean - the Levallois technique"
+                        : industry.label) + ". Click for the next one.")));
         addRenderableWidget(cycle);
         List<KnappingChoice> choices = choices();
         int y = topPos + 26;
         for (KnappingChoice choice : choices) {
-            Button button = Button.builder(Component.translatable(choice.titleKey()),
-                    b -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, choice.ordinal()))
-                    .bounds(x, y, PANEL_WIDTH, 18)
-                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(choice.hintKey())))
-                    .build();
+            Button button = new LeatherButton(x, y, PANEL_WIDTH, 18, Component.translatable(choice.titleKey()),
+                    b -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, choice.ordinal()));
+            button.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                    Component.translatable(choice.hintKey())));
             button.active = allowed();
             toolButtons.add(button);
             addRenderableWidget(button);
@@ -118,11 +123,11 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x3F3F3F, false);
-        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x3F3F3F, false);
-        graphics.drawString(font, "Hammerstone", 48, KnappingStationMenu.TOOL_SLOT_Y + 1, 0x3F3F3F, false);
-        graphics.drawString(font, "Bopper (bone)", 48, KnappingStationMenu.TOOL_SLOT_Y + 10, 0x5A5A5A, false);
-        graphics.drawString(font, "Stone to work", 8, KnappingStationMenu.STORAGE_Y - 10, 0x3F3F3F, false);
+        graphics.drawString(font, title, titleLabelX, titleLabelY, LABEL, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, LABEL, false);
+        graphics.drawString(font, "Hammerstone", 48, KnappingStationMenu.TOOL_SLOT_Y + 1, LABEL, false);
+        graphics.drawString(font, "Bopper (bone)", 48, KnappingStationMenu.TOOL_SLOT_Y + 10, LABEL_HINT, false);
+        graphics.drawString(font, "Stone to work", 8, KnappingStationMenu.STORAGE_Y - 10, LABEL, false);
         drawPanel(graphics);
     }
 
@@ -135,19 +140,19 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         boolean hammer = !menu.station().getItem(KnappingStationBlockEntity.HAMMER).isEmpty();
         boolean bopper = !menu.station().getItem(KnappingStationBlockEntity.BOPPER).isEmpty();
         if (!hammer) {
-            graphics.drawString(font, "No hammerstone", x, y, 0xC04040, false);
+            graphics.drawString(font, "No hammerstone", x, y, PANEL_WARN, false);
             y += 10;
         }
         if (industry != Industry.OLDOWAN && !bopper) {
-            graphics.drawString(font, "No bopper (bone)", x, y, 0xC04040, false);
+            graphics.drawString(font, "No bopper (bone)", x, y, PANEL_WARN, false);
             y += 10;
         }
         graphics.drawString(font, stone.isEmpty() ? "No stone laid out" : "Working: " + trim(stone.getHoverName().getString()),
-                x, y, 0x3F3F3F, false);
+                x, y, PANEL_TEXT, false);
         y += 11;
         if (industry == Industry.OLDOWAN) {
-            graphics.drawString(font, "No quality tiers.", x, y, 0x5A5A5A, false);
-            graphics.drawString(font, "Hammer only.", x, y + 10, 0x5A5A5A, false);
+            graphics.drawString(font, "No quality tiers.", x, y, PANEL_HINT, false);
+            graphics.drawString(font, "Hammer only.", x, y + 10, PANEL_HINT, false);
             return;
         }
         if (industry == Industry.LEVALLOIS) {
@@ -155,11 +160,11 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
             return;
         }
         if (!menu.canWorkAcheulean()) {
-            graphics.drawString(font, "Erectus hands only.", x, y, 0xC04040, false);
+            graphics.drawString(font, "Erectus hands only.", x, y, PANEL_WARN, false);
             return;
         }
         int level = menu.knappingLevel();
-        graphics.drawString(font, "Your skill: level " + level, x, y, 0x3F3F3F, false);
+        graphics.drawString(font, "Your skill: level " + level, x, y, PANEL_TEXT, false);
         y += 11;
         if (stone.isEmpty()) {
             return;
@@ -174,10 +179,10 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
             y += 10;
         }
         if (stone.is(ModItems.LIMESTONE_ROCK.get())) {
-            graphics.drawString(font, "Limestone: crude only.", x, y + 2, 0x5A5A5A, false);
+            graphics.drawString(font, "Limestone: crude only.", x, y + 2, PANEL_HINT, false);
             y += 10;
         } else if (stone.is(ModItems.BASALT_ROCK.get())) {
-            graphics.drawString(font, "Basalt: never flawless.", x, y + 2, 0x5A5A5A, false);
+            graphics.drawString(font, "Basalt: never flawless.", x, y + 2, PANEL_HINT, false);
             y += 10;
         }
         if (odds[0] > 0.0D) {
@@ -189,12 +194,12 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
     /** The Levallois panel: flakes and blades need no skill; the hand axe needs a hammerstone core laid out. */
     private void drawLevallois(GuiGraphics graphics, int x, int y) {
         if (!menu.canWorkLevallois()) {
-            graphics.drawString(font, "Heidelbergensis only.", x, y, 0xC04040, false);
+            graphics.drawString(font, "Heidelbergensis only.", x, y, PANEL_WARN, false);
             return;
         }
-        graphics.drawString(font, "Flakes: 2 a stone.", x, y, 0x5A5A5A, false);
-        graphics.drawString(font, "Blade: 1 a stone.", x, y + 10, 0x5A5A5A, false);
-        graphics.drawString(font, "Anyone's hands.", x, y + 20, 0x5A5A5A, false);
+        graphics.drawString(font, "Flakes: 2 a stone.", x, y, PANEL_HINT, false);
+        graphics.drawString(font, "Blade: 1 a stone.", x, y + 10, PANEL_HINT, false);
+        graphics.drawString(font, "Anyone's hands.", x, y + 20, PANEL_HINT, false);
         y += 33;
         ItemStack core = ItemStack.EMPTY;
         for (int slot = KnappingStationBlockEntity.STONES_START; slot < KnappingStationBlockEntity.SIZE && core.isEmpty();
@@ -204,12 +209,12 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
             }
         }
         if (core.isEmpty()) {
-            graphics.drawString(font, "Hand axe: lay out", x, y, 0x3F3F3F, false);
-            graphics.drawString(font, "a hammerstone core.", x, y + 10, 0x3F3F3F, false);
+            graphics.drawString(font, "Hand axe: lay out", x, y, PANEL_TEXT, false);
+            graphics.drawString(font, "a hammerstone core.", x, y + 10, PANEL_TEXT, false);
             return;
         }
         int level = menu.knappingLevel();
-        graphics.drawString(font, "Hand axe, skill " + level + ":", x, y, 0x3F3F3F, false);
+        graphics.drawString(font, "Hand axe, skill " + level + ":", x, y, PANEL_TEXT, false);
         y += 11;
         double[] odds = Acheulean.odds(level, new ItemStack(StationKnapping.rockOf(
                 dev.hominin.evolution.item.StoneMaterial.of(core))));

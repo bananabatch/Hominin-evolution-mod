@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-/** The primitive work station: a custom background sized for the tool slot beside the grid. */
+/** The primitive work station: a leather background sized for the tool slot beside the grid. */
 public class WorkStationScreen extends AbstractContainerScreen<WorkStationMenu> {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "textures/gui/work_station.png");
@@ -25,6 +25,13 @@ public class WorkStationScreen extends AbstractContainerScreen<WorkStationMenu> 
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
         graphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight, imageWidth, imageHeight);
+    }
+
+    /** Dark brown lettering on the tanned hide. */
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x2E1B0C, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x2E1B0C, false);
     }
 
     @Override
