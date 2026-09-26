@@ -3515,6 +3515,38 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
     }
 
+    /**
+     * Up in the crown of a tree and awake - out of a nest up there in the morning, or left standing on the leaves:
+     * down it comes, dropping through the canopy the way it does off a trunk, stepping off the nest first.
+     */
+    private void comeDownFromCanopy() {
+        if (!onGround()) {
+            return;
+        }
+        BlockPos feet = blockPosition();
+        BlockPos standing = level().getBlockState(feet).is(dev.hominin.evolution.ModBlocks.NEST.get()) ? feet : feet.below();
+        var under = level().getBlockState(standing);
+        boolean onNest = under.is(dev.hominin.evolution.ModBlocks.NEST.get());
+        if (!onNest && !under.is(net.minecraft.tags.BlockTags.LEAVES)
+                || !dev.hominin.evolution.block.NestBlock.upATree(level(), standing)) {
+            return;
+        }
+        safeLandingTicks = Math.max(safeLandingTicks, 60);
+        if (onNest) {
+            // Off the edge of the nest, onto leaves - or open air - to drop through.
+            for (net.minecraft.core.Direction side : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                BlockPos step = standing.relative(side);
+                var floor = level().getBlockState(step);
+                if (!floor.is(dev.hominin.evolution.ModBlocks.NEST.get())
+                        && (floor.isAir() || floor.is(net.minecraft.tags.BlockTags.LEAVES))
+                        && level().getBlockState(step.above()).getCollisionShape(level(), step.above()).isEmpty()) {
+                    getMoveControl().setWantedPosition(step.getX() + 0.5D, getY(), step.getZ() + 0.5D, 1.0D);
+                    break;
+                }
+            }
+        }
+    }
+
     /** Something to cling to: a log within arm's reach, at foot or head height. */
     private boolean trunkInReach() {
         BlockPos origin = blockPosition();
@@ -3775,6 +3807,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             tickTreeStay();
         } else {
             calmInTreeTicks = 0;
+            if (tickCount % 10 == 0 && !isSleeping()) {
+                comeDownFromCanopy();
+            }
         }
         if (displayDelay > 0) {
             displayDelay--;

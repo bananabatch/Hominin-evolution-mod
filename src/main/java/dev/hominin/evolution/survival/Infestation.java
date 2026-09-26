@@ -91,7 +91,7 @@ public final class Infestation {
 
     /**
      * A nest is leaves and twigs on the ground, and everything living in the ground has a
-     * chance to get on you. Thatch bedding does not carry this risk.
+     * chance to get on you. Up a tree, half as much finds its way in. Thatch bedding does not carry this risk.
      */
     private static void tickNestSleep(ServerPlayer player) {
         if (player.tickCount % NEST_SLEEP_CHECK_TICKS != 0 || !player.isSleeping() || of(player) >= MAX) {
@@ -101,7 +101,8 @@ public final class Infestation {
         if (sleepingPos.isEmpty()
                 || !(player.level().getBlockState(sleepingPos.get()).getBlock()
                         instanceof dev.hominin.evolution.block.NestBlock)
-                || player.getRandom().nextFloat() >= NEST_SLEEP_RISK) {
+                || player.getRandom().nextFloat() >= (dev.hominin.evolution.block.NestBlock.upATree(player.level(),
+                        sleepingPos.get()) ? NEST_SLEEP_RISK / 2.0F : NEST_SLEEP_RISK)) {
             return;
         }
         set(player, of(player) + 1);

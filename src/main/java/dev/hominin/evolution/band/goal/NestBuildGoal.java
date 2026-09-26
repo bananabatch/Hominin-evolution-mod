@@ -30,6 +30,8 @@ public class NestBuildGoal extends Goal {
 
     private final BandMember member;
     private BlockPos[] cells;
+    /** The foot of the trunk to climb, when the nest goes up a tree. */
+    private BlockPos tree;
     private int placed;
     private int ticks;
     private long lastNestDay = -1L;
@@ -80,6 +82,7 @@ public class NestBuildGoal extends Goal {
                 BlockPos floor = dev.hominin.evolution.build.Building.floorIn(server, room);
                 if (floor != null) {
                     cells = new BlockPos[] {floor};
+                    tree = null;
                     return true;
                 }
             }
@@ -95,14 +98,51 @@ public class NestBuildGoal extends Goal {
             lastNestDay = day;
             return false;
         }
-        // A mate makes theirs right beside you.
-        cells = Nests.siteNear(level, origin, mate ? 4 : withLeader ? 9 : 5, member.getRandom());
+        // The climbers make theirs up a tree when there is one about; a mate makes theirs right beside you.
+        tree = null;
+        if (dev.hominin.evolution.climb.Climbing.climbsTrees(member.getStage())) {
+            cells = Nests.treeSiteNear(level, origin, mate ? 6 : withLeader ? 12 : 8, member.getRandom());
+            tree = cells != null ? Nests.trunkUnder(level, cells[0]) : null;
+            if (tree == null) {
+                cells = null;
+            }
+        }
+        if (cells == null) {
+            cells = Nests.siteNear(level, origin, mate ? 4 : withLeader ? 9 : 5, member.getRandom());
+        }
         // Not in anyone's building - a store least of all.
         if (cells != null && level instanceof net.minecraft.server.level.ServerLevel server
                 && dev.hominin.evolution.build.Building.anyBuilt(server, cells)) {
             cells = null;
         }
         return cells != null;
+    }
+
+    /** How far a climber clinging at the top of the trunk can reach to weave. */
+    static final double TREE_REACH = 4.0D;
+
+    /**
+     * Gets a member to a trunk and up it, a tick at a time: walks to the foot of it, then clings and climbs. True
+     * while it is clinging to the trunk; false while it is still on its way over.
+     */
+    static boolean climbTo(BandMember member, BlockPos trunk, int ticks) {
+        double dx = member.getX() - (trunk.getX() + 0.5D);
+        double dz = member.getZ() - (trunk.getZ() + 0.5D);
+        if (dx * dx + dz * dz >= 2.25D) {
+            if (member.isClimbingTree() && !member.onGround()) {
+                // Knocked away from the trunk: let go.
+                member.setClimbingTree(false);
+            }
+            if (ticks % 20 == 1 || member.getNavigation().isDone()) {
+                member.getNavigation().moveTo(trunk.getX() + 0.5D, trunk.getY(), trunk.getZ() + 0.5D, 1.0D);
+            }
+            return false;
+        }
+        // Push into the trunk; while climbing, that is what lifts it.
+        member.getNavigation().stop();
+        member.setClimbingTree(true);
+        member.getMoveControl().setWantedPosition(trunk.getX() + 0.5D, member.getY() + 2.0D, trunk.getZ() + 0.5D, 1.0D);
+        return true;
     }
 
     /** Whether the leader has a finished nest or bed of their own close by. */
@@ -139,6 +179,7 @@ public class NestBuildGoal extends Goal {
             dev.hominin.evolution.band.Lines.say(member, "turn_in");
         }
         cells = null;
+        tree = null;
         member.getNavigation().stop();
     }
 
@@ -147,7 +188,17 @@ public class NestBuildGoal extends Goal {
         ticks++;
         BlockPos next = cells[placed];
         member.getLookControl().setLookAt(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D);
-        if (member.distanceToSqr(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D) > 6.25D) {
+        if (tree != null) {
+            // Up the trunk to the crown, and weave it from there, clinging on.
+            if (member.distanceToSqr(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D) > TREE_REACH * TREE_REACH) {
+                climbTo(member, tree, ticks);
+                return;
+            }
+            member.getNavigation().stop();
+            if (member.isClimbingTree()) {
+                member.getMoveControl().setWantedPosition(tree.getX() + 0.5D, member.getY(), tree.getZ() + 0.5D, 1.0D);
+            }
+        } else if (member.distanceToSqr(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D) > 6.25D) {
             if (ticks % 20 == 0) {
                 member.getNavigation().moveTo(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D, 1.0D);
             }
@@ -160,7 +211,10 @@ public class NestBuildGoal extends Goal {
         Level level = member.level();
         var state = ModBlocks.NEST.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING,
                 cells.length > 2 && cells[2].getX() != cells[0].getX() ? Direction.EAST : Direction.SOUTH);
-        if (level.getBlockState(next).canBeReplaced() && state.canSurvive(level, next)) {
+        // Up a tree the leaves where it goes are bent over into it.
+        if ((level.getBlockState(next).canBeReplaced()
+                || tree != null && level.getBlockState(next).is(net.minecraft.tags.BlockTags.LEAVES))
+                && state.canSurvive(level, next)) {
             level.setBlock(next, state, 3);
             if (level instanceof net.minecraft.server.level.ServerLevel server) {
                 // Theirs: nobody else lies down in it.

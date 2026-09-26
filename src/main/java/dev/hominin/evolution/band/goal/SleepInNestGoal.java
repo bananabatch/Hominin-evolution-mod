@@ -27,6 +27,9 @@ public class SleepInNestGoal extends Goal {
     private final BandMember member;
     @Nullable
     private BlockPos nest;
+    /** The foot of the trunk to climb, when the nest is up a tree. */
+    @Nullable
+    private BlockPos trunk;
     private int ticks;
 
     public SleepInNestGoal(BandMember member) {
@@ -57,7 +60,11 @@ public class SleepInNestGoal extends Goal {
     @Override
     public void start() {
         ticks = 0;
-        walk();
+        trunk = nest.getY() > member.getY() + 1.5D && dev.hominin.evolution.block.NestBlock.upATree(member.level(), nest)
+                ? Nests.trunkUnder(member.level(), nest) : null;
+        if (trunk == null) {
+            walk();
+        }
     }
 
     @Override
@@ -65,7 +72,11 @@ public class SleepInNestGoal extends Goal {
         if (member.isSleeping()) {
             member.stopSleeping();
         }
+        if (member.isClimbingTree()) {
+            member.setClimbingTree(false);
+        }
         nest = null;
+        trunk = null;
         member.getNavigation().stop();
     }
 
@@ -73,6 +84,18 @@ public class SleepInNestGoal extends Goal {
     public void tick() {
         ticks++;
         if (member.isSleeping()) {
+            return;
+        }
+        if (trunk != null) {
+            // Up the trunk, and over into the nest from it.
+            if (member.distanceToSqr(nest.getX() + 0.5D, nest.getY(), nest.getZ() + 0.5D)
+                    > NestBuildGoal.TREE_REACH * NestBuildGoal.TREE_REACH) {
+                NestBuildGoal.climbTo(member, trunk, ticks);
+                return;
+            }
+            member.getNavigation().stop();
+            member.setClimbingTree(false);
+            member.startSleeping(nest);
             return;
         }
         if (member.distanceToSqr(nest.getX() + 0.5D, nest.getY(), nest.getZ() + 0.5D) > REACH * REACH) {
@@ -125,14 +148,17 @@ public class SleepInNestGoal extends Goal {
         if (mate) {
             around.add(leader.blockPosition());
         }
+        // The climbers look up into the trees as well.
+        int up = dev.hominin.evolution.climb.Climbing.climbsTrees(member.getStage()) ? 12 : 4;
         for (BlockPos centre : around) {
             for (BlockPos pos : BlockPos.betweenClosed(centre.offset(-SEARCH_RADIUS, -4, -SEARCH_RADIUS),
-                    centre.offset(SEARCH_RADIUS, 4, SEARCH_RADIUS))) {
+                    centre.offset(SEARCH_RADIUS, up, SEARCH_RADIUS))) {
                 var state = member.level().getBlockState(pos);
                 // A finished nest - or thatch bedding, the erectus bed.
                 boolean bed = state.is(ModBlocks.THATCH_BEDDING.get()) || state.is(ModBlocks.NEST.get())
                         && (Nests.isComplete(member.level(), pos) || dev.hominin.evolution.build.Building.inRoom(member.level(), pos));
-                if (!bed || taken(pos) || !dev.hominin.evolution.block.NestOwners.mayUse(member, pos)) {
+                if (!bed || taken(pos) || !dev.hominin.evolution.block.NestOwners.mayUse(member, pos)
+                        || up < 12 && dev.hominin.evolution.block.NestBlock.upATree(member.level(), pos)) {
                     continue;
                 }
                 double distance = pos.distSqr(origin);

@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,9 +33,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * and what early hominins that had come down out of the trees would have made on the
  * ground instead.
  *
- * <p>It works as a bed: sleep the night away, and it becomes where you wake. It is flat
- * on the ground rather than raised, and a nest someone else left behind is a sign that
- * a band slept here recently.
+ * <p>It works as a bed: sleep the night away, and it becomes where you wake. A nest someone else left behind is a
+ * sign that a band slept here recently.
+ *
+ * <p>The climbers - Australopithecus, habilis and those before them - can weave one up a tree as well: on the
+ * leaves, against a trunk or bough, or out from a piece already lying on them, the way chimpanzees bend branches
+ * over into a platform. From erectus on it goes on the ground.
  */
 public class NestBlock extends HorizontalDirectionalBlock {
     public static final MapCodec<NestBlock> CODEC = simpleCodec(NestBlock::new);
@@ -85,6 +89,17 @@ public class NestBlock extends HorizontalDirectionalBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        // Up a tree is for the climbers. The check is the server's: that is where the stage is known for certain.
+        if (!level.isClientSide() && context.getPlayer() instanceof ServerPlayer player && !player.isCreative()
+                && upATree(level, pos)
+                && !dev.hominin.evolution.climb.Climbing.climbsTrees(
+                        player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+            player.displayClientMessage(Component.literal(
+                    "Your kind sleeps on the ground now: a nest up a tree is for climbers."), true);
+            return null;
+        }
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
@@ -95,14 +110,48 @@ public class NestBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        BlockPos below = pos.below();
-        return level.getBlockState(below).isFaceSturdy(level, below, Direction.UP);
+        return restsOn(level, pos.below()) || inTree(level, pos);
+    }
+
+    /** Solid ground under it - or a block of leaves, or a bough, which hold a nest as well as ground does. */
+    public static boolean restsOn(BlockGetter level, BlockPos below) {
+        BlockState state = level.getBlockState(below);
+        return state.isFaceSturdy(level, below, Direction.UP) || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS);
+    }
+
+    /**
+     * Woven into a tree rather than laid on anything: lashed to a trunk or bough beside it, bent into the leaves
+     * beside it, or carried out from a piece of the nest that does rest on them. One piece out, no further.
+     */
+    public static boolean inTree(BlockGetter level, BlockPos pos) {
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            BlockPos next = pos.relative(side);
+            BlockState state = level.getBlockState(next);
+            if (state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES)
+                    || state.getBlock() instanceof NestBlock && restsOn(level, next.below())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Up a tree, not on the ground: nothing but air, leaves, boughs or nest for the first two blocks down. */
+    public static boolean upATree(BlockGetter level, BlockPos pos) {
+        for (int down = 1; down <= 2; down++) {
+            BlockState state = level.getBlockState(pos.below(down));
+            if (!state.isAir() && !state.is(BlockTags.LEAVES) && !state.is(BlockTags.LOGS)
+                    && !(state.getBlock() instanceof NestBlock)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
             LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        return direction == Direction.DOWN && !canSurvive(state, level, pos)
+        // Anything holding it up may go - the ground, the leaves under it, the bough beside it.
+        return direction != Direction.UP && !canSurvive(state, level, pos)
                 ? Blocks.AIR.defaultBlockState()
                 : super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
