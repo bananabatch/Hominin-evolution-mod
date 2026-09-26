@@ -10,8 +10,8 @@
       },
       {
         "id": "survive_days",
-        "description": "Survive 4 days.",
-        "count": 4
+        "description": "Survive 3 days.",
+        "count": 3
       },
       {
         "id": "think_times",

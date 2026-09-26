@@ -27,7 +27,7 @@ You play a hominin, not a person, and you earn your way up the line.
 
 **Passing a stage**
 - **Required criteria**, all of them. Australopithecus afarensis: notice a stone deposit, survive 3 days.
-- **Days to survive:** Australopithecus afarensis 3, habilis 4, erectus 6 (anamensis and rudolfensis 4, ergaster 6).
+- **Days to survive:** Australopithecus afarensis 3, habilis 3, erectus 5 (anamensis and rudolfensis 4, ergaster 6).
 - **An optional pool**, any 3 of 5. Australopithecus afarensis: climb 8 trees, forage in 3 places, stun a predator, hunt twice with a sharpened stick, drink in 2 places.
 - **A milestone** — the invention that defines the stage: striking a flake for Australopithecus afarensis, carrying fire for habilis.
 - Fallback species ask less: 1 required criterion and 2 of 4.
@@ -131,7 +131,7 @@ You play a hominin, not a person, and you earn your way up the line.
 ### Homo erectus
 
 - **Taking things down.** Everything an erectus band builds can be picked back up by hand: the knapping station, the work station, thatch, bedding and building posts. A hominin carcass is butchered with any stone tool.
-- **Checklist.** Required: survive 6 days, make an Acheulean tool, spend a night by a lit hearth, **hunt a megafauna animal** (a Pelorovis, or a sabertooth, homotherium, giant hyena or crocodile — the killing blow, your band's, or one you drew first blood on and ran down), and **reach knapping level 2**. Then any 3 of: eat 3 pieces of cooked meat, run down big game you wounded (it dies 30+ seconds after your first hit), walk a scavenger off a kill, range 1,000 blocks from where you began as erectus, trade with another erectus band, grow the band to 14, adopt a moral.
+- **Checklist.** Required: survive 5 days, make an Acheulean tool, spend a night by a lit hearth, **hunt a megafauna animal** (a Pelorovis, or a sabertooth, homotherium, giant hyena or crocodile — the killing blow, your band's, or one you drew first blood on and ran down), and **reach knapping level 2**. Then any 3 of: eat 3 pieces of cooked meat, run down big game you wounded (it dies 30+ seconds after your first hit), walk a scavenger off a kill, range 1,000 blocks from where you began as erectus, trade with another erectus band, grow the band to 14, adopt a moral.
 - **Milestone → heidelbergensis:** make a tier 2 or better Acheulean tool from anything but obsidian.
 - **Hide** drops from cows and horses. **Knapping station:** 4 sticks in the main hand, a hide in the off hand, press P.
 - **The knapping station** is a proper workbench now. Open it and lay out a **hammerstone**, a **bopper** (a bone or long bone) and up to **four rows of stone**; it all stays there when you walk away, and breaking the station drops it. The block shows what is on it: an empty hide mat and anvil, then the hammerstone, the bone and a pile of cobbles that grows as you stock it.
