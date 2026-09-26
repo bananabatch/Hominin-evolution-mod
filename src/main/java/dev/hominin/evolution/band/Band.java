@@ -66,8 +66,19 @@ public final class Band {
     /** Counter under the skill prefix, so it survives evolving. Unused until erectus. */
     public static final String COHESION = EvolutionManager.SKILL_PREFIX + "band_cohesion";
 
-    private record Heir(ResourceKey<Level> dimension, UUID member) {
+    /**
+     * Who you carry on as. Everything needed is taken down when you die: respawning at a bed far away, the heir's
+     * chunk is not loaded, and looking them up then found nobody - so the rebirth never played.
+     */
+    private record Heir(ResourceKey<Level> dimension, UUID member, String name, boolean female, int hunger,
+            net.minecraft.world.phys.Vec3 pos, float yRot) {
     }
+
+    /** Heirs whose bodies were not loaded yet when you opened your eyes as them: their things come when they do. */
+    private record Absorb(UUID member, long until) {
+    }
+
+    private static final Map<UUID, Absorb> absorbing = new HashMap<>();
 
     private static final Map<UUID, Heir> heirs = new HashMap<>();
     /** Until when a player's blows on their band count as wrestling. */
@@ -106,6 +117,73 @@ public final class Band {
     public static List<BandMember> all(ServerPlayer player) {
         return new java.util.ArrayList<BandMember>(player.serverLevel().getEntities(ModEntities.BAND_MEMBER.get(),
                 member -> member.isAlive() && member.isLedBy(player)));
+    }
+
+    // ------------------------------------------------------------ two left
+
+    /** Cohesion when two join a band that takes them in: they need to learn to trust you. */
+    private static final int JOINED_COHESION = 25;
+
+    /**
+     * Down to two, from habilis on, you can ask a band of your own kind to take you in: they would sooner be more.
+     * Not a band that has it in for you.
+     */
+    public static boolean canAskToJoin(ServerPlayer player, Bands.Record band) {
+        var stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        String line = dev.hominin.evolution.stage.Kinds.line(stage);
+        return !band.nomadic() && band.haven == null && all(player).size() <= 2
+                && !line.equals("ardipithecus") && !line.equals("australopithecus")
+                && dev.hominin.evolution.stage.Kinds.line(band.species).equals(line)
+                && Relations.standing(player, band) >= Relations.UNFRIENDLY + 1;
+    }
+
+    /**
+     * They take you in - and for the sake of it, you still lead: everyone of theirs about joins you, their camp
+     * becomes your ground, what they keep is yours, what they know is yours. But they do not know you: cohesion
+     * starts at 25.
+     */
+    public static void askToJoin(ServerPlayer player, Bands.Record band) {
+        ServerLevel level = player.serverLevel();
+        if (!canAskToJoin(player, band)) {
+            player.displayClientMessage(Component.literal(BandNames.capital(band.name) + " will not take you in."), true);
+            return;
+        }
+        List<BandMember> theirs = new java.util.ArrayList<>(level.getEntities(ModEntities.BAND_MEMBER.get(),
+                m -> m.isAlive() && band.id.equals(m.getBandId())));
+        if (theirs.isEmpty() || Relations.nearestMember(level, band, player, 32.0D) == null) {
+            player.displayClientMessage(Component.literal("None of " + band.name + " are near enough to ask."), true);
+            return;
+        }
+        int maxMembers = BandSizes.of(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage()).maxMembers();
+        int room = maxMembers - all(player).size();
+        List<String> names = new java.util.ArrayList<>();
+        for (BandMember member : theirs) {
+            if (names.size() >= room) {
+                break;
+            }
+            member.ensureName();
+            member.setTarget(null);
+            member.joinPlayerBand(player.getUUID());
+            names.add(member.getName().getString());
+        }
+        // What they kept and what they knew come with them.
+        List<BlockPos> kept = ToolPiles.piles(level, band.id);
+        ToolPiles.orphan(level, band.id);
+        for (BlockPos pile : kept) {
+            if (level.getBlockEntity(pile) instanceof dev.hominin.evolution.block.ToolPileBlockEntity heap) {
+                heap.setOwner(player.getUUID());
+            }
+            ToolPiles.adopt(level, player.getUUID(), pile);
+        }
+        dev.hominin.evolution.world.Pois.bandJoined(player, band);
+        BlockPos camp = band.home;
+        Bands.remove(level, band.id);
+        dev.hominin.evolution.hunt.Predation.settle(player, camp);
+        Cohesion.startAt(player, JOINED_COHESION);
+        player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " take you in. Better one band than two "
+                + "halves of nothing - and somebody has to lead it: you. " + String.join(", ", names) + " follow you now, "
+                + "and their camp is your ground. They do not know you yet: cohesion " + JOINED_COHESION + ".")
+                .withStyle(ChatFormatting.GOLD));
     }
 
     private static int pendingBirths(List<BandMember> members) {
@@ -334,7 +412,7 @@ public final class Band {
             return;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        var stage = dev.hominin.evolution.stage.StageRegistry.get(data.getStage());
+        var stage = dev.hominin.evolution.stage.StageRegistry.current(data);
         if (stage == null) {
             return;
         }
@@ -503,7 +581,8 @@ public final class Band {
         } else if (roll < 0.5F) {
             find = new ItemStack(dev.hominin.evolution.ModItems.NESTING_MATERIAL.get(), 2);
         } else if (roll < 0.6F) {
-            find = new ItemStack(dev.hominin.evolution.ModItems.ROCK.get());
+            find = new ItemStack(member.getRandom().nextBoolean() ? dev.hominin.evolution.ModItems.GRANITE_ROCK.get()
+                    : dev.hominin.evolution.ModItems.CHERT_ROCK.get());
         }
         String name = member.getName().getString();
         if (find.isEmpty()) {
@@ -570,7 +649,7 @@ public final class Band {
      * since still do - and comes back together at night.
      */
     public static boolean splitsUp(ResourceLocation stage) {
-        String path = stage.getPath();
+        String path = dev.hominin.evolution.stage.Kinds.line(stage);
         return !path.equals("ardipithecus") && !path.equals("australopithecus");
     }
 
@@ -785,6 +864,10 @@ public final class Band {
         baby.setStage(mother.getStage());
         baby.setLeader(mother.getLeader());
         baby.setMother(mother.getUUID());
+        if (mother.leaderPlayer() instanceof ServerPlayer leader) {
+            SacredPile.event(leader, "a birth in the band");
+            Chatter.news(leader, "news_birth", "");
+        }
         Player companion = mother.companionPlayer();
         if (mother.isGuest() && companion != null && hasRoomFor(companion)) {
             // Born while the bands were together: the child stays with the player's band.
@@ -810,6 +893,24 @@ public final class Band {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        if (data.getUnlockedRecipes().contains(BAND_FORMED)) {
+            return;
+        }
+        if (Newcomers.ask(player)) {
+            // Others already walk this world: the newcomer chooses first - one of their bands, or their own far off.
+            return;
+        }
+        formFirstBand(player);
+    }
+
+    /** A player who walks with somebody else's band: never given one of their own. */
+    static void markFormed(ServerPlayer player) {
+        player.getData(Attachments.PLAYER_EVOLUTION_DATA).getUnlockedRecipes().add(BAND_FORMED);
+    }
+
+    /** The first time in: the player wakes among their band. */
+    public static void formFirstBand(ServerPlayer player) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         if (!data.getUnlockedRecipes().add(BAND_FORMED)) {
             return;
@@ -856,14 +957,34 @@ public final class Band {
     }
 
     public static BlockPos standingSpotNear(ServerLevel level, BlockPos center, int distance, float angle) {
+        BlockPos first = spotAt(level, center, distance, angle);
+        if (first != null && dry(level, first)) {
+            return first;
+        }
+        // Water there (the heightmap counts a river's surface as ground): look round about, a little further out
+        // each time, for somewhere to stand.
+        for (int attempt = 1; attempt <= 24; attempt++) {
+            BlockPos pos = spotAt(level, center, distance + attempt, angle + attempt * 2.4F);
+            if (pos != null && dry(level, pos)) {
+                return pos;
+            }
+        }
+        // Not onto a cliff top far above or below; beside whoever it was near instead.
+        return first != null && !dry(level, center) ? first : center;
+    }
+
+    @javax.annotation.Nullable
+    private static BlockPos spotAt(ServerLevel level, BlockPos center, int distance, float angle) {
         int x = center.getX() + Math.round(Mth.cos(angle) * distance);
         int z = center.getZ() + Math.round(Mth.sin(angle) * distance);
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        // Not onto a cliff top far above or below the player; stand them beside the player instead.
-        if (Math.abs(y - center.getY()) > 4) {
-            return center;
-        }
-        return new BlockPos(x, y, z);
+        return Math.abs(y - center.getY()) > 4 ? null : new BlockPos(x, y, z);
+    }
+
+    /** Somewhere to stand: no water here or underfoot, and ground under it. */
+    public static boolean dry(ServerLevel level, BlockPos pos) {
+        return level.getFluidState(pos).isEmpty() && level.getFluidState(pos.below()).isEmpty()
+                && !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty();
     }
 
     /**
@@ -914,6 +1035,8 @@ public final class Band {
             return;
         }
         dev.hominin.evolution.survival.TorchLight.douse(player);
+        // A catastrophic wound, and lacerations, are not left behind with the body.
+        dev.hominin.evolution.combat.Bleeding.carryOver(player);
         BandMember heir = null;
         double best = Double.MAX_VALUE;
         for (BandMember member : all(player)) {
@@ -927,7 +1050,9 @@ public final class Band {
             }
         }
         if (heir != null) {
-            heirs.put(player.getUUID(), new Heir(player.level().dimension(), heir.getUUID()));
+            heir.ensureName();
+            heirs.put(player.getUUID(), new Heir(player.level().dimension(), heir.getUUID(), heir.getName().getString(),
+                    heir.isFemale(), heir.getHunger(), heir.position(), heir.getYRot()));
         } else {
             heirs.remove(player.getUUID());
         }
@@ -941,30 +1066,58 @@ public final class Band {
         if (event.isEndConquered() || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        dev.hominin.evolution.combat.Bleeding.resume(player);
         Heir heir = heirs.remove(player.getUUID());
         if (heir == null) {
+            Newcomers.respawned(player);
             return;
         }
         ServerLevel level = player.server.getLevel(heir.dimension());
-        if (level == null || !(level.getEntity(heir.member()) instanceof BandMember member) || !member.isAlive()) {
+        if (level == null) {
             return;
         }
-        String name = member.getName().getString();
+        BandMember member = level.getEntity(heir.member()) instanceof BandMember loaded && loaded.isAlive() ? loaded : null;
+        String name = heir.name();
         player.getData(Attachments.MIND).setBodyName(name);
-        dev.hominin.evolution.mind.Journal.setFemale(player, member.isFemale());
-        player.teleportTo(level, member.getX(), member.getY(), member.getZ(), member.getYRot(), 0.0F);
-        for (ItemStack stack : member.takeEverything()) {
-            if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
-            }
+        dev.hominin.evolution.mind.Journal.setFemale(player, heir.female());
+        net.minecraft.world.phys.Vec3 at = member != null ? member.position() : heir.pos();
+        player.teleportTo(level, at.x, at.y, at.z, member != null ? member.getYRot() : heir.yRot(), 0.0F);
+        player.getFoodData().setFoodLevel(Math.max(6, member != null ? member.getHunger() : heir.hunger()));
+        if (member != null) {
+            absorb(player, member);
+        } else {
+            // Far from where you respawned: their body is not loaded yet. It will be in a moment, now you are here.
+            absorbing.put(player.getUUID(), new Absorb(heir.member(), level.getGameTime() + 200L));
         }
-        player.getFoodData().setFoodLevel(Math.max(6, member.getHunger()));
-        member.discard();
         PacketDistributor.sendToPlayer(player, new RebirthPayload(name));
         // The eyes are shut for a few seconds: nothing else plays over it, and nothing hurts you. If the one
         // you became was the last of the band, the panic comes once you have opened your eyes.
         dev.hominin.evolution.stage.CutsceneGuard.protect(player, REBIRTH_TICKS);
         player.sendSystemMessage(Component.literal("You carry on as " + name + ".").withStyle(ChatFormatting.GRAY));
+    }
+
+    /** What the heir carried is yours now, and the heir is you. */
+    private static void absorb(ServerPlayer player, BandMember member) {
+        for (ItemStack stack : member.takeEverything()) {
+            if (!player.getInventory().add(stack)) {
+                player.drop(stack, false);
+            }
+        }
+        member.discard();
+    }
+
+    /** Every tick: an heir whose body has just loaded in hands over what it carried. */
+    public static void tickAbsorb(ServerPlayer player) {
+        Absorb pending = absorbing.get(player.getUUID());
+        if (pending == null || player.tickCount % 5 != 0) {
+            return;
+        }
+        if (player.serverLevel().getEntity(pending.member()) instanceof BandMember member && member.isAlive()) {
+            absorbing.remove(player.getUUID());
+            absorb(player, member);
+        } else if (player.level().getGameTime() > pending.until()) {
+            absorbing.remove(player.getUUID());
+        }
     }
 
     /** The bond a member needs with you before you can live as them for a while. */
@@ -1041,6 +1194,7 @@ public final class Band {
         dev.hominin.evolution.stage.CutsceneGuard.protect(player, REBIRTH_TICKS);
         player.sendSystemMessage(Component.literal("You live as " + name + " for a while. The one you were - "
                 + member.getName().getString() + " - carries on where you stood.").withStyle(ChatFormatting.GRAY));
+        dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/just_another_me");
         dev.hominin.evolution.mind.MentalMap.sync(player);
     }
 
@@ -1141,6 +1295,11 @@ public final class Band {
 
     /** Players known to have had a living band, so an empty band reads as a loss. */
     private static final java.util.Set<UUID> hadBand = new java.util.HashSet<>();
+
+    /** Their band went into someone else's, not under: an empty band is not a loss. */
+    public static void forgetBand(ServerPlayer player) {
+        hadBand.remove(player.getUUID());
+    }
 
     /** A band that has lost its leader walks to where they are - or, if too far, simply turns up. */
     private static void keepTogether(ServerPlayer player) {
@@ -1245,7 +1404,7 @@ public final class Band {
      * their progress - the furthest along of each, since that is what hurts.
      */
     private static void loseKnowledge(ServerPlayer player, PlayerEvolutionData data) {
-        var stage = dev.hominin.evolution.stage.StageRegistry.get(data.getStage());
+        var stage = dev.hominin.evolution.stage.StageRegistry.current(data);
         if (stage == null) {
             return;
         }

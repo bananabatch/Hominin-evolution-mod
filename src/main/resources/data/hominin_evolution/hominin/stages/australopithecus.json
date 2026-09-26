@@ -1,11 +1,11 @@
 {
-  "display_name": "Australopithecus",
+  "display_name": "Australopithecus afarensis",
   "years_ago": 3300000,
   "gate": {
     "required": [
       {
         "id": "notice_stone_deposit",
-        "description": "Sneak-use a workable stone deposit.",
+        "description": "Use a workable stone deposit.",
         "count": 1
       },
       {

@@ -99,7 +99,9 @@ public final class ClientInputHandler {
             // Looking at a pile, it shows what is in it.
             if (mc.screen == null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit
                     && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
-                    && mc.level.getBlockState(hit.getBlockPos()).is(dev.hominin.evolution.ModBlocks.TOOL_PILE.get())) {
+                    && (mc.level.getBlockState(hit.getBlockPos()).is(dev.hominin.evolution.ModBlocks.TOOL_PILE.get())
+                            || mc.level.getBlockState(hit.getBlockPos()).is(dev.hominin.evolution.ModBlocks.TOOL_RACK_BAR.get())
+                            || mc.level.getBlockState(hit.getBlockPos()).is(dev.hominin.evolution.ModBlocks.COOKING_SPIT.get()))) {
                 PileScreen.request(hit.getBlockPos());
                 continue;
             }

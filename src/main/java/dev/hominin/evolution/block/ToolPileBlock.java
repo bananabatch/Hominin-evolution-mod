@@ -87,10 +87,13 @@ public class ToolPileBlock extends BaseEntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
             InteractionHand hand, BlockHitResult hit) {
-        // Stone tools on any pile; anything else only onto a pile in your store.
+        // Tools, food, bones and rocks on any pile (each onto its own kind); anything else only in your store - and
+        // on the Pile, whatever is worth giving up.
         boolean store = level instanceof ServerLevel server ? dev.hominin.evolution.build.Sites.isStore(server, pos)
                 : dev.hominin.evolution.build.SiteView.inOwnStore(pos);
-        if (!ToolPiles.layable(stack) && !(store && ToolPiles.storable(stack))) {
+        boolean sacred = level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile
+                && pile.kind() == ToolPileBlockEntity.Kind.SACRED;
+        if (!sacred && !ToolPiles.pileable(stack) && !(store && ToolPiles.storable(stack))) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide()) {

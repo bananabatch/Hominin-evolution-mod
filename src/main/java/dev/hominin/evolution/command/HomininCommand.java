@@ -61,7 +61,9 @@ public final class HomininCommand {
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("stage", ResourceLocationArgument.id())
                                 .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider
-                                        .suggestResource(StageRegistry.all().keySet(), builder))
+                                        .suggestResource(StageRegistry.all().keySet().stream()
+                                                // A path's own goals are not a stage to become.
+                                                .filter(id -> !id.getPath().contains("/")), builder))
                                 .executes(ctx -> setStage(ctx, ctx.getSource().getPlayerOrException(),
                                         ResourceLocationArgument.getId(ctx, "stage")))))
                 .then(Commands.literal("season")
@@ -322,7 +324,7 @@ public final class HomininCommand {
 
     private static int status(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         String stageName = stage != null ? stage.displayName() : data.getStage().toString();
         ctx.getSource().sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " — stage: " + stageName), false);
         if (stage != null) {

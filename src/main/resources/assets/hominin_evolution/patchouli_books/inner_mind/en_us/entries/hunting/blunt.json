@@ -7,6 +7,10 @@
     {
       "type": "patchouli:text",
       "text": "A branch will not kill anything outright. It does not need to.$(br2)Heads do not enjoy being struck, and they enjoy it less each time. Falling onto something from a great height is, it turns out, also a way of striking it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The giants leave something better than a branch: now and then a $(l)bone club$() - a great long bone, heavy at one end - from the megafauna, the giant hyena, a great cat or the giant baboon. It swings like a club, cracks skulls like one, and lasts far longer."
     }
   ]
 }

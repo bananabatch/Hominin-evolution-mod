@@ -48,6 +48,9 @@ public class MapScreen extends Screen {
     private EditBox name;
     /** Packing up throws away the presence you built: the button asks once. */
     private boolean packArmed;
+    /** How many of the places held in mind fit in the panel, and where the chosen marker's name goes. */
+    private int maxRows = Integer.MAX_VALUE;
+    private int labelY;
 
     private MapScreen(MapPayload map) {
         super(Component.literal("Mental map"));
@@ -75,11 +78,25 @@ public class MapScreen extends Screen {
         mapLeft = 10;
         mapTop = 24;
         int px = mapLeft + size + 8;
-        int y = mapTop + 58;
+        // Laid out from the bottom up - Done, the chosen marker and its Follow, then the controls - and the places held
+        // in mind take whatever room is left above them, so nothing is ever drawn on top of anything else.
+        boolean following = map.markers().stream().anyMatch(m -> m.kind() == MapPayload.WAYPOINT);
+        boolean chosenShown = selected != null;
+        int doneY = height - 28;
+        int followY = doneY - 22;
+        labelY = (chosenShown && !selected.target().isEmpty() ? followY : doneY) - 12;
+        int controls = 20 + 22 + 22 + 22 + (following ? 22 : 0);
+        int controlsTop = (chosenShown ? labelY - 4 : labelY + 8) - controls;
+        int listTop = mapTop + 58;
+        maxRows = Math.max(1, (controlsTop - 8 - listTop) / 14);
+        int y = listTop;
         int row = 0;
         for (MapPayload.Marker marker : map.markers()) {
             if (marker.memory() < 0) {
                 continue;
+            }
+            if (row >= maxRows) {
+                break;
             }
             int index = marker.memory();
             int rowY = y + row * 14;
@@ -89,7 +106,7 @@ public class MapScreen extends Screen {
                     new MapActionPayload(MapActionPayload.FORGET, index, ""))).bounds(px + PANEL - 16, rowY - 2, 14, 12).build());
             row++;
         }
-        y += Math.max(1, row) * 14 + 8;
+        y = Math.max(y + Math.max(1, row) * 14 + 8, controlsTop);
         String typed = name == null ? "" : name.getValue();
         name = new EditBox(font, px, y, PANEL - 10, 16, Component.literal("A name for this place"));
         name.setMaxLength(32);
@@ -119,7 +136,6 @@ public class MapScreen extends Screen {
                     new MapActionPayload(MapActionPayload.SETTLE, -1, ""))).bounds(px, y, PANEL - 10, 18).build());
         }
         y += 22;
-        boolean following = map.markers().stream().anyMatch(m -> m.kind() == MapPayload.WAYPOINT);
         if (following) {
             addRenderableWidget(Button.builder(Component.literal("Stop following"), b -> {
                 PacketDistributor.sendToServer(new MapActionPayload(MapActionPayload.STOP, -1, ""));
@@ -128,9 +144,10 @@ public class MapScreen extends Screen {
             y += 22;
         }
         if (selected != null && !selected.target().isEmpty()) {
+            // In with the other controls, never on top of them - a button underneath another never gets the click.
             MapPayload.Marker chosen = selected;
             addRenderableWidget(Button.builder(Component.literal("Follow: " + trim(chosen.label(), PANEL - 60)),
-                    b -> follow(chosen)).bounds(px, height - 52, PANEL - 10, 18).build());
+                    b -> follow(chosen)).bounds(px, followY, PANEL - 10, 18).build());
         }
         addRenderableWidget(Button.builder(Component.literal("-"), b -> setZoom(1)).bounds(mapLeft, mapTop + size + 2, 16, 14).build());
         addRenderableWidget(Button.builder(Component.literal("+"), b -> setZoom(-1)).bounds(mapLeft + 18, mapTop + size + 2, 16, 14).build());
@@ -141,6 +158,8 @@ public class MapScreen extends Screen {
         }).bounds(mapLeft + 36, mapTop + size + 2, 34, 14).build());
         addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(px, height - 28, PANEL - 10, 18).build());
     }
+
+    private long lastClick;
 
     private void follow(MapPayload.Marker marker) {
         if (!marker.target().isEmpty()) {
@@ -315,11 +334,13 @@ public class MapScreen extends Screen {
             case MapPayload.TOLD -> 0xFF60C0C0;
             case MapPayload.CAMP -> 0xFFFF9020;
             case MapPayload.WAYPOINT -> 0xFF7CFF7C;
+            case MapPayload.PLAYER -> 0xFF40D8FF;
             default -> 0xFFFFFFFF;
         };
         boolean chosen = selected != null && selected.x() == marker.x() && selected.z() == marker.z()
                 && selected.kind() == marker.kind();
-        int r = marker.kind() == MapPayload.BAND || marker.kind() == MapPayload.CAMP ? 3 : 2;
+        int r = marker.kind() == MapPayload.BAND || marker.kind() == MapPayload.CAMP || marker.kind() == MapPayload.PLAYER
+                ? 3 : 2;
         graphics.fill(x - r - 1, y - r - 1, x + r + 2, y + r + 2, chosen ? 0xFFFFFFFF : 0xFF1A1410);
         graphics.fill(x - r, y - r, x + r + 1, y + r + 1, colour);
         if (marker.kind() == MapPayload.WAYPOINT) {
@@ -340,7 +361,7 @@ public class MapScreen extends Screen {
         String own = map.ownName().isEmpty() ? "Your band" : Character.toUpperCase(map.ownName().charAt(0)) + map.ownName().substring(1);
         graphics.drawString(font, trim(own, PANEL - 8), px, y, 0xFF9020);
         y += 11;
-        graphics.drawString(font, map.settled() ? "Presence here: " + map.presence() + "/50" : "Packed up - no ground",
+        graphics.drawString(font, map.settled() ? "Presence here: " + map.presence() + "/20" : "Packed up - no ground",
                 px, y, map.settled() ? 0xBBBBBB : 0xE0A040);
         y += 11;
         long told = map.markers().stream().filter(m -> m.kind() == MapPayload.TOLD).count();
@@ -353,8 +374,13 @@ public class MapScreen extends Screen {
         graphics.drawString(font, "Places held in mind: " + held + "/" + map.slots(), px, y, 0xE9D8A6);
         y = mapTop + 58;
         int row = 0;
+        int hidden = 0;
         for (MapPayload.Marker marker : map.markers()) {
             if (marker.memory() < 0) {
+                continue;
+            }
+            if (row >= maxRows) {
+                hidden++;
                 continue;
             }
             graphics.drawString(font, trim(marker.label(), PANEL - 40), px, y + row * 14, 0xDDDDDD);
@@ -362,9 +388,11 @@ public class MapScreen extends Screen {
         }
         if (row == 0) {
             graphics.drawString(font, "- nothing yet -", px, y, 0x8C8578);
+        } else if (hidden > 0) {
+            graphics.drawString(font, "+" + hidden + " more (make the window bigger)", px, y + row * 14, 0x8C8578);
         }
         if (selected != null) {
-            graphics.drawString(font, trim(selected.label(), PANEL - 8), px, height - 64, 0xFFFFFF);
+            graphics.drawString(font, trim(selected.label(), PANEL - 8), px, labelY, 0xFFFFFF);
         }
         graphics.drawString(font, "Orange: yours. Red: bands'. Brown: chimps'. Diamonds: places.", mapLeft + 74,
                 mapTop + size + 5, 0x8C8578);
@@ -383,7 +411,8 @@ public class MapScreen extends Screen {
             double bestDistance = 36.0D;
             for (MapPayload.Marker marker : map.markers()) {
                 int[] at = screenOf(marker.x(), marker.z());
-                if (at == null) {
+                // Only what can be followed: the pointer to where you are already going is not a place.
+                if (at == null || marker.target().isEmpty()) {
                     continue;
                 }
                 double d = (mouseX - at[0]) * (mouseX - at[0]) + (mouseY - at[1]) * (mouseY - at[1]);
@@ -393,6 +422,13 @@ public class MapScreen extends Screen {
                 }
             }
             if (best != null) {
+                long now = net.minecraft.Util.getMillis();
+                if (best.equals(selected) && now - lastClick < 400L) {
+                    // Double-click: follow it.
+                    follow(best);
+                    return true;
+                }
+                lastClick = now;
                 selected = best;
                 rebuildWidgets();
                 return true;

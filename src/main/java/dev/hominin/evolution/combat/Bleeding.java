@@ -73,6 +73,11 @@ public final class Bleeding {
     }
 
     private static final Map<UUID, Catastrophic> dying = new HashMap<>();
+    /** When each player last drank: drinking hard holds a catastrophic bleed off, for as long as it goes on. */
+    private static final Map<UUID, Long> lastDrank = new HashMap<>();
+    private static final long STEMMED_TICKS = 60L;
+    private static final String CARRY_TICKS = "carry_catastrophic_ticks";
+    private static final String CARRY_DRUNK = "carry_catastrophic_drunk";
 
     /**
      * Opens a wound of this tier. A worse one always overrides a lesser one; a lesser
@@ -124,6 +129,7 @@ public final class Bleeding {
         if (state == null) {
             return;
         }
+        lastDrank.put(player.getUUID(), player.level().getGameTime());
         int drunk = state.drunk() + amount;
         if (drunk < WATER_TO_SURVIVE) {
             dying.put(player.getUUID(), new Catastrophic(state.endsAt(), drunk));
@@ -148,10 +154,24 @@ public final class Bleeding {
                 .withStyle(ChatFormatting.GOLD));
     }
 
+    /**
+     * Drinking hard, right now: the bleeding stops hurting and the clock stops running, until the drinking stops.
+     */
+    public static boolean stemmed(Player player) {
+        Long drank = lastDrank.get(player.getUUID());
+        return dying.containsKey(player.getUUID()) && drank != null
+                && player.level().getGameTime() - drank < STEMMED_TICKS;
+    }
+
     /** Running out of time. */
     public static void tick(ServerPlayer player) {
         Catastrophic state = dying.get(player.getUUID());
         if (state == null) {
+            return;
+        }
+        if (stemmed(player)) {
+            // Held off while the water keeps going in.
+            dying.put(player.getUUID(), new Catastrophic(state.endsAt() + 1, state.drunk()));
             return;
         }
         long left = state.endsAt() - player.level().getGameTime();
@@ -192,6 +212,41 @@ public final class Bleeding {
 
     public static void forget(UUID player) {
         dying.remove(player);
+        lastDrank.remove(player);
+    }
+
+    /**
+     * Dying with a catastrophic wound open: it does not go away - the body you wake in carries it, with the time it
+     * had left (half a minute at least) and whatever you had drunk. It is kept with this kind's knowledge, so it
+     * ends if you evolve.
+     */
+    public static void carryOver(ServerPlayer player) {
+        Catastrophic state = dying.remove(player.getUUID());
+        lastDrank.remove(player.getUUID());
+        var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        if (state == null) {
+            counters.remove(CARRY_TICKS);
+            counters.remove(CARRY_DRUNK);
+            return;
+        }
+        counters.put(CARRY_TICKS, (int) Math.max(30 * 20L, state.endsAt() - player.level().getGameTime()));
+        counters.put(CARRY_DRUNK, state.drunk());
+    }
+
+    /** Waking up: a catastrophic wound carried over opens again. */
+    public static void resume(ServerPlayer player) {
+        var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        Integer ticks = counters.remove(CARRY_TICKS);
+        int drunk = counters.getOrDefault(CARRY_DRUNK, 0);
+        counters.remove(CARRY_DRUNK);
+        if (ticks == null || ticks <= 0) {
+            return;
+        }
+        player.addEffect(new MobEffectInstance(ModEffects.BLEEDING, Tier.CATASTROPHIC.ticks(), Tier.CATASTROPHIC.ordinal(),
+                false, true, true));
+        dying.put(player.getUUID(), new Catastrophic(player.level().getGameTime() + ticks, drunk));
+        player.sendSystemMessage(Component.literal("The wound came with you. It is still open. Drink. ("
+                + drunk + "/" + WATER_TO_SURVIVE + ")").withStyle(ChatFormatting.DARK_RED));
     }
 
     private Bleeding() {

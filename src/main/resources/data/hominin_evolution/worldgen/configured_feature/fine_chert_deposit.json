@@ -1,0 +1,8 @@
+{
+  "type": "hominin_evolution:outcrop",
+  "config": {
+    "state": {
+      "Name": "hominin_evolution:fine_chert_deposit"
+    }
+  }
+}

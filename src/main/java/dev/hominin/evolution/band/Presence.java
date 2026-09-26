@@ -9,9 +9,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * How much the country around your camp knows to leave your band alone: presence, 0 to 50.
+ * How much the country around your camp knows to leave your band alone: presence, 0 to 20.
  *
- * <p>Every new stretch of ground starts at 20 - nobody knows you yet. It rises when you make yourselves
+ * <p>0 to 5 is weak: other bands raid you, what hunts does not hesitate, and even allies hang back from helping.
+ * High presence and allies come without a second thought, and most things leave you be.
+ *
+ * <p>Every new stretch of ground starts at 8 - nobody knows you yet. It rises when you make yourselves
  * felt: a predator killed on your ground (more for the great cats and the giant hyena, which nothing
  * else stands up to), a kill taken off a scavenger, big game brought down. It falls when the country
  * gets the better of you - one of the band taken, food stolen out of your camp - and it fades a little
@@ -25,26 +28,42 @@ import net.minecraft.world.entity.LivingEntity;
 public final class Presence {
     private static final String KEY = "presence";
     private static final String DAY = "presence_day";
-    public static final int START = 20;
-    public static final int MAX = 50;
-    /** Below this, a desperate band will think about raiding you. */
-    public static final int WEAK = 15;
-    /** At and above this, the country mostly leaves you alone. */
-    public static final int STRONG = 35;
+    public static final int START = 8;
+    public static final int MAX = 20;
+    /** At or below this - 0 to 5 - bands raid you, predators do not hesitate, allies hang back. */
+    public static final int WEAK = 5;
+    /** At and above this, the country mostly leaves you alone, and allies come without hesitating. */
+    public static final int STRONG = 14;
+    /** Commanding: nothing out there wants to test you. */
+    public static final int COMMANDING = 18;
+    /** Saves from when presence ran to 50 are brought down to this scale once. */
+    private static final String SCALE = "presence_scale20";
 
     private static Map<String, Integer> counters(ServerPlayer player) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
     }
 
     public static int get(ServerPlayer player) {
-        return Math.max(0, Math.min(MAX, counters(player).getOrDefault(KEY, START)));
+        Map<String, Integer> counters = counters(player);
+        if (!counters.containsKey(SCALE)) {
+            counters.put(SCALE, 1);
+            if (counters.containsKey(KEY)) {
+                counters.put(KEY, Math.round(counters.get(KEY) * 0.4F));
+            }
+        }
+        return Math.max(0, Math.min(MAX, counters.getOrDefault(KEY, START)));
+    }
+
+    /** Weak: 0 to 5. */
+    public static boolean weak(ServerPlayer player) {
+        return get(player) <= WEAK;
     }
 
     public static String label(int presence) {
-        return presence >= 45 ? "commanding - nothing out there wants to test you"
-                : presence >= STRONG ? "strong - most things keep away"
-                : presence >= WEAK ? "ordinary"
-                : "weak - you are easy pickings";
+        return presence >= COMMANDING ? "commanding - nothing out there wants to test you"
+                : presence >= STRONG ? "strong - most things keep away, and allies come at once"
+                : presence > WEAK ? "ordinary"
+                : "weak - bands raid you, predators do not hesitate, allies hang back";
     }
 
     /** New country: nobody here knows your band, for good or ill. */
@@ -64,7 +83,7 @@ public final class Presence {
         if (before < STRONG && after >= STRONG) {
             player.sendSystemMessage(Component.literal("The country around your camp has learned to leave your band "
                     + "alone. (Presence " + after + ")").withStyle(ChatFormatting.GREEN));
-        } else if (before >= WEAK && after < WEAK) {
+        } else if (before > WEAK && after <= WEAK) {
             player.sendSystemMessage(Component.literal("Your band looks weak on this ground now - to the animals, "
                     + "and to other bands. (Presence " + after + ")").withStyle(ChatFormatting.GOLD));
         }
@@ -110,7 +129,7 @@ public final class Presence {
             newDay(player);
             Map<String, Integer> counters = counters(player);
             int minutes = counters.merge(FIRE_MINUTES, 1, Integer::sum);
-            if (minutes >= 10 && counters.getOrDefault(FIRE_GAINED, 0) < 3) {
+            if (minutes >= 5 && counters.getOrDefault(FIRE_GAINED, 0) < 5) {
                 counters.put(FIRE_MINUTES, 0);
                 counters.merge(FIRE_GAINED, 1, Integer::sum);
                 add(player, 1, "a fire kept on your ground");
@@ -137,7 +156,7 @@ public final class Presence {
         newDay(player);
         Map<String, Integer> counters = counters(player);
         int built = counters.merge(BUILT, 1, Integer::sum);
-        if (built >= 6 && counters.getOrDefault(BUILD_GAINED, 0) < 2) {
+        if (built >= 3 && counters.getOrDefault(BUILD_GAINED, 0) < 4) {
             counters.put(BUILT, 0);
             counters.merge(BUILD_GAINED, 1, Integer::sum);
             add(player, 1, "you are building here");
@@ -145,7 +164,7 @@ public final class Presence {
     }
 
     /**
-     * How much of what hunts is kept from this spot: ground a band holds strongly (theirs, or yours, at 28 and
+     * How much of what hunts is kept from this spot: ground a band holds strongly (theirs, or yours, at 11 and
      * up), and a prosperous day. Up to six in ten never come.
      */
     public static float predatorsKeptOff(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at) {
@@ -155,8 +174,8 @@ public final class Presence {
         }
         for (ServerPlayer player : level.players()) {
             int presence = get(player);
-            if (presence >= 28 && dev.hominin.evolution.hunt.Predation.onOwnGround(player, at)) {
-                kept = Math.max(kept, Math.min(0.6F, (presence - 25) / 40.0F));
+            if (presence >= 11 && dev.hominin.evolution.hunt.Predation.onOwnGround(player, at)) {
+                kept = Math.max(kept, Math.min(0.6F, (presence - 10) / 16.0F));
             }
         }
         return kept;
@@ -174,11 +193,21 @@ public final class Presence {
         }
         boolean first = !counters.containsKey(DAY);
         counters.put(DAY, day);
-        if (!first && get(player) > START) {
+        // Presence nobody keeps up fades - slowly, and only the strong kind.
+        if (!first && get(player) > 12 && day % 2 == 0) {
             counters.put(KEY, get(player) - 1);
+        }
+        if (!first && dev.hominin.evolution.hunt.Predation.settled(player)
+                && Band.all(player).stream().filter(m -> !m.isBaby()).count() >= 4) {
+            // A band that lives somewhere is felt there.
+            add(player, 1, "your band lives here");
         }
         if (!first && day % 2 == 0) {
             dev.hominin.evolution.band.Claims.addFeared(player, -1);
+        }
+        if (!first) {
+            // Bands you stand with take up your ways.
+            Relations.shareWays(player);
         }
         if (!first) {
             // Allies near you lend you their name: everything out there knows who stands with you.

@@ -77,6 +77,12 @@ public class CarcassBlock extends HorizontalDirectionalBlock {
         java.util.List<net.minecraft.world.item.ItemStack> drops = new java.util.ArrayList<>(super.getDrops(state, params));
         net.minecraft.server.level.ServerLevel level = params.getLevel();
         dev.hominin.evolution.survival.Seasons.adjust(level, drops, level.random);
+        net.minecraft.world.phys.Vec3 origin = params.getOptionalParameter(
+                net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN);
+        if (origin != null && rots(state)) {
+            dev.hominin.evolution.hunt.CarcassAge.spoilIfLeft(level, BlockPos.containing(origin), drops,
+                    dev.hominin.evolution.hunt.CarcassAge.CARCASS_DAYS);
+        }
         return drops;
     }
 
@@ -91,5 +97,22 @@ public class CarcassBlock extends HorizontalDirectionalBlock {
         // Whoever is at it: a clan strips it if nobody is standing over it. The giant hyena
         // does its own eating, and fights for the privilege.
         dev.hominin.evolution.hunt.Carcasses.clanFeeds(level, pos);
+        if (rots(state) && level.getBlockState(pos).is(this)) {
+            dev.hominin.evolution.hunt.CarcassAge.age(level, pos, dev.hominin.evolution.hunt.CarcassAge.CARCASS_DAYS);
+        }
+    }
+
+    /** A fresh kill rots. An old bone bed is past rotting, and a hominin's body is for the band to see to. */
+    protected boolean rots(BlockState state) {
+        return !state.getValue(LARGE) && !(this instanceof HomininCarcassBlock);
+    }
+
+    @Override
+    protected void onRemove(BlockState state, net.minecraft.world.level.Level level, BlockPos pos, BlockState newState,
+            boolean moved) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel server) {
+            dev.hominin.evolution.hunt.CarcassAge.forget(server, pos);
+        }
+        super.onRemove(state, level, pos, newState, moved);
     }
 }

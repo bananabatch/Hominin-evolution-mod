@@ -110,6 +110,12 @@ public class SleepInNestGoal extends Goal {
             }
         }
         BlockPos origin = member.blockPosition();
+        // Erectus: their own thatch bed, if it is near enough to walk back to.
+        BlockPos own = dev.hominin.evolution.band.ErectusWork.works(member)
+                ? dev.hominin.evolution.band.ErectusWork.bedOf(member) : null;
+        if (own != null && own.distSqr(origin) < 32.0D * 32.0D && !taken(own)) {
+            return own;
+        }
         net.minecraft.world.entity.player.Player leader = member.leaderPlayer();
         boolean mate = leader != null && member.isMateOf(leader.getUUID()) && member.distanceToSqr(leader) < 32.0D * 32.0D;
         BlockPos best = null;

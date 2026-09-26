@@ -1,0 +1,141 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "bark": "hominin_evolution:block/branch_bark",
+    "end": "hominin_evolution:block/branch_end",
+    "twine": "hominin_evolution:block/twine_coil",
+    "granite": "hominin_evolution:block/granite_rock",
+    "chert": "hominin_evolution:block/chert_rock",
+    "particle": "hominin_evolution:block/branch_bark"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark"
+        },
+        "south": {
+          "texture": "#bark"
+        },
+        "east": {
+          "texture": "#bark"
+        },
+        "west": {
+          "texture": "#bark"
+        },
+        "up": {
+          "texture": "#end"
+        },
+        "down": {
+          "texture": "#end"
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        0,
+        8.5
+      ],
+      "to": [
+        7,
+        2,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chert"
+        },
+        "south": {
+          "texture": "#chert"
+        },
+        "east": {
+          "texture": "#chert"
+        },
+        "west": {
+          "texture": "#chert"
+        },
+        "up": {
+          "texture": "#chert"
+        },
+        "down": {
+          "texture": "#chert"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        0,
+        5.5
+      ],
+      "to": [
+        11.5,
+        1.5,
+        7.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#granite"
+        },
+        "south": {
+          "texture": "#granite"
+        },
+        "east": {
+          "texture": "#granite"
+        },
+        "west": {
+          "texture": "#granite"
+        },
+        "up": {
+          "texture": "#granite"
+        },
+        "down": {
+          "texture": "#granite"
+        }
+      }
+    },
+    {
+      "from": [
+        6.75,
+        3.0,
+        6.75
+      ],
+      "to": [
+        9.25,
+        4.25,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#twine"
+        },
+        "south": {
+          "texture": "#twine"
+        },
+        "east": {
+          "texture": "#twine"
+        },
+        "west": {
+          "texture": "#twine"
+        },
+        "up": {
+          "texture": "#twine"
+        },
+        "down": {
+          "texture": "#twine"
+        }
+      }
+    }
+  ]
+}

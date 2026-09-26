@@ -2,6 +2,9 @@
   "values": [
     "hominin_evolution:fire_hardened_spear",
     "hominin_evolution:hand_axe",
-    "hominin_evolution:cleaver"
+    "hominin_evolution:cleaver",
+    "hominin_evolution:schoningen_spear",
+    "hominin_evolution:stone_tipped_spear",
+    "hominin_evolution:levallois_hand_axe"
   ]
 }

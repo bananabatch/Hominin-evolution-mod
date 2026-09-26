@@ -48,6 +48,8 @@ public record MapPayload(int x, int z, int slots, int presence, String ownName, 
     public static final int TOOL_STORE = 12;
     /** Something you built, or marked out to build. */
     public static final int STRUCTURE = 13;
+    /** Another player, wherever they are. */
+    public static final int PLAYER = 14;
     /** A place your band knows: this plus the kind of place (see {@link dev.hominin.evolution.world.Pois.Kind}). */
     public static final int PLACE = 20;
 

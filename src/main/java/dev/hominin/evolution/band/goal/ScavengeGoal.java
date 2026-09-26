@@ -139,7 +139,7 @@ public class ScavengeGoal extends Goal {
         }
         SimpleContainer pack = member.getInventory();
         int boneSlot = -1;
-        boolean hasStone = member.count(ModItems.ROCK.get()) > 0 || member.count(ModItems.HAMMERSTONE.get()) > 0
+        boolean hasStone = member.countRocks() > 0 || member.count(ModItems.HAMMERSTONE.get()) > 0
                 || member.count(ModItems.FLAKE.get()) > 0
                 || member.getMainHandItem().is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE);
         for (int slot = 0; slot < pack.getContainerSize() && hasStone; slot++) {

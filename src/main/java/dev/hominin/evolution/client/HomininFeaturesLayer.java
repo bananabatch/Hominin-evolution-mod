@@ -87,16 +87,17 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
     }
 
     /**
-     * Rudolfensis: a long face, broad and flat - not pushed forward like a muzzle but tall and wide - under a brow
-     * set low, and a skull a size bigger than habilis's: the vault stands up over the head.
+     * Rudolfensis: a long face, broad and flat - not pushed forward like a muzzle but wide, standing only a little
+     * proud of the face below the eyes - under a heavy brow, and a skull a size bigger than habilis's: the vault
+     * stands up over the head. The eyes stay clear between the two.
      */
     public static LayerDefinition rudolfensis() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
-                .addBox(-4.0F, -5.8F, -4.7F, 8, 1, 1), PartPose.ZERO);
+                .addBox(-4.0F, -6.0F, -4.7F, 8, 1, 1), PartPose.ZERO);
         root.addOrReplaceChild("face", CubeListBuilder.create().texOffs(0, 2)
-                .addBox(-3.0F, -4.8F, -4.9F, 6, 5, 1), PartPose.ZERO);
+                .addBox(-3.0F, -4.0F, -4.5F, 6, 3, 1), PartPose.ZERO);
         root.addOrReplaceChild("vault", CubeListBuilder.create().texOffs(0, 8)
                 .addBox(-3.5F, -8.8F, -3.5F, 7, 1, 7), PartPose.ZERO);
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);

@@ -133,8 +133,14 @@ public final class MentalMap {
 
     @Nullable
     public static String depositName(BlockState state) {
+        if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+            return "Obsidian seam";
+        }
         if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
             return "Chert outcrop";
+        }
+        if (state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())) {
+            return "Fine chert seam";
         }
         if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
             return "Quartzite outcrop";
@@ -235,6 +241,12 @@ public final class MentalMap {
         }
         player.sendSystemMessage(Component.literal("They tell you what they remember - on your map for today:")
                 .withStyle(ChatFormatting.AQUA));
+        // And how the country lies round each place: drawn in, if you have never been there.
+        dev.hominin.evolution.world.LandReveal.Telling telling = dev.hominin.evolution.world.LandReveal.telling();
+        for (MindData.Memory memory : mind.told()) {
+            telling.around(player.serverLevel(), memory.pos(), 24);
+        }
+        telling.send(player);
         for (String line : heard.subList(0, Math.min(8, heard.size()))) {
             player.sendSystemMessage(Component.literal("  " + line).withStyle(ChatFormatting.GRAY));
         }
@@ -424,7 +436,7 @@ public final class MentalMap {
         if (settled) {
             var land = dev.hominin.evolution.world.Land.ofPlayer(player);
             grounds.add(new MapPayload.Ground(camp.getX(), camp.getZ(), ownRadius, 0, BandNames.capital(ownName),
-                    "Your ground - presence " + presence + "/50, " + Presence.label(presence) + "|Cohesion "
+                    "Your ground - presence " + presence + "/20, " + Presence.label(presence) + "|Cohesion "
                             + dev.hominin.evolution.band.Cohesion.get(player) + "/" + dev.hominin.evolution.band.Cohesion.MAX
                             + "|Pressure " + land.total() + "/10 - "
                             + dev.hominin.evolution.world.Land.label(land.total()) + "|" + String.join(", ", land.describe(player))
@@ -441,14 +453,15 @@ public final class MentalMap {
             String label = BandNames.capital(band.name) + " (" + (band.nomadic() ? "Paranthropus"
                     : dev.hominin.evolution.band.Relations.speciesName(band.species)) + ") - standing " + standing + "/50";
             if (!band.nomadic()) {
-                label += ", presence " + band.presence + "/50";
+                label += ", presence " + band.presence + "/20";
                 String pressure = level.hasChunk(band.home.getX() >> 4, band.home.getZ() >> 4)
                         ? "|Pressure " + dev.hominin.evolution.world.Land.of(level, band.home, band.radius()).total() + "/10"
                         : "";
                 grounds.add(new MapPayload.Ground(band.home.getX(), band.home.getZ(), band.radius(), 1,
-                        BandNames.capital(band.name), Relations.speciesName(band.species) + "|Standing " + standing
+                        BandNames.capital(band.name), Relations.speciesName(band.species)
+                                + (band.haven != null ? " - they hold a haven" : "") + "|Standing " + standing
                                 + "/50 - " + Relations.tier(standing)
-                                + "|Presence " + band.presence + "/50 - " + band.strength() + "|Cohesion " + band.cohesion
+                                + "|Presence " + band.presence + "/20 - " + band.strength() + "|Cohesion " + band.cohesion
                                 + "/50 - " + band.temper() + "|Desperation " + band.desperation + "/5 - "
                                 + dev.hominin.evolution.band.Claims.desperationLabel(band.desperation) + pressure));
             }
@@ -492,6 +505,21 @@ public final class MentalMap {
             markers.add(new MapPayload.Marker(site.origin().getX(), site.origin().getZ(), MapPayload.STRUCTURE,
                     site.label(), -1, at(site.origin(), site.name())));
         }
+        // Everyone else walking this country: you always know roughly where the others are.
+        for (ServerPlayer other : level.players()) {
+            if (other == player || other.isSpectator()) {
+                continue;
+            }
+            java.util.UUID host = dev.hominin.evolution.band.Newcomers.hostOf(other);
+            String with = host != null && host.equals(player.getUUID()) ? " - walks with your band"
+                    : host != null && level.getServer().getPlayerList().getPlayer(host) instanceof ServerPlayer h
+                            ? " - walks with " + h.getGameProfile().getName() + "'s band"
+                            : dev.hominin.evolution.band.Newcomers.hostOf(player) != null
+                                    && dev.hominin.evolution.band.Newcomers.hostOf(player).equals(other.getUUID())
+                                            ? " - leads your band" : "";
+            markers.add(new MapPayload.Marker(other.getBlockX(), other.getBlockZ(), MapPayload.PLAYER,
+                    other.getGameProfile().getName() + with, -1, at(other.blockPosition(), other.getGameProfile().getName())));
+        }
         BlockPos waypoint = mind.waypoint();
         if (waypoint != null) {
             markers.add(new MapPayload.Marker(waypoint.getX(), waypoint.getZ(), MapPayload.WAYPOINT,
@@ -520,7 +548,7 @@ public final class MentalMap {
      */
     public static void rainOnLava(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
-        if (player.tickCount % 600 != 311 || !level.isRaining()) {
+        if (player.tickCount % 300 != 11 || !level.isRaining()) {
             return;
         }
         RandomSource random = player.getRandom();
@@ -543,7 +571,7 @@ public final class MentalMap {
         }
         for (BlockPos pool : pools) {
             if (!level.hasChunk(pool.getX() >> 4, pool.getZ() >> 4) || !level.canSeeSky(pool.above())
-                    || random.nextInt(3) != 0) {
+                    || random.nextBoolean()) {
                 continue;
             }
             int glass = 0;
@@ -552,7 +580,7 @@ public final class MentalMap {
                     glass++;
                 }
             }
-            if (glass >= 4) {
+            if (glass >= 8) {
                 continue;
             }
             for (int attempt = 0; attempt < 12; attempt++) {

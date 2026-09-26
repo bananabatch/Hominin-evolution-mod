@@ -27,7 +27,7 @@ public final class EvolutionManager {
 
     public static void incrementCriterion(ServerPlayer player, String criterionId, int amount) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         if (stage == null) {
             return;
         }
@@ -37,7 +37,7 @@ public final class EvolutionManager {
 
     public static void forceSatisfyCriterion(ServerPlayer player, String criterionId) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         if (stage == null) {
             return;
         }
@@ -69,6 +69,8 @@ public final class EvolutionManager {
             player.sendSystemMessage(Component.literal(
                     "You are ready to evolve — perform your milestone act: " + stage.milestone().description()));
             dev.hominin.evolution.guide.Tips.readyToEvolve(player, stage.milestone().type());
+            // Ready to become something new: a thing worth a feast.
+            dev.hominin.evolution.band.Feast.event(player, "all your people have done");
         }
     }
 
@@ -79,7 +81,7 @@ public final class EvolutionManager {
      */
     public static boolean isReadyForMilestone(ServerPlayer player, ResourceLocation milestoneType) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         return stage != null
                 && stage.milestone().type().equals(milestoneType)
                 && stage.nextStage().isPresent()
@@ -88,7 +90,7 @@ public final class EvolutionManager {
 
     public static boolean attemptMilestone(ServerPlayer player, ResourceLocation milestoneType) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         if (stage == null || !stage.milestone().type().equals(milestoneType) || stage.nextStage().isEmpty()) {
             return false;
         }
@@ -111,6 +113,10 @@ public final class EvolutionManager {
                 nextStageId = detour;
             }
         }
+        // With others in the world, everyone gets fifteen seconds to choose first.
+        if (dev.hominin.evolution.stage.Intermission.start(player, nextStageId)) {
+            return;
+        }
         become(player, nextStageId);
     }
 
@@ -124,11 +130,17 @@ public final class EvolutionManager {
         if (nextStage == null) {
             return;
         }
+        // Where the line splits, nothing changes until a path is chosen.
+        if (dev.hominin.evolution.stage.Lineage.holdFor(player, nextStageId)) {
+            return;
+        }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         ResourceLocation previousStageId = data.getStage();
         StageDefinition previousStage = StageRegistry.get(previousStageId);
         data.setStage(nextStageId);
         data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(SKILL_PREFIX));
+        dev.hominin.evolution.survival.Afflictions.relieve(player, dev.hominin.evolution.survival.Afflictions.Affliction.LACERATED);
+        dev.hominin.evolution.combat.Bleeding.forget(player.getUUID());
         data.getNotifiedReadyStages().clear();
         // Distance credit is per-stage, so the new stage starts measuring from here.
         // Without this reset, ground covered as Australopithecus would immediately
@@ -156,6 +168,15 @@ public final class EvolutionManager {
             dev.hominin.evolution.band.Bands.newEra(player);
             // The places the band knew are still there, and the band still knows them.
             dev.hominin.evolution.world.Pois.passDown(player);
+            // The band's tool piles are from before now: nobody's, and aged into artifacts.
+            dev.hominin.evolution.band.ToolPiles.passDown(player);
+            // And what they built has fallen down.
+            dev.hominin.evolution.build.Building.wipeOld(player);
+            // A new age: day one, the start of the rains - and a body that has eaten and drunk.
+            dev.hominin.evolution.survival.Era.begin(player.serverLevel());
+            player.getFoodData().setFoodLevel(20);
+            player.getFoodData().setSaturation(5.0F);
+            dev.hominin.evolution.survival.Thirst.set(player, dev.hominin.evolution.survival.Thirst.MAX);
             player.getData(Attachments.MIND).wipe();
             player.getData(Attachments.MIND).setBodyName("");
             dev.hominin.evolution.mind.MentalMap.sync(player);

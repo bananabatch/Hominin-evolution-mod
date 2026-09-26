@@ -31,11 +31,11 @@ public final class Voices {
     /** Closer than this there is no need to say where they are. */
     private static final double CLOSE = 12.0D;
     private static final long BAND_GAP = 45 * 20L;
-    private static final long OWN_GAP = 4 * 60 * 20L;
+    private static final long OWN_GAP = 150 * 20L;
 
     private static final Map<String, Long> lastHeard = new HashMap<>();
 
-    private static final String[] ALLIED = {"There they are! Come and sit with us.", "You are always welcome at our fire.",
+    private static final String[] ALLIED = {"There they are! Come and sit with us.", "You are always welcome with us.",
             "We saw a big herd down by the water - we'll show you.", "Our young ones keep asking about you.",
             "Whatever you need, just say it.", "Your people and ours - one band, near enough.",
             "Stay close tonight. Two bands are safer than one.", "We kept some meat back for you."};
@@ -71,6 +71,26 @@ public final class Voices {
     private static final String[] CLOSE_BOND = {"I would follow you anywhere. You know that.", "You're the best of us.",
             "I saved you the good part. Don't tell the others.", "Whatever comes, we face it together.",
             "When I'm old I'll still be listening to you."};
+
+    /** How the band as a whole takes you, by cohesion: 50 and up, 40, 30, 20, and thin ice below that. */
+    private static final String[] TRUSTING = {"We'd go anywhere with you. Anywhere.",
+            "Come, sit with us - there's room by the fire.", "Whatever you decide, we're with you.",
+            "You've kept us safe. We haven't forgotten.", "Stay. Rest. We'll keep watch.",
+            "It's good, the way things are with us."};
+    private static final String[] SETTLED = {"Where to today? You lead, we follow.", "We're getting used to your ways.",
+            "You haven't led us wrong yet.", "Tell us what to do and we'll do it.", "It's a good band, this."};
+    private static final String[] WARY = {"I trust you. Mostly.", "You know where we're going... don't you?",
+            "We'll follow. For now.", "Some of us aren't sure about you. I am. I think.", "Just don't get us killed."};
+    private static final String[] SLIPPING = {"People are talking about you.", "I used to be sure about you.",
+            "Why should we keep following you?", "Something has to change.", "We're not as close as we were."};
+    private static final String[] THIN_ICE = {"One more mistake. That's all you have left.",
+            "Nobody here trusts you any more.", "Don't turn your back on us.", "We could leave. Some of us want to.",
+            "You're on thin ice. You know that?"};
+
+    private static String[] byCohesion(int cohesion) {
+        return cohesion >= 50 ? TRUSTING : cohesion >= 40 ? SETTLED : cohesion >= 30 ? WARY : cohesion >= 20 ? SLIPPING
+                : THIN_ICE;
+    }
 
     /** Every five seconds per player. */
     public static void tick(ServerPlayer player) {
@@ -111,17 +131,28 @@ public final class Voices {
             return;
         }
         int standing = band == null ? Relations.NEUTRAL : Relations.standing(player, band);
-        List<String> pool = new ArrayList<>(List.of(standing >= Relations.ALLIED ? ALLIED : standing >= Relations.FRIENDLY
-                ? FRIENDLY : standing > Relations.UNFRIENDLY ? NEUTRAL : standing > Relations.HOSTILE ? UNFRIENDLY : HOSTILE));
+        // They say what their kind would say - and their kind's own things besides.
+        net.minecraft.resources.ResourceLocation kind = band != null ? band.species : speaker.getStage();
+        List<String> pool = new ArrayList<>(Speech.fitting(List.of(standing >= Relations.ALLIED ? ALLIED
+                : standing >= Relations.FRIENDLY ? FRIENDLY : standing > Relations.UNFRIENDLY ? NEUTRAL
+                        : standing > Relations.HOSTILE ? UNFRIENDLY : HOSTILE), kind));
+        boolean warm = standing >= Relations.FRIENDLY;
+        pool.addAll(Speech.band(kind, warm));
+        if (standing > Relations.HOSTILE && player.getRandom().nextInt(3) == 0) {
+            pool.addAll(Speech.kin(kind, player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage(),
+                    warm));
+        }
         boolean hard = dev.hominin.evolution.survival.Seasons.strained(level);
         if (hard && standing < Relations.FRIENDLY) {
-            pool.addAll(List.of(HARD));
+            pool.addAll(Speech.fitting(List.of(HARD), kind));
         }
-        if (band != null && band.presence >= 35 && standing < Relations.FRIENDLY) {
-            pool.addAll(List.of(PROUD));
+        if (band != null && band.presence >= Presence.STRONG && standing < Relations.FRIENDLY) {
+            pool.addAll(Speech.fitting(List.of(PROUD), kind));
         }
         boolean quarrel = band != null && band.cohesion < 20 && player.getRandom().nextInt(3) == 0;
-        String line = Lines.pickFrom("voice|" + player.getUUID(), quarrel ? List.of(QUARREL) : pool, player.getRandom());
+        List<String> quarrels = Speech.fitting(List.of(QUARREL), kind);
+        String line = Lines.pickFrom("voice|" + player.getUUID(), quarrel && !quarrels.isEmpty() ? quarrels : pool,
+                player.getRandom());
         MutableComponent name = Component.literal(speaker.getName().getString()
                 + (band != null ? " of " + BandNames.capital(band.name) : "")).withStyle(colour(standing));
         player.sendSystemMessage(Component.literal("<").withStyle(colour(standing)).append(name)
@@ -168,6 +199,7 @@ public final class Voices {
         speaker.ensureName();
         player.sendSystemMessage(Component.literal("<" + speaker.getName().getString() + "> ").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(line).withStyle(ChatFormatting.WHITE)));
+        Chatter.echo(speaker, "to_leader");
     }
 
     /** What this member says to you, by how they feel about you. */
@@ -178,7 +210,16 @@ public final class Voices {
         if (member.isAntisocial() && bond < 6) {
             pool = COLD;
         }
-        return Lines.pickFrom("bond|" + player.getUUID(), List.of(pool), player.getRandom());
+        // Half the time it is how they feel about you; half, how the band as a whole does.
+        if (!member.isAntisocial() && player.getRandom().nextBoolean()) {
+            pool = byCohesion(Cohesion.get(player));
+        }
+        List<String> lines = new ArrayList<>(Speech.fitting(List.of(pool), member.getStage()));
+        if (pool != COLD) {
+            // Their kind's own business, now and then.
+            lines.addAll(Speech.own(member.getStage()));
+        }
+        return lines.isEmpty() ? null : Lines.pickFrom("bond|" + player.getUUID(), lines, player.getRandom());
     }
 
     public static void forget(UUID player) {

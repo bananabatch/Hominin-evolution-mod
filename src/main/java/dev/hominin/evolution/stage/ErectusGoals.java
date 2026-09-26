@@ -18,6 +18,8 @@ public final class ErectusGoals {
     /** Out of Africa, in miniature. */
     private static final int RANGE_BLOCKS = 1000;
     private static final int BIG_BAND = 14;
+    /** Heidelbergensis bands ran bigger. */
+    private static final int BIGGER_BAND = 16;
     private static final String ORIGIN_X = "erectus_origin_x";
     private static final String ORIGIN_Z = "erectus_origin_z";
 
@@ -27,7 +29,8 @@ public final class ErectusGoals {
         }
         var data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         String era = data.getStage().getPath();
-        if (!era.equals("homo_erectus") && !era.equals("homo_ergaster")) {
+        boolean heidelbergensis = era.equals("homo_heidelbergensis");
+        if (!era.equals("homo_erectus") && !era.equals("homo_ergaster") && !heidelbergensis) {
             return;
         }
         Map<String, Integer> counters = data.getCriterionCounters();
@@ -43,8 +46,10 @@ public final class ErectusGoals {
                         + "Nothing before you ever walked this far.").withStyle(ChatFormatting.GOLD));
             }
         }
-        if (counters.getOrDefault("big_band", 0) == 0 && Band.all(player).size() >= BIG_BAND) {
+        if (counters.getOrDefault("big_band", 0) == 0
+                && Band.all(player).size() >= (heidelbergensis ? BIGGER_BAND : BIG_BAND)) {
             EvolutionManager.incrementCriterion(player, "big_band", 1);
+            dev.hominin.evolution.band.Feast.event(player, "a band as big as a people");
         }
     }
 

@@ -48,6 +48,19 @@ public final class WorkRecipes {
     private static final Predicate<ItemStack> CLEAVER = is(ModItems.CLEAVER);
     private static final Predicate<ItemStack> TWINE = is(ModItems.TWINE);
     private static final Predicate<ItemStack> STICK = stack -> stack.is(net.minecraft.world.item.Items.STICK);
+    private static final Predicate<ItemStack> BLADE = is(ModItems.LEVALLOIS_BLADE);
+    private static final Predicate<ItemStack> SHAFT = is(ModItems.WORKABLE_SHAFT);
+
+    /** Things that have to be thought of before they can be made: until then the station shows only a question. */
+    private static final java.util.Map<String, net.minecraft.resources.ResourceLocation> SEEN_FIRST = java.util.Map.of(
+            "stone_tipped_spear", dev.hominin.evolution.item.SuperWeapons.STONE_TIPPED);
+
+    /** Whether this person has had the idea this recipe needs, if it needs one. */
+    public static boolean seen(net.minecraft.world.entity.player.Player player, WorkRecipe recipe) {
+        net.minecraft.resources.ResourceLocation idea = SEEN_FIRST.get(recipe.name());
+        return idea == null || player instanceof net.minecraft.server.level.ServerPlayer server
+                && dev.hominin.evolution.item.SuperWeapons.knows(server, idea);
+    }
 
     private static List<Predicate<ItemStack>> grid(Predicate<ItemStack>... cells) {
         return java.util.Arrays.asList(cells);
@@ -73,6 +86,9 @@ public final class WorkRecipes {
             // A branch forked at the top, stood on three sticks: one end of a cooking rack.
             new WorkRecipe("cooking_rack", stack -> true, ToolUse.WEAR, 0, List.of(BRANCH, STICK, STICK, STICK), true,
                     ModItems.COOKING_RACK, 1),
+            // The same, and one more stick for the bar across: a tool rack.
+            new WorkRecipe("tool_rack", stack -> true, ToolUse.WEAR, 0, List.of(BRANCH, STICK, STICK, STICK, STICK), true,
+                    ModItems.TOOL_RACK, 1),
             // A grid of thatch bound with twine: thatch blocks.
             new WorkRecipe("thatch_block", TWINE, ToolUse.SPEND, 4, grid(
                     THATCH, THATCH, THATCH,
@@ -83,11 +99,11 @@ public final class WorkRecipes {
                     HIDE, HIDE, HIDE,
                     THATCH, THATCH, THATCH,
                     null, null, null), false, ModItems.THATCH_BEDDING, 2),
-            // Three logs laid round, five sticks piled in the middle: a fire pit. Nothing needed in the slot.
+            // Three sticks laid along the bottom, a log over the middle of them: a fire pit. Nothing in the slot.
             new WorkRecipe("fire_pit", stack -> true, ToolUse.WEAR, 0, grid(
-                    STICK, null, STICK,
-                    STICK, STICK, STICK,
-                    LOG, LOG, LOG), false, ModItems.FIRE_PIT, 1),
+                    null, null, null,
+                    null, LOG, null,
+                    STICK, STICK, STICK), false, ModItems.FIRE_PIT, 1),
             // Thatch over the end of a stick, three twine wound round to hold it: a torch.
             new WorkRecipe("torch", TWINE, ToolUse.SPEND, 3, grid(
                     null, THATCH, null,
@@ -97,7 +113,19 @@ public final class WorkRecipes {
             new WorkRecipe("digging_stick", TWINE, ToolUse.SPEND, 10, grid(
                     null, null, null,
                     BRANCH, HAMMER, null,
-                    null, null, null), false, ModItems.DIGGING_STICK, 1));
+                    null, null, null), false, ModItems.DIGGING_STICK, 1),
+            // A Levallois blade with four twine wound round one end: a knife. The twine in the slot...
+            new WorkRecipe("knife", TWINE, ToolUse.SPEND, 4, List.of(BLADE), true, ModItems.KNIFE, 1),
+            // ...or laid round the blade itself.
+            new WorkRecipe("knife_wound", stack -> true, ToolUse.WEAR, 0, grid(
+                    null, TWINE, null,
+                    TWINE, BLADE, TWINE,
+                    null, TWINE, null), false, ModItems.KNIFE, 1),
+            // A blade above a shaft, bound on with five twine: the stone-tipped spear. It has to be seen first.
+            new WorkRecipe("stone_tipped_spear", TWINE, ToolUse.SPEND, 5, grid(
+                    null, BLADE, null,
+                    null, SHAFT, null,
+                    null, null, null), false, ModItems.STONE_TIPPED_SPEAR, 1));
 
     /** The recipe this grid and tool make, if any. */
     @Nullable

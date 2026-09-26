@@ -60,7 +60,7 @@ public final class Wants {
     }
 
     public static boolean isGoodStone(ItemStack stack) {
-        return (stack.is(ModItems.ROCK.get()) || stack.is(ModTags.Items.KNAPPABLE_STONE))
+        return (stack.is(ModTags.Items.ROCKS) || stack.is(ModTags.Items.KNAPPABLE_STONE))
                 && !stack.is(ModItems.LIMESTONE_ROCK.get());
     }
 
@@ -160,6 +160,10 @@ public final class Wants {
     // ------------------------------------------------------------ wants
 
     private static void chooseWant(BandMember member, long now) {
+        if (member.isSurvivor() && member.getRandom().nextInt(4) != 0) {
+            // The last of their band: they do not ask for much.
+            return;
+        }
         List<Item> options = new ArrayList<>();
         if (member.isObsessedWithObsidian() && member.count(ModItems.OBSIDIAN_ROCK.get()) == 0) {
             options.add(ModItems.OBSIDIAN_ROCK.get());
@@ -345,7 +349,7 @@ public final class Wants {
         // A good hunter who likes you goes off after something and brings you a share.
         if (member.getBond() >= HUNTS_FOR_YOU_BOND && member.getHuntLevel() <= 2 && !member.isPregnant()
                 && leader.getFoodData().getFoodLevel() <= 16 && member.getRandom().nextInt(3) == 0) {
-            int meat = 1 + member.getRandom().nextInt(member.getHuntLevel() == 1 ? 3 : 2);
+            int meat = 1 + member.getRandom().nextInt(member.getHuntLevel() <= 1 ? 3 : 2);
             give(leader, new ItemStack(ModItems.MEAT_CHUNK.get(), meat), name
                     + " slips away for a while, and comes back with meat - for you.");
             return true;
@@ -478,7 +482,7 @@ public final class Wants {
     }
 
     static boolean isFood(ItemStack stack) {
-        return stack.has(DataComponents.FOOD);
+        return stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack);
     }
 
     private Wants() {

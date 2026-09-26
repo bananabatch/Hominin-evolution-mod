@@ -101,7 +101,8 @@ public class FirePitBlockEntity extends BlockEntity {
 
     /** Whether a click with this does anything here - so the client can swing an arm without guessing. */
     public static boolean handles(ItemStack stack, BlockState state) {
-        return fuelOf(stack) != null || stack.is(ModItems.FIRE_DRILL.get()) || stack.is(ModItems.TORCH.get())
+        // Not the drill: that is held to the pit for three seconds (FireDrillItem), and comes back here when done.
+        return fuelOf(stack) != null || stack.is(ModItems.TORCH.get())
                 || stack.is(ModItems.LIT_TORCH.get()) || (state.getValue(FirePitBlock.LIT) && !stack.isEmpty());
     }
 
@@ -129,10 +130,6 @@ public class FirePitBlockEntity extends BlockEntity {
 
     /** A right-click with something in hand. Returns true when it did something. */
     public boolean use(ServerPlayer player, InteractionHand hand, ItemStack stack) {
-        if (stack.is(ModItems.FIRE_DRILL.get())) {
-            drill(player, stack);
-            return true;
-        }
         if (stack.is(ModItems.TORCH.get())) {
             if (lit()) {
                 dev.hominin.evolution.item.TorchItem.lightOne(player, hand, stack);
@@ -283,7 +280,18 @@ public class FirePitBlockEntity extends BlockEntity {
 
     // ------------------------------------------------------------ lighting
 
+    /** Three seconds of the drill against it: one attempt at lighting it. */
+    public void drillWith(ServerPlayer player, ItemStack drill) {
+        drill(player, drill);
+    }
+
     private void drill(ServerPlayer player, ItemStack drill) {
+        if (dev.hominin.evolution.band.Species.neverMakesFire(
+                player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+            say(player, "Your kind never learned to make fire. Carry it here from one that is burning - a torch lit "
+                    + "at a natural fire will catch it.");
+            return;
+        }
         if (lit()) {
             say(player, "It is already burning.");
             return;
@@ -386,16 +394,87 @@ public class FirePitBlockEntity extends BlockEntity {
         return cooking;
     }
 
+    // ------------------------------------------------------------ kept by the band
+
+    public boolean isLit() {
+        return lit();
+    }
+
+    /** Ticks of fire left on a burning pit; zero on a cold one. */
+    public long ticksLeft() {
+        return lit() && level != null ? Math.max(0L, burnsOutAt - level.getGameTime()) : 0L;
+    }
+
+    public int fuelPieces() {
+        return pieces();
+    }
+
+    /** One of the band feeds it: more time on a burning fire, more to catch on a cold one. */
+    public void stoke(@Nullable Fuel fuel, int count) {
+        if (level == null || fuel == null || count <= 0) {
+            return;
+        }
+        long now = level.getGameTime();
+        if (lit()) {
+            burnsOutAt = Math.min(Math.max(now, burnsOutAt) + (long) fuel.ticks * count, now + MOST_BANKED);
+            if (fuel == Fuel.THATCH) {
+                smokyUntil = Math.max(now, smokyUntil) + 200L * count;
+            }
+            level.playSound(null, worldPosition, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F, 1.0F);
+        } else {
+            held[fuel.ordinal()] += Math.max(0, Math.min(count, MOST_HELD - pieces()));
+            setState(false, true, ashes());
+            level.playSound(null, worldPosition, SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 0.7F, 1.1F);
+        }
+        changed();
+    }
+
+    /** Lit by one of the band who knows how - if there is enough in it to catch. */
+    public boolean kindle() {
+        if (level == null || lit() || pieces() < LEAST_TO_CATCH) {
+            return false;
+        }
+        long now = level.getGameTime();
+        long burn = 0L;
+        for (Fuel fuel : Fuel.values()) {
+            burn += (long) fuel.ticks * held[fuel.ordinal()];
+            held[fuel.ordinal()] = 0;
+        }
+        burnsOutAt = now + Math.min(burn, MOST_BANKED);
+        embersUntil = 0L;
+        setState(true, false, false);
+        level.playSound(null, worldPosition, SoundEvents.FIRECHARGE_USE, SoundSource.BLOCKS, 0.8F, 1.2F);
+        dev.hominin.evolution.survival.Hearths.pitLit((ServerLevel) level, worldPosition);
+        changed();
+        return true;
+    }
+
     // ------------------------------------------------------------ over time
+
+    /**
+     * The smoke. Ticked with the block entity rather than drawn as the block's ambient effects, which only run within
+     * a few dozen blocks of you: a column of smoke over a camp is seen from as far as the world is drawn - the way you
+     * find other people's fires.
+     */
+    public static void clientTick(Level level, BlockPos pos, BlockState state, FirePitBlockEntity pit) {
+        if (state.getValue(FirePitBlock.LIT) && level.random.nextFloat() < 0.11F) {
+            for (int i = 0; i < level.random.nextInt(2) + 2; i++) {
+                net.minecraft.world.level.block.CampfireBlock.makeParticles(level, pos, false, false);
+            }
+        }
+    }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FirePitBlockEntity pit) {
         if (!state.getValue(FirePitBlock.LIT)) {
             return;
         }
         long now = level.getGameTime();
-        // Rain on an open fire eats it four times as fast.
+        // Rain on an open fire eats it eight times as fast - and a real downpour can put it out altogether.
         if (now % 20L == 0L && level.isRainingAt(pos.above())) {
-            pit.burnsOutAt -= 60L;
+            pit.burnsOutAt -= 140L;
+            if (level.random.nextFloat() < (level.isThundering() ? 0.02F : 0.006F)) {
+                pit.burnsOutAt = now;
+            }
         }
         if (now >= pit.burnsOutAt) {
             pit.goOut();

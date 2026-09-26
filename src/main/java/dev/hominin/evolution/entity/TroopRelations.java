@@ -230,6 +230,7 @@ public final class TroopRelations {
         if (player.tickCount % 100 == 0) {
             organiseEscorts(player);
         }
+        BaboonBegging.tick(player);
     }
 
     /**

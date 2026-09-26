@@ -26,7 +26,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Three logs along the bottom row, sticks in the rest but the top middle, nothing in the slot: a $(l)fire pit$() (see Keeping Fire).$(br2)Thatch over a stick - thatch in the top middle, the stick under it - with three twine in the slot: a $(l)torch$().$(br2)Planks are not a thing anyone here would make: wood is split, not sawn."
+      "text": "Three sticks along the bottom row, one log in the middle of the grid, nothing in the slot: a $(l)fire pit$() (see Keeping Fire).$(br2)Thatch over a stick - thatch in the top middle, the stick under it - with three twine in the slot: a $(l)torch$().$(br2)Planks are not a thing anyone here would make: wood is split, not sawn."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The cooking rack's branch and three sticks, and a fourth stick: one post of a $(l)tool rack$(). Set two one or two blocks apart and use a workable branch on one - it lies across the forks. Right-click the bar with a spear, club or branch to lean it there, empty-handed to take one down. Your band use it too: someone with nothing better takes a weapon off it, and spares go back on."
     }
   ]
 }

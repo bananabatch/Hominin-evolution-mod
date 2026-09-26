@@ -44,9 +44,67 @@ public class ToolPileRenderer implements BlockEntityRenderer<ToolPileBlockEntity
         this.items = context.getItemRenderer();
     }
 
+    /**
+     * Rocks do not stack like tools: they heap. Each kind of stone on the pile is a heap of its own loose rocks - one,
+     * two, three, four of them - and past four the heap just grows, wider and higher, until the pile is full. A pile
+     * of one stone is one heap in the middle; mixed stone is a heap of each, side by side.
+     */
+    private void renderRocks(ToolPileBlockEntity pile, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
+        java.util.Map<net.minecraft.world.level.block.Block, Integer> heaps = new java.util.LinkedHashMap<>();
+        List<ItemStack> loose = new java.util.ArrayList<>();
+        for (ItemStack stack : pile.contents()) {
+            if (stack.getItem() instanceof net.minecraft.world.item.BlockItem item
+                    && item.getBlock() instanceof dev.hominin.evolution.block.LooseRockBlock) {
+                heaps.merge(item.getBlock(), stack.getCount(), Integer::sum);
+            } else {
+                loose.add(stack);
+            }
+        }
+        var blocks = net.minecraft.client.Minecraft.getInstance().getBlockRenderer();
+        boolean alone = heaps.size() == 1;
+        int i = 0;
+        for (var entry : heaps.entrySet()) {
+            int count = entry.getValue();
+            var state = entry.getKey().defaultBlockState().setValue(dev.hominin.evolution.block.LooseRockBlock.ROCKS,
+                    Math.max(1, Math.min(dev.hominin.evolution.block.LooseRockBlock.MAX_ROCKS, count)));
+            // Past four it grows: up to nearly twice as wide and three times as high at a full pile.
+            float grow = count <= 4 ? 0.0F : Math.min(1.0F, (count - 4) / 40.0F);
+            float wide = (alone ? 1.0F : 0.55F) * (1.0F + grow * (alone ? 0.35F : 0.6F));
+            float high = (alone ? 1.0F : 0.7F) * (1.0F + grow * 2.0F);
+            int place = PLACES[i % 4];
+            float centreX = alone ? 0.5F : 0.25F + (place % 2) * 0.5F;
+            float centreZ = alone ? 0.5F : 0.25F + (place / 2) * 0.5F;
+            pose.pushPose();
+            pose.translate(centreX, 0.0F, centreZ);
+            pose.mulPose(Axis.YP.rotationDegrees((pile.getBlockPos().asLong() * 37L + i * 90L) % 360L));
+            pose.scale(wide, high, wide);
+            pose.translate(-0.5F, 0.0F, -0.5F);
+            blocks.renderSingleBlock(state, pose, buffers, light, overlay);
+            pose.popPose();
+            i++;
+        }
+        if (!loose.isEmpty()) {
+            // Anything else that counts as stone (a cobble, a flint) lies on top as it is.
+            float y = 0.2F;
+            for (ItemStack stack : loose) {
+                pose.pushPose();
+                pose.translate(0.5F, y, 0.5F);
+                pose.mulPose(Axis.XP.rotationDegrees(90.0F));
+                pose.scale(0.3F, 0.3F, 0.3F);
+                items.renderStatic(stack, ItemDisplayContext.FIXED, light, overlay, pose, buffers, pile.getLevel(), 0);
+                pose.popPose();
+                y += 0.03F;
+            }
+        }
+    }
+
     @Override
     public void render(ToolPileBlockEntity pile, float partialTick, PoseStack pose, MultiBufferSource buffers, int light,
             int overlay) {
+        if (pile.kind() == ToolPileBlockEntity.Kind.ROCKS) {
+            renderRocks(pile, pose, buffers, light, overlay);
+            return;
+        }
         List<ItemStack> stacks = pile.contents();
         long seed = pile.getBlockPos().asLong();
         float[] height = new float[4];
@@ -99,8 +157,47 @@ public class ToolPileRenderer implements BlockEntityRenderer<ToolPileBlockEntity
         }
     }
 
+    /**
+     * A wood pile is stacked like one: everything laid full length side by side, three to a layer, each layer across
+     * the one under it - spears and branches longer than the pile hang over its ends, as they would.
+     */
+    private void renderWood(ToolPileBlockEntity pile, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
+        List<ItemStack> stacks = pile.contents();
+        long seed = pile.getBlockPos().asLong();
+        float y = 0.0F;
+        float layerHeight = 0.0F;
+        for (int i = 0; i < stacks.size(); i++) {
+            ItemStack stack = stacks.get(i);
+            int layer = i / 3;
+            int place = i % 3;
+            if (place == 0 && i > 0) {
+                y += layerHeight;
+                layerHeight = 0.0F;
+            }
+            BakedModel model = items.getModel(stack, pile.getLevel(), null, (int) seed + i);
+            float[] b = bounds(model);
+            float length = b[4] - b[1];
+            float thick = Math.max(b[3] - b[0], b[5] - b[2]);
+            // Long things full length, up to a block and a half; nothing thicker than a third of the pile.
+            float scale = Math.min(Math.min(1.0F, 1.5F / Math.max(0.1F, length)), 0.3F / Math.max(0.02F, thick));
+            RandomSource random = RandomSource.create(seed * 31L + i * 7919L);
+            pose.pushPose();
+            pose.translate(0.5F, y + thick * scale / 2.0F + 0.002F, 0.5F);
+            // Each layer across the one under it, and none quite straight.
+            pose.mulPose(Axis.YP.rotationDegrees((layer % 2) * 90.0F + (random.nextFloat() - 0.5F) * 12.0F));
+            pose.translate((place - 1) * 0.3F, 0.0F, (random.nextFloat() - 0.5F) * 0.2F);
+            // Laid down along its height.
+            pose.mulPose(Axis.XP.rotationDegrees(90.0F));
+            pose.scale(scale, scale, scale);
+            pose.translate(0.5F - (b[0] + b[3]) / 2.0F, 0.5F - (b[1] + b[4]) / 2.0F, 0.5F - (b[2] + b[5]) / 2.0F);
+            items.render(stack, ItemDisplayContext.NONE, false, pose, buffers, light, overlay, model);
+            pose.popPose();
+            layerHeight = Math.max(layerHeight, thick * scale);
+        }
+    }
+
     /** How far a model reaches each way, from its quads. A model with none is taken as a whole block. */
-    private static float[] bounds(BakedModel model) {
+    static float[] bounds(BakedModel model) {
         return BOUNDS.computeIfAbsent(model, m -> {
             float[] b = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE,
                     -Float.MAX_VALUE};

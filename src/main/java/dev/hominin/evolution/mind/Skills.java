@@ -42,7 +42,7 @@ public final class Skills {
                 true),
         FIRE("Firemaking",
                 "Making fire, rather than waiting for one.",
-                "Two sticks in your hands and P makes a drill. Use it on dry ground.",
+                "Two sticks in your hands and P makes a drill. Hold use with it on dry ground for three seconds.",
                 "Your drills last: half the time a fire you light leaves the drill fit to use again.",
                 true),
         EARLY_TRACKING("Early tracking",
@@ -69,6 +69,31 @@ public final class Skills {
                 "Thinking about time: the days before this one, and the ones after it.",
                 "Think with nothing in your hands, more than once.",
                 "Thinking comes easier. The wait between thoughts is a minute shorter.",
+                true),
+        SUPER_WEAPONS("Great weapons",
+                "Making the weapons that brought down the biggest animals there were: the Schoningen spear, and the "
+                        + "stone-tipped spear.",
+                "As heidelbergensis, far enough along, hold K with a workable shaft in hand - then make one.",
+                "Your band makes them too, once you show them - and whatever you become sees them sooner: one hard "
+                        + "requirement and one task fewer.",
+                true),
+        CLEAN_EYE("Clean eye",
+                "Seeing what is in the grass before it moves.",
+                "Run five animals down.",
+                "Whatever stands in the grass near you shows itself - and when one of a herd runs, you keep hold of it "
+                        + "and two more.",
+                true),
+        NOMAD("Nomad",
+                "Knowing country by walking it.",
+                "Move your band three times, each a long way (250 blocks) from the last camp.",
+                "Far from camp, the country opens to you: places worth knowing, old tools and lone camps, giant "
+                        + "carcasses, and anything about to drop dead.",
+                true),
+        JACK("Jack of all trades",
+                "A little of everything, and no fear of the next thing.",
+                "Three of: level 2 knapper, level 2 hunter, two places known, two skills taught, a tool worth something "
+                        + "made.",
+                "Every skill you learn brings your knapping or your hunting up a level with it, and both come easier.",
                 true);
 
         private final String title;
@@ -115,6 +140,22 @@ public final class Skills {
             };
         }
 
+        /** The knacks are about the one who has them: nothing to show anybody. */
+        public boolean teachable() {
+            return this != CLEAN_EYE && this != NOMAD && this != JACK;
+        }
+
+        /** Whether a wild band of this kind might know it, to teach. The great weapons are not given away. */
+        public boolean bandsKnow(net.minecraft.resources.ResourceLocation species) {
+            return switch (this) {
+                case NOMAD, JACK -> false;
+                case MARROW -> dev.hominin.evolution.band.Species.cracksMarrow(species);
+                case FIRE -> !dev.hominin.evolution.band.Species.neverMakesFire(species);
+                case SUPER_WEAPONS, LONG_VIEW -> false;
+                default -> true;
+            };
+        }
+
         /** Knowledge that survives evolving, as opposed to something only this body can do. */
         public boolean carriesOver() {
             return carriesOver;
@@ -138,8 +179,11 @@ public final class Skills {
     public static boolean learn(ServerPlayer player, Skill skill) {
         // Every time you do it counts as showing it, for anyone watching to be taught.
         Teaching.demonstrated(player, skill);
-        if (knows(player, skill)
-                || !skill.learnableAs(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+        var stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        if (knows(player, skill) || !skill.learnableAs(stage)
+                // What your kind never had, you do not pick up either.
+                || skill == Skill.MARROW && !dev.hominin.evolution.band.Species.cracksMarrow(stage)
+                || skill == Skill.FIRE && dev.hominin.evolution.band.Species.neverMakesFire(stage)) {
             return false;
         }
         player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().put(skill.key(), 1);
@@ -149,6 +193,7 @@ public final class Skills {
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(skill.effect() + " (J to see your skills)")
                         .withStyle(ChatFormatting.GRAY)));
+        Knacks.learnedAnother(player, skill);
         return true;
     }
 

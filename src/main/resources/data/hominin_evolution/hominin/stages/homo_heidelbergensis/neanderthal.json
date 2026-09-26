@@ -1,0 +1,92 @@
+{
+  "display_name": "Homo heidelbergensis (North Africa)",
+  "years_ago": 600000,
+  "gate": {
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 6 days.",
+        "count": 6
+      },
+      {
+        "id": "levallois_hand_axe",
+        "description": "Knap a Levallois hand axe.",
+        "count": 1
+      },
+      {
+        "id": "hunt_megafauna",
+        "description": "Hunt 2 megafauna animals.",
+        "count": 2
+      },
+      {
+        "id": "hearth_night",
+        "description": "Spend a night by a lit hearth.",
+        "count": 1
+      },
+      {
+        "id": "fire_harden_spear",
+        "description": "Harden 3 spears in a fire.",
+        "count": 3
+      },
+      {
+        "id": "super_weapon",
+        "description": "Make a Schoningen spear.",
+        "count": 1
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "make_levallois_tool",
+        "description": "Knap 3 Levallois tools.",
+        "count": 3
+      },
+      {
+        "id": "make_knife",
+        "description": "Haft a Levallois blade into a knife.",
+        "count": 1
+      },
+      {
+        "id": "take_kill",
+        "description": "Walk up to a scavenger's kill and take it.",
+        "count": 1
+      },
+      {
+        "id": "persistence_kill",
+        "description": "Run down big game you wounded.",
+        "count": 1
+      },
+      {
+        "id": "build_structure",
+        "description": "Build a structure from a blueprint (O).",
+        "count": 1
+      },
+      {
+        "id": "adopt_norm",
+        "description": "Give your people a rule to live by.",
+        "count": 1
+      },
+      {
+        "id": "hold_feast",
+        "description": "Hold a feast.",
+        "count": 1
+      },
+      {
+        "id": "demand_tribute",
+        "description": "Make strangers on your ground pay for it.",
+        "count": 1
+      },
+      {
+        "id": "eat_cooked_meat",
+        "description": "Eat 5 pieces of cooked meat.",
+        "count": 5
+      }
+    ],
+    "choose": 4
+  },
+  "milestone": {
+    "type": "hominin_evolution:become_neanderthal",
+    "description": "The Neanderthals are still to come - there is nothing further to evolve into yet."
+  },
+  "behaviors_gained": [],
+  "behaviors_lost": []
+}

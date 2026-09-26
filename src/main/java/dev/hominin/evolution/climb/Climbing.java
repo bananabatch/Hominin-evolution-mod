@@ -56,6 +56,16 @@ public final class Climbing {
     private static final ResourceLocation HABILIS =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "homo_habilis");
 
+    /**
+     * Whether this kind can still climb a tree at all. Erectus traded the climber's shoulders and curved fingers for
+     * long legs: from erectus on, a trunk is no more use than any other wall - four blocks up and no further.
+     */
+    public static boolean climbsTrees(@Nullable ResourceLocation stage) {
+        String line = dev.hominin.evolution.stage.Kinds.line(stage);
+        return line.isEmpty() || line.equals("ardipithecus") || line.equals("australopithecus")
+                || line.equals("homo_habilis");
+    }
+
     public static boolean isClimbing(Player player) {
         // hasData first, so a query never creates the attachment on a player who has
         // never climbed - this is asked for every leaf block every player touches.
@@ -69,6 +79,7 @@ public final class Climbing {
     }
 
     public static double climbSpeed(@Nullable ResourceLocation stage) {
+        stage = dev.hominin.evolution.stage.Kinds.lineOf(stage);
         if (AUSTRALOPITHECUS.equals(stage) || ARDIPITHECUS.equals(stage)) {
             return AUSTRALOPITHECUS_SPEED;
         }
@@ -112,7 +123,11 @@ public final class Climbing {
         return grippedWall(player, ARM_REACH);
     }
 
-    /** Holding on by a wall alone, which is the kind of climb with a height limit. */
+    /** Holding on by a wall alone, which is the kind of climb with a height limit - every climb, for a non-climber. */
+    public static boolean onlyWall(Player player, boolean trees) {
+        return !trees || onlyWall(player);
+    }
+
     public static boolean onlyWall(Player player) {
         return grippedLog(player) == null
                 && !(inLeaves(player) && trunkNearby(player.level(), player.blockPosition(), CANOPY_REACH))
@@ -142,6 +157,11 @@ public final class Climbing {
             }
         }
         return false;
+    }
+
+    /** Something to hold on to - for a kind that no longer climbs trees, only a wall (a trunk counts as one). */
+    public static boolean canHold(Player player, boolean trees) {
+        return trees ? canHold(player) : grippedWall(player) != null || grippedLog(player) != null;
     }
 
     /** Something to hold on to: a trunk in reach, or branches with a trunk behind them. */

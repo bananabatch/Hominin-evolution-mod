@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:bone_club"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.haven_example.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.haven_example.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

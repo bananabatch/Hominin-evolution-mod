@@ -778,6 +778,12 @@
         "hominin_evolution:material": 0.5
       },
       "model": "hominin_evolution:item/oldowan_multitool_obsidian"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.6
+      },
+      "model": "hominin_evolution:item/oldowan_multitool_fine_chert"
     }
   ]
 }

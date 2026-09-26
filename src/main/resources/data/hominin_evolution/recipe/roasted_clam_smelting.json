@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:clam"
+  },
+  "result": {
+    "id": "hominin_evolution:roasted_clam"
+  },
+  "experience": 0.1,
+  "cookingtime": 150
+}

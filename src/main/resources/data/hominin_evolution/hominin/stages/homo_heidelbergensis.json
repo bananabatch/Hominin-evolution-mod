@@ -4,8 +4,8 @@
   "gate": {
     "required": [
       {
-        "id": "heidelbergensis_placeholder",
-        "description": "Homo heidelbergensis content is not built yet.",
+        "id": "choose_lineage",
+        "description": "Choose which way your people go.",
         "count": 1
       }
     ],
@@ -13,17 +13,26 @@
     "choose": 0
   },
   "milestone": {
-    "type": "hominin_evolution:heidelbergensis_placeholder",
-    "description": "Homo heidelbergensis content is not built yet."
+    "type": "hominin_evolution:lineage_split",
+    "description": "Choose which way your people go."
   },
   "behaviors_gained": [
-    "Levallois technique (coming)",
-    "Hunting big game head-on (coming)"
+    "The Levallois technique: prepared cores - flakes, blades, knives, finer hand axes",
+    "A great weapon: the Schoningen spear, or the stone-tipped spear",
+    "The line splits: towards Homo sapiens, or towards the Neanderthals"
   ],
   "behaviors_lost": [],
   "arrival_items": [
     {
-      "id": "hominin_evolution:hammerstone",
+      "id": "hominin_evolution:hand_axe",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:sharpened_spear",
+      "count": 1
+    },
+    {
+      "id": "hominin_evolution:fire_drill",
       "count": 1
     }
   ]

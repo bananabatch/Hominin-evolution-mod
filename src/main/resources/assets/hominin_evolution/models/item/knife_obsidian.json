@@ -1,0 +1,10 @@
+{
+  "parent": "hominin_evolution:item/knife",
+  "textures": {
+    "body": "hominin_evolution:item/stone/obsidian_body",
+    "scar": "hominin_evolution:item/stone/obsidian_scar",
+    "edge": "hominin_evolution:item/stone/obsidian_edge",
+    "particle": "hominin_evolution:item/stone/obsidian_body",
+    "twine": "hominin_evolution:item/twine_wrap"
+  }
+}

@@ -152,6 +152,73 @@ public final class Lines {
                 " turns a stone over and over, working both faces - a multitool!");
         pool("craft_regrind", " grinds a fresh edge back onto their %s.", " puts a new edge on their %s.",
                 " sits and sharpens their %s against a stone.");
+        pool("bonobo_like", "I like these ones. They feed us and pick us clean, and want nothing back.",
+                "I like how these ones provide and clean for us.", "Nobody fights here. Nobody. I could stay.",
+                "They gave the little ones fruit, for nothing.", "The bonobos went through my hair for me. Every tick.");
+        pool("craft_bedding", " lays hide over thatch at the work station and binds it with twine - bedding for a bed.",
+                " stretches hide over a layer of thatch and ties it down. A bed, nearly.",
+                " finishes a length of thatch bedding, and tries it with one hand. Soft.");
+        pool("craft_twine", " twists grass stems against each other into twine.", " sits rolling thatch into cord.",
+                " twists a few lengths of twine out of the thatch.");
+        pool("craft_thatch_block", " binds thatch into blocks for the build.",
+                " packs thatch tight and ties it - four blocks for the roof.");
+        pool("craft_building_branch", " sets a branch upright in a base of stones. Something to build with.",
+                " props branches up in stones - posts for the build.");
+        pool("craft_workable_branch", " splits a branch with a hand axe.", " trims a branch clean with a hand axe.");
+        pool("craft_club", " batters two branches together into a club.", " makes a club, and swings it once to try it.");
+        pool("craft_cleaver", " works a stone into a %s cleaver (tier %s).",
+                " sits at the knapping station and takes a straight edge off a stone: a %s cleaver (tier %s).");
+        pool("stone_found", "Found one. Rings right, this.", "Here - two good stones. I'll make something.",
+                "Told you I'd find one.");
+        pool("gravel_found", "Look what was in the gravel!", "Good stone, just lying in the gravel.",
+                "The river brings the best stone down.");
+        pool("haul_gone", "It was gone. Somebody got there first.", "Nothing there. Just tracks round where it was.",
+                "Someone took it - all of it.");
+        pool("opinion_against_friend", "They were good to us. Why do this?", "I liked them. I don't like this.",
+                "We'll need friends one day. You just lost one.");
+        pool("opinion_against_foe", "Good. They had it coming.", "About time somebody did that.",
+                "Now they know who we are.");
+        pool("opinion_for_foe", "Why are we being nice to them?", "They'll take it and laugh at us.",
+                "I wouldn't give them the bones.");
+        pool("opinion_for_friend", "Good. They're decent people.", "That's how it should be with them.",
+                "They'll remember that.");
+        pool("practise_start", "Let me try that!", "Like this? Watch me.", "My turn!", "Wait - let me do it.");
+        pool("practise_done", "Ha! It works!", "I've got it now.", "Again - I want to do it again.",
+                "Did you see? I did it!");
+        pool("roots_again", "Roots? Again? My teeth hate them.", "Roots. Always roots.",
+                "My jaw aches just looking at these.", "Fine. Roots. Again.", "If I eat one more root my teeth fall out.");
+        pool("abscess", "My tooth... it's swelling.", "Something is wrong with my tooth. It burns.",
+                "I can't chew. My face is hot.");
+        pool("feast_begin", "The feast! Everyone to the fire!", "Come on - it's the feast!", "Eat! Eat until you can't!",
+                "Nobody goes hungry tonight.");
+        pool("feast_eat", "Mm. More.", "Pass me that.", "I can't stop.", "This is the best thing I've ever eaten.",
+                "Another! Just one more.", "Is there any left on the rack?");
+        pool("feast_bring", " brings food to the feast fire.", " lays what they gathered on the food pile by the fire.",
+                " puts food by for the feast.");
+        pool("feast_hang", " hangs meat on the rack over the fire, for the feast.", " hooks meat onto the spit for the feast.");
+        pool("feast_rack", " starts putting up a cooking rack by the feast fire.",
+                " goes to raise a rack over a fire pit for the feast.");
+        pool("feast_rack_done", " sets the last post: a cooking rack stands by the feast fire.",
+                " lays the branch across: a new cooking rack for the feast.");
+        pool("fire_feed", " feeds the fire.", " throws more wood on the fire.", " keeps the fire going.");
+        pool("fire_light", " works a drill until the fire pit catches.", " gets the fire going.");
+        pool("craft_schoningen", " turns a whole shaft through the fire, end to end, until it is hard and black and "
+                + "balanced: a Schoningen spear.", " hardens a long shaft in the flames and sights along it. It flies "
+                + "true - a Schoningen spear.");
+        pool("craft_stone_tipped", " binds a Levallois blade onto a shaft, tight as sinew: a stone-tipped spear.",
+                " sets a blade in the end of a shaft and winds the twine on: a stone-tipped spear.");
+        pool("craft_hardened", " turns a spear's point in the embers until the wood darkens.",
+                " holds a spear in the fire, turning it, until the point is hard.");
+        pool("throw_spear", " draws back and throws their spear at the %s!", " hurls a spear - it flies true at the %s!",
+                " sets their feet and throws. The spear goes after the %s.");
+        pool("throw_rock", " flings a rock at the %s.", " picks a rock from their pack and throws it at the %s.",
+                " hurls a stone at the %s, hard.");
+        pool("cut_thatch", " goes to cut grass for thatch.", " is off cutting thatch - the band needs it.");
+        pool("hunt_hide", " goes after a %s - the band needs hides.", " picks out a %s. There's a hide on that.");
+        pool("hunt_hide_done", " brings down the %s. There will be a hide off it.", " has killed the %s. A good skin.");
+        pool("build_place", " sets a %s into the %s.", " puts a %s in place on the %s.");
+        pool("build_cure", " stretches a hide over raw thatch.", " pegs a hide down over the thatch. It will hold now.");
+        pool("bed_laid", " lays a thatch bed down - their own.", " has a bed of their own now, and lies on it to try it.");
         pool("craft_hand_axe", " sits at the knapping station and shapes a %s hand axe (tier %s).",
                 " works a stone into a %s hand axe (tier %s), both faces.",
                 " takes their time at the knapping station: a %s hand axe (tier %s).");
@@ -257,6 +324,7 @@ public final class Lines {
             return;
         }
         Band.announceDiscovery(member, ": \"" + pick(kind, member.getRandom()) + "\"" + after);
+        Chatter.echo(member, kind);
     }
 
     /**

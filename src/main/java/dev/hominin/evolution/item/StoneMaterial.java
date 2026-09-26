@@ -31,7 +31,9 @@ public enum StoneMaterial {
     QUARTZITE("Quartzite", ChatFormatting.GRAY, 0.0F, "coarse and tough - it holds up to a beating"),
     CHERT("Chert", ChatFormatting.GOLD, 0.5F, "fine-grained and waxy - it takes a keener edge"),
     LIMESTONE("Limestone", ChatFormatting.WHITE, 0.0F, "soft and chalky - it barely holds an edge"),
-    OBSIDIAN("Obsidian", ChatFormatting.DARK_PURPLE, 1.0F, "volcanic glass - the sharpest edge there is");
+    OBSIDIAN("Obsidian", ChatFormatting.DARK_PURPLE, 1.5F, "volcanic glass - the sharpest edge there is"),
+    /** Out of the river gravel and nowhere else: glassier than any seam gives. Nearly as keen as obsidian. */
+    FINE_CHERT("Fine chert", ChatFormatting.YELLOW, 1.0F, "glassy chert out of the river gravel - nearly as keen as obsidian");
 
     private final String title;
     private final ChatFormatting colour;
@@ -61,8 +63,11 @@ public enum StoneMaterial {
     /** What a piece of raw stone is. Null for anything that is not knapping stone. */
     @Nullable
     public static StoneMaterial ofStone(ItemStack stone) {
-        if (stone.is(ModItems.OBSIDIAN_ROCK.get())) {
+        if (stone.is(ModItems.OBSIDIAN_ROCK.get()) || stone.is(ModItems.OBSIDIAN_CHUNK.get())) {
             return OBSIDIAN;
+        }
+        if (stone.is(ModItems.FINE_CHERT_ROCK.get())) {
+            return FINE_CHERT;
         }
         if (stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get())) {
             return CHERT;
@@ -90,12 +95,37 @@ public enum StoneMaterial {
         return stack.is(ModTags.Items.STONE_TOOLS) || stack.is(ModItems.GRINDING_ROCK.get());
     }
 
-    /** Marks a freshly made tool with the stone it came from. Returns the same stack. */
+    /**
+     * Marks a freshly made tool with the stone it came from. Returns the same stack - except a hammerstone of chert,
+     * which is the chert hammerstone: one item, not a plain hammerstone that happens to be chert.
+     */
     public static ItemStack stamp(ItemStack tool, @Nullable StoneMaterial material) {
+        if (material == CHERT && tool.is(ModItems.HAMMERSTONE.get())) {
+            return new ItemStack(ModItems.CHERT_HAMMERSTONE.get(), tool.getCount());
+        }
         if (material != null && isStoneTool(tool) && !tool.is(ModItems.CHERT_HAMMERSTONE.get())) {
             tool.set(ModDataComponents.MATERIAL.get(), material.ordinal());
         }
         return tool;
+    }
+
+    /** Marks something as made of this stone whatever it is - the point of a spear, say, which is no stone tool. */
+    public static ItemStack mark(ItemStack stack, @Nullable StoneMaterial material) {
+        if (material != null) {
+            stack.set(ModDataComponents.MATERIAL.get(), material.ordinal());
+        }
+        return stack;
+    }
+
+    /** Any plain hammerstone stamped chert, from before there was only the one, becomes the chert hammerstone. */
+    public static void tidyHammerstones(net.minecraft.server.level.ServerPlayer player) {
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.is(ModItems.HAMMERSTONE.get()) && of(stack) == CHERT) {
+                inventory.setItem(slot, new ItemStack(ModItems.CHERT_HAMMERSTONE.get(), stack.getCount()));
+            }
+        }
     }
 
     /** Marks a tool made from this piece of stone. */
@@ -173,11 +203,20 @@ public enum StoneMaterial {
 
     /** The tooltip line: what it is made of, and what that means. */
     public static void describe(ItemStack stack, List<Component> tooltip) {
+        if (stack.is(ModItems.STONE_TIPPED_SPEAR.get())) {
+            StoneMaterial point = of(stack);
+            if (point != null) {
+                tooltip.add(Math.min(1, tooltip.size()), Component.literal(point.title + " point - " + point.about)
+                        .withStyle(point.colour));
+            }
+            return;
+        }
         StoneMaterial material = isStoneTool(stack) ? of(stack) : null;
         if (material == null) {
             return;
         }
-        String effect = material == OBSIDIAN ? " (+1 damage; cuts can open a tier deeper)"
+        String effect = material == OBSIDIAN ? " (+1.5 damage; cuts can open a tier deeper)"
+                : material == FINE_CHERT ? " (+1 damage)"
                 : material == CHERT ? " (+0.5 damage)" : material == BASALT ? " (+0.25 damage)" : "";
         tooltip.add(Math.min(1, tooltip.size()), Component.literal(material.title + " - " + material.about + effect)
                 .withStyle(material.colour));

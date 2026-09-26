@@ -1,0 +1,18 @@
+{
+  "name": "Tool rack",
+  "order": 4,
+  "description": "Two forked posts two blocks apart, a workable branch laid across them: spears, clubs and branches lean against it, up off the ground where anyone can reach for them. Set the posts, then use a workable branch on one.",
+  "key": {
+    "L": "hominin_evolution:tool_rack[half=lower]",
+    "U": "hominin_evolution:tool_rack[half=upper]",
+    "B": "hominin_evolution:tool_rack_bar[axis=x]"
+  },
+  "layers": [
+    [
+      "L  L"
+    ],
+    [
+      "UBBU"
+    ]
+  ]
+}

@@ -2,7 +2,7 @@
   "parent": "hominin_evolution:hominin/homo_erectus",
   "display": {
     "icon": {
-      "id": "hominin_evolution:rock"
+      "id": "hominin_evolution:granite_rock"
     },
     "title": {
       "translate": "advancements.hominin_evolution.arms_race.title"

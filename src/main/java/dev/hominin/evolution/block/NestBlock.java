@@ -54,6 +54,30 @@ public class NestBlock extends HorizontalDirectionalBlock {
         return CODEC;
     }
 
+    /**
+     * A nest is a night's bed. Through the day it comes apart - the branches spring back, the leaves wilt and blow
+     * off - and by evening there is nothing to sleep in: make a new one. Nobody reuses last night's.
+     */
+    @Override
+    protected boolean isRandomlyTicking(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected void randomTick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        long time = level.getDayTime() % 24000L;
+        if (time < 1000L || time > 11500L || random.nextFloat() >= 0.35F) {
+            return;
+        }
+        if (!level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(pos).inflate(0.5D),
+                LivingEntity::isSleeping).isEmpty()) {
+            return;
+        }
+        level.levelEvent(2001, pos, Block.getId(state));
+        level.removeBlock(pos, false);
+    }
+
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);

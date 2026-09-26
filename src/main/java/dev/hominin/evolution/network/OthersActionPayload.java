@@ -23,6 +23,15 @@ public record OthersActionPayload(String band, int action) implements CustomPack
     public static final int DEMAND = 6;
     public static final int RAID = 7;
     public static final int TELL_PLACES = 8;
+    public static final int ASK_PLACES = 9;
+    /** Down to two: ask to join them. */
+    public static final int JOIN_THEM = 10;
+    /** "Teach me what you know." */
+    public static final int LEARN = 11;
+    /** "What do you do when something comes for you?" */
+    public static final int ASK_POSTURE = 12;
+    /** Send a party: PARTY + the intent (see Parties). */
+    public static final int PARTY = 20;
 
     public static final StreamCodec<ByteBuf, OthersActionPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8, OthersActionPayload::band,

@@ -14,7 +14,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "A $(l)hammerstone$() throws harder than any cobble - half again, and more from an arm that can aim. To the head, it staggers what it hits and can concuss it outright; a skull already rung can start to bleed.$(br2)Stone that dense does not always survive the landing. Now and then it $(l)shatters$(), and all you get back is a flake - if that."
+      "text": "A $(l)hammerstone$() throws harder than any cobble - hard, aimed, from an arm built for it. To the head, an aimed one staggers what it hits and can concuss it; a skull already rung can start to bleed. A heave in a display only stings.$(br2)Stone that dense does not always survive the landing: now and then it $(l)shatters$(). Only chert breaks clean enough to leave a flake."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From erectus on, weapons make a display. A weapon in your hand, and every one of your band near you carrying one: each makes whatever you are facing likelier to leave.$(br2)Hunters come one at a time, and go for whoever has strayed from the band - a crowd is left alone. Keep together."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Choose how the band meets what comes for it (Danger): $(l)stand together$(), $(l)overwhelm$() it all at once, keep off and $(l)throw$() with two guarding, or $(l)ambush$() - still, then everything at once. Every band has its own way; ask them, or fight them, or ask a band that knows them. And a hunt can be $(l)kinetic$(): throw first, close after."
     }
   ]
 }

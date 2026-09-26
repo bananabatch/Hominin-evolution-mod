@@ -68,7 +68,7 @@ public final class Predation {
 
     /** 1 for the earliest hominins, 3 for erectus and later: how formidable your kind looks. */
     public static int standing(Player player) {
-        String stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
         return switch (stage) {
             case "ardipithecus", "australopithecus" -> 1;
             case "homo_habilis" -> 2;
@@ -115,6 +115,7 @@ public final class Predation {
         }
         ServerLevel level = player.serverLevel();
         tickRange(player, level);
+        sendThreat(player, level);
         Camp camp = camps.get(player.getUUID());
         if (camp == null) {
             camps.put(player.getUUID(), new Camp(player.blockPosition(), 0.0F, false));
@@ -151,20 +152,25 @@ public final class Predation {
         if (level.isNight()) {
             gain += 2.0F;
         }
-        gain += carcassesNear(level, player.blockPosition()) * 2.5F;
+        gain += carcassesNear(level, player.blockPosition()) * 3.0F;
         if (player.getHealth() < player.getMaxHealth() * 0.5F) {
             gain += 2.0F;
         }
         // A big band is harder to creep up on, and knows it; a band the country knows to leave alone, more so.
         gain -= Math.min(3.0F, Band.ownNear(player, 16.0D).size() * 0.5F);
-        gain -= Math.max(0, dev.hominin.evolution.band.Presence.get(player) - 20) * 0.08F;
+        gain -= Math.max(0, dev.hominin.evolution.band.Presence.get(player) - 8) * 0.2F;
+        // Food piled in the open is a smell on the wind; a trusted baboon troop about keeps watch, and nothing creeps
+        // up past it.
+        gain += Math.min(3.0F, foodInTheOpen(level, player, camp.anchor()) * 0.75F);
+        if (friendlyTroopNear(player, level)) {
+            gain -= 2.0F;
+        }
         float pressure = Mth.clamp(camp.pressure() + Math.max(0.5F, gain), 0.0F, PRESSURE_MAX);
         boolean warned = camp.warned();
         if (!warned && pressure >= PRESSURE_WARN) {
             warned = true;
-            player.sendSystemMessage(Component.literal(
-                    "Something has been about the camp. There are tracks you did not make.")
-                    .withStyle(ChatFormatting.GOLD));
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.WARNING, "Something has been about the camp. There are tracks you did not make.",
+                    ChatFormatting.GOLD);
         }
         if (pressure >= PRESSURE_VISIT && sendVisitor(player, level)) {
             pressure -= 45.0F;
@@ -172,14 +178,97 @@ public final class Predation {
         camps.put(player.getUUID(), new Camp(camp.anchor(), pressure, warned));
     }
 
-    private static int carcassesNear(ServerLevel level, BlockPos around) {
+    // ------------------------------------------------------------ building threat
+
+    /** The camp's building threat, 1 to 10: how much of what hunts has learned this place. */
+    public static int threat(ServerPlayer player) {
+        Camp camp = camps.get(player.getUUID());
+        float pressure = camp == null ? 0.0F : camp.pressure();
+        return 1 + Math.min(9, (int) (pressure / PRESSURE_MAX * 10.0F));
+    }
+
+    /** The great predators: killing one tells everything else on the ground what lives here now. */
+    public static boolean giant(net.minecraft.world.entity.LivingEntity entity) {
+        return entity instanceof dev.hominin.evolution.entity.Dinopithecus
+                || entity instanceof dev.hominin.evolution.entity.Pachycrocuta
+                || entity instanceof dev.hominin.evolution.entity.Sabertooth
+                || entity instanceof dev.hominin.evolution.entity.Homotherium;
+    }
+
+    /** A great predator killed by you or yours: the building threat on your ground falls a long way. */
+    public static void giantKilled(ServerPlayer player, net.minecraft.world.entity.LivingEntity predator) {
+        Camp camp = camps.get(player.getUUID());
+        if (!giant(predator) || camp == null) {
+            return;
+        }
+        int before = threat(player);
+        camps.put(player.getUUID(), new Camp(camp.anchor(), Math.max(0.0F, camp.pressure() - 40.0F), camp.warned()));
+        if (threat(player) < before) {
+            player.displayClientMessage(Component.literal("Building threat " + before + " -> " + threat(player)
+                    + ": everything out there saw what you did to the " + predator.getName().getString().toLowerCase()
+                    + ".").withStyle(ChatFormatting.DARK_GREEN), true);
+        }
+    }
+
+    /** The band's food piles near camp that are not under a roof. */
+    private static int foodInTheOpen(ServerLevel level, ServerPlayer player, BlockPos around) {
         int count = 0;
-        for (BlockPos pos : BlockPos.betweenClosed(around.offset(-12, -4, -12), around.offset(12, 4, 12))) {
-            if (level.getBlockState(pos).is(ModBlocks.CARCASS.get())) {
+        for (BlockPos pos : dev.hominin.evolution.band.ToolPiles.piles(level, player.getUUID())) {
+            if (pos.distSqr(around) <= 32 * 32 && level.isLoaded(pos)
+                    && level.getBlockEntity(pos) instanceof dev.hominin.evolution.block.ToolPileBlockEntity pile
+                    && pile.kind() == dev.hominin.evolution.block.ToolPileBlockEntity.Kind.FOOD
+                    && dev.hominin.evolution.build.Sites.roomAt(level, pos) == null) {
                 count++;
             }
         }
-        return Math.min(4, count);
+        return count;
+    }
+
+    private static boolean friendlyTroopNear(ServerPlayer player, ServerLevel level) {
+        return !level.getEntitiesOfClass(dev.hominin.evolution.entity.Baboon.class, player.getBoundingBox().inflate(48.0D),
+                b -> b.isAlive() && b.getTroop() != null
+                        && dev.hominin.evolution.entity.TroopRelations.isTrusted(player, b.getTroop())).isEmpty();
+    }
+
+    private static final Map<UUID, String> threatSent = new HashMap<>();
+
+    /** Every ten seconds: the threat of the ground underfoot - yours, another band's, or nobody's - to the bar. */
+    private static void sendThreat(ServerPlayer player, ServerLevel level) {
+        int value = 0;
+        String whose = "";
+        BlockPos at = player.blockPosition();
+        if (onOwnGround(player, at)) {
+            value = threat(player);
+            whose = "your ground";
+        } else {
+            for (dev.hominin.evolution.band.Bands.Record band : dev.hominin.evolution.band.Bands.all(level)) {
+                if (!band.nomadic() && band.holds(at)) {
+                    value = band.threat();
+                    whose = band.knownTo(player.getUUID()) ? band.name : "a band's ground";
+                    break;
+                }
+            }
+        }
+        String key = value + "|" + whose;
+        if (!key.equals(threatSent.get(player.getUUID()))) {
+            threatSent.put(player.getUUID(), key);
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                    new dev.hominin.evolution.network.ThreatPayload(value, whose));
+        }
+    }
+
+    /** Carcasses left lying about the camp - a giant's counts three times over. The more, the faster it builds. */
+    private static int carcassesNear(ServerLevel level, BlockPos around) {
+        int count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(around.offset(-24, -5, -24), around.offset(24, 5, 24))) {
+            var state = level.getBlockState(pos);
+            if (state.is(ModBlocks.CARCASS.get()) || state.is(ModBlocks.HOMININ_CARCASS.get())) {
+                count++;
+            } else if (state.is(ModBlocks.GIANT_CARCASS.get())) {
+                count += 3;
+            }
+        }
+        return Math.min(12, count);
     }
 
     /** Something comes to look the camp over. What comes depends on the hour and your era. */
@@ -195,6 +284,7 @@ public final class Predation {
         }
         visitor.moveTo(site.getX() + 0.5D, site.getY(), site.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
         visitor.finalizeSpawn(level, level.getCurrentDifficultyAt(site), MobSpawnType.EVENT, null);
+        visitor.addTag(PredatorMood.CAME_FOR_YOU);
         level.addFreshEntity(visitor);
         dev.hominin.evolution.band.Paranthropus.warn(player, site);
         // A pair, for the animals that hunt in pairs.
@@ -203,12 +293,13 @@ public final class Predation {
             if (mate != null) {
                 mate.moveTo(site.getX() + 2.5D, site.getY(), site.getZ() + 1.5D, 0.0F, 0.0F);
                 mate.finalizeSpawn(level, level.getCurrentDifficultyAt(site), MobSpawnType.EVENT, null);
+                mate.addTag(PredatorMood.CAME_FOR_YOU);
                 level.addFreshEntity(mate);
             }
         }
-        player.sendSystemMessage(Component.literal(level.isNight()
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, level.isNight()
                 ? "Something is moving out there in the dark, and it knows where you sleep."
-                : "Something has followed the smell of this place in.").withStyle(ChatFormatting.RED));
+                : "Something has followed the smell of this place in.", ChatFormatting.RED);
         return true;
     }
 
@@ -348,6 +439,8 @@ public final class Predation {
                 && dev.hominin.evolution.band.Relations.standing(player, theirs) < dev.hominin.evolution.band.Relations.ALLIED) {
             dev.hominin.evolution.band.Relations.change(player, theirs, -5, "you made camp on their ground");
         }
+        // What the band keeps at the old camp is fetched.
+        dev.hominin.evolution.band.Haul.begin(player, at);
     }
 
     /** The band packs up: no ground of its own until it chooses some. The camp goes where you go. */
@@ -368,7 +461,9 @@ public final class Predation {
 
     /** From the map: here is our ground now. */
     public static void settleHere(ServerPlayer player) {
+        BlockPos from = campOf(player);
         settle(player, player.blockPosition());
+        dev.hominin.evolution.mind.Knacks.relocated(player, from, player.blockPosition());
         var land = dev.hominin.evolution.world.Land.ofPlayer(player);
         player.sendSystemMessage(Component.literal("Your band makes this its ground: " + territoryRadius(player)
                 + " blocks round where you stand. Keep a fire and build here and the country learns to leave you alone.")
@@ -438,7 +533,7 @@ public final class Predation {
         if (stayed >= WARN_TICKS && told < 1) {
             counters.put(RANGE_TOLD, 1);
             dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.HOME_RANGE);
-            player.sendSystemMessage(Component.literal("Four days on this ground. The things that hunt here "
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.WARNING, Component.literal("Four days on this ground. The things that hunt here "
                     + "are starting to know your band's ways. Half a day more and they will start testing you - make "
                     + "your band felt here (presence " + dev.hominin.evolution.band.Presence.get(player) + ") - keep a fire, "
                     + "build, kill what hunts here - or pack up and move on.")
@@ -450,7 +545,7 @@ public final class Predation {
         if (told < 2) {
             counters.put(RANGE_TOLD, 2);
             counters.put(RANGE_NEXT, minute + 1);
-            player.sendSystemMessage(Component.literal("Four and a half days on the same ground. Everything that hunts "
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, Component.literal("Four and a half days on the same ground. Everything that hunts "
                     + "here knows your band now - where you sleep, where you eat, who lags behind. Hold it if you can: "
                     + "the ground is wearing out under you all the same.").withStyle(ChatFormatting.RED));
         }
@@ -462,7 +557,7 @@ public final class Predation {
         int gap = Math.max(1, INCIDENT_MINUTES + level.random.nextInt(3) - (int) over);
         counters.put(RANGE_NEXT, minute + gap);
         int presence = dev.hominin.evolution.band.Presence.get(player);
-        float turnedAway = presence >= 45 ? 0.7F : presence >= dev.hominin.evolution.band.Presence.STRONG ? 0.5F : 0.0F;
+        float turnedAway = presence >= dev.hominin.evolution.band.Presence.COMMANDING ? 0.7F : presence >= dev.hominin.evolution.band.Presence.STRONG ? 0.5F : 0.0F;
         if (level.random.nextFloat() < turnedAway) {
             if (level.random.nextInt(3) == 0) {
                 player.displayClientMessage(Component.literal("Something came to test the camp, saw whose it was, and "
@@ -489,7 +584,7 @@ public final class Predation {
                     robbed.takeFood();
                 }
                 robbed.ensureName();
-                player.sendSystemMessage(Component.literal("While nobody watched, something got into "
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.WARNING, Component.literal("While nobody watched, something got into "
                         + robbed.getName().getString() + "'s food and made off with " + taken.getHoverName().getString()
                         + ". It knows this camp.").withStyle(ChatFormatting.RED));
                 dev.hominin.evolution.band.Presence.add(player, -2, "food stolen from the camp");
@@ -510,10 +605,11 @@ public final class Predation {
             if (hunter != null) {
                 hunter.moveTo(site.getX() + 0.5D, site.getY(), site.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
                 hunter.finalizeSpawn(level, level.getCurrentDifficultyAt(site), MobSpawnType.EVENT, null);
+                hunter.addTag(PredatorMood.CAME_FOR_YOU);
                 level.addFreshEntity(hunter);
                 hunter.setTarget(straggler);
                 straggler.ensureName();
-                player.sendSystemMessage(Component.literal("Something has been waiting for one of you to stray - and "
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, Component.literal("Something has been waiting for one of you to stray - and "
                         + straggler.getName().getString() + " has.").withStyle(ChatFormatting.DARK_RED));
                 return;
             }

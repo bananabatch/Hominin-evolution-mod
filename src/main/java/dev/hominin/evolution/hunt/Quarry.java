@@ -32,8 +32,9 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * marks it out for its first run. Erectus can do it over and over, and pays in water.
  */
 public final class Quarry {
-    /** The first panic: two seconds where nothing on two legs can follow. */
+    /** The first panic: two seconds where nothing on two legs can follow - Speed III. */
     private static final int BURST_TICKS = 40;
+    private static final int BURST_AMPLIFIER = 2;
     /** The run afterwards, which is where a hunter begins to catch up. */
     private static final int STRIDE_TICKS = 60;
 
@@ -96,6 +97,8 @@ public final class Quarry {
         }
         animal.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         animal.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, MEGA_RUN_TICKS, 1, false, false, true));
+        // It goes off hard - Speed III for the first two seconds, dropping back to the long run after.
+        animal.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BURST_TICKS, BURST_AMPLIFIER, false, false, true));
         winded.put(animal.getUUID(), new Winded(hunter.getUUID(), RUNNING,
                 animal.level().getGameTime() + MEGA_RUN_TICKS));
         if (animal instanceof PathfinderMob mob) {
@@ -241,9 +244,13 @@ public final class Quarry {
 
     /** Anything that will stand and fight does not bolt: predators, the fearless, a mobbing troop. */
     public static boolean standsGround(LivingEntity target) {
-        if (target.getType().is(ModTags.EntityTypes.FEARLESS) || target.getType().is(ModTags.EntityTypes.PREDATORS)
-                || target instanceof Enemy) {
+        if (MobClass.stillFights(target) || target.getType().is(ModTags.EntityTypes.FEARLESS)) {
             return true;
+        }
+        MobClass kind = MobClass.of(target);
+        if (kind == MobClass.PREDATOR || kind == MobClass.DEFENSIVE) {
+            // Past its breaking point: it runs now, like anything else.
+            return false;
         }
         if (target instanceof dev.hominin.evolution.entity.Pelorovis pelorovis) {
             return pelorovis.standsGround();
@@ -264,17 +271,17 @@ public final class Quarry {
 
     /** Too small for this to be worth it: persistence hunting is for animals that can outrun you. */
     public static boolean isBigGame(LivingEntity target) {
-        return target.getMaxHealth() > 10.0F || target.getBbWidth() > 1.0F;
+        return target.getMaxHealth() >= 8.0F || target.getBbWidth() >= 0.85F;
     }
 
     /** Only from habilis: the earlier hominins take what small things they can catch. */
     private static boolean hunts(ServerPlayer player) {
-        String stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
         return !stage.equals("ardipithecus") && !stage.equals("australopithecus");
     }
 
     private static boolean isErectus(ServerPlayer player) {
-        String stage = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
         return !stage.equals("ardipithecus") && !stage.equals("australopithecus") && !stage.equals("homo_habilis");
     }
 
@@ -286,6 +293,8 @@ public final class Quarry {
             return;
         }
         if (standsGround(victim)) {
+            // Defensive or a predator, and not yet beaten: it fights back.
+            MobClass.turnOn(victim, hunter);
             return;
         }
         UUID before = quarryOf(hunter);
@@ -302,7 +311,8 @@ public final class Quarry {
         // Everything grazing beside it goes too, which is the hard part of picking one.
         for (LivingEntity other : victim.level().getEntitiesOfClass(LivingEntity.class,
                 victim.getBoundingBox().inflate(HERD_RADIUS))) {
-            if (other != victim && other instanceof net.minecraft.world.entity.animal.Animal && !standsGround(other)) {
+            if (other != victim && other instanceof net.minecraft.world.entity.animal.Animal
+                    && MobClass.of(other) == MobClass.PREY) {
                 bolt(other, hunter);
             }
         }
@@ -341,13 +351,54 @@ public final class Quarry {
         }
         dev.hominin.evolution.EvolutionManager.incrementCriterion(hunter, "persistence_kill", 1);
         Persistence.practise(hunter);
+        if (dev.hominin.evolution.hunt.Predation.onOwnGround(hunter, dead.blockPosition())) {
+            // Everything on this ground saw what your band can run down.
+            dev.hominin.evolution.band.Presence.add(hunter, 2, "you ran big game down on your ground");
+        }
+        if (ranDown.size() > 256) {
+            ranDown.clear();
+        }
+        ranDown.add(dead.getUUID());
         hunter.displayClientMessage(net.minecraft.network.chat.Component.literal(
                 "It could not run any more. You could.").withStyle(net.minecraft.ChatFormatting.GOLD), true);
     }
 
+    /** Animals just run to death, whose drops are still to come. */
+    private static final java.util.Set<UUID> ranDown = new java.util.HashSet<>();
+
+    /**
+     * Run down, not struck down: it died all at once, exhausted, nothing wasted on a panicked fight - and the hunter
+     * was there for every bit of it. Meat, hide and bone all come away in more: every stack half again to double, and
+     * a second hide from anything that has one.
+     */
+    public static void onDrops(net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) {
+        LivingEntity dead = event.getEntity();
+        if (dead.level().isClientSide() || !ranDown.remove(dead.getUUID())) {
+            return;
+        }
+        boolean hide = false;
+        for (net.minecraft.world.entity.item.ItemEntity drop : event.getDrops()) {
+            net.minecraft.world.item.ItemStack stack = drop.getItem();
+            if (stack.isEmpty() || !stack.isStackable()) {
+                continue;
+            }
+            hide |= stack.is(dev.hominin.evolution.ModItems.HIDE.get());
+            int more = Math.max(1, (int) Math.ceil(stack.getCount() * (0.5F + dead.getRandom().nextFloat() * 0.5F)));
+            stack.setCount(Math.min(stack.getMaxStackSize(), stack.getCount() + more));
+        }
+        if (hide) {
+            event.getDrops().add(new net.minecraft.world.entity.item.ItemEntity(dead.level(), dead.getX(), dead.getY(),
+                    dead.getZ(), new net.minecraft.world.item.ItemStack(dev.hominin.evolution.ModItems.HIDE.get())));
+        }
+        if (dead.level().getNearestPlayer(dead, 32.0D) instanceof ServerPlayer hunter) {
+            hunter.displayClientMessage(Component.literal("Run down clean - more comes off it than off anything "
+                    + "you only struck.").withStyle(ChatFormatting.GOLD), false);
+        }
+    }
+
     /** The burst: a hard sprint that nothing on two legs can follow, and then a longer stride. */
     private static void bolt(LivingEntity animal, ServerPlayer hunter) {
-        animal.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BURST_TICKS, 1, false, false, true));
+        animal.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BURST_TICKS, BURST_AMPLIFIER, false, false, true));
         secondWind.put(animal.getUUID(), animal.level().getGameTime() + BURST_TICKS);
         if (animal instanceof PathfinderMob mob) {
             dev.hominin.evolution.entity.WoundedFleeGoal.makeFlee(mob, hunter);
@@ -402,12 +453,14 @@ public final class Quarry {
             }
             Thirst.drink(player, -REMARK_THIRST_COST);
             quarry.addEffect(new MobEffectInstance(MobEffects.GLOWING, REMARK_TICKS, 0, false, false));
+            dev.hominin.evolution.mind.Knacks.trackMore(player, quarry, REMARK_TICKS);
             player.sendSystemMessage(Component.literal("You pick the tracks up again, and sweat for it.")
                     .withStyle(ChatFormatting.GRAY));
         } else {
             boolean tracker = dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.TRACKING);
             quarry.addEffect(new MobEffectInstance(MobEffects.GLOWING,
                     tracker ? FIRST_RUN_TICKS * 3 / 2 : FIRST_RUN_TICKS, 0, false, false));
+            dev.hominin.evolution.mind.Knacks.trackMore(player, quarry, tracker ? FIRST_RUN_TICKS * 3 / 2 : FIRST_RUN_TICKS);
             dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.TRACKING);
             // Habilis thinking the chase back together is where the line learns to hunt this way at all.
             dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.EARLY_TRACKING);

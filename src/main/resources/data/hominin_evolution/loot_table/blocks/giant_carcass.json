@@ -10,11 +10,7 @@
           "functions": [
             {
               "function": "minecraft:set_count",
-              "count": {
-                "type": "minecraft:uniform",
-                "min": 9,
-                "max": 14
-              },
+              "count": 30,
               "add": false
             }
           ]
@@ -75,6 +71,23 @@
                 "min": 4,
                 "max": 7
               },
+              "add": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:beef",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 8,
               "add": false
             }
           ]

@@ -49,7 +49,19 @@ public enum KnappingChoice {
 
     /** Only for a chert hammerstone: give up the hammer and keep the stone. */
     SPLIT_CORE("knapping.hominin_evolution.split_core",
-            "knapping.hominin_evolution.split_core.hint", ModItems.CHERT_ROCK);
+            "knapping.hominin_evolution.split_core.hint", ModItems.CHERT_ROCK),
+
+    /** Levallois, at a knapping station: two thin, even flakes off a prepared core. */
+    LEVALLOIS_FLAKE("knapping.hominin_evolution.levallois_flake",
+            "knapping.hominin_evolution.levallois_flake.hint", ModItems.LEVALLOIS_FLAKE),
+
+    /** Levallois: a long, straight blade - for a knife, or the point of a spear. */
+    LEVALLOIS_BLADE("knapping.hominin_evolution.levallois_blade",
+            "knapping.hominin_evolution.levallois_blade.hint", ModItems.LEVALLOIS_BLADE),
+
+    /** Levallois: a hand axe taken down from a hammerstone of the stone it is to be. */
+    LEVALLOIS_HAND_AXE("knapping.hominin_evolution.levallois_hand_axe",
+            "knapping.hominin_evolution.levallois_hand_axe.hint", ModItems.LEVALLOIS_HAND_AXE);
 
     private final String titleKey;
     private final String hintKey;

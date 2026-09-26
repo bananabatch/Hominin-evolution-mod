@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Every band out there has a name, and ground of its own: eighty blocks round its camp from erectus on, less before. Hear one calling and you know them - the call says how far and which way, and $(l)Lead me there$() puts a pointer at the top of your screen.$(br2)You name your own band when it forms."
+      "text": "Every band out there has a name, and ground of its own: a hundred and five blocks round its camp from erectus on, less before. Hear one calling and you know them - the call says how far and which way, and $(l)Lead me there$() puts a pointer at the top of your screen.$(br2)You name your own band when it forms."
     },
     {
       "type": "patchouli:text",
@@ -63,6 +63,58 @@
     {
       "type": "patchouli:text",
       "text": "Not every band is your kind. Beside each species stands a marginal cousin, with hands of its own: $(l)anamensis$() knaps nothing and never cracks a bone; $(l)rudolfensis$() makes flakes and choppers but no multi tool, and no marrow; $(l)ergaster$() knaps only rough hand axes, and has never made fire. Hover a band on the map to see its kind."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Take from a band's ground - stone, wood, grass, water - and it is missed, seen or not. Before you meet them, they find the signs; after, they keep count. Take enough and they come to you: $(o)\"We found where, and we know it was you.\"$() Pay, fight, or run - and if you run, they will come again."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Friends come by: to trade, or just to sit a while with food to share. Now and then one of theirs would sooner live with your band, and asks. And when a band threatens you and you choose to $(l)fight$(), it is a fight: it ends when they break, when you go down, or when both sides have had enough."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Send a party.$() From The others: three of your band or more, with a purpose - a gift, a demand for tribute, a request for their ground, a message (help us fight a band; join our next hunt), a trade, or a raid - and whatever you pick for them to carry, yours or the band's. They walk there and back; a fight can leave some hurt, and up to two dead."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Haggling.$() A band offering for your ground can be answered with $(o)Counter offer$() - pick what of theirs you would take instead; the more pressure on your ground, the more they will give - or $(o)Bring me something better$(): the best they have with them, or they come back tomorrow with more. With plenty of food on you, they offer stone and hides, not food."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Strangers on your ground.$() Now and then a few of another band wander onto your ground and forage it as if it were theirs. They glow, and one of your band tells you where. Walk up to them: make them pay for it - nine times in ten they give in and hand something over - let them be, or drive them off. Ignore them, and the country notices."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Presence$() runs 0 to 20. At $(l)5 or under$() you are weak: bands raid you, predators do not think twice, and allies hang back rather than stand in front of you. From $(l)14$() you are strong: half of what comes to test the camp thinks better of it, demands come half as often, and nothing raids food left out at night. At $(l)18$(), hardly anything tries you at all."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Above your hunger, the $(l)threat$() bar: 1 to 10, how much of what hunts has learned your ground. Time on the same ground builds it, and carcasses, wounds and food left out in the open. Presence slows it. Kill one of the $(l)giants$() - the giant baboon, the giant hyena, a great cat - and it drops a long way; a friendly baboon troop by the camp keeps it down too."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Havens.$() A spring, a great seam of stone - often with obsidian in its foot - a salt lick and old tools, all within a stone's throw: the best ground there is. Every band for miles knows where each one is, and your band hears of any within a long walk. Most lie empty. One in five is held - by the best armed band of its kind."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Walk onto a held haven and they want paying: $(l)twelve food$(), or half as much good stone, for three days there. Stay without paying and they come at you.$(br2)Or kill them all. They fight to the last. Then choose: $(l)take the land$() and move your band there - or $(l)set an example$(): leave it, and nobody comes for your ground again, not even in desperate times, and the haven is open to you for good."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "An empty haven does not stay empty: within a few days some band moves in. $(l)Bands move$() anyway, now and then - to richer ground, or to a haven - and leave their old pile behind for anyone.$(br2)$(l)Ask what they know$() (The others, standing 30 and up): a band tells you the lie of its land, and of places beyond it, and it goes on your map."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From erectus on, other bands keep a fire burning at their camp, and you can see the smoke from far off - that is how you find them. Most have a knapping station by it; some, a hut.$(br2)Down to $(l)two$() of you? Near a band of your own kind that is not against you, $(l)Ask to join them$(). They take you in, and you still lead - but they do not know you yet."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bands end, and some of their people walk away from it. Every day or two a few $(l)survivors$() come in from the grass and ask to walk with you. Whatever ended their band comes with them: a predator leaves nothing but grief; a band that killed the rest leaves a $(l)grudge$(), and every day they spend with you your band likes that band less; a band that fought itself apart leaves some of them spoiling for a fight."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Now and then one of the survivors is carrying a child - they will tell you, or tell you none of them is. And a band that stands with you, down to its last few, may ask to $(l)become one band with yours$(). Take them in and they bring all they kept and all they knew - and a band others chose to join holds together the better for it."
     }
   ]
 }

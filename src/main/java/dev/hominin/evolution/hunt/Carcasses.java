@@ -79,13 +79,6 @@ public final class Carcasses {
         }
     }
 
-    /** Whether this player's band already has everybody it can hold. */
-    private static boolean bandIsFull(ServerPlayer player) {
-        var stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage();
-        return dev.hominin.evolution.band.Band.all(player).size()
-                >= dev.hominin.evolution.band.BandSizes.of(stage).maxMembers();
-    }
-
     /** Leaves a carcass where something died, and sometimes tells a hyena about it. */
     public static void onDeath(LivingEntity dead) {
         if (dead instanceof Player || !(dead.level() instanceof ServerLevel level)) {
@@ -111,11 +104,6 @@ public final class Carcasses {
             return;
         }
         boolean yours = killedByHand(dead);
-        // Somebody else got here first, and they are not an animal. A hominin at a kill
-        // keeps the scavengers off it, which is most of the reason to be at one.
-        if (!yours && !mega && level.random.nextFloat() < LONER_AT_KILL_CHANCE && leaveLoner(level, pos)) {
-            return;
-        }
         boolean hard = dev.hominin.evolution.survival.Seasons.strained(level);
         if (mega) {
             if (level.random.nextFloat() < (hard ? 0.6F : 0.45F)) {
@@ -156,74 +144,6 @@ public final class Carcasses {
             }
         }
         return null;
-    }
-
-    /** How often a fresh kill already has somebody at it, and an old bone bed does. */
-    private static final float LONER_AT_KILL_CHANCE = 0.12F;
-    private static final float LONER_AT_BONE_BED_CHANCE = 0.3F;
-    /** How often a player's surroundings are searched for an unvisited bone bed. */
-    private static final int LONER_CHECK_TICKS = 600;
-    private static final int LONER_SEARCH_RADIUS = 20;
-
-    /** Bone beds already looked over, so each one is only ever worth one meeting. */
-    private static final java.util.Set<BlockPos> visitedBeds = new java.util.HashSet<>();
-
-    /**
-     * Somebody of your own kind, alone at a carcass. A hominin whose band is gone is not
-     * dead - it is sitting somewhere with nothing left, living off whatever it finds, and
-     * it will come with anyone who comes for it.
-     */
-    private static boolean leaveLoner(ServerLevel level, BlockPos carcass) {
-        if (!(level.getNearestPlayer(carcass.getX(), carcass.getY(), carcass.getZ(), 160.0D, false)
-                instanceof ServerPlayer nearest)) {
-            return false;
-        }
-        // Nobody joins a band that is already as big as it gets. A stranger at a kill
-        // is a chance at a recruit, and a chance you cannot take is not worth spawning.
-        if (bandIsFull(nearest)) {
-            return false;
-        }
-        BandMember loner = ModEntities.BAND_MEMBER.get().create(level);
-        if (loner == null) {
-            return false;
-        }
-        BlockPos spot = dev.hominin.evolution.band.Band.standingSpotNear(level, carcass, 2,
-                level.random.nextFloat() * Mth.TWO_PI);
-        loner.moveTo(spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
-        loner.finalizeSpawn(level, level.getCurrentDifficultyAt(spot), MobSpawnType.EVENT, null);
-        loner.setStage(nearest.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage());
-        loner.ensureName();
-        loner.setGrieving(true);
-        level.addFreshEntity(loner);
-        return true;
-    }
-
-    /**
-     * Old bones out in the country often have somebody sitting by them. Checked around each
-     * player rather than at worldgen, so the meeting happens where somebody is there to have it.
-     */
-    public static void tickLoners(ServerPlayer player) {
-        if (player.tickCount % LONER_CHECK_TICKS != 200 || player.isSpectator()) {
-            return;
-        }
-        ServerLevel level = player.serverLevel();
-        BlockPos origin = player.blockPosition();
-        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-LONER_SEARCH_RADIUS, -6, -LONER_SEARCH_RADIUS),
-                origin.offset(LONER_SEARCH_RADIUS, 6, LONER_SEARCH_RADIUS))) {
-            var state = level.getBlockState(pos);
-            if (!state.is(ModBlocks.CARCASS.get())
-                    || !state.getValue(dev.hominin.evolution.block.CarcassBlock.LARGE)) {
-                continue;
-            }
-            BlockPos bed = pos.immutable();
-            if (!visitedBeds.add(bed)) {
-                continue;
-            }
-            if (level.random.nextFloat() < LONER_AT_BONE_BED_CHANCE) {
-                leaveLoner(level, bed);
-            }
-            return;
-        }
     }
 
     // ------------------------------------------------------------ who comes for it

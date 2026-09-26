@@ -23,6 +23,18 @@
     {
       "type": "patchouli:text",
       "text": "A club will not ring those skulls - it only breaks their bones. Rusingoryx never fights at all: it honks, and the herd goes, and it runs further than anything.$(br2)Stay on the same ground too long and the big herds stop coming - except to a $(l)breeding ground$(), where they come back whatever you do."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The hunting party.$() $(o)Let's hunt$() lists what is about - prey that runs, animals that fight back, predators, megafauna - and you pick one, how many go and what they carry. For megafauna the party splits: attackers bring the chosen one down, chasers strike another of the herd to draw it off. You pick your group. Nobody starts a hunt near dusk, and a party gives up at nightfall."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Throwing a spear.$() Hold use with a spear to draw it back; let go to throw. Erectus throws overarm, hard and true; earlier kinds only lob it. In an animal it stays - it goes where the animal goes, and comes free when it is down - and an animal hit while running staggers for a second. Erectus bands throw too: rocks, and a spear when they have something else to fight with."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Every skill has a level 0$(): flawless. Persistence hunting: at level 1, five more animals run down and you reach it - the animal stays in sight four times in five when it runs, and your blows land a heart and a half harder. Only cows, goats, sheep, pigs and bigger count as game worth running down."
     }
   ]
 }

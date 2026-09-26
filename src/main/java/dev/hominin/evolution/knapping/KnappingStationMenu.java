@@ -26,6 +26,7 @@ public class KnappingStationMenu extends AbstractContainerMenu {
     /** Synced to the screen: the player's knapping level, and whether they can work Acheulean. */
     public static final int DATA_LEVEL = 0;
     public static final int DATA_ACHEULEAN = 1;
+    public static final int DATA_LEVALLOIS = 2;
 
     public static final int STORAGE_X = 8;
     public static final int STORAGE_Y = 46;
@@ -42,7 +43,7 @@ public class KnappingStationMenu extends AbstractContainerMenu {
     private final BlockPos pos;
 
     public KnappingStationMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) {
-        this(id, inventory, new SimpleContainer(STATION_SLOTS), new SimpleContainerData(2), BlockPos.ZERO,
+        this(id, inventory, new SimpleContainer(STATION_SLOTS), new SimpleContainerData(3), BlockPos.ZERO,
                 ContainerLevelAccess.NULL);
     }
 
@@ -85,7 +86,10 @@ public class KnappingStationMenu extends AbstractContainerMenu {
                 if (!(player instanceof ServerPlayer server)) {
                     return 0;
                 }
-                return index == DATA_LEVEL ? Acheulean.level(server) : Acheulean.canUse(server) ? 1 : 0;
+                // Level plus one: a synced 0 means nothing has arrived yet, not a flawless knapper.
+                return index == DATA_LEVEL ? Acheulean.level(server) + 1
+                        : index == DATA_ACHEULEAN ? (Acheulean.canUse(server) ? 1 : 0)
+                        : Acheulean.canUseLevallois(server) ? 1 : 0;
             }
 
             @Override
@@ -94,17 +98,22 @@ public class KnappingStationMenu extends AbstractContainerMenu {
 
             @Override
             public int getCount() {
-                return 2;
+                return 3;
             }
         };
     }
 
     public int knappingLevel() {
-        return Math.max(1, Math.min(4, data.get(DATA_LEVEL) == 0 ? 4 : data.get(DATA_LEVEL)));
+        int synced = data.get(DATA_LEVEL);
+        return synced == 0 ? 4 : Math.max(0, Math.min(4, synced - 1));
     }
 
     public boolean canWorkAcheulean() {
         return data.get(DATA_ACHEULEAN) == 1;
+    }
+
+    public boolean canWorkLevallois() {
+        return data.get(DATA_LEVALLOIS) == 1;
     }
 
     public Container station() {

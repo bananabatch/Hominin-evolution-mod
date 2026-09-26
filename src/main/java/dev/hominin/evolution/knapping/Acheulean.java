@@ -35,6 +35,9 @@ public final class Acheulean {
     private static final String PROGRESS = EvolutionManager.SKILL_PREFIX + "knapping_progress";
     /** Tools to make at each level before reaching the next: level 4 needs 1, 3 needs 2, 2 needs 3. */
     private static final int[] TO_ADVANCE = {0, 0, 3, 2, 1};
+    /** Flawless tools made at level 1, towards level 0: two. Only the player gets there. */
+    private static final String FLAWLESS = EvolutionManager.SKILL_PREFIX + "knapping_flawless";
+    private static final int FLAWLESS_TO_ZERO = 2;
     public static final int STONE_COST = 2;
 
     public static final List<KnappingChoice> CHOICES =
@@ -64,7 +67,9 @@ public final class Acheulean {
             return false;
         }
         Map<String, Integer> counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
-        int progress = counters.getOrDefault(PROGRESS, 0) + amount;
+        // A jack of all trades picks it up faster.
+        int progress = counters.getOrDefault(PROGRESS, 0) + amount
+                * (Skills.knows(player, Skills.Skill.JACK) ? 2 : 1);
         if (progress < TO_ADVANCE[level]) {
             counters.put(PROGRESS, progress);
             return false;
@@ -81,8 +86,12 @@ public final class Acheulean {
 
     public static String describe(ServerPlayer player) {
         int level = level(player);
-        if (level <= 1) {
-            return "level 1 (master)";
+        if (level <= 0) {
+            return "level 0 (flawless)";
+        }
+        if (level == 1) {
+            return "level 1 (master) - " + player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters()
+                    .getOrDefault(FLAWLESS, 0) + "/" + FLAWLESS_TO_ZERO + " flawless tools to level 0";
         }
         int progress = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().getOrDefault(PROGRESS, 0);
         return "level " + level + " (" + progress + "/" + TO_ADVANCE[level] + " tools to the next)";
@@ -93,11 +102,13 @@ public final class Acheulean {
     /** How a tool comes out, for a knapper of this level working this stone. Lower is better. */
     public static int rollQuality(int level, ItemStack stone, RandomSource random) {
         boolean obsidian = stone.is(ModItems.OBSIDIAN_ROCK.get());
-        boolean chert = stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get());
+        boolean fine = stone.is(ModItems.FINE_CHERT_ROCK.get());
+        boolean chert = fine || stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get());
         int tier = switch (level) {
             case 3 -> random.nextFloat() < 0.2F ? 2 : 3;
-            case 2 -> random.nextFloat() < (obsidian ? 0.4F : 0.25F) ? 1 : 2;
-            case 1 -> random.nextFloat() < (obsidian ? 0.45F : chert ? 0.15F : 0.0F) ? 0 : 1;
+            case 2 -> random.nextFloat() < (obsidian ? 0.4F : fine ? 0.35F : 0.25F) ? 1 : 2;
+            case 1 -> random.nextFloat() < (obsidian ? 0.45F : fine ? 0.3F : chert ? 0.15F : 0.0F) ? 0 : 1;
+            case 0 -> random.nextFloat() < (obsidian ? 0.75F : fine ? 0.6F : chert ? 0.4F : 0.0F) ? 0 : 1;
             default -> 4;
         };
         // The stone's own ceiling.
@@ -125,7 +136,8 @@ public final class Acheulean {
      */
     public static double[] odds(int level, ItemStack stone) {
         boolean obsidian = stone.is(ModItems.OBSIDIAN_ROCK.get());
-        boolean chert = stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get());
+        boolean fine = stone.is(ModItems.FINE_CHERT_ROCK.get());
+        boolean chert = fine || stone.is(ModItems.CHERT_ROCK.get()) || stone.is(ModItems.CHERT_HAMMERSTONE.get());
         double[] base = new double[5];
         switch (level) {
             case 3 -> {
@@ -133,12 +145,17 @@ public final class Acheulean {
                 base[2] = 0.2D;
             }
             case 2 -> {
-                double better = obsidian ? 0.4D : 0.25D;
+                double better = obsidian ? 0.4D : fine ? 0.35D : 0.25D;
                 base[1] = better;
                 base[2] = 1.0D - better;
             }
             case 1 -> {
-                double flawless = obsidian ? 0.45D : chert ? 0.15D : 0.0D;
+                double flawless = obsidian ? 0.45D : fine ? 0.3D : chert ? 0.15D : 0.0D;
+                base[0] = flawless;
+                base[1] = 1.0D - flawless;
+            }
+            case 0 -> {
+                double flawless = obsidian ? 0.75D : fine ? 0.6D : chert ? 0.4D : 0.0D;
                 base[0] = flawless;
                 base[1] = 1.0D - flawless;
             }
@@ -164,7 +181,10 @@ public final class Acheulean {
      * handed over, and credited - checklist, skill, the flawless achievement, the milestone.
      */
     public static ItemStack make(ServerPlayer player, KnappingChoice choice, ItemStack stoneKind, BlockPos where) {
-        int quality = rollQuality(level(player), stoneKind, player.getRandom());
+        // Your kind's hands set the best you can do: ergaster's hand axes are rough at best.
+        int quality = dev.hominin.evolution.band.Species.capQuality(
+                player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage(),
+                rollQuality(level(player), stoneKind, player.getRandom()));
         boolean obsidian = stoneKind.is(ModItems.OBSIDIAN_ROCK.get());
         AcheuleanToolItem tool = (AcheuleanToolItem) choice.result();
         ItemStack made = dev.hominin.evolution.item.StoneMaterial.stampFrom(tool.make(quality), stoneKind);
@@ -177,8 +197,27 @@ public final class Acheulean {
                 + AcheuleanToolItem.TIER_NAMES[quality].toLowerCase() + " " + name + " (tier " + quality + ").")
                 .withStyle(ChatFormatting.GOLD), true);
         EvolutionManager.incrementCriterion(player, "make_acheulean_tool", 1);
+        if (choice == KnappingChoice.LEVALLOIS_HAND_AXE) {
+            EvolutionManager.incrementCriterion(player, "make_levallois_tool", 1);
+            EvolutionManager.incrementCriterion(player, "levallois_hand_axe", 1);
+        }
         if (quality == 0) {
             dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/last_tool");
+            if (level(player) == 1) {
+                Map<String, Integer> counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+                int flawless = counters.getOrDefault(FLAWLESS, 0) + 1;
+                if (flawless >= FLAWLESS_TO_ZERO) {
+                    counters.remove(FLAWLESS);
+                    counters.put(LEVEL, 0);
+                    player.sendSystemMessage(Component.literal("Two flawless tools, and your hands know why. "
+                            + "Knapping: level 0 - flawless. Nobody else alive knaps like this.")
+                            .withStyle(ChatFormatting.LIGHT_PURPLE));
+                } else {
+                    counters.put(FLAWLESS, flawless);
+                    player.sendSystemMessage(Component.literal("A flawless tool. One more, and your hands will know "
+                            + "how it is done.").withStyle(ChatFormatting.GOLD));
+                }
+            }
         }
         practise(player, 1);
         if (quality <= 2 && !obsidian
@@ -198,6 +237,19 @@ public final class Acheulean {
         String era = data.getStage().getPath();
         return !era.startsWith("australopithecus") && !era.equals("ardipithecus") && !era.equals("homo_habilis")
                 && !era.equals("homo_rudolfensis");
+    }
+
+    /** The Levallois technique: heidelbergensis and after. */
+    public static boolean canUseLevallois(ServerPlayer player) {
+        var data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
+        return data.isDeveloperMode() || levalloisKind(data.getStage());
+    }
+
+    /** Whether a kind knaps the Levallois way - every one of them, whatever their skill. */
+    public static boolean levalloisKind(net.minecraft.resources.ResourceLocation species) {
+        String path = species.getPath();
+        return dev.hominin.evolution.band.Bands.erectusOn(species) && !path.equals("homo_erectus")
+                && !path.equals("homo_ergaster");
     }
 
     /** Thinking hard over a good stone or a fine tool sometimes teaches the hands something. */

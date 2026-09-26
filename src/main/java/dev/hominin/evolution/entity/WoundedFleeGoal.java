@@ -94,7 +94,7 @@ public class WoundedFleeGoal extends Goal {
 
     /** Animals that fight rather than run: a cat, a baboon with its troop behind it, a buffalo that has turned. */
     public static boolean standsGround(LivingEntity animal) {
-        return animal.getType().is(ModTags.EntityTypes.FEARLESS)
+        return dev.hominin.evolution.hunt.MobClass.stillFights(animal) || animal.getType().is(ModTags.EntityTypes.FEARLESS)
                 || (animal instanceof Baboon baboon && baboon.hasTroopBehindIt())
                 || (animal instanceof Pelorovis pelorovis && pelorovis.standsGround())
                 || (animal instanceof Megafauna giant && giant.standsGround());
@@ -106,6 +106,12 @@ public class WoundedFleeGoal extends Goal {
         if (!(event.getEntity() instanceof PathfinderMob mob) || mob.level().isClientSide() || !mob.isAlive()
                 || mob instanceof TroopAnimal || !dev.hominin.evolution.hunt.Predation.isGame(mob) || standsGround(mob)
                 || !(event.getSource().getEntity() instanceof LivingEntity attacker) || attacker == mob) {
+            if (event.getEntity() instanceof PathfinderMob fighter && !fighter.level().isClientSide()
+                    && dev.hominin.evolution.hunt.MobClass.stillFights(fighter) && event.getSource().getEntity() instanceof LivingEntity attacker
+                    && attacker != fighter) {
+                // Defensive and predators: it turns on whoever did it.
+                dev.hominin.evolution.hunt.MobClass.turnOn(fighter, attacker);
+            }
             return;
         }
         makeFlee(mob, attacker);

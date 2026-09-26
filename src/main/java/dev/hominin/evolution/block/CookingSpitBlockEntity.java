@@ -32,7 +32,7 @@ import net.minecraft.world.phys.Vec3;
  * What hangs from one block of spit: three hooks, a few pieces to a hook. Over a fire, raw meat cooks - and cooked
  * meat left there long enough chars. Without one, it just hangs, out of the dirt and away from the flies.
  */
-public class CookingSpitBlockEntity extends BlockEntity {
+public class CookingSpitBlockEntity extends BlockEntity implements Holding {
     public static final int HOOKS = 3;
     private static final int PER_HOOK = 4;
 
@@ -40,6 +40,13 @@ public class CookingSpitBlockEntity extends BlockEntity {
     /** Ticks each hook has spent over a fire, and how many it needs: to cook, or - cooked - to char. */
     private final int[] progress = new int[HOOKS];
     private final int[] needs = new int[HOOKS];
+    /** Who hung each hook's meat, their name, and who it is for - as on a pile. */
+    private final java.util.UUID[] layers = new java.util.UUID[HOOKS];
+    private final String[] names = {"", "", ""};
+    private final int[] marks = new int[HOOKS];
+    @javax.annotation.Nullable
+    private java.util.UUID firstBy;
+    private String firstName = "";
 
     public CookingSpitBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.COOKING_SPIT.get(), pos, state);
@@ -102,6 +109,13 @@ public class CookingSpitBlockEntity extends BlockEntity {
             hooks.set(slot, stack.copyWithCount(count));
             progress[slot] = 0;
             needs[slot] = needed(hooks.get(slot));
+            layers[slot] = player.getUUID();
+            names[slot] = player.getName().getString();
+            marks[slot] = ToolPileBlockEntity.FOR_EVERYONE;
+            if (firstBy == null) {
+                firstBy = player.getUUID();
+                firstName = player.getName().getString();
+            }
         } else {
             count = Math.min(count, PER_HOOK - on.getCount());
             on.grow(count);
@@ -120,22 +134,178 @@ public class CookingSpitBlockEntity extends BlockEntity {
         return true;
     }
 
+    /** Whether a hookful of this would go on somewhere. */
+    public boolean hasRoomFor(ItemStack stack) {
+        if (!hangable(stack)) {
+            return false;
+        }
+        for (int i = 0; i < HOOKS; i++) {
+            if (room(i, stack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** One of the band hangs food up: as much as a hook takes. Returns how many went on. */
+    public int hangFor(java.util.UUID by, String name, ItemStack stack) {
+        if (!hangable(stack) || level == null) {
+            return 0;
+        }
+        for (int slot = 0; slot < HOOKS; slot++) {
+            if (!room(slot, stack)) {
+                continue;
+            }
+            ItemStack on = hooks.get(slot);
+            int count;
+            if (on.isEmpty()) {
+                count = Math.min(PER_HOOK, stack.getCount());
+                hooks.set(slot, stack.split(count));
+                progress[slot] = 0;
+                needs[slot] = needed(hooks.get(slot));
+                layers[slot] = by;
+                names[slot] = name;
+                marks[slot] = ToolPileBlockEntity.FOR_EVERYONE;
+                if (firstBy == null) {
+                    firstBy = by;
+                    firstName = name;
+                }
+            } else {
+                count = Math.min(PER_HOOK - on.getCount(), stack.getCount());
+                on.grow(count);
+                stack.shrink(count);
+            }
+            level.playSound(null, worldPosition, SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 0.6F, 1.3F);
+            changed();
+            return count;
+        }
+        return 0;
+    }
+
+    /** Back on its hook: what was left of a hookful when one piece was taken off it. */
+    public void putBack(int slot, ItemStack stack, java.util.UUID by, String name) {
+        if (stack.isEmpty() || level == null) {
+            return;
+        }
+        if (slot < 0 || slot >= HOOKS || !hooks.get(slot).isEmpty()) {
+            net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX() + 0.5D, worldPosition.getY(),
+                    worldPosition.getZ() + 0.5D, stack);
+            return;
+        }
+        hooks.set(slot, stack);
+        progress[slot] = 0;
+        needs[slot] = needed(stack);
+        layers[slot] = by;
+        names[slot] = name;
+        marks[slot] = ToolPileBlockEntity.FOR_EVERYONE;
+        changed();
+    }
+
     private boolean room(int slot, ItemStack stack) {
         ItemStack on = hooks.get(slot);
         return on.isEmpty() || ItemStack.isSameItemSameComponents(on, stack) && on.getCount() < PER_HOOK;
     }
 
+    // ------------------------------------------------------------ holding
+
+    @Override
+    public int slots() {
+        return HOOKS;
+    }
+
+    @Override
+    public ItemStack at(int slot) {
+        return slot >= 0 && slot < HOOKS ? hooks.get(slot) : ItemStack.EMPTY;
+    }
+
+    @javax.annotation.Nullable
+    @Override
+    public java.util.UUID layerOf(int slot) {
+        return slot >= 0 && slot < HOOKS ? layers[slot] : null;
+    }
+
+    @Override
+    public String layerNameOf(int slot) {
+        return slot >= 0 && slot < HOOKS ? names[slot] : "";
+    }
+
+    @Override
+    public int markOf(int slot) {
+        return slot >= 0 && slot < HOOKS ? marks[slot] : ToolPileBlockEntity.FOR_EVERYONE;
+    }
+
+    @Override
+    public void setMark(int slot, int mark) {
+        if (slot >= 0 && slot < HOOKS) {
+            marks[slot] = Math.floorMod(mark, 3);
+            changed();
+        }
+    }
+
+    @Override
+    public ItemStack takeSlot(int slot, ToolPileBlockEntity.Access access) {
+        if (!mayTake(slot, access)) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack down = hooks.get(slot);
+        clearHook(slot);
+        changed();
+        return down;
+    }
+
+    private void clearHook(int slot) {
+        hooks.set(slot, ItemStack.EMPTY);
+        progress[slot] = 0;
+        needs[slot] = 0;
+        layers[slot] = null;
+        names[slot] = "";
+        marks[slot] = ToolPileBlockEntity.FOR_EVERYONE;
+    }
+
+    @javax.annotation.Nullable
+    @Override
+    public java.util.UUID firstBy() {
+        return firstBy;
+    }
+
+    @Override
+    public String firstName() {
+        return firstName;
+    }
+
+    @Override
+    public String holdingName() {
+        return "A cooking rack";
+    }
+
+    @Override
+    public String extra(int slot) {
+        ItemStack stack = at(slot);
+        if (stack.isEmpty() || needs[slot] <= 0) {
+            return "";
+        }
+        if (Cooking.isCooked(stack)) {
+            return fire() ? "Cooked - it will char" : "Cooked";
+        }
+        return fire() ? Math.round(100.0F * progress[slot] / needs[slot]) + "% cooked" : "Raw - no fire under it";
+    }
+
     /** Empty-handed: take down the hook nearest where you reached - or whichever has something on it. */
     public void takeDown(ServerPlayer player, Vec3 hit) {
+        ToolPileBlockEntity.Access access = dev.hominin.evolution.band.ToolPiles.access(player);
         int slot = hookAt(hit);
-        if (hooks.get(slot).isEmpty()) {
+        if (!mayTake(slot, access)) {
             slot = -1;
             for (int i = HOOKS - 1; i >= 0; i--) {
-                if (!hooks.get(i).isEmpty()) {
+                if (mayTake(i, access)) {
                     slot = i;
                     break;
                 }
             }
+        }
+        if (slot < 0 && hooks.stream().anyMatch(s -> !s.isEmpty())) {
+            player.displayClientMessage(Component.literal("What hangs here is not for you."), true);
+            return;
         }
         if (slot < 0) {
             player.displayClientMessage(Component.literal(fire()
@@ -146,9 +316,7 @@ public class CookingSpitBlockEntity extends BlockEntity {
         ItemStack down = hooks.get(slot);
         boolean raw = !Cooking.isCooked(down) && needs[slot] > 0;
         int left = raw ? Math.max(1, (needs[slot] - progress[slot]) / 20) : 0;
-        hooks.set(slot, ItemStack.EMPTY);
-        progress[slot] = 0;
-        needs[slot] = 0;
+        clearHook(slot);
         if (!player.getInventory().add(down)) {
             player.drop(down, false);
         }
@@ -237,6 +405,21 @@ public class CookingSpitBlockEntity extends BlockEntity {
         ContainerHelper.saveAllItems(tag, hooks, true, registries);
         tag.putIntArray("Progress", progress);
         tag.putIntArray("Needs", needs);
+        tag.putIntArray("Marks", marks);
+        net.minecraft.nbt.ListTag who = new net.minecraft.nbt.ListTag();
+        for (int i = 0; i < HOOKS; i++) {
+            CompoundTag one = new CompoundTag();
+            if (layers[i] != null) {
+                one.putUUID("By", layers[i]);
+            }
+            one.putString("Name", names[i]);
+            who.add(one);
+        }
+        tag.put("Who", who);
+        if (firstBy != null) {
+            tag.putUUID("FirstBy", firstBy);
+        }
+        tag.putString("FirstName", firstName);
     }
 
     @Override
@@ -248,10 +431,18 @@ public class CookingSpitBlockEntity extends BlockEntity {
         ContainerHelper.loadAllItems(tag, hooks, registries);
         int[] savedProgress = tag.getIntArray("Progress");
         int[] savedNeeds = tag.getIntArray("Needs");
+        int[] savedMarks = tag.getIntArray("Marks");
+        net.minecraft.nbt.ListTag who = tag.getList("Who", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int i = 0; i < HOOKS; i++) {
             progress[i] = i < savedProgress.length ? savedProgress[i] : 0;
             needs[i] = i < savedNeeds.length ? savedNeeds[i] : 0;
+            marks[i] = i < savedMarks.length ? savedMarks[i] : 0;
+            CompoundTag one = i < who.size() ? who.getCompound(i) : new CompoundTag();
+            layers[i] = one.hasUUID("By") ? one.getUUID("By") : null;
+            names[i] = one.getString("Name");
         }
+        firstBy = tag.hasUUID("FirstBy") ? tag.getUUID("FirstBy") : null;
+        firstName = tag.getString("FirstName");
     }
 
     @Override

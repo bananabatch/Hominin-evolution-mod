@@ -27,6 +27,10 @@
     {
       "type": "patchouli:text",
       "text": "A $(l)giant carcass$() is what a megafauna kill leaves: a ribcage you could stand inside. Crack it open with a $(l)hammerstone$() for a great deal of meat, ribs and bone. A clan strips one over four sittings if nobody is standing over it, and you can see the meat going."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The hunters of the plain are rivals. Two of different kinds that meet may go for each other - and over a kill they very likely will: the clan mobs the cat off its carcass, the giant baboon runs the giant hyena off. A clan never turns on itself."
     }
   ]
 }

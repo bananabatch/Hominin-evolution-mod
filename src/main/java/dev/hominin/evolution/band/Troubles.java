@@ -118,8 +118,9 @@ public final class Troubles {
         member.setTemper(false);
         member.addBond(4);
         Cohesion.add(player, 3);
-        player.sendSystemMessage(Component.literal(member.getName().getString() + " sits by the fire with everyone "
-                + "again, and leans against you. They are back.").withStyle(ChatFormatting.GREEN));
+        player.sendSystemMessage(Component.literal(member.getName().getString() + " sits by "
+                + Speech.camp(member.getStage()) + " with everyone again, and leans against you. They are back.")
+                .withStyle(ChatFormatting.GREEN));
     }
 
     /** A stone given to someone troubled: it gives their hands something to do, and their hands learn. */
@@ -181,7 +182,8 @@ public final class Troubles {
                     case "child" -> new String[] {who + " should be here. They were so small.",
                             "I keep hearing " + who + ".", "I couldn't keep " + who + " safe."};
                     case "parent" -> new String[] {who + " always knew where the water was.",
-                            "Who's going to show me now? " + who + " is gone.", "I still look for " + who + " at the fire."};
+                            "Who's going to show me now? " + who + " is gone.",
+                            "I still look for " + who + " at " + Speech.camp(member.getStage()) + "."};
                     default -> new String[] {who + " and I used to sit right there.", "It's quiet without " + who + ".",
                             "Nobody laughed like " + who + " did."};
                 };

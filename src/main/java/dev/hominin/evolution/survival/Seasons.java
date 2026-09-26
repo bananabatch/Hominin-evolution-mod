@@ -221,7 +221,7 @@ public final class Seasons {
         } else if (veryProsperous(player.level())) {
             news += " And this one is a very prosperous season: good days on most days, and not a dry one among them.";
         }
-        player.sendSystemMessage(Component.literal(news).withStyle(season.colour()));
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.SEASON, Component.literal(news).withStyle(season.colour()));
         if (season == Season.DRY) {
             dev.hominin.evolution.guide.Tips.drySeason(player);
         }
@@ -245,8 +245,8 @@ public final class Seasons {
         }
         dayTold.put(player.getUUID(), day);
         if (Drought.isActive(player.level())) {
-            player.sendSystemMessage(Component.literal("A dry day. The ground gives less and runs out sooner, and hungry "
-                    + "bands get desperate.").withStyle(ChatFormatting.GOLD));
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.SEASON, Component.literal("A dry day. The ground gives less and runs out "
+                    + "sooner, and hungry bands get desperate.").withStyle(ChatFormatting.GOLD));
             if (isProsperous(player.level())) {
                 dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/bad_luck");
             }
@@ -254,9 +254,9 @@ public final class Seasons {
             if (isDry(player.level())) {
                 dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/miracle");
             }
-            player.sendSystemMessage(Component.literal("A prosperous day. Everything is out and growing: foraging comes "
-                    + "easy, the ground gives twice what it usually would and is back by morning, and fewer hunters are "
-                    + "about.").withStyle(ChatFormatting.GREEN));
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.SEASON, Component.literal("A prosperous day. Everything is out and growing: "
+                    + "foraging comes easy, the ground gives twice what it usually would and is back by morning, and fewer "
+                    + "hunters are about.").withStyle(ChatFormatting.GREEN));
         }
     }
 

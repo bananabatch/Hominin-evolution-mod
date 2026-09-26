@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:octopus"
+  },
+  "result": {
+    "id": "hominin_evolution:cooked_octopus"
+  },
+  "experience": 0.1,
+  "cookingtime": 300
+}

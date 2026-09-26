@@ -2,8 +2,11 @@
   "replace": false,
   "values": [
     "hominin_evolution:chert_deposit",
+    "hominin_evolution:fine_chert_deposit",
+    "hominin_evolution:obsidian_deposit",
     "hominin_evolution:quartzite_deposit",
     "hominin_evolution:limestone_deposit",
-    "hominin_evolution:termite_mound"
+    "hominin_evolution:termite_mound",
+    "hominin_evolution:salt_block"
   ]
 }

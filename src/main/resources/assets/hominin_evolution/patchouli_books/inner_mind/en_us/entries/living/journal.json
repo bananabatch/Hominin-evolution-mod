@@ -14,6 +14,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "Event log: what cannot wait - your water and hunger, a need in the band and how long is left, who is expecting, a band demanding something or on its way, the season - and the last of the urgent news, each with its day. Urgent news also crosses the top of your screen, and chat marks it: [Need], [Warning], [Danger], [Season], [Band]."
+    },
+    {
+      "type": "patchouli:text",
       "text": "$(l)Teach$() under $(k:hominin_evolution.social): choose a skill and do it in front of the band, and those watching learn it. Children learn what their minder knows as they grow."
     }
   ]

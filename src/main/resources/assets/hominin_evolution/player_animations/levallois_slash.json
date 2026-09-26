@@ -1,0 +1,119 @@
+{
+  "version": 3,
+  "name": "levallois_slash",
+  "description": "Levallois flake or blade: the same turn to the right and roll of the wrist as the knife, quicker and smaller, then a sideways slash right to left",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 12,
+    "stopTick": 12,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -88,
+          "yaw": -4,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 2,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -93,
+          "yaw": 38,
+          "roll": 28
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": -7,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeInQuart",
+        "rightArm": {
+          "pitch": -94,
+          "yaw": 42,
+          "roll": 32
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": -8,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 5,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -89,
+          "yaw": -32,
+          "roll": -8
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 9,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 7,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -87,
+          "yaw": -38,
+          "roll": -10
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 10,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 12,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -88,
+          "yaw": -4,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

@@ -44,6 +44,7 @@
     "hominin_evolution:nest",
     "hominin_evolution:carcass",
     "hominin_evolution:chert_rock",
+    "hominin_evolution:fine_chert_rock",
     "hominin_evolution:basalt_rock",
     "hominin_evolution:granite_rock",
     "hominin_evolution:limestone_rock",
@@ -55,6 +56,10 @@
     "hominin_evolution:building_branch",
     "hominin_evolution:tool_pile",
     "hominin_evolution:cooking_rack",
-    "hominin_evolution:cooking_spit"
+    "hominin_evolution:tool_rack",
+    "hominin_evolution:tool_rack_bar",
+    "hominin_evolution:cooking_spit",
+    "hominin_evolution:placed_torch",
+    "hominin_evolution:wall_placed_torch"
   ]
 }

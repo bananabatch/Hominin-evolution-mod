@@ -19,6 +19,8 @@ import net.neoforged.neoforge.common.NeoForge;
 @Mod(value = HomininEvolutionMod.MODID, dist = Dist.CLIENT)
 public class HomininEvolutionClient {
     public HomininEvolutionClient(IEventBus modEventBus, ModContainer modContainer) {
+        // Each bleeding tier draws its own icon.
+        modEventBus.addListener(BleedingIcons::register);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onRightClickEmpty);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onLeftClickBlock);
@@ -51,16 +53,40 @@ public class HomininEvolutionClient {
             for (var item : java.util.List.of(dev.hominin.evolution.ModItems.FLAKE, dev.hominin.evolution.ModItems.CHOPPER,
                     dev.hominin.evolution.ModItems.HAMMERSTONE, dev.hominin.evolution.ModItems.LOMEKWIAN_TOOL,
                     dev.hominin.evolution.ModItems.OLDOWAN_MULTITOOL, dev.hominin.evolution.ModItems.GRINDING_ROCK,
-                    dev.hominin.evolution.ModItems.HAND_AXE, dev.hominin.evolution.ModItems.CLEAVER)) {
+                    dev.hominin.evolution.ModItems.HAND_AXE, dev.hominin.evolution.ModItems.CLEAVER,
+                    dev.hominin.evolution.ModItems.LEVALLOIS_FLAKE, dev.hominin.evolution.ModItems.LEVALLOIS_BLADE,
+                    dev.hominin.evolution.ModItems.KNIFE, dev.hominin.evolution.ModItems.LEVALLOIS_HAND_AXE,
+                    dev.hominin.evolution.ModItems.STONE_TIPPED_SPEAR)) {
                 net.minecraft.client.renderer.item.ItemProperties.register(item.get(), material,
                         (stack, level, entity, seed) -> {
                             Integer stone = stack.get(dev.hominin.evolution.ModDataComponents.MATERIAL.get());
                             return stone == null ? 0.0F : (stone + 1) / 10.0F;
                         });
             }
+            // A spear drawn back to throw is held point forward, over the shoulder.
+            net.minecraft.resources.ResourceLocation throwing = net.minecraft.resources.ResourceLocation
+                    .fromNamespaceAndPath(dev.hominin.evolution.HomininEvolutionMod.MODID, "throwing");
+            for (var item : java.util.List.of(dev.hominin.evolution.ModItems.SHARPENED_SPEAR,
+                    dev.hominin.evolution.ModItems.FIRE_HARDENED_SPEAR, dev.hominin.evolution.ModItems.SCHONINGEN_SPEAR,
+                    dev.hominin.evolution.ModItems.STONE_TIPPED_SPEAR)) {
+                net.minecraft.client.renderer.item.ItemProperties.register(item.get(), throwing,
+                        (stack, level, entity, seed) -> entity != null && entity.isUsingItem()
+                                && entity.getUseItem() == stack ? 1.0F : 0.0F);
+            }
         }));
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) ->
                 dev.hominin.evolution.item.StoneMaterial.describe(event.getItemStack(), event.getToolTip()));
+        // The question a work station shows for something not thought of yet.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) -> {
+            if (event.getItemStack().is(dev.hominin.evolution.ModItems.UNWORKED_IDEA.get())) {
+                event.getToolTip().add(net.minecraft.network.chat.Component.literal(
+                        "Something could be made of this - but it has not come to you yet.")
+                        .withStyle(net.minecraft.ChatFormatting.GRAY));
+                event.getToolTip().add(net.minecraft.network.chat.Component.literal(
+                        "Hold K with the blade or the shaft in hand to think it through.")
+                        .withStyle(net.minecraft.ChatFormatting.YELLOW));
+            }
+        });
         modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) -> {
             event.registerLayerDefinition(dev.hominin.evolution.client.model.WildAnimalRenderer.layer("baboon"),
                     dev.hominin.evolution.client.model.WildAnimalLayers::baboon);
@@ -98,8 +124,10 @@ public class HomininEvolutionClient {
         {
             event.registerEntityRenderer(ModEntities.THROWN_OBJECT.get(), ThrownItemRenderer::new);
             event.registerEntityRenderer(ModEntities.THROWN_TORCH.get(), ThrownItemRenderer::new);
+            event.registerEntityRenderer(ModEntities.THROWN_SPEAR.get(), ThrownSpearRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.FIRE_PIT.get(), FirePitRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.TOOL_PILE.get(), ToolPileRenderer::new);
+            event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.TOOL_RACK.get(), ToolRackRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.COOKING_SPIT.get(),
                     CookingSpitRenderer::new);
             event.registerEntityRenderer(ModEntities.BAND_MEMBER.get(), BandMemberRenderer::new);
@@ -148,6 +176,9 @@ public class HomininEvolutionClient {
         modEventBus.addListener(ChecklistOverlay::register);
         modEventBus.addListener(ThirstOverlay::register);
         modEventBus.addListener(WaypointHud::register);
+        modEventBus.addListener(AlertHud::register);
+        modEventBus.addListener(TrackHud::register);
+        modEventBus.addListener(ThreatHud::register);
         modEventBus.addListener(ArmsRaceFlash::register);
         modEventBus.addListener(SkullPoseFlash::register);
         modEventBus.addListener(EvolutionCutscene::register);

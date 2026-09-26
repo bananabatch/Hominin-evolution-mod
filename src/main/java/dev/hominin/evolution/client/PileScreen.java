@@ -62,8 +62,9 @@ public class PileScreen extends Screen {
     protected void init() {
         int count = pile.stacks().size();
         for (int row = 0; row < count; row++) {
-            int slot = count - 1 - row;
-            int code = pile.codes().get(slot);
+            int code = pile.codes().get(count - 1 - row);
+            // The server says which slot each row is: racks have gaps.
+            int slot = code >> PileMenu.SLOT_SHIFT;
             int y = rowY(row);
             if ((code & PileMenu.YOURS) != 0) {
                 int mark = code & 3;
@@ -84,8 +85,10 @@ public class PileScreen extends Screen {
         int footer = rowY(count) + 8;
         addRenderableWidget(Button.builder(Component.literal("Take all you may"), b -> send(PileMenu.TAKE_ALL, -1))
                 .bounds(width / 2 - 170, footer, 110, 20).build());
+        boolean rack = pile.header().size() > 3 && pile.header().get(3).equals("rack");
         Button relocate = Button.builder(Component.literal("Relocate"), b -> send(PileMenu.RELOCATE, -1))
                 .bounds(width / 2 - 55, footer, 110, 20).build();
+        relocate.visible = !rack;
         relocate.active = pile.header().size() > 2 && pile.header().get(2).equals("1");
         relocate.setTooltip(Tooltip.create(Component.literal(relocate.active
                 ? "Gather the whole pile up as one thing, to set down somewhere else. Set it down soon if any of it is "

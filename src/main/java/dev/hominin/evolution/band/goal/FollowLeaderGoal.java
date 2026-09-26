@@ -35,6 +35,9 @@ public class FollowLeaderGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (member.isSleeping()) {
+            return false;
+        }
         if (member.getLeavePos() != null) {
             // Leaving for the night: head off, and the rest of the band follows the alpha.
             if (member.getNavigation().isDone()) {

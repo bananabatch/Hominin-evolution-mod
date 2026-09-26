@@ -40,7 +40,9 @@ public final class Drinking {
         }
         lastDrink.put(player.getUUID(), now);
         // Sick from bad meat, you drink past thirst: it is going straight through you.
-        if (Thirst.get(player) >= Thirst.MAX && !FoodIllness.has(player)) {
+        // Bleeding out, or washing out an abscess, you drink far past thirst.
+        if (Thirst.get(player) >= Thirst.MAX && !FoodIllness.has(player)
+                && !dev.hominin.evolution.combat.Bleeding.isBleedingOut(player) && !Diseases.drinksPastFull(player)) {
             player.displayClientMessage(Component.literal("You have drunk your fill."), true);
             return;
         }

@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/homo_heidelbergensis",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:schoningen_spear"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.super_weapon.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.super_weapon.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

@@ -48,6 +48,8 @@ public final class MeatSplitting {
         // Named after its source, so a stack of chunks still says what it was.
         chunks.set(DataComponents.ITEM_NAME,
                 Component.translatable("item.hominin_evolution.meat_chunk.of", meat.getHoverName()));
+        // Cut up, meat that had turned is still meat that had turned.
+        Spoilage.carry(meat, chunks);
 
         meat.shrink(1);
         ToolUse.wear(player, InteractionHand.OFF_HAND);

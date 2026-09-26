@@ -35,8 +35,11 @@ import net.minecraft.world.level.saveddata.SavedData;
  */
 public final class Bands extends SavedData {
     private static final String NAME = "hominin_evolution_bands";
-    public static final int ERECTUS_RADIUS = 80;
-    public static final int EARLY_RADIUS = 48;
+    /** A band's ground: 210 blocks across from erectus on, 128 before. */
+    public static final int ERECTUS_RADIUS = 105;
+    public static final int EARLY_RADIUS = 64;
+    /** In desperate times a hungry band patrols this far past the edge of its ground. */
+    public static final int PATROL_OUT = 45;
 
     public static final class Record {
         public final UUID id;
@@ -50,12 +53,14 @@ public final class Bands extends SavedData {
         public final Set<UUID> known = new HashSet<>();
         /** Uses of this band's ground by players it has not met yet: counted against them when it does. */
         public final Map<UUID, Integer> trespass = new HashMap<>();
+        /** What a player has taken off this band's ground since they met, that the band wants paying for. */
+        public final Map<UUID, Integer> owed = new HashMap<>();
         /** What they have heard about a player they have not met - from someone who left that player's band. */
         public final Map<UUID, Integer> rumours = new HashMap<>();
         /** The day a nomadic troop last moved on. */
         public long movedDay;
         /**
-         * How much the country round their camp knows to leave them alone, 0-50 - as a player's presence is.
+         * How much the country round their camp knows to leave them alone, 0-20 - as a player's presence is.
          * A strong band has fewer predators about it and is not worth trying; a weak one is.
          */
         public int presence;
@@ -71,6 +76,88 @@ public final class Bands extends SavedData {
         public final Map<UUID, Long> accessUntil = new HashMap<>();
         /** Other bands this one stands with: raid one and the others remember, and may come with them. */
         public final Set<UUID> allies = new HashSet<>();
+        /** Players whose Pile this band stole from: their bands hold it against them. */
+        public final Set<UUID> pileThieves = new HashSet<>();
+        /** Ways taken up from a band they stood with. */
+        public final Set<String> adopted = new HashSet<>();
+        /** Players this band has let use its ground (they asked, and paid), until when. */
+        public final Map<UUID, Long> openTo = new HashMap<>();
+        /** Their camp's fire, kept burning (erectus on). */
+        @Nullable
+        public BlockPos fire;
+        /** Whether their camp has been laid out: the fire, a station, perhaps a hut. */
+        public boolean furnished;
+        /** The haven this band holds, if it holds one. */
+        @Nullable
+        public String haven;
+        /** Where a haven band's presence stays - low (anybody could take it off them) or high; -1 for any other band. */
+        public int havenPresence = -1;
+
+        /**
+         * This band's ways of life: from erectus on, a few morals of its own (fixed by who they are) and any they have
+         * taken up from a band they stood with. Earlier kinds hold no rules.
+         */
+        /** What this band knows how to do - worth learning from them. Rolled the first time anyone asks. */
+        public final java.util.Set<String> skills = new java.util.LinkedHashSet<>();
+        public boolean skillsRolled;
+        /** How it meets what comes for it (see {@link Postures}); -1 until first needed. And who knows it. */
+        public int posture = -1;
+        public final Set<UUID> postureKnown = new HashSet<>();
+        /** What hunts has been learning their ground, day by day. High enough, and a weak band packs up and goes. */
+        public int threatBuild;
+
+        public int posture() {
+            if (posture < 0) {
+                posture = java.util.concurrent.ThreadLocalRandom.current().nextInt(Postures.Posture.values().length);
+            }
+            return posture;
+        }
+
+        /** Their own kind's skills, and one or two more of their own. */
+        public java.util.List<dev.hominin.evolution.mind.Skills.Skill> skills() {
+            if (!skillsRolled) {
+                skillsRolled = true;
+                for (dev.hominin.evolution.mind.Skills.Skill skill : Species.nativeSkills(species)) {
+                    skills.add(skill.name());
+                }
+                java.util.List<dev.hominin.evolution.mind.Skills.Skill> extra = new java.util.ArrayList<>();
+                for (dev.hominin.evolution.mind.Skills.Skill skill : dev.hominin.evolution.mind.Skills.Skill.values()) {
+                    if (skill.learnableAs(species) && skill.bandsKnow(species) && !skills.contains(skill.name())) {
+                        extra.add(skill);
+                    }
+                }
+                java.util.Collections.shuffle(extra, new java.util.Random(id.getLeastSignificantBits()));
+                for (int i = 0; i < Math.min(extra.size(), 1 + (int) Math.floorMod(id.getMostSignificantBits(), 2L)); i++) {
+                    skills.add(extra.get(i).name());
+                }
+            }
+            java.util.List<dev.hominin.evolution.mind.Skills.Skill> list = new java.util.ArrayList<>();
+            for (String name : skills) {
+                try {
+                    list.add(dev.hominin.evolution.mind.Skills.Skill.valueOf(name));
+                } catch (IllegalArgumentException ignored) {
+                    // A skill that is no more.
+                }
+            }
+            return list;
+        }
+
+        public java.util.List<Morals.Moral> ways() {
+            java.util.List<Morals.Moral> ways = new java.util.ArrayList<>();
+            if (!erectusOn(species)) {
+                return ways;
+            }
+            net.minecraft.util.RandomSource random = randomFor(id);
+            for (Morals.Moral moral : Morals.Moral.values()) {
+                if (random.nextFloat() < 0.35F || adopted.contains(moral.name())) {
+                    ways.add(moral);
+                }
+            }
+            if (ways.contains(Morals.Moral.TIGHT_TIMES) && ways.contains(Morals.Moral.ALWAYS_SHARE)) {
+                ways.remove(random.nextBoolean() ? Morals.Moral.TIGHT_TIMES : Morals.Moral.ALWAYS_SHARE);
+            }
+            return ways;
+        }
 
         Record(UUID id, String name, ResourceLocation species, BlockPos home, int size) {
             this.id = id;
@@ -98,14 +185,36 @@ public final class Bands extends SavedData {
             return dx * dx + dz * dz <= (double) radius() * radius();
         }
 
+        /** Their ground - and in desperate times, if they are hungry, the ring they patrol outside it. */
+        public boolean patrols(BlockPos pos, boolean desperateTimes) {
+            if (holds(pos)) {
+                return true;
+            }
+            if (!desperateTimes || desperation < 3 || nomadic()) {
+                return false;
+            }
+            double reach = radius() + PATROL_OUT;
+            double dx = pos.getX() - home.getX();
+            double dz = pos.getZ() - home.getZ();
+            return dx * dx + dz * dz <= reach * reach;
+        }
+
         public boolean knownTo(UUID player) {
             return known.contains(player);
         }
 
+        /**
+         * Their ground's building threat, 1 to 10: how much of what hunts has learned it. A band with little presence,
+         * or a hungry one, draws more.
+         */
+        public int threat() {
+            return Math.max(1, Math.min(10, 4 + (Presence.STRONG - presence) / 3 + (desperation - 2) + threatBuild / 3));
+        }
+
         /** What they would think of trying you - and what you might think of trying them. */
         public String strength() {
-            return presence >= 35 ? "strong - predators keep well clear of them"
-                    : presence >= 20 ? "holding their own" : "weak - easy pickings for anything";
+            return presence >= Presence.STRONG ? "strong - predators keep well clear of them"
+                    : presence > Presence.WEAK ? "holding their own" : "weak - easy pickings for anything";
         }
 
         public String temper() {
@@ -114,7 +223,10 @@ public final class Bands extends SavedData {
 
         /** Where this band's presence and cohesion settle when nothing much happens to it. */
         private int presenceMean() {
-            return 15 + randomFor(id).nextInt(21) + Math.min(6, size / 2);
+            if (havenPresence >= 0) {
+                return havenPresence;
+            }
+            return 6 + randomFor(id).nextInt(9) + Math.min(3, size / 4);
         }
 
         private int cohesionTrait() {
@@ -126,9 +238,9 @@ public final class Bands extends SavedData {
         /** A day passes for them: presence drifts round its mean, cohesion after it with a temper of its own. */
         void drift(RandomSource random, boolean hard) {
             int mean = presenceMean();
-            presence += random.nextInt(5) - 2 + Integer.signum(mean - presence) - (hard ? 1 : 0);
-            presence = Math.max(0, Math.min(50, presence));
-            int target = presence * 3 / 5 + cohesionTrait() - (hard ? 4 : 0);
+            presence += random.nextInt(3) - 1 + Integer.signum(mean - presence) - (hard && random.nextBoolean() ? 1 : 0);
+            presence = Math.max(0, Math.min(Presence.MAX, presence));
+            int target = presence * 3 / 2 + cohesionTrait() - (hard ? 4 : 0);
             cohesion += (target - cohesion) / 3 + random.nextInt(7) - 3;
             cohesion = Math.max(0, Math.min(50, cohesion));
         }
@@ -150,7 +262,7 @@ public final class Bands extends SavedData {
                 // Everybody around them is starving too.
                 d = Math.max(d + 1, 2);
             }
-            if (presence >= 35 && random.nextBoolean()) {
+            if (presence >= Presence.STRONG && random.nextBoolean()) {
                 d--;
             }
             desperation = Math.max(1, Math.min(5, d));
@@ -259,8 +371,8 @@ public final class Bands extends SavedData {
                 home.immutable(), size);
         record.movedDay = level.getDayTime() / 24000L;
         record.driftDay = record.movedDay;
-        record.presence = record.presenceMean() + level.random.nextInt(9) - 4;
-        record.cohesion = Math.max(5, Math.min(45, record.presence * 3 / 5 + record.cohesionTrait()));
+        record.presence = Math.max(0, record.presenceMean() + level.random.nextInt(5) - 2);
+        record.cohesion = Math.max(5, Math.min(45, record.presence * 3 / 2 + record.cohesionTrait()));
         data.bands.put(id, record);
         // A new band may already stand with the nearest one.
         Record neighbour = data.nearestHolder(record, 300.0D);
@@ -317,6 +429,11 @@ public final class Bands extends SavedData {
                 continue;
             }
             record.driftDay = day;
+            // Every day on the same ground, what hunts learns it a little better - unless the band is strong.
+            if (!record.nomadic()) {
+                record.threatBuild = net.minecraft.util.Mth.clamp(record.threatBuild + 1 + (record.desperation >= 3 ? 1 : 0)
+                        - (record.presence >= Presence.STRONG ? 3 : 0), 0, 20);
+            }
             record.drift(level.random, hard);
             record.strain(level, level.random);
             drifted.add(record);
@@ -340,6 +457,8 @@ public final class Bands extends SavedData {
             }
             record.allies.removeIf(id -> !data.bands.containsKey(id));
         }
+        // Some bands give up their ground for better.
+        Moves.daily(level);
         // Desperate times: most bands out there desperate at once.
         List<Record> holders = data.bands.values().stream().filter(r -> !r.nomadic()).toList();
         long desperate = holders.stream().filter(r -> r.desperation >= 4).count();
@@ -366,7 +485,7 @@ public final class Bands extends SavedData {
     /** The band whose ground this is, if it is strong enough there to keep predators off. */
     public static float predatorsKeptOff(ServerLevel level, BlockPos pos) {
         Record record = groundAt(level, pos);
-        return record == null || record.presence < 28 ? 0.0F : Math.min(0.6F, (record.presence - 25) / 40.0F);
+        return record == null || record.presence < 11 ? 0.0F : Math.min(0.6F, (record.presence - 10) / 16.0F);
     }
 
     /**
@@ -428,6 +547,19 @@ public final class Bands extends SavedData {
                     b.getInt("Size"));
             record.movedDay = b.getLong("MovedDay");
             record.desperation = Math.max(1, b.getInt("Desperation"));
+            record.haven = b.contains("Haven") ? b.getString("Haven") : null;
+            record.fire = b.contains("Fire") ? BlockPos.of(b.getLong("Fire")) : null;
+            record.furnished = b.getBoolean("Furnished");
+            record.posture = b.contains("Posture") ? b.getInt("Posture") : -1;
+            record.threatBuild = b.getInt("ThreatBuild");
+            record.skillsRolled = b.getBoolean("SkillsRolled");
+            for (Tag s : b.getList("Skills", Tag.TAG_STRING)) {
+                record.skills.add(s.getAsString());
+            }
+            for (Tag k : b.getList("PostureKnown", Tag.TAG_INT_ARRAY)) {
+                record.postureKnown.add(net.minecraft.nbt.NbtUtils.loadUUID(k));
+            }
+            record.havenPresence = b.contains("HavenPresence") ? b.getInt("HavenPresence") : -1;
             for (Tag s : b.getList("Stance", Tag.TAG_COMPOUND)) {
                 CompoundTag st = (CompoundTag) s;
                 record.stance.put(st.getUUID("Player"), st.getInt("Value"));
@@ -440,13 +572,15 @@ public final class Bands extends SavedData {
                 record.accessUntil.put(st.getUUID("Player"), st.getLong("Until"));
             }
             if (b.contains("Presence")) {
-                record.presence = b.getInt("Presence");
+                // Saves from when presence ran to 50 come down to 20.
+                record.presence = b.getBoolean("PresenceScale20") ? b.getInt("Presence")
+                        : Math.round(b.getInt("Presence") * 0.4F);
                 record.cohesion = b.getInt("Cohesion");
                 record.driftDay = b.getLong("DriftDay");
             } else {
                 // From before bands had their own: where they would have settled.
                 record.presence = record.presenceMean();
-                record.cohesion = record.presence * 3 / 5 + record.cohesionTrait();
+                record.cohesion = record.presence * 3 / 2 + record.cohesionTrait();
                 record.driftDay = record.movedDay;
             }
             for (Tag s : b.getList("Standing", Tag.TAG_COMPOUND)) {
@@ -461,8 +595,22 @@ public final class Bands extends SavedData {
                 CompoundTag st = (CompoundTag) s;
                 record.trespass.put(st.getUUID("Player"), st.getInt("Value"));
             }
+            for (Tag s : b.getList("Owed", Tag.TAG_COMPOUND)) {
+                CompoundTag st = (CompoundTag) s;
+                record.owed.put(st.getUUID("Player"), st.getInt("Value"));
+            }
             for (Tag s : b.getList("Known", Tag.TAG_COMPOUND)) {
                 record.known.add(((CompoundTag) s).getUUID("Player"));
+            }
+            for (Tag s : b.getList("OpenTo", Tag.TAG_COMPOUND)) {
+                CompoundTag o = (CompoundTag) s;
+                record.openTo.put(o.getUUID("Player"), o.getLong("Until"));
+            }
+            for (Tag s : b.getList("PileThieves", Tag.TAG_COMPOUND)) {
+                record.pileThieves.add(((CompoundTag) s).getUUID("Player"));
+            }
+            for (Tag s : b.getList("Adopted", Tag.TAG_STRING)) {
+                record.adopted.add(s.getAsString());
             }
             data.bands.put(record.id, record);
         }
@@ -481,9 +629,31 @@ public final class Bands extends SavedData {
             b.putInt("Size", record.size);
             b.putLong("MovedDay", record.movedDay);
             b.putInt("Presence", record.presence);
+            b.putBoolean("PresenceScale20", true);
             b.putInt("Cohesion", record.cohesion);
             b.putLong("DriftDay", record.driftDay);
             b.putInt("Desperation", record.desperation);
+            if (record.fire != null) {
+                b.putLong("Fire", record.fire.asLong());
+            }
+            b.putBoolean("Furnished", record.furnished);
+            b.putInt("Posture", record.posture);
+            b.putInt("ThreatBuild", record.threatBuild);
+            b.putBoolean("SkillsRolled", record.skillsRolled);
+            net.minecraft.nbt.ListTag skillList = new net.minecraft.nbt.ListTag();
+            for (String s : record.skills) {
+                skillList.add(net.minecraft.nbt.StringTag.valueOf(s));
+            }
+            b.put("Skills", skillList);
+            net.minecraft.nbt.ListTag knownList = new net.minecraft.nbt.ListTag();
+            for (UUID k : record.postureKnown) {
+                knownList.add(net.minecraft.nbt.NbtUtils.createUUID(k));
+            }
+            b.put("PostureKnown", knownList);
+            if (record.haven != null) {
+                b.putString("Haven", record.haven);
+                b.putInt("HavenPresence", record.havenPresence);
+            }
             b.put("Stance", pairs(record.stance));
             ListTag access = new ListTag();
             for (var entry : record.accessUntil.entrySet()) {
@@ -500,8 +670,29 @@ public final class Bands extends SavedData {
                 allies.add(a);
             }
             b.put("Allies", allies);
+            ListTag thieves = new ListTag();
+            for (UUID player : record.pileThieves) {
+                CompoundTag t = new CompoundTag();
+                t.putUUID("Player", player);
+                thieves.add(t);
+            }
+            b.put("PileThieves", thieves);
+            ListTag open = new ListTag();
+            for (var entry : record.openTo.entrySet()) {
+                CompoundTag o = new CompoundTag();
+                o.putUUID("Player", entry.getKey());
+                o.putLong("Until", entry.getValue());
+                open.add(o);
+            }
+            b.put("OpenTo", open);
+            ListTag adopted = new ListTag();
+            for (String way : record.adopted) {
+                adopted.add(net.minecraft.nbt.StringTag.valueOf(way));
+            }
+            b.put("Adopted", adopted);
             b.put("Standing", pairs(record.standing));
             b.put("Trespass", pairs(record.trespass));
+            b.put("Owed", pairs(record.owed));
             b.put("Rumours", pairs(record.rumours));
             ListTag known = new ListTag();
             for (UUID player : record.known) {

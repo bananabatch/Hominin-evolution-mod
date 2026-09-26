@@ -205,8 +205,7 @@ public class Crocuta extends PathfinderMob {
                 }
             }
             if (intruder instanceof Player player) {
-                player.displayClientMessage(Component.literal("You did not back off. The clan comes for you!")
-                        .withStyle(ChatFormatting.RED), true);
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, "You did not back off. The clan comes for you!", ChatFormatting.RED);
             }
         } else if (distance > RELAX_RANGE) {
             warnTicks = 0;
@@ -245,9 +244,8 @@ public class Crocuta extends PathfinderMob {
         Player told = intruder instanceof Player player ? player
                 : intruder instanceof BandMember member ? member.companionPlayer() : null;
         if (told != null) {
-            told.displayClientMessage(Component.literal("The hyenas bristle and bark at you over the kill. Back off, "
-                    + "or they will come for you. (A threat display might break them - or might not.)")
-                    .withStyle(ChatFormatting.GOLD), false);
+            dev.hominin.evolution.guide.Alerts.urgent(told, dev.hominin.evolution.guide.Alerts.Kind.WARNING, "The hyenas bristle and bark at you over the kill. Back off, or they "
+                    + "will come for you. (A threat display might break them - or might not.)", ChatFormatting.GOLD);
             if (told instanceof net.minecraft.server.level.ServerPlayer server) {
                 dev.hominin.evolution.guide.Tips.offer(server, dev.hominin.evolution.guide.Tips.Tip.HYENA_CLAN);
             }
@@ -339,8 +337,7 @@ public class Crocuta extends PathfinderMob {
                     hyena.setTarget(player);
                 }
                 clan.get(0).playSound(ModSounds.CROCUTA_BARK.get(), 1.6F, 0.8F);
-                player.displayClientMessage(Component.literal("They call your bluff - the clan comes at you!")
-                        .withStyle(ChatFormatting.RED), true);
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, "They call your bluff - the clan comes at you!", ChatFormatting.RED);
             }
         }
         return scattered;

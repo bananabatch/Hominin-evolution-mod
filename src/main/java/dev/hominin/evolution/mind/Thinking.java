@@ -100,6 +100,16 @@ public final class Thinking {
             return;
         }
 
+        // A shaft, or a blade, in the hands of a people far enough along: a great weapon, seen.
+        int weapon = dev.hominin.evolution.item.SuperWeapons.think(player);
+        if (weapon > 0) {
+            if (weapon == 2) {
+                spend(player, now);
+                EvolutionManager.incrementCriterion(player, "think_times", 1);
+            }
+            return;
+        }
+
         ItemStack main = player.getItemInHand(InteractionHand.MAIN_HAND);
         ItemStack off = player.getItemInHand(InteractionHand.OFF_HAND);
         HandRecipe recipe = ItemInteractions.match(main, off);

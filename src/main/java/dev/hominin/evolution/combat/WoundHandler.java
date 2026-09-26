@@ -36,12 +36,30 @@ public final class WoundHandler {
     /** Driven in rather than drawn across: this is what internal bleeding is. */
     private static final Edge SPEAR = new Edge(0.75F, Bleeding.Tier.INTERNAL, 0.08F);
     private static final Edge HARDENED_SPEAR = new Edge(0.85F, Bleeding.Tier.INTERNAL, 0.18F);
+    /** Tier 3 more than half the time, and tier 2 three times in four of the rest. */
+    private static final Edge SCHONINGEN = new Edge(0.89F, Bleeding.Tier.INTERNAL, 0.62F);
+    private static final Edge STONE_TIPPED = new Edge(0.9F, Bleeding.Tier.INTERNAL, 0.35F);
+    /** A prepared edge: finer than any flake struck at random. */
+    private static final Edge LEVALLOIS = new Edge(0.7F, Bleeding.Tier.EXTERNAL, 0.0F);
+    private static final Edge KNIFE = new Edge(0.75F, Bleeding.Tier.EXTERNAL, 0.05F);
 
     /** Priority 0 puts flight above the animal's own wandering and grazing. */
     private static final int FLEE_PRIORITY = 0;
 
     @Nullable
     private static Edge edgeOf(ItemStack weapon) {
+        if (weapon.is(ModItems.SCHONINGEN_SPEAR.get())) {
+            return SCHONINGEN;
+        }
+        if (weapon.is(ModItems.STONE_TIPPED_SPEAR.get())) {
+            return STONE_TIPPED;
+        }
+        if (weapon.is(ModItems.KNIFE.get())) {
+            return KNIFE;
+        }
+        if (weapon.is(ModItems.LEVALLOIS_FLAKE.get()) || weapon.is(ModItems.LEVALLOIS_BLADE.get())) {
+            return LEVALLOIS;
+        }
         if (weapon.is(ModItems.FIRE_HARDENED_SPEAR.get())) {
             return HARDENED_SPEAR;
         }

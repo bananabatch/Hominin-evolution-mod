@@ -68,7 +68,12 @@ public class ItemPickScreen extends Screen {
     /** Things that can be fetched, for one member (entity id) or the band (-1). */
     public static void openFetch(int entityId, Component who) {
         List<Choice> choices = new java.util.ArrayList<>();
+        var self = Minecraft.getInstance().player;
+        boolean erectus = self != null && dev.hominin.evolution.band.Bands.erectusOn(ClientSync.stageOf(self.getUUID()));
         for (FetchKind kind : FetchKind.values()) {
+            if (kind.erectusOnly() && !erectus) {
+                continue;
+            }
             choices.add(new Choice(kind.icon(), Component.literal(kind.label()),
                     () -> PacketDistributor.sendToServer(new FetchRequestPayload(entityId, kind.ordinal()))));
         }
@@ -76,17 +81,46 @@ public class ItemPickScreen extends Screen {
                 .append(" to get you..."), choices, Component.empty()));
     }
 
+    /** The first row shown: a long list scrolls instead of running off the screen. */
+    private int firstRow;
+
+    private int columns() {
+        return choices.size() > 6 ? 2 : 1;
+    }
+
+    private int rows() {
+        return (choices.size() + columns() - 1) / columns();
+    }
+
+    /** Rows that fit between the title and the bottom of the screen. */
+    private int visibleRows() {
+        return Math.max(3, (height - 30 - 40) / ROW);
+    }
+
+    private int top() {
+        return Math.max(30, height / 2 - Math.min(rows(), visibleRows()) * ROW / 2);
+    }
+
+    private boolean shown(int i) {
+        int row = i / columns();
+        return row >= firstRow && row < firstRow + visibleRows();
+    }
+
     @Override
     protected void init() {
-        int columns = choices.size() > 6 ? 2 : 1;
-        int rows = (choices.size() + columns - 1) / columns;
+        int columns = columns();
         int totalWidth = columns * BUTTON_WIDTH + (columns - 1) * 8;
         int left = (width - totalWidth) / 2;
-        int top = Math.max(30, height / 2 - rows * ROW / 2);
+        int top = top();
+        int rows = Math.min(rows(), visibleRows());
+        firstRow = Math.max(0, Math.min(firstRow, rows() - visibleRows()));
         for (int i = 0; i < choices.size(); i++) {
+            if (!shown(i)) {
+                continue;
+            }
             Choice choice = choices.get(i);
             int x = left + (i % columns) * (BUTTON_WIDTH + 8);
-            int y = top + (i / columns) * ROW;
+            int y = top + (i / columns - firstRow) * ROW;
             addRenderableWidget(Button.builder(choice.label(), b -> {
                 choice.onPick().run();
                 onClose();
@@ -110,20 +144,40 @@ public class ItemPickScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        int columns = choices.size() > 6 ? 2 : 1;
-        int rows = (choices.size() + columns - 1) / columns;
+        int columns = columns();
         int totalWidth = columns * BUTTON_WIDTH + (columns - 1) * 8;
         int left = (width - totalWidth) / 2;
-        int top = Math.max(30, height / 2 - rows * ROW / 2);
+        int top = top();
         graphics.drawCenteredString(font, title, width / 2, top - 18, 0xE9D8A6);
         if (choices.isEmpty()) {
             graphics.drawCenteredString(font, emptyMessage, width / 2, height / 2, 0xBBBBBB);
         }
         for (int i = 0; i < choices.size(); i++) {
+            if (!shown(i)) {
+                continue;
+            }
             int x = left + (i % columns) * (BUTTON_WIDTH + 8);
-            int y = top + (i / columns) * ROW;
+            int y = top + (i / columns - firstRow) * ROW;
             graphics.renderItem(choices.get(i).icon(), x, y + 2);
         }
+        if (rows() > visibleRows()) {
+            if (firstRow > 0) {
+                graphics.drawCenteredString(font, "^ more (scroll)", width / 2, top - 8, 0x8C8578);
+            }
+            if (firstRow + visibleRows() < rows()) {
+                graphics.drawCenteredString(font, "v more (scroll)", width / 2, top + visibleRows() * ROW + 2, 0x8C8578);
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (rows() > visibleRows()) {
+            firstRow = Math.max(0, Math.min(rows() - visibleRows(), firstRow - (int) Math.signum(scrollY)));
+            rebuildWidgets();
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override

@@ -25,8 +25,14 @@ public class ChoiceScreen extends Screen {
         Minecraft.getInstance().setScreen(new ChoiceScreen(choices));
     }
 
+    /** The question, wrapped: some of them are a whole story. */
+    private java.util.List<net.minecraft.util.FormattedCharSequence> lines() {
+        return font.split(title, Math.max(WIDTH, Math.min(width - 40, 340)));
+    }
+
     private int top() {
-        return Math.max(40, height / 2 - choices.labels().size() * ROW / 2);
+        int above = 16 + lines().size() * 10;
+        return Math.max(above + 8, height / 2 - choices.labels().size() * ROW / 2);
     }
 
     @Override
@@ -47,7 +53,12 @@ public class ChoiceScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, top() - 18, 0xE9D8A6);
+        var lines = lines();
+        int y = top() - 10 - lines.size() * 10;
+        for (var line : lines) {
+            graphics.drawCenteredString(font, line, width / 2, y, 0xE9D8A6);
+            y += 10;
+        }
         if (choices.labels().isEmpty()) {
             graphics.drawCenteredString(font, "Nothing to choose from yet.", width / 2, top(), 0xBBBBBB);
         }

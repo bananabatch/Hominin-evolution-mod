@@ -48,8 +48,9 @@ public class KnappingStationBlockEntity extends BlockEntity {
         return items;
     }
 
+    /** What goes in the hammer's place - the obsidian chunk goes there too, and bursts at the first blow. */
     public static boolean isHammer(ItemStack stack) {
-        return stack.is(ModTags.Items.HAMMERSTONES);
+        return stack.is(ModTags.Items.HAMMERSTONES) || stack.is(ModItems.OBSIDIAN_CHUNK.get());
     }
 
     public static boolean isBopper(ItemStack stack) {
@@ -57,8 +58,10 @@ public class KnappingStationBlockEntity extends BlockEntity {
     }
 
     public static boolean isStone(ItemStack stack) {
+        // A hammerstone among the stone is a core: the Levallois hand axe is taken down from one.
         return stack.is(ModTags.Items.KNAPPABLE_STONE) || stack.is(ModTags.Items.ROCKS)
-                || stack.is(ModItems.CHERT_HAMMERSTONE.get());
+                || stack.is(ModItems.CHERT_HAMMERSTONE.get()) || stack.is(ModItems.HAMMERSTONE.get())
+                || stack.is(ModItems.OBSIDIAN_CHUNK.get());
     }
 
     public static boolean accepts(int slot, ItemStack stack) {

@@ -39,6 +39,9 @@ public final class DeadWood extends SavedData {
 
     /** Every log cracked, by position, and how many times (old saves counted per trunk foot). */
     private final Map<Long, Integer> cracked = new HashMap<>();
+    /** Dead branches snapped off, by where: three to a tree. */
+    private final Map<Long, Integer> snapped = new HashMap<>();
+    private static final int BRANCHES_PER_TREE = 3;
 
     private static DeadWood of(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(DeadWood::new, DeadWood::load), NAME);
@@ -50,6 +53,11 @@ public final class DeadWood extends SavedData {
         int[] counts = tag.getIntArray("Counts");
         for (int i = 0; i < Math.min(trees.length, counts.length); i++) {
             data.cracked.put(trees[i], counts[i]);
+        }
+        long[] branchTrees = tag.getLongArray("BranchTrees");
+        int[] branchCounts = tag.getIntArray("BranchCounts");
+        for (int i = 0; i < Math.min(branchTrees.length, branchCounts.length); i++) {
+            data.snapped.put(branchTrees[i], branchCounts[i]);
         }
         return data;
     }
@@ -65,6 +73,15 @@ public final class DeadWood extends SavedData {
         }
         tag.putLongArray("Trees", trees);
         tag.putIntArray("Counts", counts);
+        long[] branchTrees = new long[snapped.size()];
+        int[] branchCounts = new int[snapped.size()];
+        i = 0;
+        for (var entry : snapped.entrySet()) {
+            branchTrees[i] = entry.getKey();
+            branchCounts[i++] = entry.getValue();
+        }
+        tag.putLongArray("BranchTrees", branchTrees);
+        tag.putIntArray("BranchCounts", branchCounts);
         return tag;
     }
 
@@ -79,6 +96,52 @@ public final class DeadWood extends SavedData {
             }
         }
         return count;
+    }
+
+    private static int near(Map<Long, Integer> counts, BlockPos pos) {
+        int count = 0;
+        for (var entry : counts.entrySet()) {
+            BlockPos at = BlockPos.of(entry.getKey());
+            if (Math.abs(at.getX() - pos.getX()) <= TREE_REACH && Math.abs(at.getZ() - pos.getZ()) <= TREE_REACH
+                    && Math.abs(at.getY() - pos.getY()) <= TREE_REACH * 2) {
+                count += entry.getValue();
+            }
+        }
+        return count;
+    }
+
+    /**
+     * A chopper to a dead tree: a dead branch comes away - three to a tree, and it does not use up the logs worth
+     * cracking. Returns true if that is what the click did.
+     */
+    public static boolean snapBranch(ServerPlayer player, BlockPos pos) {
+        ServerLevel level = player.serverLevel();
+        BlockState state = level.getBlockState(pos);
+        if (!state.is(ModBlocks.DECAYING_LOG.get())) {
+            return false;
+        }
+        DeadWood data = of(level);
+        int done = near(data.snapped, pos);
+        if (done >= BRANCHES_PER_TREE) {
+            player.displayClientMessage(Component.literal("There are no more dead branches worth taking off this tree."),
+                    true);
+            return true;
+        }
+        data.snapped.merge(pos.asLong(), 1, Integer::sum);
+        data.setDirty();
+        level.playSound(null, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0F, 1.1F);
+        level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D,
+                pos.getZ() + 0.5D, 10, 0.3D, 0.3D, 0.3D, 0.05D);
+        player.swing(InteractionHand.MAIN_HAND, true);
+        ItemStack branch = new ItemStack(ModItems.DEAD_BRANCH.get());
+        if (!player.getInventory().add(branch)) {
+            player.drop(branch, false);
+        }
+        int left = BRANCHES_PER_TREE - done - 1;
+        player.displayClientMessage(Component.literal("A dead branch comes away, light and bored through with holes. "
+                + (left > 0 ? left + " more on this tree." : "That was the last of them on this tree."))
+                .withStyle(ChatFormatting.GOLD), true);
+        return true;
     }
 
     /** Pulls a decaying log open. Returns true if that is what the click did. */

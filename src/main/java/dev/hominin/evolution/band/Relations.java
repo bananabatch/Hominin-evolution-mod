@@ -67,6 +67,8 @@ public final class Relations {
 
     /** Members this close see what you do. */
     private static final double SIGHT = 64.0D;
+    /** How near a band's camp you can come before they have seen you. */
+    private static final double NOTICED_AT = 150.0D;
     /** Close enough to deal with face to face. */
     private static final double NEAR = 32.0D;
     private static final long DEMAND_TICKS = 30 * 20L;
@@ -127,8 +129,11 @@ public final class Relations {
         band.trespass.remove(player.getUUID());
         int rumours = band.rumours.getOrDefault(player.getUUID(), 0);
         band.rumours.remove(player.getUUID());
-        int start = Math.max(UNFRIENDLY - 2, NEUTRAL - trespass * 3 - rumours * 3);
+        int start = Math.max(UNFRIENDLY - 2, NEUTRAL - trespass * 3 - rumours * 3) + 2 * sharedWays(player, band);
         band.standing.put(player.getUUID(), start);
+        if (trespass > 0 && !band.nomadic()) {
+            band.owed.merge(player.getUUID(), trespass, Integer::sum);
+        }
         Bands.changed(player.serverLevel());
         dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.OTHER_BANDS);
         if (quiet) {
@@ -141,8 +146,8 @@ public final class Relations {
             line.append(Component.literal(" Someone who knew you got here first - they have heard things about you. "
                     + "(Standing " + start + ")").withStyle(ChatFormatting.RED));
         } else if (trespass > 0 && !band.nomadic()) {
-            line.append(Component.literal(" They had already watched you taking from their ground, and think less of you "
-                    + "for it. (Standing " + start + ")").withStyle(ChatFormatting.RED));
+            line.append(Component.literal(" They know someone has been taking from their ground - and now they know "
+                    + "who. They will want paying for it. (Standing " + start + ")").withStyle(ChatFormatting.RED));
         }
         line.append(Component.literal(" ").append(leadLink(band)));
         player.sendSystemMessage(line);
@@ -150,7 +155,7 @@ public final class Relations {
 
     public static String speciesName(ResourceLocation species) {
         return switch (species.getPath()) {
-            case "australopithecus" -> "Australopithecus";
+            case "australopithecus" -> "Australopithecus afarensis";
             case "australopithecus_anamensis" -> "Australopithecus anamensis";
             case "homo_habilis" -> "Homo habilis";
             case "homo_rudolfensis" -> "Homo rudolfensis";
@@ -172,6 +177,29 @@ public final class Relations {
     }
 
     /** Standing moves: said once, quietly, and louder when it crosses into a new tier. */
+    /** Ways of life this band and the player's both hold. */
+    public static int sharedWays(ServerPlayer player, Bands.Record band) {
+        int shared = 0;
+        for (Morals.Moral moral : band.ways()) {
+            if (Morals.holds(player, moral)) {
+                shared++;
+            }
+        }
+        return shared;
+    }
+
+    /** Ways one side holds and the other does not. */
+    public static int differentWays(ServerPlayer player, Bands.Record band) {
+        java.util.List<Morals.Moral> theirs = band.ways();
+        int different = 0;
+        for (Morals.Moral moral : Morals.Moral.values()) {
+            if (theirs.contains(moral) != Morals.holds(player, moral)) {
+                different++;
+            }
+        }
+        return different;
+    }
+
     public static void change(ServerPlayer player, Bands.Record band, int delta, String why) {
         if (delta == 0) {
             return;
@@ -180,6 +208,25 @@ public final class Relations {
             meet(player, band, "");
         }
         int before = standing(player, band);
+        // Their ways and yours: shared ones warm them to you; different ones they do not mind - until they are
+        // looking for a reason, when every difference is one. Desperation makes it worse.
+        int shared = sharedWays(player, band);
+        if (delta > 0 && shared > 0) {
+            delta = Math.round(delta * (1.0F + 0.2F * shared));
+            why += ", and they share your ways";
+        } else if (delta < 0 && before < FRIENDLY) {
+            int different = differentWays(player, band);
+            if (different > 0 && !band.ways().isEmpty()) {
+                delta = Math.round(delta * (1.0F + 0.15F * different) * (band.desperation >= 3 ? 1.5F : 1.0F));
+                why += " - and your ways are not theirs";
+            }
+        }
+        if (SacredPile.grudge(player, band) && delta > 0) {
+            // Your band has not forgiven them the Pile.
+            delta = Math.max(1, delta / 2);
+        }
+        // Your own people were watching, and have views of their own.
+        Opinions.judge(player, band, delta);
         int after = Mth.clamp(before + delta, 0, MAX);
         if (after == before) {
             return;
@@ -188,6 +235,10 @@ public final class Relations {
         Bands.changed(player.serverLevel());
         player.displayClientMessage(Component.literal(BandNames.capital(band.name) + ": standing " + (delta > 0 ? "+" : "")
                 + delta + " (" + why + ") - " + after + "/" + MAX).withStyle(colour(after)), true);
+        if (before < ALLIED && after >= ALLIED) {
+            SacredPile.event(player, BandNames.capital(band.name) + " standing with you");
+            Chatter.news(player, "news_ally", BandNames.capital(band.name));
+        }
         int[] lines = {HOSTILE, UNFRIENDLY, NEUTRAL - 1, FRIENDLY - 1, ALLIED - 1};
         for (int line : lines) {
             boolean up = before <= line && after > line;
@@ -204,9 +255,21 @@ public final class Relations {
 
     /** Friends are welcome on a band's ground; in hard times only good friends. */
     public static boolean welcomes(ServerPlayer player, Bands.Record band) {
+        if (band.openTo.getOrDefault(player.getUUID(), 0L) > player.level().getGameTime()) {
+            // They were asked, and paid: their ground is open to you for now.
+            return true;
+        }
+        if (dev.hominin.evolution.world.Havens.openForGood(player, band)) {
+            // You set an example here once. Whoever lives here now knows it.
+            return true;
+        }
         int standing = standing(player, band);
         if (standing >= ALLIED) {
             return true;
+        }
+        if (band.haven != null) {
+            // A haven is nobody's to walk on for free - only their allies'.
+            return false;
         }
         return standing >= FRIENDLY && (!Seasons.strained(player.level()) || standing >= 40);
     }
@@ -228,23 +291,21 @@ public final class Relations {
             return;
         }
         boolean seen = membersNear(level, band, player, SIGHT) > 0;
-        if (!seen && player.getRandom().nextFloat() > 0.25F) {
-            return;
-        }
         String key = player.getUUID() + "/use/" + band.id;
         long now = level.getGameTime();
         if (now < cooldowns.getOrDefault(key, 0L)) {
             return;
         }
-        cooldowns.put(key, now + 600L);
+        // Seen or not, it is noticed: what is taken is missed, and there are signs of who took it.
+        cooldowns.put(key, now + (seen ? 400L : 600L));
         if (!band.knownTo(player.getUUID())) {
             int trespass = band.trespass.merge(player.getUUID(), 1, Integer::sum);
             Bands.changed(level);
             if (seen) {
                 meet(player, band, "Somebody has been watching you take from their ground.");
-            } else if (trespass >= 3) {
-                player.displayClientMessage(Component.literal("There are signs of people here - somebody's ground.")
-                        .withStyle(ChatFormatting.GRAY), true);
+            } else if (trespass == 1 || trespass % 3 == 0) {
+                player.displayClientMessage(Component.literal("There are signs of people here - somebody's ground. "
+                        + "Whatever you take, they will miss.").withStyle(ChatFormatting.GRAY), true);
             }
             return;
         }
@@ -252,6 +313,12 @@ public final class Relations {
             return;
         }
         change(player, band, -1, "you took from their ground");
+        // They want paying for it - soon, if they saw; once they notice what is missing, if not.
+        int owed = band.owed.merge(player.getUUID(), seen ? 2 : 1, Integer::sum);
+        Bands.changed(level);
+        if (owed >= OWED_BEFORE_THEY_COME && !band.nomadic()) {
+            Claims.tribute(player, band);
+        }
         if (seen) {
             BandMember speaker = nearestOf(level, band, player, SIGHT);
             if (speaker != null && player.getRandom().nextInt(3) == 0) {
@@ -338,6 +405,41 @@ public final class Relations {
      * Any hurt to a band member. A player - or their band - striking another band's people costs a great
      * deal; and a raiding party that is fought often breaks and runs.
      */
+    /**
+     * "Teach me what you know": a friendly band near enough shows you one of their skills that you do not have - one a
+     * day from each band.
+     */
+    private static void learnFrom(ServerPlayer player, Bands.Record band) {
+        if (nearestMember(player.serverLevel(), band, player, 32.0D) == null) {
+            player.displayClientMessage(Component.literal("None of " + band.name + " are near enough to learn from."), true);
+            return;
+        }
+        if (standing(player, band) < FRIENDLY) {
+            player.displayClientMessage(Component.literal(BandNames.capital(band.name) + " do not know you well enough to "
+                    + "show you anything. (Friendly: 35.)"), true);
+            return;
+        }
+        var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        String key = "learned_from_" + band.id.toString().substring(0, 8);
+        int day = (int) (player.level().getDayTime() / 24000L);
+        if (counters.getOrDefault(key, -1) == day) {
+            player.displayClientMessage(Component.literal("They have shown you enough for one day."), true);
+            return;
+        }
+        var stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage();
+        for (dev.hominin.evolution.mind.Skills.Skill skill : band.skills()) {
+            if (!dev.hominin.evolution.mind.Skills.knows(player, skill) && skill.learnableAs(stage)
+                    && dev.hominin.evolution.mind.Skills.learn(player, skill)) {
+                counters.put(key, day);
+                player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " show you how they do it.")
+                        .withStyle(ChatFormatting.AQUA));
+                return;
+            }
+        }
+        player.displayClientMessage(Component.literal("They know nothing you do not - or nothing your kind could learn."),
+                true);
+    }
+
     public static void onHurt(LivingIncomingDamageEvent event) {
         if (!(event.getEntity() instanceof BandMember member) || !member.isWild()
                 || !(member.level() instanceof ServerLevel level)) {
@@ -353,10 +455,15 @@ public final class Relations {
         if (band == null) {
             return;
         }
+        // Fight them and you learn how they fight.
+        if (Postures.learn(player, band)) {
+            player.sendSystemMessage(Component.literal("Now you know how " + band.name + " fight: "
+                    + Postures.Posture.byId(band.posture()).label + ".").withStyle(ChatFormatting.GRAY));
+        }
         Demand demand = demands.get(player.getUUID());
         if (demand != null && demand.raid() && demand.band().equals(band.id)) {
             // Raiders who meet a band that holds together break sooner.
-            float breaks = 0.35F + (Cohesion.get(player) - 25) / 100.0F + (Presence.get(player) - 20) / 100.0F;
+            float breaks = 0.35F + (Cohesion.get(player) - 25) / 100.0F + (Presence.get(player) - 8) / 40.0F;
             if (member.getRandom().nextFloat() < Mth.clamp(breaks, 0.2F, 0.8F)) {
                 endRaid(player, level, band, true);
                 return;
@@ -381,7 +488,13 @@ public final class Relations {
     public static void alliesJoin(ServerPlayer player, LivingEntity target, boolean hunting) {
         ServerLevel level = player.serverLevel();
         for (Bands.Record band : Bands.all(level)) {
-            if (band.nomadic() || standing(player, band) < ALLIED || !band.holds(player.blockPosition())) {
+            boolean pledged = Parties.pledgedHunt(player, band);
+            if (band.nomadic() || standing(player, band) < ALLIED && !pledged
+                    || !band.holds(player.blockPosition()) && !pledged) {
+                continue;
+            }
+            // Weak (presence 0-5), allies hesitate: half the time they hang back. Strong, they never do.
+            if (!pledged && Presence.weak(player) && player.getRandom().nextBoolean()) {
                 continue;
             }
             for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
@@ -391,6 +504,7 @@ public final class Relations {
             String key = player.getUUID() + "/allies/" + band.id;
             if (level.getGameTime() >= cooldowns.getOrDefault(key, 0L)) {
                 cooldowns.put(key, level.getGameTime() + 1200L);
+                Opinions.helped(player, band);
                 player.displayClientMessage(Component.literal(BandNames.capital(band.name)
                         + (hunting ? " join the hunt." : " come running.")).withStyle(ChatFormatting.AQUA), true);
             }
@@ -470,7 +584,10 @@ public final class Relations {
             }
             ItemStack given = stack.split(Math.min(counts.get(i), stack.getCount()));
             count += given.getCount();
-            if (given.has(DataComponents.FOOD)) {
+            if (dev.hominin.evolution.food.Spoilage.isSpoiled(given)) {
+                // Rotten meat as a gift is an insult, not a gift.
+                worth -= given.getCount();
+            } else if (given.has(DataComponents.FOOD)) {
                 // Food is what a band needs most, and every mouthful of it counts.
                 var food = given.get(DataComponents.FOOD);
                 worth += given.getCount() * (food != null && food.nutrition() >= 4 ? 3 : 2);
@@ -487,7 +604,7 @@ public final class Relations {
         receiver.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         player.sendSystemMessage(Component.literal("You give " + band.name + " " + String.join(", ", names)
                 + ". " + receiver.getName().getString() + " takes it.").withStyle(ChatFormatting.GREEN));
-        worth = Psychopaths.talkUpGift(player, worth);
+        worth = Negotiation.talkUpGift(player, worth);
         earn(player, band, Math.max(1, worth / 3), "a gift");
         Demand demand = demands.get(player.getUUID());
         if (demand != null && demand.band().equals(band.id) && worth >= 4) {
@@ -498,10 +615,41 @@ public final class Relations {
     // ------------------------------------------------------------ demands: ransom, and raids
 
     /** A band wants something from the player, now: to be paid off their ground, or paid not to raid. */
-    private record Demand(UUID band, long until, boolean raid, boolean spoken) {
+    private record Demand(UUID band, long until, boolean raid, boolean spoken, boolean fighting) {
+    }
+
+    /** After any stand-off, how long before their patrols come at you over their ground again. */
+    private static final long PATROL_REST_TICKS = 3 * 60 * 20L;
+    /** A fight goes on until one side breaks, you go down - or this long, when both sides have had enough. */
+    private static final long FIGHT_TICKS = 60 * 20L;
+    /** What they come for when they notice what went missing off their ground. */
+    private static final int OWED_BEFORE_THEY_COME = 3;
+
+    /** They have said their piece, one way or another: leave the player be on their ground a while. */
+    private static void rested(ServerPlayer player, Bands.Record band) {
+        cooldowns.put(player.getUUID() + "/patrol/" + band.id, player.level().getGameTime() + PATROL_REST_TICKS);
     }
 
     private static final Map<UUID, Demand> demands = new HashMap<>();
+
+    /** What a band wants from the player right now, for the journal - or null. */
+    @Nullable
+    public static String describeDemand(ServerPlayer player) {
+        Demand demand = demands.get(player.getUUID());
+        if (demand == null) {
+            return null;
+        }
+        Bands.Record band = Bands.get(player.serverLevel(), demand.band());
+        String name = band == null ? "A band" : BandNames.capital(band.name);
+        if (demand.fighting()) {
+            return name + " are fighting you - hold until they break, or run.";
+        }
+        if (demand.raid()) {
+            return demand.spoken() ? name + " want paying, or they take it - answer them."
+                    : name + " are coming for you - and not to trade.";
+        }
+        return name + " want you off their ground - pay them, or leave it.";
+    }
 
     static boolean hasDemand(ServerPlayer player) {
         return demands.containsKey(player.getUUID());
@@ -509,16 +657,20 @@ public final class Relations {
 
     /** A band wants something now; on a raid, it is theirs to take if nobody pays or stops them. */
     static void demand(ServerPlayer player, Bands.Record band, boolean raid) {
-        demands.put(player.getUUID(), new Demand(band.id, player.level().getGameTime() + DEMAND_TICKS, raid, true));
+        demands.put(player.getUUID(), new Demand(band.id, player.level().getGameTime() + DEMAND_TICKS, raid, true, false));
     }
 
     /** Raiders set out now: they walk in, and say what they want when they reach you. */
     static void raidNow(ServerPlayer player, Bands.Record band) {
-        demands.put(player.getUUID(), new Demand(band.id, player.level().getGameTime() + DEMAND_TICKS * 4, true, false));
+        demands.put(player.getUUID(), new Demand(band.id, player.level().getGameTime() + DEMAND_TICKS * 4, true, false, false));
     }
 
     static void clearDemand(ServerPlayer player) {
-        demands.remove(player.getUUID());
+        Demand demand = demands.remove(player.getUUID());
+        Bands.Record band = demand == null ? null : Bands.get(player.serverLevel(), demand.band());
+        if (band != null) {
+            rested(player, band);
+        }
     }
 
     static void settleDemand(ServerPlayer player, Bands.Record band, String how) {
@@ -533,7 +685,7 @@ public final class Relations {
     /** You would not pay: they come at you, and your band stands with you. Break them and it is over. */
     static void fight(ServerPlayer player, Bands.Record band) {
         ServerLevel level = player.serverLevel();
-        demands.put(player.getUUID(), new Demand(band.id, level.getGameTime() + DEMAND_TICKS * 2, true, true));
+        demands.put(player.getUUID(), new Demand(band.id, level.getGameTime() + FIGHT_TICKS, true, true, true));
         List<BandMember> theirs = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
                 m -> m.isAlive() && band.id.equals(m.getBandId()) && !m.isBaby());
         for (BandMember member : theirs) {
@@ -565,7 +717,7 @@ public final class Relations {
             if (food >= 4) {
                 break;
             }
-            if (stack.has(DataComponents.FOOD)) {
+            if (stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
                 int take = Math.min(4 - food, stack.getCount());
                 stack.shrink(take);
                 food += take;
@@ -602,6 +754,7 @@ public final class Relations {
 
     private static void settle(ServerPlayer player, ServerLevel level, Bands.Record band, String how) {
         Demand demand = demands.remove(player.getUUID());
+        rested(player, band);
         player.sendSystemMessage(Component.literal(how).withStyle(ChatFormatting.GRAY));
         if (demand != null && demand.raid()) {
             sendHome(level, band, player);
@@ -619,6 +772,11 @@ public final class Relations {
 
     private static void endRaid(ServerPlayer player, ServerLevel level, Bands.Record band, boolean foughtOff) {
         demands.remove(player.getUUID());
+        rested(player, band);
+        if (foughtOff) {
+            // Beaten off: whatever they said you owed them, they have stopped asking.
+            band.owed.remove(player.getUUID());
+        }
         sendHome(level, band, player);
         if (foughtOff) {
             player.sendSystemMessage(Component.literal("The raiders break and run. They will not try that again soon.")
@@ -640,7 +798,7 @@ public final class Relations {
     /** Your odds of making them pay: their weakness against your strength. */
     private static float tributeOdds(ServerPlayer player, Bands.Record band) {
         int adults = (int) Band.ownNear(player, 24.0D).stream().filter(m -> !m.isBaby()).count();
-        float odds = 0.2F + (Presence.get(player) - band.presence) / 60.0F + (adults + 1 - band.size) * 0.05F
+        float odds = 0.2F + (Presence.get(player) - band.presence) / 24.0F + (adults + 1 - band.size) * 0.05F
                 + (25 - band.cohesion) / 50.0F;
         return Mth.clamp(odds, 0.05F, 0.9F);
     }
@@ -653,6 +811,7 @@ public final class Relations {
             say(player, "None of " + band.name + " are near enough to lean on.");
             return;
         }
+        revenge(player, band);
         String key = player.getUUID() + "/tribute/" + band.id + "/" + level.getDayTime() / 24000L;
         if (cooldowns.containsKey(key)) {
             say(player, "You already leaned on " + band.name + " today.");
@@ -666,7 +825,7 @@ public final class Relations {
             }
         }
         if (player.getRandom().nextFloat() < tributeOdds(player, band)) {
-            int wanted = 2 + Math.max(0, (30 - band.presence) / 8);
+            int wanted = 2 + Math.max(0, (12 - band.presence) / 3);
             int given = 0;
             List<String> names = new ArrayList<>();
             for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(NEAR),
@@ -693,12 +852,12 @@ public final class Relations {
             player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " pay you off: " + String.join(", ", names)
                     + ".").withStyle(ChatFormatting.GOLD));
             Presence.add(player, 2, band.name + " paid you tribute");
-            band.presence = Math.max(0, band.presence - 2);
+            band.presence = Math.max(0, band.presence - 1);
             band.cohesion = Math.max(0, band.cohesion - 2);
             change(player, band, -6, "you made them pay");
             return;
         }
-        say(player, speaker, band.presence >= 30 ? "Pay you? Look around you. Look at us." : "We have nothing for you. Go.");
+        say(player, speaker, band.presence >= 12 ? "Pay you? Look around you. Look at us." : "We have nothing for you. Go.");
         change(player, band, -4, "you tried to make them pay");
         if (band.cohesion >= 20 && player.getRandom().nextBoolean()) {
             for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(NEAR),
@@ -710,8 +869,45 @@ public final class Relations {
         }
     }
 
+    /** Going after a band that stole from the Pile: your band has waited for this. */
+    static void revenge(ServerPlayer player, Bands.Record band) {
+        if (SacredPile.grudge(player, band)) {
+            Cohesion.addLimited(player, "pile_revenge", 3, 24000L);
+            player.sendSystemMessage(Component.literal("Your band has not forgotten the Pile. They go at " + band.name
+                    + " with a will.").withStyle(ChatFormatting.GOLD));
+        }
+    }
+
+    /** Once a day: a band you stand with may take up one of your ways. */
+    public static void shareWays(ServerPlayer player) {
+        for (Bands.Record band : Bands.all(player.serverLevel())) {
+            if (band.nomadic() || !erectusOn(band.species) || standing(player, band) < ALLIED
+                    || player.getRandom().nextFloat() >= 0.25F) {
+                continue;
+            }
+            java.util.List<Morals.Moral> theirs = band.ways();
+            for (Morals.Moral moral : Morals.Moral.values()) {
+                if (Morals.holds(player, moral) && !theirs.contains(moral)) {
+                    band.adopted.add(moral.name());
+                    Bands.changed(player.serverLevel());
+                    player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " have taken up one of your "
+                            + "ways: \"" + moral.title() + ".\"").withStyle(ChatFormatting.AQUA));
+                    break;
+                }
+            }
+        }
+    }
+
     /** Your band falls on theirs. A weak band that does not hold together breaks fast, and drops what it carries. */
     private static void raidThem(ServerPlayer player, Bands.Record band) {
+        revenge(player, band);
+        for (Bands.Record friend : Parties.pledgedAgainst(player, band)) {
+            // They promised: they come, and it tells.
+            band.cohesion = Math.max(0, band.cohesion - 8);
+            band.presence = Math.max(0, band.presence - 2);
+            player.sendSystemMessage(Component.literal(BandNames.capital(friend.name) + " come with you against " + band.name
+                    + ", as they promised.").withStyle(ChatFormatting.AQUA));
+        }
         ServerLevel level = player.serverLevel();
         List<BandMember> theirs = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(NEAR),
                 m -> m.isAlive() && band.id.equals(m.getBandId()) && !m.isBaby());
@@ -730,7 +926,7 @@ public final class Relations {
         }
         player.sendSystemMessage(Component.literal("You fall on " + band.name + "! " + (band.cohesion < 20
                 ? "They are already arguing among themselves - they will not hold long."
-                : band.presence >= 35 ? "They are strong, and they stand." : "Break them and they drop what they carry.")
+                : band.presence >= Presence.STRONG ? "They are strong, and they stand." : "Break them and they drop what they carry.")
                 ).withStyle(ChatFormatting.RED));
         change(player, band, -15, "you raided them");
         for (UUID allyId : band.allies) {
@@ -744,7 +940,7 @@ public final class Relations {
 
     /** One of theirs hurt in your raid: they may break. */
     private static void raidBlow(ServerPlayer player, ServerLevel level, Bands.Record band, BandMember hurt, boolean killing) {
-        float breaks = 0.12F + (30 - band.cohesion) / 100.0F + (25 - band.presence) / 120.0F + (killing ? 0.3F : 0.0F);
+        float breaks = 0.12F + (30 - band.cohesion) / 100.0F + (10 - band.presence) / 48.0F + (killing ? 0.3F : 0.0F);
         if (hurt.getRandom().nextFloat() >= Mth.clamp(breaks, 0.05F, 0.7F)) {
             return;
         }
@@ -765,7 +961,7 @@ public final class Relations {
                 own.setTarget(null);
             }
         }
-        band.presence = Math.max(0, band.presence - 4);
+        band.presence = Math.max(0, band.presence - 2);
         band.cohesion = Math.max(0, band.cohesion - 4);
         band.desperation = Math.min(5, band.desperation + 1);
         Bands.changed(level);
@@ -825,10 +1021,34 @@ public final class Relations {
         for (Bands.Record band : bands) {
             if (!band.knownTo(player.getUUID()) && membersNear(level, band, player, SIGHT) > 0) {
                 meet(player, band, "You pick them out across the country.");
+            } else if (!band.knownTo(player.getUUID()) && !band.nomadic()
+                    && Bands.horizontal(band.home, player.blockPosition()) < NOTICED_AT * NOTICED_AT) {
+                // Close to a camp, you are seen long before you see them.
+                meet(player, band, "They have seen you - you are close to their camp.");
             }
         }
         tickDemand(player, level);
+        if (player.tickCount % 600 == 17) {
+            // What was taken off their ground while nobody was looking is missed in the end.
+            for (Bands.Record band : bands) {
+                if (band.knownTo(player.getUUID()) && !band.nomadic()
+                        && band.owed.getOrDefault(player.getUUID(), 0) >= OWED_BEFORE_THEY_COME - 1
+                        && player.getRandom().nextInt(3) == 0) {
+                    Claims.tribute(player, band);
+                    break;
+                }
+            }
+        }
         Bands.Record ground = Bands.groundAt(level, player.blockPosition());
+        if (ground == null && Bands.desperateTimes(level)) {
+            // Desperate times: hungry bands patrol outside their ground as well.
+            for (Bands.Record band : bands) {
+                if (band.patrols(player.blockPosition(), true)) {
+                    ground = band;
+                    break;
+                }
+            }
+        }
         if (ground != null && ground.knownTo(player.getUUID())) {
             onTheirGround(player, level, ground);
         }
@@ -849,28 +1069,41 @@ public final class Relations {
         int standing = standing(player, band);
         if (now >= cooldowns.getOrDefault(key, 0L)) {
             cooldowns.put(key, now + 12000L);
-            player.displayClientMessage(Component.literal(welcomes(player, band)
+            player.displayClientMessage(Component.literal(band.haven != null && !welcomes(player, band)
+                    ? "You are on the haven - " + band.name + "'s, and they want paying by anyone who walks on it."
+                    : welcomes(player, band)
                     ? "You are on " + band.name + "'s ground. They know you, and you are welcome."
                     : standing <= UNFRIENDLY ? "You are on " + band.name + "'s ground - and they do not want you here."
                     : "You are on " + band.name + "'s ground. Whatever you take here, they will notice.")
                     .withStyle(colour(standing)), true);
         }
         boolean hard = Bands.desperateTimes(level);
-        boolean patrolled = standing <= UNFRIENDLY || (hard && standing < FRIENDLY && band.desperation >= 3);
-        if (!patrolled || demands.containsKey(player.getUUID())) {
+        boolean haven = band.haven != null && !welcomes(player, band);
+        boolean patrolled = haven || standing <= UNFRIENDLY || (hard && standing < FRIENDLY && band.desperation >= 3);
+        if (!patrolled || demands.containsKey(player.getUUID())
+                || now < cooldowns.getOrDefault(player.getUUID() + "/patrol/" + band.id, 0L)) {
             return;
         }
-        BandMember spotter = nearestOf(level, band, player, hard ? 40.0D : 24.0D);
+        BandMember spotter = nearestOf(level, band, player, hard || haven ? 40.0D : 24.0D);
         if (spotter == null) {
             return;
         }
         // On sight: they come at you, and want you gone - or paid.
-        demands.put(player.getUUID(), new Demand(band.id, now + DEMAND_TICKS, false, true));
+        demands.put(player.getUUID(), new Demand(band.id, now + DEMAND_TICKS, false, true, false));
         spotter.ensureName();
         for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(32.0D),
                 m -> band.id.equals(m.getBandId()) && !m.isBaby())) {
             Band.memberDisplay(member, member.getRandom().nextInt(10));
             member.getNavigation().moveTo(player, 1.2D);
+        }
+        if (haven) {
+            Claims.open(player, band, Claims.Kind.HAVEN_TOLL, spotter, "This is the haven. Nobody walks on it for "
+                    + "nothing. Pay, and it is open to you - three days. Or go.",
+                    "Give in: " + dev.hominin.evolution.world.Havens.TOLL + " food (or half as much good stone) for three "
+                            + "days on the haven - less buys fewer days. Stay without paying and they come at you. They are "
+                            + "the best armed band there is.",
+                    List.of(new ItemStack(ModItems.MEAT_CHUNK.get(), dev.hominin.evolution.world.Havens.TOLL)), null);
+            return;
         }
         Claims.open(player, band, Claims.Kind.TRESPASS, spotter, "Off our ground. Now - or pay us to let you through.",
                 "Give in: 4 food (or 2 good stone). Fight them. Or flee - you drop some of what you carry, and they chase "
@@ -888,14 +1121,26 @@ public final class Relations {
             return;
         }
         long now = level.getGameTime();
+        if (demand.fighting()) {
+            tickFight(player, level, band, demand, now);
+            return;
+        }
         if (!demand.raid()) {
-            if (!band.holds(player.blockPosition())) {
+            if (!band.patrols(player.blockPosition(), Bands.desperateTimes(level))) {
                 demands.remove(player.getUUID());
                 player.displayClientMessage(Component.literal("You are off their ground. They let you go.")
                         .withStyle(ChatFormatting.GRAY), true);
                 return;
             }
             if (now < demand.until()) {
+                return;
+            }
+            if (band.haven != null) {
+                // A haven's people do not push you off it. They kill you on it.
+                demands.remove(player.getUUID());
+                player.sendSystemMessage(Component.literal("You would not pay, and you would not go. " + BandNames.capital(
+                        band.name) + " come at you.").withStyle(ChatFormatting.RED));
+                fight(player, band);
                 return;
             }
             // Still here, still unpaid: driven off.
@@ -933,7 +1178,7 @@ public final class Relations {
             raiders.forEach(m -> m.getNavigation().moveTo(player, 1.1D));
             if (closest.distanceToSqr(player) < 12.0D * 12.0D) {
                 closest.ensureName();
-                demands.put(player.getUUID(), new Demand(band.id, now + DEMAND_TICKS, true, true));
+                demands.put(player.getUUID(), new Demand(band.id, now + DEMAND_TICKS, true, true, false));
                 raiders.forEach(m -> Band.memberDisplay(m, m.getRandom().nextInt(10)));
                 Claims.open(player, band, Claims.Kind.FOOD_RAID, closest, band.desperation >= 4
                         ? "We are starving. You have food. Give it to us - or we take it."
@@ -959,18 +1204,89 @@ public final class Relations {
             if (taken >= 4) {
                 break;
             }
-            if (stack.has(DataComponents.FOOD)) {
+            if (stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
                 int take = Math.min(4 - taken, stack.getCount());
                 closest.addToInventory(stack.split(take));
                 taken += take;
             }
         }
         demands.remove(player.getUUID());
+        rested(player, band);
+        band.owed.remove(player.getUUID());
         player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " take " + (taken == 0 ? "what little there is"
                 : taken + " food") + " and go. The band watched you let them.").withStyle(ChatFormatting.RED));
         Cohesion.add(player, -2);
         sendHome(level, band, player);
         Claims.raidWon(player, band);
+    }
+
+    /**
+     * You chose to fight. They come at you - every one of them, and they keep coming - and your band stands with
+     * you. It ends when they break (see onHurt), when they have beaten you down and take what they came for, or when
+     * both sides have had enough. Saying no is never the same as paying.
+     */
+    private static void tickFight(ServerPlayer player, ServerLevel level, Bands.Record band, Demand demand, long now) {
+        List<BandMember> theirs = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
+                m -> m.isAlive() && band.id.equals(m.getBandId()) && !m.isBaby());
+        if (theirs.isEmpty()) {
+            demands.remove(player.getUUID());
+            rested(player, band);
+            band.owed.remove(player.getUUID());
+            player.sendSystemMessage(Component.literal("None of " + band.name + " are left standing near you. It is "
+                    + "over.").withStyle(ChatFormatting.GREEN));
+            return;
+        }
+        for (BandMember member : theirs) {
+            // Kept at it: a member's own nerve runs out after a while, and in a real fight it is not allowed to.
+            if (member.getTarget() != player || !member.isDefending()) {
+                member.fightFor(player);
+            }
+        }
+        List<BandMember> ours = new ArrayList<>(Band.ownNear(player, 24.0D));
+        ours.removeIf(BandMember::isBaby);
+        for (int i = 0; i < ours.size(); i++) {
+            BandMember own = ours.get(i);
+            if (own.getTarget() == null || !own.getTarget().isAlive() || !own.isDefending()) {
+                own.fightFor(theirs.get(i % theirs.size()));
+            }
+        }
+        if (player.getHealth() <= player.getMaxHealth() * 0.3F) {
+            // Beaten down. They take what they came for.
+            BandMember closest = theirs.stream().min(Comparator.comparingDouble(m -> m.distanceToSqr(player))).get();
+            int taken = 0;
+            for (ItemStack stack : player.getInventory().items) {
+                if (taken >= 4) {
+                    break;
+                }
+                if (stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
+                    int take = Math.min(4 - taken, stack.getCount());
+                    closest.addToInventory(stack.split(take));
+                    taken += take;
+                }
+            }
+            demands.remove(player.getUUID());
+            rested(player, band);
+            band.owed.remove(player.getUUID());
+            sendHome(level, band, player);
+            Cohesion.add(player, -2, "lost the fight with " + band.name);
+            player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " beat you down" + (taken > 0
+                    ? " and take " + taken + " food" : "") + ", and go.").withStyle(ChatFormatting.RED));
+            return;
+        }
+        if (now >= demand.until()) {
+            demands.remove(player.getUUID());
+            rested(player, band);
+            band.owed.remove(player.getUUID());
+            sendHome(level, band, player);
+            for (BandMember own : Band.ownNear(player, 32.0D)) {
+                if (own.getTarget() instanceof BandMember target && band.id.equals(target.getBandId())) {
+                    own.setTarget(null);
+                }
+            }
+            change(player, band, -2, "you fought them");
+            player.sendSystemMessage(Component.literal("Neither side breaks. " + BandNames.capital(band.name) + " pull back, "
+                    + "still glaring - and take nothing.").withStyle(ChatFormatting.GOLD));
+        }
     }
 
     /** A band calling across the country: which way, how far - and a link to follow it. */
@@ -1016,6 +1332,10 @@ public final class Relations {
         if (demands.containsKey(player.getUUID()) || Band.all(player).isEmpty()) {
             return;
         }
+        if (Bands.desperateTimes(level) && dev.hominin.evolution.world.Havens.madeAnExample(player)) {
+            // Hungry or not, nobody forgets the haven.
+            return;
+        }
         var counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
         int minute = (int) (level.getGameTime() / 1200L);
         if (minute < counters.getOrDefault("raid_next_minute", 0)) {
@@ -1024,18 +1344,23 @@ public final class Relations {
         boolean hard = Seasons.strained(level);
         boolean bad = level.isNight() || hard || Band.ownNear(player, 32.0D).size() <= 3;
         // How soft a target you look: no presence to speak of, a band that does not hold together.
-        float soft = 0.5F * Mth.clamp((22 - Presence.get(player)) / 22.0F, 0.0F, 1.0F)
+        float soft = 0.5F * Mth.clamp((9 - Presence.get(player)) / 9.0F, 0.0F, 1.0F)
                 + 0.5F * Mth.clamp((28 - Cohesion.get(player)) / 28.0F, 0.0F, 1.0F);
         for (Bands.Record band : bands) {
             if (band.nomadic() || Bands.horizontal(band.home, player.blockPosition()) > 220.0D * 220.0D) {
                 continue;
             }
             int standing = standing(player, band);
+            boolean weak = Presence.weak(player);
             float chance = standing <= HOSTILE ? (bad ? 0.08F : 0.02F) + 0.08F * soft
                     : standing <= UNFRIENDLY ? 0.04F * soft
-                    : hard && standing <= NEUTRAL ? 0.05F * soft : 0.0F;
+                    // Weak (presence 0-5): any band that is not your friend may try you, hard times or not.
+                    : (hard || weak) && standing <= NEUTRAL ? 0.05F * soft : 0.0F;
+            if (weak) {
+                chance *= 1.5F;
+            }
             // A hungry band coming apart takes chances; a strong one is sure of itself; a desperate one, more so.
-            chance *= (band.cohesion < 20 ? 1.5F : 1.0F) * (0.5F + band.presence / 50.0F) * (0.6F + band.desperation * 0.3F);
+            chance *= (band.cohesion < 20 ? 1.5F : 1.0F) * (0.5F + band.presence / 20.0F) * (0.6F + band.desperation * 0.3F);
             chance *= Claims.fearFactor(player) * (Bands.desperateTimes(level) ? 2.0F : 1.0F);
             if (Claims.hasAccess(player, band)) {
                 chance = 0.0F;
@@ -1045,6 +1370,12 @@ public final class Relations {
             }
             counters.put("raid_next_minute", minute + (int) (RAID_GAP / 1200L));
             Bands.Record ally = allyNear(player, level, bands);
+            // With no presence to speak of, even allies think twice about standing in front of you.
+            if (ally != null && Presence.weak(player) && player.getRandom().nextBoolean()) {
+                player.sendSystemMessage(Component.literal(BandNames.capital(ally.name) + " could have stood with you - "
+                        + "but your band is nothing on this ground, and they hang back.").withStyle(ChatFormatting.GRAY));
+                ally = null;
+            }
             if (ally != null) {
                 player.sendSystemMessage(Component.literal(BandNames.capital(band.name) + " were coming for your food - but "
                         + ally.name + " stand with you, and they turn back.").withStyle(ChatFormatting.AQUA));
@@ -1072,6 +1403,7 @@ public final class Relations {
     }
 
     private static void startRaid(ServerPlayer player, ServerLevel level, Bands.Record band) {
+        Opinions.raided(player, band);
         int close = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(80.0D),
                 m -> m.isAlive() && band.id.equals(m.getBandId())).size();
         if (close == 0) {
@@ -1086,12 +1418,12 @@ public final class Relations {
             WildBands.placeBand(level, at, band.species, 2 + player.getRandom().nextInt(2), band.id, player.getRandom());
             Claims.gangUp(player, level, band, at);
         }
-        demands.put(player.getUUID(), new Demand(band.id, level.getGameTime() + DEMAND_TICKS * 4, true, false));
+        demands.put(player.getUUID(), new Demand(band.id, level.getGameTime() + DEMAND_TICKS * 4, true, false, false));
         if (band.desperation >= 3) {
             Claims.warnDesperate(player, band);
         } else {
-            player.sendSystemMessage(Component.literal("People are coming - " + band.name + ", and not to trade. "
-                    + WildBands.bearingFrom(player, band.home) + ".").withStyle(ChatFormatting.RED));
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, Component.literal("People are coming - " + band.name + ", and not to "
+                    + "trade. " + WildBands.bearingFrom(player, band.home) + ".").withStyle(ChatFormatting.RED));
         }
     }
 
@@ -1154,6 +1486,10 @@ public final class Relations {
         if (band == null || !band.knownTo(player.getUUID())) {
             return;
         }
+        if (action >= OthersActionPayload.PARTY && action < OthersActionPayload.PARTY + Parties.INTENTS.length) {
+            Parties.open(player, band, action - OthersActionPayload.PARTY);
+            return;
+        }
         switch (action) {
             case OthersActionPayload.LEAD -> lead(player, band);
             case OthersActionPayload.RANSOM -> payRansom(player, band);
@@ -1161,6 +1497,19 @@ public final class Relations {
             case OthersActionPayload.DEMAND -> demandTribute(player, band);
             case OthersActionPayload.RAID -> raidThem(player, band);
             case OthersActionPayload.TELL_PLACES -> dev.hominin.evolution.world.Pois.tellBand(player, band);
+            case OthersActionPayload.ASK_PLACES -> dev.hominin.evolution.world.Pois.askBand(player, band);
+            case OthersActionPayload.JOIN_THEM -> Band.askToJoin(player, band);
+            case OthersActionPayload.LEARN -> learnFrom(player, band);
+            case OthersActionPayload.ASK_POSTURE -> {
+                if (nearestMember(player.serverLevel(), band, player, 32.0D) == null) {
+                    player.displayClientMessage(Component.literal("None of " + band.name + " are near enough to ask."), true);
+                } else if (standing(player, band) < UNFRIENDLY) {
+                    player.displayClientMessage(Component.literal(BandNames.capital(band.name) + " will not tell you that."),
+                            true);
+                } else {
+                    Postures.ask(player, band);
+                }
+            }
             case OthersActionPayload.TRADE, OthersActionPayload.TRAVEL -> {
                 BandMember member = nearestOf(level, band, player, NEAR);
                 if (member == null) {
@@ -1179,6 +1528,17 @@ public final class Relations {
     /** Sets the pointer on a band: its people if they are about, its camp if not. */
     public static void lead(ServerPlayer player, Bands.Record band) {
         dev.hominin.evolution.mind.MentalMap.lead(player, whereIs(player.serverLevel(), band), band.name, band.id.toString());
+    }
+
+    /** "4 hand axes, 12 meat chunks" - what lies on a band's piles, as far as can be seen (loaded ground only). */
+    public static String pilesOf(ServerLevel level, Bands.Record band) {
+        List<net.minecraft.world.item.ItemStack> all = new ArrayList<>();
+        for (BlockPos pos : ToolPiles.piles(level, band.id)) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof dev.hominin.evolution.block.ToolPileBlockEntity pile) {
+                all.addAll(pile.contents());
+            }
+        }
+        return all.isEmpty() ? "" : ToolPiles.describe(all);
     }
 
     public static BlockPos whereIs(ServerLevel level, Bands.Record band) {
@@ -1220,8 +1580,12 @@ public final class Relations {
                 lines.add((band.nomadic() ? "Last heard of " : "Their camp: ") + distance + " blocks "
                         + WildBands.bearingFrom(player, where));
             }
+            if (band.haven != null) {
+                lines.add("They hold a haven - the best armed band of their kind"
+                        + (band.presence <= Presence.WEAK ? ", but their hold on it is weak." : ", and they hold it hard."));
+            }
             if (!band.nomadic()) {
-                lines.add("Presence " + band.presence + "/50 - " + band.strength() + ". Cohesion " + band.cohesion
+                lines.add("Presence " + band.presence + "/" + Presence.MAX + " - " + band.strength() + ". Cohesion " + band.cohesion
                         + "/50 - " + band.temper() + ".");
                 lines.add("Desperation " + Claims.meter(band.desperation) + " " + band.desperation + "/5 - "
                         + Claims.desperationLabel(band.desperation) + ".");
@@ -1265,9 +1629,29 @@ public final class Relations {
                     lines.add("They stood with your old band, and remember what it showed them.");
                 }
             }
+            if (!band.nomadic()) {
+                List<String> theirSkills = new ArrayList<>();
+                for (dev.hominin.evolution.mind.Skills.Skill skill : band.skills()) {
+                    theirSkills.add((dev.hominin.evolution.mind.Skills.knows(player, skill) ? "" : "* ") + skill.title());
+                }
+                lines.add(theirSkills.isEmpty() ? "They know no skills worth teaching."
+                        : "Their skills: " + String.join(", ", theirSkills) + " (* one you do not know).");
+                lines.add(Postures.describe(player, band));
+            }
+            String piles = pilesOf(level, band);
+            if (!piles.isEmpty()) {
+                lines.add("Their piles: " + piles + ".");
+            }
+            if (SacredPile.grudge(player, band)) {
+                lines.add(0, "They stole from the Pile. Your band will not forget it.");
+            }
+            List<String> ways = new ArrayList<>();
+            for (Morals.Moral moral : band.ways()) {
+                ways.add((Morals.holds(player, moral) ? "Shared: " : "") + moral.title());
+            }
             views.add(new OthersPayload.View(band.id.toString(), band.name, standing, near, ransomDemanded(player, band.id),
                     !band.nomadic() && standing >= (erectusOn(band.species) ? FRIENDLY : NEUTRAL), band.nomadic(), lines,
-                    band.presence, band.cohesion, band.desperation));
+                    band.presence, band.cohesion, band.desperation, ways, near && Band.canAskToJoin(player, band)));
         }
         PacketDistributor.sendToPlayer(player, new OthersPayload(views));
     }

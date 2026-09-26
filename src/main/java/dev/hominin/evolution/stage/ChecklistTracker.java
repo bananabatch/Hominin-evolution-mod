@@ -45,7 +45,7 @@ public final class ChecklistTracker {
             return;
         }
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         if (stage == null) {
             return;
         }

@@ -15,9 +15,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * The mod's blocks. So far that is only the loose surface rocks: the mod has no
  * mining, so stone enters the game as pebble scatters picked up off the ground.
  *
- * <p>All three rock types currently drop the same {@link ModItems#ROCK}. They
- * differ only in look and in where they generate; tier-specific drops (chert
- * flaking finer than limestone, and so on) are a planned follow-up.
+ * <p>Each loose rock drops itself: its stone is what it knaps into.
  */
 public final class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(HomininEvolutionMod.MODID);
@@ -25,6 +23,10 @@ public final class ModBlocks {
     /** Dark, glassy, conchoidal - the knapper's stone. Found where water has worked it loose. */
     public static final DeferredBlock<LooseRockBlock> CHERT_ROCK = BLOCKS.registerBlock("chert_rock",
             LooseRockBlock::new, looseRock(MapColor.DEEPSLATE));
+
+    /** Glassy amber chert, sifted out of river gravel - or, now and then, weathered out beside a chert outcrop. */
+    public static final DeferredBlock<LooseRockBlock> FINE_CHERT_ROCK = BLOCKS.registerBlock("fine_chert_rock",
+            LooseRockBlock::new, looseRock(MapColor.COLOR_ORANGE));
 
     /** Coarse, speckled and heavy. Weathers out of mountain and hill country. */
     public static final DeferredBlock<LooseRockBlock> GRANITE_ROCK = BLOCKS.registerBlock("granite_rock",
@@ -59,6 +61,29 @@ public final class ModBlocks {
     /** The knapper's bedrock. Scarce on purpose - chert is what you go looking for. */
     public static final DeferredBlock<Block> CHERT_DEPOSIT = BLOCKS.registerSimpleBlock("chert_deposit",
             deposit(MapColor.DEEPSLATE));
+
+    /**
+     * Fine chert in the living rock: a block or two in the foot of a chert outcrop, now and then, and very rarely a
+     * small seam of its own. A face of it gives up the best stone there is short of glass.
+     */
+    public static final DeferredBlock<Block> FINE_CHERT_DEPOSIT = BLOCKS.registerSimpleBlock("fine_chert_deposit",
+            deposit(MapColor.COLOR_ORANGE));
+
+    /**
+     * Volcanic glass in the foot of an outcrop: a few blocks of it at most, and in very few outcrops. Where it shows,
+     * every band for miles knows the place.
+     */
+    public static final DeferredBlock<Block> OBSIDIAN_DEPOSIT = BLOCKS.registerSimpleBlock("obsidian_deposit",
+            deposit(MapColor.COLOR_BLACK));
+
+    /** Salt, crusted in the ground at a lick: licked, or struck for a chunk to carry (two to a block). */
+    public static final DeferredBlock<dev.hominin.evolution.block.SaltBlock> SALT_BLOCK = BLOCKS.registerBlock("salt_block",
+            dev.hominin.evolution.block.SaltBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.SNOW)
+                    .strength(1.2F, 3.0F).sound(SoundType.CALCITE));
+
+    /** Sand the sea keeps wet: round the tide pools, holding the water in. */
+    public static final DeferredBlock<Block> WET_SAND = BLOCKS.registerSimpleBlock("wet_sand",
+            BlockBehaviour.Properties.of().mapColor(MapColor.SAND).strength(0.6F).sound(SoundType.SAND));
 
     /** Coarse and plentiful. The workhorse stone, and the common outcrop. */
     public static final DeferredBlock<Block> QUARTZITE_DEPOSIT = BLOCKS.registerSimpleBlock("quartzite_deposit",
@@ -138,6 +163,26 @@ public final class ModBlocks {
                             .sound(SoundType.WOOD)
                             .noOcclusion()
                             .ignitedByLava());
+
+    /** A forked post two blocks tall: one end of a tool rack. */
+    public static final DeferredBlock<dev.hominin.evolution.block.ToolRackBlock> TOOL_RACK =
+            BLOCKS.registerBlock("tool_rack", dev.hominin.evolution.block.ToolRackBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(1.0F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
+    /** The branch across two tool rack posts, that spears and clubs lean on. */
+    public static final DeferredBlock<dev.hominin.evolution.block.ToolRackBarBlock> TOOL_RACK_BAR =
+            BLOCKS.registerBlock("tool_rack_bar", dev.hominin.evolution.block.ToolRackBarBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(0.5F)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
 
     /** A forked stick two blocks tall: one end of a cooking rack. */
     public static final DeferredBlock<dev.hominin.evolution.block.CookingRackBlock> COOKING_RACK =

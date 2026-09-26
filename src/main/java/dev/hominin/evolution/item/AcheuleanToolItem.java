@@ -35,6 +35,8 @@ public class AcheuleanToolItem extends Item {
     private final double attackSpeed;
     /** Whether a flawless one of these is the industry's multitool - true of the hand axe. */
     private final boolean multitoolWhenFlawless;
+    /** Struck from a prepared core: harder-hitting, longer-lasting, and it can cut a tier deeper. */
+    private boolean levallois;
 
     public AcheuleanToolItem(int baseDurability, double baseDamage, double attackSpeed, boolean multitoolWhenFlawless,
             Properties properties) {
@@ -43,6 +45,26 @@ public class AcheuleanToolItem extends Item {
         this.baseDamage = baseDamage;
         this.attackSpeed = attackSpeed;
         this.multitoolWhenFlawless = multitoolWhenFlawless;
+    }
+
+    /** Made the Levallois way. */
+    public AcheuleanToolItem levallois() {
+        levallois = true;
+        return this;
+    }
+
+    public boolean isLevallois() {
+        return levallois;
+    }
+
+    /** What the Levallois way adds to the blow: half a heart on a crude one, up to a whole one on a flawless one. */
+    private static double levalloisDamage(int quality) {
+        return 0.5D + (4 - quality) * 0.125D;
+    }
+
+    /** The chance a Levallois edge cuts a tier deeper than the tool usually would: 20%, up to 55% at its best. */
+    private static float deeperChance(int quality) {
+        return 0.20F + (4 - quality) * 0.0875F;
     }
 
     public static int qualityOf(ItemStack stack) {
@@ -69,9 +91,10 @@ public class AcheuleanToolItem extends Item {
     public ItemStack make(int quality) {
         ItemStack stack = new ItemStack(this);
         stack.set(ModDataComponents.QUALITY.get(), quality);
-        stack.set(DataComponents.MAX_DAMAGE, Math.max(8, Math.round(baseDurability * DURABILITY[quality])));
+        stack.set(DataComponents.MAX_DAMAGE, Math.max(8, Math.round(baseDurability * DURABILITY[quality]
+                * (levallois ? 1.3F : 1.0F))));
         // baseDamage is the crude tool's; each tier up adds 0.375, so a flawless one hits 1.5 harder.
-        double damage = baseDamage + (4 - quality) * 0.375D;
+        double damage = baseDamage + (4 - quality) * 0.375D + (levallois ? levalloisDamage(quality) : 0.0D);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()
                 .add(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_ID, damage - 1.0D,
                         AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND)
@@ -87,17 +110,26 @@ public class AcheuleanToolItem extends Item {
         int quality = qualityOf(stack);
         var random = attacker.getRandom();
         // Crude edges tear the skin; a good one opens something deeper; the best can end it.
+        Bleeding.Tier tier = null;
         if (quality >= 3) {
             if (random.nextFloat() < 0.4F) {
-                Bleeding.inflict(target, Bleeding.Tier.EXTERNAL);
+                tier = Bleeding.Tier.EXTERNAL;
             }
         } else if (quality == 2) {
             if (random.nextFloat() < 0.5F) {
-                Bleeding.inflict(target, Bleeding.Tier.INTERNAL);
+                tier = Bleeding.Tier.INTERNAL;
             }
         } else {
             boolean catastrophic = random.nextFloat() < (quality == 0 ? 0.3F : 0.15F);
-            Bleeding.inflict(target, catastrophic ? Bleeding.Tier.CATASTROPHIC : Bleeding.Tier.INTERNAL);
+            tier = catastrophic ? Bleeding.Tier.CATASTROPHIC : Bleeding.Tier.INTERNAL;
+        }
+        // A Levallois edge sometimes goes a tier deeper than the tool usually would.
+        if (levallois && random.nextFloat() < deeperChance(quality)) {
+            tier = tier == null ? Bleeding.Tier.EXTERNAL : tier == Bleeding.Tier.EXTERNAL ? Bleeding.Tier.INTERNAL
+                    : Bleeding.Tier.CATASTROPHIC;
+        }
+        if (tier != null) {
+            Bleeding.inflict(target, tier);
         }
         return true;
     }
@@ -106,6 +138,10 @@ public class AcheuleanToolItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         int quality = qualityOf(stack);
         tooltip.add(Component.literal("Tier " + quality + " - " + TIER_NAMES[quality]).withStyle(TIER_COLOURS[quality]));
+        if (levallois) {
+            tooltip.add(Component.literal("Levallois: +" + levalloisDamage(quality) + " damage, lasts longer, and "
+                    + Math.round(deeperChance(quality) * 100) + "% of cuts go a tier deeper").withStyle(ChatFormatting.GRAY));
+        }
         if (isMultitool(stack)) {
             tooltip.add(Component.literal("Multitool").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             tooltip.add(Component.literal("Also a flake and a hammerstone.").withStyle(ChatFormatting.GRAY));

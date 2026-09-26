@@ -143,12 +143,12 @@ public final class Developer {
                 yield "24 berries. Within the minute, the band asks you to split them.";
             }
             case DEV_PRESENCE_UP -> {
-                Presence.add(player, 10, "developer");
-                yield "Presence " + Presence.get(player) + "/50.";
+                Presence.add(player, 4, "developer");
+                yield "Presence " + Presence.get(player) + "/" + Presence.MAX + ".";
             }
             case DEV_PRESENCE_DOWN -> {
-                Presence.add(player, -10, "developer");
-                yield "Presence " + Presence.get(player) + "/50.";
+                Presence.add(player, -4, "developer");
+                yield "Presence " + Presence.get(player) + "/" + Presence.MAX + ".";
             }
             case DEV_NAME_UP -> {
                 Claims.addFeared(player, 2);
@@ -306,7 +306,50 @@ public final class Developer {
             case DEV_NEXT_PLACE -> nextPlace(player);
             case DEV_PLACE_SPRING -> made(player, Pois.makeHere(player, Pois.Kind.SPRING));
             case DEV_PLACE_LICK -> made(player, Pois.makeHere(player, Pois.Kind.LICK));
+            case DEV_PLACE_CAMP -> made(player, Pois.makeHere(player, Pois.Kind.CAMP));
+            case DEV_PLACE_CHERT -> made(player, Pois.makeHere(player, Pois.Kind.CHERT));
             case DEV_PLACE_DEPOSIT -> made(player, Pois.makeHere(player, Pois.Kind.TOOLS));
+            case DEV_PLACE_OASIS -> made(player, Pois.makeHere(player, Pois.Kind.OASIS));
+            case DEV_PLACE_TIDE -> made(player, Pois.makeHere(player, Pois.Kind.TIDE_POOL));
+            case DEV_PLACE_GRAVEL -> made(player, Pois.makeHere(player, Pois.Kind.SUPER_GRAVEL));
+            case DEV_DAWN -> {
+                level.setDayTime(level.getDayTime() - level.getDayTime() % 24000L + 23200L);
+                yield "First light. Animals come to an oasis or a haven within 128 blocks.";
+            }
+            case DEV_KNACKS -> {
+                Skills.set(player, Skills.Skill.CLEAN_EYE, true);
+                Skills.set(player, Skills.Skill.NOMAD, true);
+                Skills.set(player, Skills.Skill.JACK, true);
+                yield "You have a clean eye, a nomad's eye for country, and a hand for everything.";
+            }
+            case DEV_LACERATE -> {
+                Afflictions.afflict(player, Afflictions.Affliction.LACERATED, 24000);
+                yield "Lacerated for a day: you cannot heal past a third of your hearts. Drink - or sit in a spring 30s.";
+            }
+            case DEV_BLEED_EXTERNAL -> {
+                dev.hominin.evolution.combat.Bleeding.inflict(player, dev.hominin.evolution.combat.Bleeding.Tier.EXTERNAL);
+                yield "External bleeding (tier 1): it bleeds, and then it stops.";
+            }
+            case DEV_BLEED_INTERNAL -> {
+                dev.hominin.evolution.combat.Bleeding.inflict(player, dev.hominin.evolution.combat.Bleeding.Tier.INTERNAL);
+                yield "Internal bleeding (tier 2): nothing closes while it runs.";
+            }
+            case DEV_BLEED_CATASTROPHIC -> {
+                dev.hominin.evolution.combat.Bleeding.inflict(player,
+                        dev.hominin.evolution.combat.Bleeding.Tier.CATASTROPHIC);
+                yield "Catastrophic bleeding (tier 3): drink, and keep drinking - or it kills you.";
+            }
+            case DEV_BLEED_STOP -> {
+                player.removeEffect(dev.hominin.evolution.ModEffects.BLEEDING);
+                dev.hominin.evolution.combat.Bleeding.forget(player.getUUID());
+                Afflictions.relieve(player, Afflictions.Affliction.LACERATED);
+                Afflictions.relieve(player, Afflictions.Affliction.BLED_OUT);
+                yield "Every wound closed: no bleeding, no lacerations.";
+            }
+            case DEV_BRAIN -> {
+                give(player, new ItemStack(ModItems.HOMININ_BRAIN.get(), 2));
+                yield "Two brains. Drop one near an erectus band and watch - or eat one, and gamble.";
+            }
             case DEV_TOOL_PILE -> ToolPiles.devPile(player, toolSet()) ? "A full pile of your band's tools in front of you."
                     : "No room in front of you.";
             case DEV_TROUBLED, DEV_SOUR -> {
@@ -371,6 +414,113 @@ public final class Developer {
             case DEV_BUILD_UNLOCK -> dev.hominin.evolution.build.Building.devUnlock(player);
             case DEV_BUILD_ASK -> dev.hominin.evolution.build.Building.devAskAgain(player);
             case DEV_BUILD_CLEAR -> dev.hominin.evolution.build.Building.devClear(player);
+            // ------------------------------------------------ newcomers and evolving
+            case DEV_SURVIVORS -> Refugees.devArrive(player, null);
+            case DEV_SURVIVORS_PREDATOR -> Refugees.devArrive(player, Refugees.Cause.PREDATOR);
+            case DEV_SURVIVORS_RAID -> Refugees.devArrive(player, Refugees.Cause.RAID);
+            case DEV_SURVIVORS_FIGHT -> Refugees.devArrive(player, Refugees.Cause.INFIGHTING);
+            case DEV_SURVIVORS_PSYCHO -> Refugees.devArrive(player, Refugees.Cause.PSYCHOPATH);
+            case DEV_MERGE -> {
+                Bands.Record band = nearestKnown(player);
+                if (band == null) {
+                    yield "You know no band. Spawn one first.";
+                }
+                yield Refugees.devMerge(player, band);
+            }
+            case DEV_GRUDGE_DAY -> Refugees.devGrudgeDay(player);
+            case DEV_WHO_GRUDGE -> {
+                List<String> held = new ArrayList<>();
+                for (BandMember member : Band.all(player)) {
+                    if (member.getGrudge() != null) {
+                        Bands.Record band = Bands.get(level, member.getGrudge());
+                        member.ensureName();
+                        held.add(member.getName().getString() + " (against " + (band == null ? "a band now gone"
+                                : band.name) + ")");
+                    }
+                }
+                yield held.isEmpty() ? "Nobody in your band holds a grudge." : "Grudges: " + String.join(", ", held);
+            }
+            case DEV_PREGNANT -> {
+                BandMember mother = null;
+                if (entityId >= 0 && level.getEntity(entityId) instanceof BandMember picked && picked.isLedBy(player)) {
+                    mother = picked;
+                } else {
+                    for (BandMember member : Band.ownNear(player, RANGE)) {
+                        if (member.isFemale() && !member.isBaby() && !member.isPregnant()) {
+                            mother = member;
+                            break;
+                        }
+                    }
+                }
+                if (mother == null || !mother.isFemale() || mother.isBaby()) {
+                    yield "No grown woman of yours near enough (pick one out, or stand near one).";
+                }
+                mother.arriveCarrying(0.5F);
+                mother.ensureName();
+                yield mother.getName().getString() + " is carrying - due in half a day. (Sleep the night through and it "
+                        + "comes by morning.)";
+            }
+            case DEV_BIRTH -> {
+                int born = 0;
+                for (BandMember member : Band.all(player)) {
+                    if (member.isPregnant()) {
+                        member.deliverNow();
+                        born++;
+                    }
+                }
+                yield born == 0 ? "Nobody in your band is carrying." : born + " births. (Twins one time in seven, "
+                        + "triplets one in thirty-three.)";
+            }
+            case DEV_LULL -> {
+                dev.hominin.evolution.hunt.PredatorLull.endLull(player.getUUID());
+                yield "The lull is over: the next hunter may come at once.";
+            }
+            case DEV_EVOLVE -> {
+                var stage = dev.hominin.evolution.stage.StageRegistry.current(data);
+                if (stage == null || stage.nextStage().isEmpty()) {
+                    yield "There is nothing further to evolve into from here.";
+                }
+                dev.hominin.evolution.EvolutionManager.evolve(player, stage.nextStage().get());
+                yield "Evolving into " + stage.nextStage().get().getPath() + ".";
+            }
+            case DEV_PLAYER_BANDS -> {
+                Newcomers.openMenu(player);
+                yield "";
+            }
+            case DEV_STONES -> {
+                give(player, new ItemStack(ModItems.FINE_CHERT_ROCK.get(), 8));
+                give(player, new ItemStack(ModItems.OBSIDIAN_CHUNK.get(), 2));
+                give(player, new ItemStack(ModItems.DEAD_BRANCH.get(), 3));
+                give(player, new ItemStack(ModItems.FINE_CHERT_DEPOSIT.get(), 2));
+                yield "8 fine chert, 2 obsidian chunks, 3 dead branches and 2 fine chert deposit blocks.";
+            }
+            case DEV_RIBCAGE -> {
+                BlockPos at = player.blockPosition().relative(player.getDirection(), 3);
+                level.setBlock(at, dev.hominin.evolution.ModBlocks.GIANT_CARCASS.get().defaultBlockState(), 3);
+                yield "A giant carcass, three blocks ahead. (A clan eats it down in four sittings.)";
+            }
+            case DEV_FINE_SEAM -> {
+                BlockPos centre = player.blockPosition().relative(player.getDirection(), 3);
+                int placed = 0;
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (Math.abs(dx) + Math.abs(dz) > 1 && player.getRandom().nextBoolean()) {
+                            continue;
+                        }
+                        int x = centre.getX() + dx;
+                        int z = centre.getZ() + dz;
+                        BlockPos top = new BlockPos(x, level.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
+                        level.setBlock(top, dev.hominin.evolution.ModBlocks.FINE_CHERT_DEPOSIT.get().defaultBlockState(), 3);
+                        placed++;
+                    }
+                }
+                level.setBlock(new BlockPos(centre.getX(), level.getHeight(
+                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, centre.getX(),
+                        centre.getZ()), centre.getZ()), dev.hominin.evolution.ModBlocks.FINE_CHERT_DEPOSIT.get()
+                        .defaultBlockState(), 3);
+                yield "A small fine chert seam ahead (" + (placed + 1) + " blocks). Strike it with a hammerstone.";
+            }
             default -> "";
         };
         if (!done.isEmpty()) {

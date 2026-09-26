@@ -56,6 +56,18 @@ public class NestBuildGoal extends Goal {
         if (!wildAtRest && !withLeader) {
             return false;
         }
+        if (withLeader && dev.hominin.evolution.band.ErectusWork.works(member)) {
+            BlockPos bed = dev.hominin.evolution.band.ErectusWork.bedOf(member);
+            if (bed != null && bed.distSqr(member.blockPosition()) < 32.0D * 32.0D) {
+                // Erectus sleeps on thatch bedding of its own, if it is near enough to go back to: no nest tonight.
+                lastNestDay = day;
+                return false;
+            }
+            if (member.countOf(dev.hominin.evolution.band.ErectusWork.BEDDING) >= 2 && dev.hominin.evolution.band.ErectusWork.bedSite(member) != null) {
+                // Bedding made and a place for it: they lay that instead (see BuildHelpGoal).
+                return false;
+            }
+        }
         BlockPos origin = withLeader ? leader.blockPosition() : member.blockPosition();
         // A roof of their own - given to them, or their mate's: the nest goes in there, or there is one already.
         if (level instanceof net.minecraft.server.level.ServerLevel server) {

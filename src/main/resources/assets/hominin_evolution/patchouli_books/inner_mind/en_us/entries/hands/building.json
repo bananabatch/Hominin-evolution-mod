@@ -27,6 +27,18 @@
     {
       "type": "patchouli:text",
       "text": "Now and then one of the band will want something built - somewhere dry for someone hurt or with child, a store, a roof for you - and mark its $(l)ghost$() out on your ground, in yellow. Press $(k:hominin_evolution.build): $(o)Confirm$(), $(o)Move$() it, or $(o)Cancel$(). Until a block goes in, you can still move or cancel any plan."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The band builds with you.$() It works on your first two marked-out builds - its projects: whoever carries thatch blocks or building branches sets them in, lowest first, and draws on the heaps beside the build. They make those at the work station when a project wants them, and stretch spare hides over raw thatch. The journal's Event log shows each project and what it still wants."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Racks$() are builds too: a $(l)cooking rack$() (two posts either side of a fire pit, a branch across) and a $(l)tool rack$() (two posts, two blocks apart). Mark one out and set the posts in its ghost, then use a workable branch on a post. Racks are for everyone: nobody asks what they are for."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Racks remember, like piles do. Look at a rack's bar or a spit and press $(k:hominin_evolution.item_interact): what is on it, who put each thing there, and who put the first thing on it. What you put there you can mark for everyone, for you alone, or for those close to you - your band leaves alone what is not for them."
     }
   ]
 }

@@ -139,8 +139,7 @@ public final class Mating {
         }
         rouse(player);
         mate.ensureName();
-        player.displayClientMessage(Component.literal("Something has hurt " + mate.getName().getString() + ".")
-                .withStyle(ChatFormatting.RED), true);
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, "Something has hurt " + mate.getName().getString() + ".", ChatFormatting.RED);
     }
 
     private static boolean offProtectCooldown(UUID who, long now) {
@@ -269,6 +268,8 @@ public final class Mating {
 
     private static void birth(ServerPlayer player) {
         clearPregnancy(player);
+        SacredPile.event(player, "your child's birth");
+        Chatter.news(player, "news_birth", "");
         ServerLevel level = player.serverLevel();
         BandMember baby = ModEntities.BAND_MEMBER.get().create(level);
         if (baby == null) {
@@ -332,11 +333,11 @@ public final class Mating {
                 && !member.hasEffect(dev.hominin.evolution.ModEffects.BLEEDING);
     }
 
-    /** From joining a band to looking for a mate: one to three days. */
-    private static final int PAIR_MIN_TICKS = 24000;
-    private static final int PAIR_SPREAD_TICKS = 48000;
+    /** From joining a band to looking for a mate: half a day to a day and a half. */
+    private static final int PAIR_MIN_TICKS = 12000;
+    private static final int PAIR_SPREAD_TICKS = 24000;
     /** The share who never pair up by themselves (you can still ask them). */
-    private static final float NEVER_PAIRS = 0.3F;
+    private static final float NEVER_PAIRS = 0.15F;
 
     /** Once a minute or so, per member of a player's band. */
     public static void tickMember(BandMember member) {
@@ -387,7 +388,7 @@ public final class Mating {
             mother.startPregnancy();
             mother.ensureName();
             father.ensureName();
-            leader.sendSystemMessage(Component.literal(mother.getName().getString() + " is expecting. "
+            dev.hominin.evolution.guide.Alerts.urgent(leader, dev.hominin.evolution.guide.Alerts.Kind.BAND, Component.literal(mother.getName().getString() + " is expecting. "
                     + father.getName().getString() + " is the father.").withStyle(ChatFormatting.LIGHT_PURPLE));
             return;
         }
@@ -399,8 +400,8 @@ public final class Mating {
             return;
         }
         mother.ensureName();
-        leader.sendSystemMessage(Component.literal(mother.getName().getString() + " has gone off alone to give birth. "
-                + "Everything that hunts will find her - find her first, and guard her.").withStyle(ChatFormatting.GOLD));
+        dev.hominin.evolution.guide.Alerts.urgent(leader, dev.hominin.evolution.guide.Alerts.Kind.WARNING, Component.literal(mother.getName().getString() + " has gone off alone to give "
+                + "birth. Everything that hunts will find her - find her first, and guard her.").withStyle(ChatFormatting.GOLD));
         labour(leader, mother.blockPosition(), true);
     }
 
@@ -415,6 +416,21 @@ public final class Mating {
             return "you";
         }
         return level.getEntity(mate) instanceof BandMember other ? other.getName().getString() : null;
+    }
+
+    /**
+     * You slept the night through: by morning every one of your band who was carrying has had the child. Nobody wants
+     * to be told at dawn there is still a day to go.
+     */
+    public static void nightSlept(ServerPlayer player) {
+        if (player.level().getDayTime() % 24000L > 2000L) {
+            return;
+        }
+        for (BandMember member : Band.all(player)) {
+            if (member.isPregnant()) {
+                member.deliverNow();
+            }
+        }
     }
 
     private Mating() {

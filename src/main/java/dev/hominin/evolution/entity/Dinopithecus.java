@@ -39,6 +39,13 @@ import net.minecraft.world.level.Level;
 public class Dinopithecus extends PathfinderMob {
     /** Crowd one this closely and it stops tolerating you. */
     private static final double PERSONAL_SPACE = 5.0D;
+    /** Inside this, it warns you: the yawn, the canines, the stare. */
+    private static final double WARNING_SPACE = 11.0D;
+    /** Warned, you have this long to back off before being that close counts against you. */
+    private static final long WARNING_GRACE_TICKS = 50L;
+    private static final long WARN_AGAIN_TICKS = 30 * 20L;
+    /** Who it has warned, and when. */
+    private final java.util.Map<java.util.UUID, Long> warned = new java.util.HashMap<>();
     /** How far a provoked one calls the others in from. */
     private static final double GROUP_RADIUS = 20.0D;
     /** Those canines are the largest in any monkey that ever lived. */
@@ -78,15 +85,49 @@ public class Dinopithecus extends PathfinderMob {
         if (level().isClientSide() || tickCount % CHECK_INTERVAL != 0 || getTarget() != null) {
             return;
         }
+        long now = level().getGameTime();
         for (LivingEntity near : level().getEntitiesOfClass(LivingEntity.class,
-                getBoundingBox().inflate(PERSONAL_SPACE))) {
+                getBoundingBox().inflate(WARNING_SPACE))) {
             if (near instanceof Player player && (player.isCreative() || player.isSpectator())) {
                 continue;
             }
-            if (near instanceof Player || near instanceof BandMember) {
+            if (!(near instanceof Player) && !(near instanceof BandMember)) {
+                continue;
+            }
+            Long when = warned.get(near.getUUID());
+            boolean fresh = when == null || now - when > WARN_AGAIN_TICKS;
+            if (fresh) {
+                warn(near, now);
+                continue;
+            }
+            if (distanceToSqr(near) <= PERSONAL_SPACE * PERSONAL_SPACE && now - when >= WARNING_GRACE_TICKS) {
+                // It told you. You came closer anyway.
                 provoke(near);
                 return;
             }
+        }
+    }
+
+    /**
+     * The warning: it rears up, yawns wide to show canines longer than a leopard's, and stares. Everyone who knows
+     * baboons knows what that means.
+     */
+    private void warn(LivingEntity near, long now) {
+        warned.put(near.getUUID(), now);
+        if (warned.size() > 32) {
+            warned.entrySet().removeIf(e -> now - e.getValue() > WARN_AGAIN_TICKS);
+        }
+        getNavigation().stop();
+        getLookControl().setLookAt(near, 30.0F, 30.0F);
+        playSound(ModSounds.BABOON_ANGRY.get(), 1.2F, 0.75F);
+        swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (near instanceof Player player) {
+            dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, "The giant baboon rears up and yawns wide at you, all canine. "
+                    + "Back off - now.", net.minecraft.ChatFormatting.RED);
+        } else if (near instanceof BandMember member && member.getNavigation() != null) {
+            // The band knows that look, and gives it room.
+            net.minecraft.world.phys.Vec3 away = member.position().subtract(position()).normalize().scale(8.0D);
+            member.getNavigation().moveTo(member.getX() + away.x, member.getY(), member.getZ() + away.z, 1.2D);
         }
     }
 

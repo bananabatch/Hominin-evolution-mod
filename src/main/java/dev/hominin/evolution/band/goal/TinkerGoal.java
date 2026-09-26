@@ -194,7 +194,7 @@ public class TinkerGoal extends Goal {
     }
 
     private static boolean isStone(ItemStack stack) {
-        return stack.is(ModItems.ROCK.get()) || stack.is(ModTags.Items.KNAPPABLE_STONE);
+        return stack.is(ModTags.Items.ROCKS) || stack.is(ModTags.Items.KNAPPABLE_STONE);
     }
 
     private BlockPos findLooseRock() {

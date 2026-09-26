@@ -93,15 +93,26 @@ public final class HeldAnimationHandler {
             HeldAnims.of(ModItems.SHARPENED_SPEAR, "spear_hold", "spear_thrust", true),
             // Same weapon, harder point - same grip and thrust.
             HeldAnims.of(ModItems.FIRE_HARDENED_SPEAR, "spear_hold", "spear_thrust", true),
+            HeldAnims.of(ModItems.SCHONINGEN_SPEAR, "spear_hold", "spear_thrust", true),
+            // The stone-tipped spear is its own weapon: carried overhand in one hand, high, and stabbed down.
+            HeldAnims.of(ModItems.STONE_TIPPED_SPEAR, "stone_tipped_hold", "stone_tipped_thrust", false),
             HeldAnims.of(ModItems.LONG_BRANCH, "branch_hold", "branch_swing", true),
             // Worked wood is carried and swung exactly as the branch it came from.
             HeldAnims.of(ModItems.WORKABLE_BRANCH, "branch_hold", "branch_swing", true),
             HeldAnims.of(ModItems.WORKABLE_SHAFT, "branch_hold", "branch_swing", true),
             // One-handed: the club's weight does the work, so the other hand stays free.
             HeldAnims.of(ModItems.WOODEN_CLUB, "club_hold", "club_swing", false),
+            HeldAnims.of(ModItems.BONE_CLUB, "club_hold", "club_swing", false),
             HeldAnims.strikeOnly(ModItems.SHARPENED_STICK, "stick_stab"),
             HeldAnims.strikeOnly(ModItems.POINTY_STICK, "stick_stab"),
             HeldAnims.strikeOnly(ModItems.FLAKE, "flake_slash"),
+            // A prepared edge: the arm turns out to the right, the wrist rolls, then a slash across.
+            HeldAnims.strikeOnly(ModItems.LEVALLOIS_FLAKE, "levallois_slash"),
+            HeldAnims.strikeOnly(ModItems.LEVALLOIS_BLADE, "levallois_slash"),
+            // The knife: held low and ready; the same turn to the right, bigger, and a full slash through.
+            HeldAnims.of(ModItems.KNIFE, "knife_hold", "knife_slash", false),
+            HeldAnims.attackAndBreak(ModItems.LEVALLOIS_HAND_AXE, "hand_axe_hold", "hand_axe_slash", "hand_axe_chop",
+                    "hand_axe_chop_again"),
             // The hand axe: carried low in front, lying level in the hand; a heavy sideways slash at
             // anything alive; and to take a block apart, the cleaver's push - caught in both hands and
             // driven in, stroke after stroke.
@@ -125,7 +136,11 @@ public final class HeldAnimationHandler {
     private static final Set<ResourceLocation> THIRD_PERSON_ONLY = Set.of(
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "cleaver_hold"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "hand_axe_hold"),
-            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_hold"));
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_hold"),
+            // Held high overhand, or drawn back behind the head: in first person the arm would only fill the sky.
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "stone_tipped_hold"),
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_draw"),
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "knife_hold"));
 
     /** Swings that need the other hand drawn in first person too. */
     private static final Set<ResourceLocation> TWO_HANDED = Set.of(
@@ -134,7 +149,24 @@ public final class HeldAnimationHandler {
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "hand_axe_chop_again"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_jab"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_dig"),
-            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_dig_again"));
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_dig_again"),
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "fire_drill_spin"));
+
+    private static final ResourceLocation SPEAR_DRAW =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_draw");
+    private static final ResourceLocation SPEAR_THROW =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_throw");
+    private static final ResourceLocation FIRE_DRILL_SPIN =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "fire_drill_spin");
+    /** What plays while an item is in use rather than swung: one-handed (the throw), and both hands (the drill). */
+    private static final HeldAnims USING_ONE = HeldAnims.strikeOnly(() -> net.minecraft.world.item.Items.AIR,
+            "spear_throw");
+    private static final HeldAnims USING_BOTH = HeldAnims.of(() -> net.minecraft.world.item.Items.AIR, null,
+            "fire_drill_spin", true);
+    /** How long each player has been drawing a spear back, while they are: long enough, and letting go throws. */
+    private static final Map<UUID, Integer> DRAWN = new HashMap<>();
+    /** Players mid-throw: nothing takes the arm back until it has followed through. */
+    private static final Set<UUID> THROWING = new HashSet<>();
 
     /**
      * Whether this swing is at a block rather than at something alive. For the local player that
@@ -212,12 +244,16 @@ public final class HeldAnimationHandler {
             STRIKING.clear();
             AGAIN.clear();
             PLAYING.clear();
+            DRAWN.clear();
+            THROWING.clear();
             return;
         }
         var present = level.players().stream().map(AbstractClientPlayer::getUUID).toList();
         STRIKING.retainAll(present);
         AGAIN.retainAll(present);
         PLAYING.keySet().retainAll(present);
+        DRAWN.keySet().retainAll(present);
+        THROWING.retainAll(present);
         for (AbstractClientPlayer player : level.players()) {
             update(player);
         }
@@ -239,6 +275,31 @@ public final class HeldAnimationHandler {
         }
         UUID id = player.getUUID();
         HeldAnims anims = animsFor(player);
+        // Drawn back to throw: the throwing arm up behind the head, the body twisted into it.
+        if (player.isUsingItem() && player.getUseItem().getItem() instanceof dev.hominin.evolution.item.SpearItem) {
+            DRAWN.put(id, player.getTicksUsingItem());
+            keep(layer, id, USING_ONE, SPEAR_DRAW);
+            return;
+        }
+        // Working a fire drill: bent over it, rubbing the spindle between the palms.
+        if (player.isUsingItem() && player.getUseItem().is(ModItems.FIRE_DRILL.get())) {
+            keep(layer, id, USING_BOTH, FIRE_DRILL_SPIN);
+            return;
+        }
+        // Let go after a proper draw: the throw and its follow-through, whatever is in the hand after it.
+        Integer drawn = DRAWN.remove(id);
+        if (drawn != null && drawn >= dev.hominin.evolution.item.SpearItem.MIN_DRAW) {
+            play(layer, id, USING_ONE, SPEAR_THROW, 1, Ease.OUTQUAD);
+            THROWING.add(id);
+            return;
+        }
+        if (THROWING.contains(id)) {
+            IAnimation throwing = layer.getAnimation();
+            if (throwing != null && throwing.isActive() && SPEAR_THROW.equals(PLAYING.get(id))) {
+                return;
+            }
+            THROWING.remove(id);
+        }
         if (anims == null) {
             STRIKING.remove(id);
             AGAIN.remove(id);
@@ -303,6 +364,16 @@ public final class HeldAnimationHandler {
                 && current instanceof KeyframeAnimationPlayer keyframes
                 && keyframes.getCurrentTick() >= keyframes.getStopTick() - HOLD_FADE) {
             play(layer, id, anims, anims.hold(), HOLD_FADE, Ease.INOUTSINE);
+        }
+    }
+
+    /** Plays a loop unless it is already the one playing. */
+    private static void keep(ModifierLayer<IAnimation> layer, UUID player, HeldAnims anims, ResourceLocation id) {
+        IAnimation current = layer.getAnimation();
+        if (!id.equals(PLAYING.get(player)) || current == null || !current.isActive()) {
+            STRIKING.remove(player);
+            AGAIN.remove(player);
+            play(layer, player, anims, id, 3, Ease.INOUTSINE);
         }
     }
 

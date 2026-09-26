@@ -30,11 +30,47 @@
     },
     {
       "type": "patchouli:text",
-      "text": "The menu shows each thing: its stone, quality, wear, who laid it, and who laid the pile first. Mark yours for everyone, you alone, or those close to you (bond 4+). $(l)Relocate$() gathers the whole pile up to set down elsewhere - soon, if any of it is others', or the band minds. Keep two of a kind that are not yours and they notice."
+      "text": "The menu shows each thing: its stone, quality, wear, who laid it, and who laid the pile first. Mark yours for everyone, you alone, or those close to you (bond 4+). $(l)Relocate$() gathers the whole pile up to set down elsewhere - soon, if any of it is others', or the band minds. Keep two of a kind that are not yours and they notice.$(br2)Evolve, and your piles are from before: nobody's, their tools worn into artifacts."
     },
     {
       "type": "patchouli:text",
       "text": "A $(l)spring$() gives twice the water, clean, even on the driest day - and at dusk the grazers come to drink. At a $(l)salt lick$() they come at first light; use the pale crust bare-handed for a lick of salt yourself, once a day. An $(l)old tool deposit$() is anybody's: worn tools, but stone is stone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)lone camp$() is the only place a lone hominin is found: sitting by the dead of the band they lost. Walk up and they come with you. It looks like its time - trampled ground and the dead before habilis; old tools and more dead at habilis; from erectus a fire still burning, a station, sometimes a hut. Evolve, and it is laid out again for your kind. A $(l)chert super deposit$(): a whole seam in a river bank, or a heap of it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Piles have kinds.$() The first thing laid on a pile decides it: a $(l)tool pile$() (tools and weapons), a $(l)food pile$() (food and bones - it does not rot there), a $(l)rock pile$() (any stone, mixed - the heap just grows), or, in a store, a heap of odds and ends. Lay the wrong kind on one and it starts its own pile beside it. Food and rocks go down anywhere on your own ground."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)No wood piles.$() Branches, shafts, clubs and spears do not go on piles - lean spears and clubs on a rack. Sticks do: a stick, a sharpened or pointy one, a termite stick lies on the tool pile with the stone. (A plain stick sneak-used on the ground still forages - use the pile itself to put one on.)"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Moving camp.$() Settle new ground and your band goes back for the piles you left: each carries a whole pile over, as it lay, and they make more trips if there are more piles than people. It is a long walk.$(br2)Until then the old piles are anybody's - a band living near may help itself. And you can carry off another band's pile the same way... if none of them sees you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Food piles in the open$() get raided at night - hyenas, or baboons at first light; the tracks tell you which. They leave the bones. Keep food under a roof, keep a fire lit near it, or be strong enough (presence 14) that nothing dares."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Now and then you hear it: $(o)the call of the lonely$() - somebody alone, calling for anyone at all, from the way a lone camp lies. It goes on your map. Follow it, and whoever is left comes with you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)spring$() heals. Drink from it and it mends you a little, and now and then settles a sick gut at once. Sit in it: ten breaths and the ticks let go and float away; thirty, and torn-open wounds close clean."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Along a river the gravel lies in $(l)deposits$() - patches of it up the bank - and now and then the whole bank has gone to it: a $(l)gravel super deposit$(). On a shore, $(l)tide pools$(): crouch and work a stick through the water for oysters, clams, small fish, sometimes an octopus."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "In dry country, an $(l)oasis$(): a great pool in a horseshoe of hill, gravel at its edge, good stone about. At first light everything comes to drink - even hunters, who leave you be at the water. Kill too many of them at dawn and they stay away. Havens are the same at first light - and every haven has water and food of its own."
     }
   ]
 }

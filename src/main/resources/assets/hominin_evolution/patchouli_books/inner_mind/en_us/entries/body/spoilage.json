@@ -15,6 +15,10 @@
     {
       "type": "patchouli:text",
       "text": "The way through is $(l)water$() - a lot of it, more than you want: sick, you can drink past thirst - and $(l)small meals$(): a grub, a handful of berries, a chunk of meat. A big meal will not stay down. Left alone it passes too, slowly.$(br2)Cooking spoiled meat kills most of what is in it. Not all: three times in ten it still lays you out."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Nobody will take meat that has turned. Your band will not eat it or take it from your hand; other bands give nothing for it in trade, take it as an insult in a gift, and will not count it as payment. Cut up, it is still spoiled."
     }
   ]
 }

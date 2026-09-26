@@ -90,6 +90,18 @@ public class FetchGoal extends Goal {
                 return;
             }
         }
+        if (kind.source() == FetchKind.Source.MADE && dev.hominin.evolution.band.ErectusWork.works(member)
+                && member.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            // Not on them: the heaps by the work station, then.
+            net.minecraft.server.level.ServerPlayer leader = dev.hominin.evolution.band.ErectusWork.leader(member);
+            BlockPos station = leader == null ? null
+                    : dev.hominin.evolution.band.ErectusWork.workStation(server, dev.hominin.evolution.band.ErectusWork.camp(leader));
+            ItemStack found = dev.hominin.evolution.band.ErectusWork.takeFromHeaps(member, station, kind::matches);
+            if (!found.isEmpty()) {
+                member.addToInventory(found);
+                return;
+            }
+        }
         if (kind.source() == FetchKind.Source.MADE) {
             // They either had it - handled above by carries() - or they did not.
             fail(kind, player);

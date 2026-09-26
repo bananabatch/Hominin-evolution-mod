@@ -23,6 +23,10 @@
     {
       "type": "patchouli:text",
       "text": "From erectus, some do not care what the band thinks. They steal, hoard, never give, teach the young nothing, and now and then start a fight. A band coming apart grows more of them.$(br2)A band can stand up to them: $(l)Nobody lords it over the rest$(), in the Culture tab, or $(o)Shun them$() under Social - and they bend, or they go."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "How they talk to you follows how the band holds together: trusting and welcoming at the top, settled under your lead, a little questioning, trust slipping - and thin ice.$(br2)They have $(l)opinions$() of their own, too: of every band, and of what you do about them. Hungry and armed, they will tell you who to raid."
     }
   ]
 }

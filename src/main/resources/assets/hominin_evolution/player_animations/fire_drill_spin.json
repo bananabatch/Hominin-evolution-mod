@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "name": "fire_drill_spin",
+  "description": "Working a fire drill: bent over the board, the spindle rubbed back and forth between both palms, fast",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 6,
+    "stopTick": 6,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -45,
+          "yaw": -18,
+          "roll": 6
+        },
+        "leftArm": {
+          "pitch": -45,
+          "yaw": 32,
+          "roll": -6
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.012,
+          "z": -0.079
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -47,
+          "yaw": -32,
+          "roll": -6
+        },
+        "leftArm": {
+          "pitch": -43,
+          "yaw": 18,
+          "roll": 6
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.012,
+          "z": -0.079
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -45,
+          "yaw": -18,
+          "roll": 6
+        },
+        "leftArm": {
+          "pitch": -45,
+          "yaw": 32,
+          "roll": -6
+        },
+        "body": {
+          "pitch": -14,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.012,
+          "z": -0.079
+        }
+      }
+    ]
+  }
+}

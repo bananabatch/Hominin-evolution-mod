@@ -1,0 +1,59 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "axis": "z"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit"
+      }
+    },
+    {
+      "when": {
+        "axis": "x"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "neg": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit_neg"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "pos": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit_pos"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "neg": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit_pos",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "pos": "true"
+      },
+      "apply": {
+        "model": "hominin_evolution:block/cooking_spit_neg",
+        "y": 90
+      }
+    }
+  ]
+}

@@ -229,7 +229,7 @@ public final class Commissions {
         var pack = member.getInventory();
         for (int slot = 0; slot < pack.getContainerSize(); slot++) {
             ItemStack stack = pack.getItem(slot);
-            if (Wants.isGoodStone(stack) || (kind == CHOPPER && stack.is(ModItems.ROCK.get()))) {
+            if (Wants.isGoodStone(stack) || (kind == CHOPPER && stack.is(dev.hominin.evolution.ModTags.Items.ROCKS))) {
                 stones += stack.getCount();
             }
         }
@@ -300,7 +300,7 @@ public final class Commissions {
     /** Takes the stone and knaps it, at this member's level. */
     private static ItemStack make(BandMember member, int kind) {
         if (kind == CHOPPER) {
-            ItemStack stone = member.takeFirst(s -> Wants.isGoodStone(s) || s.is(ModItems.ROCK.get()));
+            ItemStack stone = member.takeFirst(s -> Wants.isGoodStone(s) || s.is(dev.hominin.evolution.ModTags.Items.ROCKS));
             return stone.isEmpty() ? ItemStack.EMPTY
                     : dev.hominin.evolution.item.StoneMaterial.stampFrom(new ItemStack(ModItems.CHOPPER.get()), stone);
         }

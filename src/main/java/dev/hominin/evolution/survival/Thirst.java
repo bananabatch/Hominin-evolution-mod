@@ -49,6 +49,8 @@ public final class Thirst {
             dev.hominin.evolution.combat.Bleeding.drank(player, amount);
             // And somebody sick from bad meat needs every drop of it.
             FoodIllness.drank(player, amount);
+            // And water washes an abscess out.
+            Diseases.drank(player, amount);
         }
     }
 
@@ -66,8 +68,7 @@ public final class Thirst {
         if (drain > 0) {
             set(player, data.getThirst() - drain);
             if (data.getThirst() == PARCHED) {
-                player.displayClientMessage(Component.literal("Your mouth is dry. You need water.")
-                        .withStyle(ChatFormatting.AQUA), true);
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.NEED, "Your mouth is dry. You need water.", ChatFormatting.AQUA);
             }
         }
         if (player.tickCount % 40 != 0) {

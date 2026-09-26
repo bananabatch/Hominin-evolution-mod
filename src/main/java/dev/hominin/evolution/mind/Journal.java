@@ -29,7 +29,7 @@ public final class Journal {
     public static void send(ServerPlayer player) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         backfill(player, data);
-        StageDefinition stage = StageRegistry.get(data.getStage());
+        StageDefinition stage = StageRegistry.current(data);
         String stageName = stage != null ? stage.displayName() : data.getStage().getPath();
 
         List<String> stats = new ArrayList<>();
@@ -40,6 +40,7 @@ public final class Journal {
         stats.add("Ticks: " + Infestation.describe(player));
         stats.add("Knapping: " + dev.hominin.evolution.knapping.Acheulean.describe(player));
         stats.add("Persistence hunting: " + dev.hominin.evolution.hunt.Persistence.describe(player));
+        stats.add("Negotiating: " + dev.hominin.evolution.band.Negotiation.describe(player));
         if (dev.hominin.evolution.survival.FoodIllness.has(player)) {
             stats.add("Illness: " + dev.hominin.evolution.survival.FoodIllness.describe(player));
         }
@@ -75,7 +76,7 @@ public final class Journal {
         stats.add(left == 0 ? "This band is the last one your species has."
                 : "You can lose " + left + " more " + (left == 1 ? "band" : "bands") + " before your species dies out.");
         stats.add("Your band: " + dev.hominin.evolution.band.BandNames.capital(dev.hominin.evolution.band.Relations.ownName(player))
-                + "    Presence here: " + dev.hominin.evolution.band.Presence.get(player) + "/50");
+                + "    Presence here: " + dev.hominin.evolution.band.Presence.get(player) + "/20");
         if (dev.hominin.evolution.hunt.Predation.settled(player)) {
             var land = dev.hominin.evolution.world.Land.ofPlayer(player);
             stats.add("Your ground: pressure " + land.total() + "/10 - " + dev.hominin.evolution.world.Land.label(land.total()));
@@ -128,6 +129,9 @@ public final class Journal {
         var counters = data.getCriterionCounters();
         stats.add("Practised at running: " + Math.min(3, counters.getOrDefault("play_tag", 0)) + "/3"
                 + "    at fighting: " + Math.min(3, counters.getOrDefault("play_wrestle", 0)) + "/3");
+        if (!Skills.knows(player, Skills.Skill.JACK)) {
+            stats.add("Jack of all trades: " + Math.min(3, Knacks.jackProgress(player)) + "/3 of five things done");
+        }
 
         List<String> titles = new ArrayList<>();
         List<String> bodies = new ArrayList<>();
@@ -137,7 +141,8 @@ public final class Journal {
             bodies.add(skill.about() + "\n" + skill.howTo() + "\n" + skill.effect());
             flags.add((Skills.knows(player, skill) ? 1 : 0) | (skill.carriesOver() ? 2 : 0));
         }
-        PacketDistributor.sendToPlayer(player, new JournalPayload(stageName, stats, titles, bodies, flags));
+        PacketDistributor.sendToPlayer(player, new JournalPayload(stageName, stats, titles, bodies, flags,
+                dev.hominin.evolution.guide.Tasks.of(player), dev.hominin.evolution.guide.Alerts.recent(player)));
     }
 
     private static String standing(float averageBond) {

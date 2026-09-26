@@ -113,6 +113,7 @@ public class Bonobo extends PathfinderMob implements TreeClimber {
                 p -> betrayed && p instanceof Player player && isBetrayer(player)));
         goalSelector.addGoal(3, new ShareFoodGoal());
         goalSelector.addGoal(3, new GroomGoal());
+        goalSelector.addGoal(4, new CareForBandGoal());
         goalSelector.addGoal(4, new ClimbTreeGoal<>(this, () -> isBaby() || isInWater(),
                 () -> getLastHurtByMob() != null && tickCount - getLastHurtByMobTimestamp() < 100));
         goalSelector.addGoal(5, new ForageAlongsideGoal());
@@ -393,6 +394,90 @@ public class Bonobo extends PathfinderMob implements TreeClimber {
                         "A bonobo settles against you and starts working through your hair.")
                         .withStyle(ChatFormatting.LIGHT_PURPLE), true);
             }
+        }
+    }
+
+    private int nextCare;
+
+    /**
+     * Your band, too: a hungry one gets fruit pressed into their hands; anyone else gets their hair gone through.
+     * The band notices - and likes them for it.
+     */
+    private class CareForBandGoal extends Goal {
+        @Nullable
+        private BandMember member;
+        private int working;
+
+        CareForBandGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (betrayed || isBaby() || tickCount < nextCare || getRandom().nextInt(120) != 0) {
+                return false;
+            }
+            for (BandMember candidate : level().getEntitiesOfClass(BandMember.class, getBoundingBox().inflate(14.0D),
+                    m -> m.isAlive() && !m.isWild() && m.leaderPlayer() != null && friendly(m.leaderPlayer()))) {
+                member = candidate;
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return member != null && member.isAlive() && working < 160 && distanceTo(member) < 20.0F;
+        }
+
+        @Override
+        public void start() {
+            working = 0;
+        }
+
+        @Override
+        public void stop() {
+            nextCare = tickCount + 20 * 60 * 2 + getRandom().nextInt(20 * 60 * 2);
+            member = null;
+        }
+
+        @Override
+        public void tick() {
+            if (member == null) {
+                return;
+            }
+            working++;
+            getLookControl().setLookAt(member, 30.0F, 30.0F);
+            if (distanceTo(member) > 2.0F) {
+                if (working % 10 == 1) {
+                    getNavigation().moveTo(member, 1.0D);
+                }
+                return;
+            }
+            getNavigation().stop();
+            if (working < 60) {
+                return;
+            }
+            member.ensureName();
+            Player leader = member.leaderPlayer();
+            if (member.isHungry()) {
+                member.feed(new ItemStack(getRandom().nextBoolean() ? Items.APPLE : Items.SWEET_BERRIES));
+                if (leader != null) {
+                    leader.displayClientMessage(Component.literal("A bonobo presses fruit into " + member.getName().getString()
+                            + "'s hands.").withStyle(ChatFormatting.LIGHT_PURPLE), true);
+                }
+            } else {
+                playSound(SoundEvents.WOOL_HIT, 0.5F, 1.3F);
+                if (leader != null) {
+                    leader.displayClientMessage(Component.literal("A bonobo settles beside " + member.getName().getString()
+                            + " and works through their hair.").withStyle(ChatFormatting.LIGHT_PURPLE), true);
+                }
+            }
+            if (level() instanceof ServerLevel server) {
+                server.sendParticles(ParticleTypes.HEART, getX(), getEyeY() + 0.3D, getZ(), 3, 0.3D, 0.2D, 0.3D, 0.0D);
+            }
+            dev.hominin.evolution.band.Lines.say(member, "bonobo_like");
+            working = 1000;
         }
     }
 

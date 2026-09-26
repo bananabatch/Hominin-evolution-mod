@@ -65,14 +65,20 @@ public class CultureScreen extends Screen {
         return Math.max(1, (height - HEADER - FOOTER) / ROW);
     }
 
+    /** The ways shown: all but those the band has no reason for yet. */
+    private Morals.Moral[] shown() {
+        return java.util.Arrays.stream(Morals.Moral.values())
+                .filter(m -> data.states().get(m.ordinal()) != Morals.LOCKED).toArray(Morals.Moral[]::new);
+    }
+
     private int maxScroll() {
-        return Math.max(0, Morals.Moral.values().length - rowsVisible());
+        return Math.max(0, shown().length - rowsVisible());
     }
 
     @Override
     protected void init() {
         scroll = Math.min(scroll, maxScroll());
-        Morals.Moral[] morals = Morals.Moral.values();
+        Morals.Moral[] morals = shown();
         int y = listTop();
         for (int i = scroll; i < Math.min(morals.length, scroll + rowsVisible()); i++) {
             Morals.Moral moral = morals[i];
@@ -133,7 +139,7 @@ public class CultureScreen extends Screen {
         String now = data.season() + ", " + data.daysLeft() + (data.daysLeft() == 1 ? " day" : " days") + " left"
                 + (data.dryDay() ? " - and a dry day" : "");
         graphics.drawCenteredString(font, now, width / 2, 24, data.season().startsWith("Dry") ? 0xE0A040 : 0x7FD86A);
-        Morals.Moral[] morals = Morals.Moral.values();
+        Morals.Moral[] morals = shown();
         int y = listTop();
         int textWidth = panelWidth() - BUTTON_WIDTH - 8;
         for (int i = scroll; i < Math.min(morals.length, scroll + rowsVisible()); i++) {

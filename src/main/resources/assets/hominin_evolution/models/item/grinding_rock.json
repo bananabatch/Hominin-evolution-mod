@@ -598,6 +598,12 @@
         "hominin_evolution:material": 0.5
       },
       "model": "hominin_evolution:item/grinding_rock_obsidian"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.6
+      },
+      "model": "hominin_evolution:item/grinding_rock_fine_chert"
     }
   ]
 }

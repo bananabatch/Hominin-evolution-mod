@@ -36,7 +36,8 @@ public class EncounterScreen extends Screen {
 
     private boolean threat() {
         return encounter.kind() != Claims.Kind.OFFER.ordinal() && encounter.kind() != Claims.Kind.HELP.ordinal()
-                && encounter.kind() != Claims.Kind.TRADE.ordinal();
+                && encounter.kind() != Claims.Kind.TRADE.ordinal() && encounter.kind() != Claims.Kind.VISIT.ordinal()
+                && encounter.kind() != Claims.Kind.JOIN.ordinal();
     }
 
     @Override
@@ -44,7 +45,9 @@ public class EncounterScreen extends Screen {
         Claims.Kind kind = Claims.Kind.values()[Math.max(0, Math.min(Claims.Kind.values().length - 1, encounter.kind()))];
         int[] choices = Claims.choicesFor(kind);
         int gap = 6;
-        int each = (WIDTH - gap * (choices.length - 1)) / choices.length;
+        // More than three answers: two to a row, so every label fits.
+        int perRow = choices.length > 3 ? 2 : choices.length;
+        int each = (WIDTH - gap * (perRow - 1)) / perRow;
         int left = (width - WIDTH) / 2;
         int content = 26 + 16 + 11 + font.split(Component.literal("\"" + encounter.line() + "\""), WIDTH).size() * 10 + 6
                 + (encounter.items().isEmpty() ? 0 : 22) + font.split(Component.literal(encounter.detail()), WIDTH).size() * 10;
@@ -54,11 +57,12 @@ public class EncounterScreen extends Screen {
             int choice = choices[i];
             Component label = Component.literal(Claims.choiceLabel(choice, encounter.kind())).withStyle(
                     choice == Claims.FIGHT ? ChatFormatting.RED : choice == Claims.FLEE ? ChatFormatting.GOLD
-                            : choice == Claims.DECLINE ? ChatFormatting.GRAY : ChatFormatting.GREEN);
+                            : choice == Claims.DECLINE ? ChatFormatting.GRAY
+                            : choice == Claims.COUNTER || choice == Claims.BETTER ? ChatFormatting.AQUA : ChatFormatting.GREEN);
             addRenderableWidget(Button.builder(label, b -> {
                 PacketDistributor.sendToServer(new EncounterChoicePayload(choice));
                 onClose();
-            }).bounds(left + i * (each + gap), y, each, 20).build());
+            }).bounds(left + (i % perRow) * (each + gap), y + (i / perRow) * 24, each, 20).build());
         }
     }
 
@@ -67,7 +71,8 @@ public class EncounterScreen extends Screen {
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(graphics, mouseX, mouseY, partialTick);
         int left = (width - WIDTH) / 2;
-        int bottom = children().isEmpty() ? height / 2 + 90 : ((Button) children().get(0)).getY() + 28;
+        int bottom = children().isEmpty() ? height / 2 + 90
+                : ((Button) children().get(children().size() - 1)).getY() + 28;
         graphics.fill(left - 8, top - 8, left + WIDTH + 8, bottom, 0xC0101010);
     }
 

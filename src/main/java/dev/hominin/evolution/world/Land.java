@@ -174,12 +174,35 @@ public final class Land {
         return of(player.serverLevel(), camp, dev.hominin.evolution.hunt.Predation.territoryRadius(player));
     }
 
+    /**
+     * Glass in the foot of the outcrop this sample hit. The ground is only sampled every few blocks, and a vein of
+     * obsidian is three or four blocks: so round every outcrop hit, the gap to the next sample is looked over too.
+     */
+    private static boolean glassAround(ServerLevel level, int x, int y, int z, int step) {
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int dx = -step / 2; dx <= step / 2; dx++) {
+            for (int dz = -step / 2; dz <= step / 2; dz++) {
+                if (!level.hasChunk((x + dx) >> 4, (z + dz) >> 4)) {
+                    continue;
+                }
+                for (int dy = -2; dy <= 3; dy++) {
+                    if (level.getBlockState(at.set(x + dx, y + dy, z + dz)).is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private static Value score(ServerLevel level, BlockPos centre, int radius) {
         List<Part> parts = new ArrayList<>();
         // Stone: the best of what is there counts, not all of it.
         int chert = 0;
+        boolean obsidian = false;
         boolean workable = false;
         boolean water = false;
+        int gravel = 0;
         int step = 4;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int dx = -radius; dx <= radius; dx += step) {
@@ -196,26 +219,45 @@ public final class Land {
                 if (!water && level.getFluidState(pos.set(x, top - 1, z)).is(FluidTags.WATER)) {
                     water = true;
                 }
+                if (level.getBlockState(pos.set(x, top - 1, z)).is(net.minecraft.world.level.block.Blocks.GRAVEL)) {
+                    gravel++;
+                }
                 for (int y = top - 6; y <= top + 1; y++) {
                     BlockState state = level.getBlockState(pos.set(x, y, z));
-                    if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
+                    if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+                        obsidian = true;
+                        break;
+                    }
+                    if (state.is(ModBlocks.CHERT_DEPOSIT.get()) || state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())) {
                         chert++;
+                        obsidian |= glassAround(level, x, y, z, step);
                         break;
                     }
                     if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get()) || state.is(ModBlocks.BASALT_DEPOSIT.get())
                             || state.is(ModBlocks.LIMESTONE_DEPOSIT.get())) {
                         workable = true;
+                        obsidian |= glassAround(level, x, y, z, step);
                         break;
                     }
                 }
             }
         }
-        if (chert >= 4) {
+        if (obsidian && chert > 0) {
+            parts.add(new Part(chert >= 4 ? "a large chert and obsidian seam" : "a chert and obsidian seam",
+                    chert >= 4 ? 6 : 5, null, null));
+        } else if (obsidian) {
+            parts.add(new Part("an obsidian seam", 4, null, null));
+        } else if (chert >= 4) {
             parts.add(new Part("a large chert seam", 3, null, null));
         } else if (chert > 0) {
             parts.add(new Part("a chert seam", 2, null, null));
         } else if (workable) {
             parts.add(new Part("workable stone", 1, null, null));
+        }
+        if (gravel >= 10) {
+            parts.add(new Part("gravel beds to sift", 2, null, null));
+        } else if (gravel >= 3) {
+            parts.add(new Part("gravel to sift", 1, null, null));
         }
         if (dev.hominin.evolution.survival.Termites.nearestColony(level, centre, radius) != null) {
             parts.add(new Part("a termite super colony", 4, null, null));
@@ -235,6 +277,13 @@ public final class Land {
                 case OBSIDIAN -> "an obsidian pool";
                 case SPRING -> "a spring that never runs dry";
                 case LICK -> "a salt lick";
+                case CHERT -> "a chert super deposit";
+                case BONOBO -> "bonobo country - nothing hunts there";
+                case HAVEN -> "a haven - every band knows it";
+                case GRAVEL -> "a gravel deposit";
+                case SUPER_GRAVEL -> "a gravel super deposit";
+                case TIDE_POOL -> "tide pools";
+                case OASIS -> "an oasis - water, stone and animals at dawn";
                 default -> "an old tool deposit";
             };
             if (parts.stream().noneMatch(p -> p.label().equals(what))) {

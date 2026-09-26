@@ -176,8 +176,25 @@ public final class Mood {
         List<BandMember> hungry = new ArrayList<>(band.stream()
                 .filter(m -> !m.isBaby() && m.getHunger() < BandMember.MAX_HUNGER - 2
                         && m.distanceToSqr(player) < 32.0D * 32.0D).toList());
-        if (foodCarried(player) < HOARD_FOOD || hungry.isEmpty()) {
+        askLater(player);
+        if (foodCarried(player) < HOARD_FOOD || hungry.isEmpty() || foodPiledNear(player) >= HOARD_FOOD) {
+            // Nobody wants it - or there is plenty on the band's food piles to eat from.
             counters.remove(HOARD_WARNED);
+            return;
+        }
+        if (hungry.stream().noneMatch(BandMember::isHungry)) {
+            // Peckish, not hungry: nobody can eat that much now. Put it by - or remember them later.
+            if (counters.getOrDefault(HOARD_WARNED, 0) == 0) {
+                counters.put(HOARD_WARNED, minute(player));
+                BandMember asker = hungry.get(0);
+                say(player, asker, player.getRandom().nextBoolean()
+                        ? "That's a lot of food to carry about. Lay some of it on a food pile - we'll eat from it."
+                        : "I couldn't eat another bite. If I'm hungry later, give me some of that, please.",
+                        ChatFormatting.YELLOW);
+                for (BandMember member : hungry) {
+                    later.put(member.getUUID(), player.getUUID());
+                }
+            }
             return;
         }
         int warned = counters.getOrDefault(HOARD_WARNED, 0);
@@ -201,6 +218,37 @@ public final class Mood {
             Cohesion.add(player, -2, "passed around the food you were carrying");
             say(player, hungry.get(0), "Still nothing? You eat well enough.", ChatFormatting.RED);
         }
+    }
+
+    /** Who asked to be given some later, and of whom. */
+    private static final Map<java.util.UUID, java.util.UUID> later = new java.util.HashMap<>();
+
+    /** Somebody who asked to be fed later is hungry now: they come and ask. */
+    private static void askLater(ServerPlayer player) {
+        if (later.isEmpty() || foodCarried(player) == 0) {
+            return;
+        }
+        for (BandMember member : Band.ownNear(player, 48.0D)) {
+            if (member.isHungry() && player.getUUID().equals(later.get(member.getUUID()))) {
+                later.remove(member.getUUID());
+                member.getNavigation().moveTo(player, 1.0D);
+                member.attendTo(player, BandMember.ATTEND_TICKS);
+                say(player, member, "I'm hungry now. You said you'd have some for me.", ChatFormatting.YELLOW);
+                return;
+            }
+        }
+    }
+
+    /** Food on the band's own piles near the player - food anyone may eat from. */
+    static int foodPiledNear(ServerPlayer player) {
+        int food = 0;
+        for (net.minecraft.core.BlockPos pos : ToolPiles.piles(player.serverLevel(), player.getUUID())) {
+            if (pos.distSqr(player.blockPosition()) < 32.0D * 32.0D && player.serverLevel().isLoaded(pos)
+                    && player.serverLevel().getBlockEntity(pos) instanceof dev.hominin.evolution.block.ToolPileBlockEntity pile) {
+                food += pile.total(s -> s.has(DataComponents.FOOD));
+            }
+        }
+        return food;
     }
 
     private static int foodCarried(BandMember member) {
@@ -325,6 +373,10 @@ public final class Mood {
             return;
         }
         BandMember victim = near.get(player.getRandom().nextInt(near.size()));
+        // Close to the band, or to the other one, and it rarely comes to blows.
+        if (player.getRandom().nextFloat() < Morals.closeness(bully, victim)) {
+            return;
+        }
         bully.ensureName();
         victim.ensureName();
         if (checked(player) && player.getRandom().nextFloat() < 0.7F) {

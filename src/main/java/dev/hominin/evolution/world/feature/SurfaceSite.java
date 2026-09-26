@@ -54,7 +54,9 @@ final class SurfaceSite {
                 || state.is(ModBlocks.QUARTZITE_DEPOSIT.get())
                 || state.is(ModBlocks.LIMESTONE_DEPOSIT.get())
                 || state.is(ModBlocks.BASALT_DEPOSIT.get())
-                || state.is(ModBlocks.CHERT_DEPOSIT.get());
+                || state.is(ModBlocks.CHERT_DEPOSIT.get())
+                || state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())
+                || state.is(ModBlocks.OBSIDIAN_DEPOSIT.get());
     }
 
     /**

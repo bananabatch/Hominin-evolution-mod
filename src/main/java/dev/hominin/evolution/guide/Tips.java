@@ -168,8 +168,8 @@ public final class Tips {
                 "living/others", 13),
         ENCOUNTER("They want something", "A band has come to you with an offer or a threat. Accept or decline an "
                 + "offer; to a threat, give in, fight - or flee, dropping some of what you carry.", "living/others", 9),
-        FIRE_PIT("A fire that keeps", "Fire on bare ground does not keep. At the work station, three logs along the "
-                + "bottom and five sticks above make a fire pit: fill it with thatch and sticks, then drill it.",
+        FIRE_PIT("A fire that keeps", "Fire on bare ground does not keep. At the work station, three sticks along the "
+                + "bottom row and a log in the middle make a fire pit: fill it with thatch and sticks, then drill it.",
                 "body/fire", 0),
         TORCH("Torches", "A stick and thatch at the work station, three twine in the slot: a torch. Light it at any "
                 + "fire, and throw it at anything that hunts - fire sends every one of them running.", "body/fire", 4),
@@ -274,6 +274,22 @@ public final class Tips {
     private static boolean ready(ServerPlayer player, long now) {
         return player.tickCount > SETTLE_TICKS && !CutsceneGuard.isProtected(player)
                 && now - lastShown.getOrDefault(player.getUUID(), -GAP_TICKS) >= GAP_TICKS;
+    }
+
+    /**
+     * A tip made up on the spot (see {@link Nudges}): shown now if tips are on and it is a tip's turn, never marked
+     * seen - the caller keeps its own count. Returns whether it was shown.
+     */
+    public static boolean showHint(ServerPlayer player, String title, String text, String entry, int page) {
+        long now = player.level().getGameTime();
+        if (data(player).isOff() || player.isSpectator() || !ready(player, now)) {
+            return false;
+        }
+        lastShown.put(player.getUUID(), now);
+        String book = !entry.isEmpty() && ModList.get().isLoaded("patchouli")
+                ? GuideBook.BOOK_ID.getNamespace() + ":" + entry : "";
+        PacketDistributor.sendToPlayer(player, new TipPayload(title, text, book, page, false));
+        return true;
     }
 
     private static void show(ServerPlayer player, Tip tip, long now) {

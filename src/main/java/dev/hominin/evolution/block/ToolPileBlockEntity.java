@@ -49,6 +49,119 @@ public class ToolPileBlockEntity extends BlockEntity {
     /** Raiders, and a pile broken up: marks mean nothing to them. */
     public static final Access ANYONE = (layer, mark) -> true;
 
+    /** What a pile is for: set by the first thing laid on it, and only that kind goes on after. */
+    public enum Kind {
+        TOOLS("Tool pile"), FOOD("Food pile"), ROCKS("Rock pile"), STORE("Store heap"), SACRED("The Pile"),
+        /** Sticks, branches, logs - and what is made of them: clubs, spears. */
+        WOOD("Wood pile");
+
+        private final String label;
+
+        Kind(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+    }
+
+    /** Which kind of pile a thing belongs on. */
+    public static Kind kindOf(ItemStack stack) {
+        if (stack.has(net.minecraft.core.component.DataComponents.FOOD) || dev.hominin.evolution.band.ToolPiles.isBone(stack)
+                || stack.is(dev.hominin.evolution.ModItems.DEAD_BRANCH.get())) {
+            return Kind.FOOD;
+        }
+        if (smallStick(stack)) {
+            // Sticks of every kind lie with the stone tools.
+            return Kind.TOOLS;
+        }
+        if (stack.is(dev.hominin.evolution.ModTags.Items.STONE_TOOLS) || dev.hominin.evolution.band.BandMember.isWeapon(stack)) {
+            return Kind.TOOLS;
+        }
+        if (stack.is(dev.hominin.evolution.ModTags.Items.ROCKS) || stack.is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)) {
+            return Kind.ROCKS;
+        }
+        return Kind.STORE;
+    }
+
+    /** Wood, worked or not: sticks, branches, logs, clubs, spears, a digging stick. */
+    public static boolean wooden(ItemStack stack) {
+        return ToolRackBlockEntity.rackable(stack) || stack.is(net.minecraft.world.item.Items.STICK)
+                || stack.is(net.minecraft.tags.ItemTags.LOGS);
+    }
+
+    /** Sticks: small enough to lie on a tool pile. */
+    public static boolean smallStick(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.STICK) || stack.is(dev.hominin.evolution.ModItems.SHARPENED_STICK.get())
+                || stack.is(dev.hominin.evolution.ModItems.POINTY_STICK.get())
+                || stack.is(dev.hominin.evolution.ModItems.TERMITE_STICK.get());
+    }
+
+    /** Spears, clubs, branches, shafts, digging sticks, logs: too big for a pile. They lean on a rack. */
+    public static boolean bigWood(ItemStack stack) {
+        return wooden(stack) && !smallStick(stack);
+    }
+
+    /**
+     * What the Pile takes: nothing ordinary. Obsidian, a chert hammerstone, a face pebble, a quartz crystal, a multi
+     * tool, a fine Acheulean tool - anything above the useful tier.
+     */
+    public static boolean important(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        if (stack.is(dev.hominin.evolution.ModItems.OBSIDIAN_ROCK.get()) || stack.is(dev.hominin.evolution.ModItems.CHERT_HAMMERSTONE.get())
+                || stack.is(dev.hominin.evolution.ModItems.FACE_PEBBLE.get()) || stack.is(dev.hominin.evolution.ModItems.QUARTZ_CRYSTAL.get())
+                || stack.is(dev.hominin.evolution.ModItems.OLDOWAN_MULTITOOL.get())) {
+            return true;
+        }
+        Integer quality = stack.get(dev.hominin.evolution.ModDataComponents.QUALITY.get());
+        if (quality != null && quality <= 1) {
+            return true;
+        }
+        return dev.hominin.evolution.band.Trading.tierOf(stack, null) >= 3;
+    }
+
+    @Nullable
+    private Kind kind;
+
+    /** This pile's kind - from what is on it, for a pile laid before piles had kinds. */
+    public Kind kind() {
+        if (kind == null) {
+            for (ItemStack stack : tools) {
+                if (!stack.isEmpty()) {
+                    return kindOf(stack);
+                }
+            }
+            return Kind.TOOLS;
+        }
+        return kind;
+    }
+
+    public void setKind(Kind kind) {
+        this.kind = kind;
+        changed();
+    }
+
+    /** Whether this goes on this pile: its own kind only - and on the Pile, only what is worth giving up. */
+    public boolean accepts(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        if (kind == Kind.SACRED) {
+            return important(stack);
+        }
+        return isEmpty() && kind == null || kindOf(stack) == kind();
+    }
+
+    /** The first thing laid on an unset pile decides what it is. */
+    private void settle(ItemStack stack) {
+        if (kind == null && !stack.isEmpty()) {
+            kind = kindOf(stack);
+        }
+    }
+
     private final NonNullList<ItemStack> tools = NonNullList.withSize(MAX, ItemStack.EMPTY);
     private final UUID[] layers = new UUID[MAX];
     private final String[] layerNames = new String[MAX];
@@ -60,6 +173,91 @@ public class ToolPileBlockEntity extends BlockEntity {
     private String firstName = "";
     /** Everyone who has ever laid anything down here - whether or not it is still here. */
     private final java.util.Set<UUID> contributors = new java.util.HashSet<>();
+    /** Which kind of its owner laid it down - how many evolutions on. -1: from before anyone counted. */
+    private int generation = -1;
+
+    public int generation() {
+        return generation;
+    }
+
+    public void setGeneration(int generation) {
+        this.generation = generation;
+        setChanged();
+    }
+
+    /** When the pile was started: a new pile is everybody's to sort out for a while before anyone keeps count. */
+    private long madeAt;
+
+    public long madeAt() {
+        return madeAt;
+    }
+
+    public void setMadeAt(long time) {
+        madeAt = time;
+        setChanged();
+    }
+
+    /**
+     * A long time passes over the pile, once for every kind since. Food rots away to nothing. A stone tool is
+     * sometimes gone - broken up, carried off - and what is left is worn, sometimes a grade cruder than it was, and
+     * marked as what it is: an artifact. Returns how many things it changed.
+     */
+    public int ageArtifacts(int steps, net.minecraft.util.RandomSource random) {
+        int changed = 0;
+        for (int step = 0; step < steps; step++) {
+            for (int i = 0; i < MAX; i++) {
+                ItemStack stack = tools.get(i);
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                if (stack.has(net.minecraft.core.component.DataComponents.FOOD)) {
+                    clear(i);
+                    changed++;
+                    continue;
+                }
+                if (!dev.hominin.evolution.item.StoneMaterial.isStoneTool(stack)) {
+                    continue;
+                }
+                changed++;
+                if (random.nextFloat() < 0.2F) {
+                    clear(i);
+                    continue;
+                }
+                if (stack.isDamageableItem()) {
+                    int max = stack.getMaxDamage();
+                    int wear = (int) (max * (0.25F + random.nextFloat() * 0.25F));
+                    stack.setDamageValue(Math.min(max - 1, stack.getDamageValue() + wear));
+                }
+                Integer quality = stack.get(dev.hominin.evolution.ModDataComponents.QUALITY.get());
+                if (quality != null && quality < 4 && random.nextFloat() < 0.35F) {
+                    stack.set(dev.hominin.evolution.ModDataComponents.QUALITY.get(), quality + 1);
+                }
+                stack.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(
+                        java.util.List.of(net.minecraft.network.chat.Component.literal("An artifact - left by those who "
+                                + "came before").withStyle(net.minecraft.ChatFormatting.GRAY,
+                                        net.minecraft.ChatFormatting.ITALIC))));
+            }
+        }
+        if (changed > 0) {
+            compact();
+            changed();
+        }
+        return changed;
+    }
+
+    /**
+     * Whoever laid these things down is long dead: no names on them, no marks, nobody who ever gave to the pile. What
+     * is left is for whoever finds it.
+     */
+    public void forgetPeople() {
+        Arrays.fill(layers, null);
+        Arrays.fill(layerNames, "");
+        Arrays.fill(marks, FOR_EVERYONE);
+        contributors.clear();
+        firstBy = null;
+        firstName = "";
+        changed();
+    }
 
     public ToolPileBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TOOL_PILE.get(), pos, state);
@@ -208,9 +406,10 @@ public class ToolPileBlockEntity extends BlockEntity {
     }
 
     public boolean add(ItemStack tool, @Nullable UUID by, String name) {
-        if (tool.isEmpty()) {
+        if (tool.isEmpty() || !accepts(tool)) {
             return false;
         }
+        settle(tool);
         for (int i = 0; i < MAX; i++) {
             if (tools.get(i).isEmpty()) {
                 set(i, tool.copyWithCount(1), by, name);
@@ -231,9 +430,10 @@ public class ToolPileBlockEntity extends BlockEntity {
      * of its own. What does not fit stays in the stack. Returns how many went on.
      */
     public int addStack(ItemStack stack, @Nullable UUID by, String name) {
-        if (stack.isEmpty()) {
+        if (stack.isEmpty() || !accepts(stack)) {
             return 0;
         }
+        settle(stack);
         int before = stack.getCount();
         if (stack.isStackable()) {
             for (int i = 0; i < MAX && !stack.isEmpty(); i++) {
@@ -318,6 +518,58 @@ public class ToolPileBlockEntity extends BlockEntity {
     }
 
     /** The first that fits what is wanted, wherever it lies in the pile. */
+    /** So many out of one slot, leaving the rest where it lies - other slots do not move. */
+    public ItemStack takeFromSlot(int slot, int count) {
+        if (slot < 0 || slot >= MAX || tools.get(slot).isEmpty() || count <= 0) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack taken = tools.get(slot).split(count);
+        if (tools.get(slot).isEmpty()) {
+            clear(slot);
+        }
+        changed();
+        return taken;
+    }
+
+    /** One of it, whatever it is made of and however worn - or empty. */
+    public ItemStack takeOne(Predicate<ItemStack> wanted) {
+        for (int i = MAX - 1; i >= 0; i--) {
+            ItemStack stack = tools.get(i);
+            if (!stack.isEmpty() && wanted.test(stack)) {
+                ItemStack one = stack.split(1);
+                if (stack.isEmpty()) {
+                    clear(i);
+                }
+                compact();
+                changed();
+                return one;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** So many of it, out of whatever stacks it lies in. Returns how many were taken. */
+    public int takeCount(Predicate<ItemStack> wanted, int count) {
+        int taken = 0;
+        for (int i = MAX - 1; i >= 0 && taken < count; i--) {
+            ItemStack stack = tools.get(i);
+            if (stack.isEmpty() || !wanted.test(stack)) {
+                continue;
+            }
+            int from = Math.min(count - taken, stack.getCount());
+            stack.shrink(from);
+            taken += from;
+            if (stack.isEmpty()) {
+                clear(i);
+            }
+        }
+        if (taken > 0) {
+            compact();
+            changed();
+        }
+        return taken;
+    }
+
     public ItemStack take(Predicate<ItemStack> wanted) {
         return take(wanted, ANYONE);
     }
@@ -399,6 +651,11 @@ public class ToolPileBlockEntity extends BlockEntity {
             tag.putUUID("FirstBy", firstBy);
         }
         tag.putString("FirstName", firstName);
+        tag.putInt("Generation", generation);
+        tag.putLong("MadeAt", madeAt);
+        if (kind != null) {
+            tag.putString("Kind", kind.name());
+        }
         ListTag gave = new ListTag();
         for (UUID who : contributors) {
             gave.add(net.minecraft.nbt.NbtUtils.createUUID(who));
@@ -431,6 +688,20 @@ public class ToolPileBlockEntity extends BlockEntity {
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
         firstBy = tag.hasUUID("FirstBy") ? tag.getUUID("FirstBy") : null;
         firstName = tag.getString("FirstName");
+        generation = tag.contains("Generation") ? tag.getInt("Generation") : -1;
+        madeAt = tag.getLong("MadeAt");
+        kind = null;
+        if (tag.contains("Kind")) {
+            try {
+                kind = Kind.valueOf(tag.getString("Kind"));
+                if (kind == Kind.WOOD) {
+                    // There are no wood piles: what was laid on one lies with the tools now.
+                    kind = Kind.TOOLS;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // An unknown kind: worked out from what is on it.
+            }
+        }
         contributors.clear();
         for (Tag entry : tag.getList("Contributors", Tag.TAG_INT_ARRAY)) {
             contributors.add(net.minecraft.nbt.NbtUtils.loadUUID(entry));
@@ -450,6 +721,8 @@ public class ToolPileBlockEntity extends BlockEntity {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         ContainerHelper.saveAllItems(tag, tools, true, registries);
+        // The kind goes to the client too: a rock pile is drawn as a heap.
+        tag.putString("Kind", kind().name());
         return tag;
     }
 

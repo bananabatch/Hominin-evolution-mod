@@ -15,8 +15,9 @@ public final class Drought {
     private static final float DRY_SEASON_CHANCE = 0.7F;
     private static final float PROSPEROUS_CHANCE = 0.1F;
 
+    /** Days since the current age began: every evolution starts the count - and the seasons - over. */
     public static long dayOf(Level level) {
-        return level.getDayTime() / 24000L;
+        return Math.max(0L, level.getDayTime() / 24000L - Era.startDay(level));
     }
 
     public static boolean isActive(Level level) {

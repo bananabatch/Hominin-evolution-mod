@@ -1,0 +1,19 @@
+{
+  "name": "Cooking rack",
+  "order": 3,
+  "description": "Two forked posts either side of a fire pit, a workable branch laid across the forks: meat hung from it over the fire cooks slowly and evenly. Set the posts, then use a workable branch on one.",
+  "key": {
+    "L": "hominin_evolution:cooking_rack[half=lower]",
+    "U": "hominin_evolution:cooking_rack[half=upper]",
+    "F": "hominin_evolution:fire_pit",
+    "S": "hominin_evolution:cooking_spit[axis=x]"
+  },
+  "layers": [
+    [
+      "LFL"
+    ],
+    [
+      "USU"
+    ]
+  ]
+}

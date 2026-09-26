@@ -45,7 +45,7 @@ public final class Spoilage {
         if (stack.isEmpty() || isSpoiled(stack)) {
             return;
         }
-        Component name = stack.getItem().getDescription();
+        Component name = stack.getHoverName();
         stack.set(ModDataComponents.SPOILED.get(), true);
         stack.set(DataComponents.ITEM_NAME, Component.translatable("item.hominin_evolution.spoiled", name));
     }

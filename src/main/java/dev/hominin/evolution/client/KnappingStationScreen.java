@@ -35,7 +35,8 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
 
     private enum Industry {
         OLDOWAN("Oldowan"),
-        ACHEULEAN("Acheulean");
+        ACHEULEAN("Acheulean"),
+        LEVALLOIS("Levallois");
 
         private final String label;
 
@@ -58,9 +59,9 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
     @Override
     protected void init() {
         super.init();
-        // Open on the Acheulean for anyone who can work it - that is what the station is for.
+        // Open on the newest industry anyone can work - that is what the station is for.
         if (menu.canWorkAcheulean() && industry == Industry.OLDOWAN && toolButtons.isEmpty()) {
-            industry = Industry.ACHEULEAN;
+            industry = menu.canWorkLevallois() ? Industry.LEVALLOIS : Industry.ACHEULEAN;
         }
         rebuild();
     }
@@ -75,10 +76,11 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
             rebuild();
         }).bounds(x, topPos + 4, PANEL_WIDTH, 16)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
-                        "Industry: " + industry.label + ". Click for the next one.")))
+                        "Industry: " + (industry == Industry.LEVALLOIS ? "Acheulean - the Levallois technique"
+                                : industry.label) + ". Click for the next one.")))
                 .build();
         addRenderableWidget(cycle);
-        List<KnappingChoice> choices = industry == Industry.ACHEULEAN ? Acheulean.CHOICES : StationKnapping.OLDOWAN;
+        List<KnappingChoice> choices = choices();
         int y = topPos + 26;
         for (KnappingChoice choice : choices) {
             Button button = Button.builder(Component.translatable(choice.titleKey()),
@@ -86,11 +88,27 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
                     .bounds(x, y, PANEL_WIDTH, 18)
                     .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(choice.hintKey())))
                     .build();
-            button.active = industry == Industry.OLDOWAN || menu.canWorkAcheulean();
+            button.active = allowed();
             toolButtons.add(button);
             addRenderableWidget(button);
             y += 20;
         }
+    }
+
+    private List<KnappingChoice> choices() {
+        return switch (industry) {
+            case ACHEULEAN -> Acheulean.CHOICES;
+            case LEVALLOIS -> StationKnapping.LEVALLOIS;
+            default -> StationKnapping.OLDOWAN;
+        };
+    }
+
+    private boolean allowed() {
+        return switch (industry) {
+            case ACHEULEAN -> menu.canWorkAcheulean();
+            case LEVALLOIS -> menu.canWorkLevallois();
+            default -> true;
+        };
     }
 
     @Override
@@ -111,7 +129,7 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
     /** What the stone laid out first will make, and the odds of each tier. */
     private void drawPanel(GuiGraphics graphics) {
         int x = PANEL_X + 2;
-        int rows = industry == Industry.ACHEULEAN ? Acheulean.CHOICES.size() : StationKnapping.OLDOWAN.size();
+        int rows = choices().size();
         int y = 26 + rows * 20 + 4;
         ItemStack stone = menu.workingStone();
         boolean hammer = !menu.station().getItem(KnappingStationBlockEntity.HAMMER).isEmpty();
@@ -120,7 +138,7 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
             graphics.drawString(font, "No hammerstone", x, y, 0xC04040, false);
             y += 10;
         }
-        if (industry == Industry.ACHEULEAN && !bopper) {
+        if (industry != Industry.OLDOWAN && !bopper) {
             graphics.drawString(font, "No bopper (bone)", x, y, 0xC04040, false);
             y += 10;
         }
@@ -130,6 +148,10 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         if (industry == Industry.OLDOWAN) {
             graphics.drawString(font, "No quality tiers.", x, y, 0x5A5A5A, false);
             graphics.drawString(font, "Hammer only.", x, y + 10, 0x5A5A5A, false);
+            return;
+        }
+        if (industry == Industry.LEVALLOIS) {
+            drawLevallois(graphics, x, y);
             return;
         }
         if (!menu.canWorkAcheulean()) {
@@ -164,6 +186,43 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
         }
     }
 
+    /** The Levallois panel: flakes and blades need no skill; the hand axe needs a hammerstone core laid out. */
+    private void drawLevallois(GuiGraphics graphics, int x, int y) {
+        if (!menu.canWorkLevallois()) {
+            graphics.drawString(font, "Heidelbergensis only.", x, y, 0xC04040, false);
+            return;
+        }
+        graphics.drawString(font, "Flakes: 2 a stone.", x, y, 0x5A5A5A, false);
+        graphics.drawString(font, "Blade: 1 a stone.", x, y + 10, 0x5A5A5A, false);
+        graphics.drawString(font, "Anyone's hands.", x, y + 20, 0x5A5A5A, false);
+        y += 33;
+        ItemStack core = ItemStack.EMPTY;
+        for (int slot = KnappingStationBlockEntity.STONES_START; slot < KnappingStationBlockEntity.SIZE && core.isEmpty();
+                slot++) {
+            if (StationKnapping.isHammerstone(menu.station().getItem(slot))) {
+                core = menu.station().getItem(slot);
+            }
+        }
+        if (core.isEmpty()) {
+            graphics.drawString(font, "Hand axe: lay out", x, y, 0x3F3F3F, false);
+            graphics.drawString(font, "a hammerstone core.", x, y + 10, 0x3F3F3F, false);
+            return;
+        }
+        int level = menu.knappingLevel();
+        graphics.drawString(font, "Hand axe, skill " + level + ":", x, y, 0x3F3F3F, false);
+        y += 11;
+        double[] odds = Acheulean.odds(level, new ItemStack(StationKnapping.rockOf(
+                dev.hominin.evolution.item.StoneMaterial.of(core))));
+        for (int tier = 0; tier <= 4; tier++) {
+            if (odds[tier] <= 0.0D) {
+                continue;
+            }
+            graphics.drawString(font, "T" + tier + " " + AcheuleanToolItem.TIER_NAMES[tier] + " "
+                    + Math.round(odds[tier] * 100) + "%", x, y, TIER_COLOURS[tier], true);
+            y += 10;
+        }
+    }
+
     private String trim(String name) {
         return font.width(name) > PANEL_WIDTH - 50 ? font.plainSubstrByWidth(name, PANEL_WIDTH - 54) + "." : name;
     }
@@ -173,7 +232,7 @@ public class KnappingStationScreen extends AbstractContainerScreen<KnappingStati
     protected void containerTick() {
         super.containerTick();
         for (Button button : toolButtons) {
-            button.active = industry == Industry.OLDOWAN || menu.canWorkAcheulean();
+            button.active = allowed();
         }
     }
 

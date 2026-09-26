@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Habilis finds fire. Erectus keeps it - in a $(l)fire pit$(). At the work station, three logs along the bottom row and five sticks above them (a gap at the top middle), nothing in the slot. Set it down where the band sleeps. A drill worked on bare ground only makes a flash of flame."
+      "text": "Habilis finds fire. Erectus keeps it - in a $(l)fire pit$(). At the work station, three sticks along the bottom row and one log in the middle, nothing in the slot. Set it down where the band sleeps. A drill worked on bare ground only makes a flash of flame."
     },
     {
       "type": "patchouli:text",
@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Then work a $(l)fire drill$() on it. It does not always catch - the more thatch in it the likelier, rain makes it hard, and knowing fire already helps. A burning torch catches it far more easily than a drill.$(br2)Lit, everything in it is fire. Feed it and it keeps: a stick is a minute, thatch half that, a branch two and a half - up to half an hour banked. Rain eats it four times as fast."
+      "text": "Then hold a $(l)fire drill$() to it for three seconds (let go early and it is lost). It may not catch - more thatch helps, rain hurts. A burning torch catches it far more easily than a drill.$(br2)Lit, everything in it is fire. Feed it and it keeps: a stick is a minute, thatch half that, a branch two and a half - up to half an hour banked. Rain eats it four times as fast."
     },
     {
       "type": "patchouli:text",
@@ -27,6 +27,14 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Thatch$() put in an unlit pit lies in the bottom of it, under the sticks, and a thread of smoke comes off it - thicker on the warm ashes of the last fire. Thrown on a burning fire, thatch goes up in a column of white smoke that can be seen a long way off."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Ergaster never worked a drill: its fire was always carried from one burning somewhere else - a torch lit at a wildfire or at lava, walked back and put to the pit. That is how an ergaster keeps a fire."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Kept fire.$() From erectus on, the band keeps the camp's fire: whoever sees a fire pit burning low feeds it, with what they carry, what is in the piles, or dead wood. One who knows fire lights a laid pit at dusk. $(l)Fire-hardening$(): right-click a fire with a sharpened spear four times, or hold it there."
     }
   ]
 }

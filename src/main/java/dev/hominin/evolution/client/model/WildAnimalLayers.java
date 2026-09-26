@@ -44,56 +44,65 @@ public final class WildAnimalLayers {
     }
 
     /**
-     * The giant baboon. Built on the same plan as its smaller cousin and wrong in every
-     * proportion: deeper chest, heavier shoulders, a muzzle carrying the largest canines
-     * of any monkey that has ever lived - and the tail, which on a baboon is a thin thing
-     * it carries in an arch and on this is a counterweight as long as the animal is.
+     * The giant baboon, built as a baboon stands: forelimbs longer than the hind, so the shoulders ride high under
+     * a heavy cape and the head is carried low and forward; a long ridged snout angled down, with the largest
+     * canines of any monkey that ever lived; hands and feet flat on the ground; and the tail held up from the rump
+     * and dropping away in the "broken" arch every baboon carries. Generated with its texture (scratchpad
+     * dino_gen.py) so the UVs match the paint.
      */
     public static LayerDefinition dinopithecus() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13)
-                .addBox(-4F, -3.5F, -7F, 8F, 7F, 14F), PartPose.offsetAndRotation(0F, 13F, 0.5F, -0.26F, 0F, 0F));
-        // The shoulder cape an adult male carries, and the ridge of the spine under it.
-        body.addOrReplaceChild("mane", CubeListBuilder.create().texOffs(46, 13)
-                .addBox(-4.5F, -4.6F, -7.5F, 9F, 6F, 6F), PartPose.offset(0F, 0F, 0F));
-        body.addOrReplaceChild("spine", CubeListBuilder.create().texOffs(78, 13)
-                .addBox(-1F, -5F, -1.5F, 2F, 2F, 9F), PartPose.offset(0F, 0F, 0F));
-
-        // Three segments rather than two, each one longer, and held in a high arch.
-        PartDefinition tail_base = body.addOrReplaceChild("tail_base", CubeListBuilder.create().texOffs(0, 35)
-                .addBox(-1.5F, -1.5F, 0F, 3F, 3F, 6F), PartPose.offsetAndRotation(0F, -2.5F, 7F, 1.05F, 0F, 0F));
-        PartDefinition tail_mid = tail_base.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(20, 35)
-                .addBox(-1F, -1F, 0F, 2F, 2F, 7F), PartPose.offsetAndRotation(0F, 0F, 6F, -2.0F, 0F, 0F));
-        tail_mid.addOrReplaceChild("tail_tip", CubeListBuilder.create().texOffs(40, 35)
-                .addBox(-0.5F, -0.5F, 0F, 1F, 1F, 6F), PartPose.offsetAndRotation(0F, 0F, 7F, 0.35F, 0F, 0F));
-
-        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0)
-                .addBox(-3.5F, -3.5F, -5F, 7F, 7F, 5F), PartPose.offset(0F, 10F, -5.5F));
-        head.addOrReplaceChild("ruff", CubeListBuilder.create().texOffs(26, 0)
-                .addBox(-5F, -4F, -3F, 10F, 8F, 3F), PartPose.offset(0F, 0F, 0F));
-        head.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(100, 0)
-                .addBox(-3.5F, -4F, -5.5F, 7F, 1.5F, 2F), PartPose.offset(0F, 0F, 0F));
-        head.addOrReplaceChild("muzzle_base", CubeListBuilder.create().texOffs(54, 0)
-                .addBox(-2.5F, -1F, -9F, 5F, 5F, 4F), PartPose.offset(0F, 0F, 0F));
-        head.addOrReplaceChild("muzzle_tip", CubeListBuilder.create().texOffs(74, 0)
-                .addBox(-2F, -0.5F, -12F, 4F, 4F, 3F), PartPose.offset(0F, 0F, 0F));
-        // The canines, which are the entire reason anybody remembers this animal.
-        // Two canines, one each side of the jaw with a gap between them - not a single
-        // block of tooth across the front.
-        head.addOrReplaceChild("left_fang", CubeListBuilder.create().texOffs(90, 0)
-                .addBox(0.6F, 2.5F, -11.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
-        head.addOrReplaceChild("right_fang", CubeListBuilder.create().texOffs(90, 0)
-                .addBox(-1.6F, 2.5F, -11.5F, 1F, 3F, 1F), PartPose.offset(0F, 0F, 0F));
-
-        root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(56, 35)
-                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(-2.5F, 14F, -4.5F));
-        root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(56, 35)
-                .addBox(-2F, 0F, -2F, 4F, 10F, 4F), PartPose.offset(2.5F, 14F, -4.5F));
-        root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(74, 35)
-                .addBox(-2F, 0F, -2F, 4F, 8F, 4F), PartPose.offset(-2.5F, 16F, 4.5F));
-        root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(74, 35)
-                .addBox(-2F, 0F, -2F, 4F, 8F, 4F), PartPose.offset(2.5F, 16F, 4.5F));
+        PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.5F, -4F, -7.5F, 9F, 8F, 15F), PartPose.offsetAndRotation(0F, 12F, 1.5F, -0.2F, 0F, 0F));
+        body.addOrReplaceChild("mane", CubeListBuilder.create().texOffs(49, 0)
+                .addBox(-5F, -5.2F, -8.2F, 10F, 7F, 8F), PartPose.offset(0F, 0F, 0F));
+        body.addOrReplaceChild("rump", CubeListBuilder.create().texOffs(86, 0)
+                .addBox(-4.2F, -4.3F, 4F, 8.4F, 6F, 4F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition tail_base = body.addOrReplaceChild("tail_base", CubeListBuilder.create().texOffs(0, 24)
+                .addBox(-1.25F, -1.25F, 0F, 2.5F, 2.5F, 5F), PartPose.offsetAndRotation(0F, -2.5F, 7.3F, 0.95F, 0F, 0F));
+        PartDefinition tail_mid = tail_base.addOrReplaceChild("tail_mid", CubeListBuilder.create().texOffs(17, 24)
+                .addBox(-1F, -1F, 0F, 2F, 2F, 7F), PartPose.offsetAndRotation(0F, 0F, 5F, -1.95F, 0F, 0F));
+        tail_mid.addOrReplaceChild("tail_tuft", CubeListBuilder.create().texOffs(36, 24)
+                .addBox(-1.3F, -1.3F, 0F, 2.6F, 2.6F, 2.5F), PartPose.offset(0F, 0F, 6.8F));
+        PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(49, 24)
+                .addBox(-3.5F, -3.5F, -6F, 7F, 7F, 6F), PartPose.offset(0F, 9.6F, -6.8F));
+        head.addOrReplaceChild("ruff", CubeListBuilder.create().texOffs(76, 24)
+                .addBox(-5.5F, -4.6F, -2F, 11F, 9F, 3F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(105, 24)
+                .addBox(-4F, -4.1F, -6.6F, 8F, 2F, 2F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition muzzle = head.addOrReplaceChild("muzzle", CubeListBuilder.create().texOffs(0, 38)
+                .addBox(-2.5F, -1.2F, -6.2F, 5F, 4.4F, 6.2F), PartPose.offsetAndRotation(0F, 0.4F, -5.4F, 0.2F, 0F, 0F));
+        muzzle.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(25, 38)
+                .addBox(-2.4F, -1.4F, -7.1F, 4.8F, 2.8F, 1.3F), PartPose.offset(0F, 0F, 0F));
+        muzzle.addOrReplaceChild("lip", CubeListBuilder.create().texOffs(40, 38)
+                .addBox(-2.3F, 1.4F, -6.6F, 4.6F, 1.8F, 0.6F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("left_eye", CubeListBuilder.create().texOffs(53, 38)
+                .addBox(0.9F, -2.1F, -6.35F, 1.6F, 1.1F, 0.5F), PartPose.offset(0F, 0F, 0F));
+        head.addOrReplaceChild("right_eye", CubeListBuilder.create().texOffs(53, 38)
+                .addBox(-2.5F, -2.1F, -6.35F, 1.6F, 1.1F, 0.5F), PartPose.offset(0F, 0F, 0F));
+        muzzle.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(60, 38)
+                .addBox(-2F, 3.2F, -5.4F, 4F, 1.5F, 5F), PartPose.offset(0F, 0F, 0F));
+        muzzle.addOrReplaceChild("left_fang", CubeListBuilder.create().texOffs(79, 38)
+                .addBox(0.8F, 3F, -6.2F, 1F, 2.6F, 1F), PartPose.offset(0F, 0F, 0F));
+        muzzle.addOrReplaceChild("right_fang", CubeListBuilder.create().texOffs(79, 38)
+                .addBox(-1.8F, 3F, -6.2F, 1F, 2.6F, 1F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition right_front_leg = root.addOrReplaceChild("right_front_leg", CubeListBuilder.create().texOffs(84, 38)
+                .addBox(-2.25F, 0F, -2.25F, 4.5F, 12F, 4.5F), PartPose.offset(-3.3F, 12F, -5.2F));
+        right_front_leg.addOrReplaceChild("right_hand", CubeListBuilder.create().texOffs(105, 38)
+                .addBox(-2.5F, 10.4F, -3.8F, 5F, 1.6F, 5.6F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition left_front_leg = root.addOrReplaceChild("left_front_leg", CubeListBuilder.create().texOffs(84, 38)
+                .addBox(-2.25F, 0F, -2.25F, 4.5F, 12F, 4.5F), PartPose.offset(3.3F, 12F, -5.2F));
+        left_front_leg.addOrReplaceChild("left_hand", CubeListBuilder.create().texOffs(105, 38)
+                .addBox(-2.5F, 10.4F, -3.8F, 5F, 1.6F, 5.6F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition right_hind_leg = root.addOrReplaceChild("right_hind_leg", CubeListBuilder.create().texOffs(0, 56)
+                .addBox(-2.25F, 0F, -2.5F, 4.5F, 10F, 5F), PartPose.offset(-3.3F, 14F, 5.6F));
+        right_hind_leg.addOrReplaceChild("right_foot", CubeListBuilder.create().texOffs(21, 56)
+                .addBox(-2.5F, 8.4F, -4.2F, 5F, 1.6F, 6.6F), PartPose.offset(0F, 0F, 0F));
+        PartDefinition left_hind_leg = root.addOrReplaceChild("left_hind_leg", CubeListBuilder.create().texOffs(0, 56)
+                .addBox(-2.25F, 0F, -2.5F, 4.5F, 10F, 5F), PartPose.offset(3.3F, 14F, 5.6F));
+        left_hind_leg.addOrReplaceChild("left_foot", CubeListBuilder.create().texOffs(21, 56)
+                .addBox(-2.5F, 8.4F, -4.2F, 5F, 1.6F, 6.6F), PartPose.offset(0F, 0F, 0F));
         return LayerDefinition.create(mesh, 128, 128);
     }
 

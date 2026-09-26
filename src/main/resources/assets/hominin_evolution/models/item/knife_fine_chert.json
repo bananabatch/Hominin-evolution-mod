@@ -1,0 +1,10 @@
+{
+  "parent": "hominin_evolution:item/knife",
+  "textures": {
+    "body": "hominin_evolution:item/stone/fine_chert_body",
+    "scar": "hominin_evolution:item/stone/fine_chert_scar",
+    "edge": "hominin_evolution:item/stone/fine_chert_edge",
+    "particle": "hominin_evolution:item/stone/fine_chert_body",
+    "twine": "hominin_evolution:item/twine_wrap"
+  }
+}

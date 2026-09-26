@@ -20,7 +20,8 @@ public record OthersPayload(List<View> bands) implements CustomPacketPayload {
 
     /** One band as the player knows it. {@code lines} are the details, ready to show. */
     public record View(String id, String name, int standing, boolean near, boolean ransom, boolean canTravel,
-            boolean nomadic, List<String> lines, int presence, int cohesion, int desperation) {
+            boolean nomadic, List<String> lines, int presence, int cohesion, int desperation, List<String> ways,
+            boolean canJoin) {
     }
 
     public static final StreamCodec<FriendlyByteBuf, OthersPayload> STREAM_CODEC =
@@ -41,6 +42,9 @@ public record OthersPayload(List<View> bands) implements CustomPacketPayload {
             buf.writeVarInt(v.presence());
             buf.writeVarInt(v.cohesion());
             buf.writeVarInt(v.desperation());
+            buf.writeVarInt(v.ways().size());
+            v.ways().forEach(buf::writeUtf);
+            buf.writeBoolean(v.canJoin());
         }
     }
 
@@ -60,8 +64,17 @@ public record OthersPayload(List<View> bands) implements CustomPacketPayload {
             for (int j = 0; j < lineCount; j++) {
                 lines.add(buf.readUtf());
             }
-            views.add(new View(id, name, standing, near, ransom, canTravel, nomadic, lines, buf.readVarInt(),
-                    buf.readVarInt(), buf.readVarInt()));
+            int presence = buf.readVarInt();
+            int cohesion = buf.readVarInt();
+            int desperation = buf.readVarInt();
+            int wayCount = buf.readVarInt();
+            List<String> ways = new ArrayList<>();
+            for (int j = 0; j < wayCount; j++) {
+                ways.add(buf.readUtf());
+            }
+            boolean canJoin = buf.readBoolean();
+            views.add(new View(id, name, standing, near, ransom, canTravel, nomadic, lines, presence, cohesion,
+                    desperation, ways, canJoin));
         }
         return new OthersPayload(views);
     }

@@ -12,38 +12,46 @@ import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * The J screen: who you are, and what you know.
+ * The J screen: who you are, what you know, and what cannot wait.
  *
- * <p>Two tabs, laid out like the H menu. Stats is a page of plain lines. Skills is a list
- * down the left - what you know by name, what you do not as question marks - and picking
- * one shows it on the right: what it is, how to do it again, and what it gives you.
+ * <p>Three tabs, laid out like the H menu. Stats is a page of plain lines. Skills is a list down the left - what you
+ * know by name, what you do not as question marks - and picking one shows it on the right: what it is, how to do it
+ * again, and what it gives you. Tasks is what wants seeing to right now, and the urgent news of late - everything
+ * that went across the top of the screen, so none of it is lost.
  */
 public class JournalScreen extends Screen {
     private static final int LINE = 12;
     private static final int LIST_WIDTH = 140;
     private static final int PANEL_WIDTH = 210;
+    private static final int TASK_WIDTH = 330;
     private static final int GOLD = 0xE9D8A6;
     private static final int PALE = 0xBBBBBB;
 
+    private static final int STATS = 0;
+    private static final int SKILLS = 1;
+    private static final int TASKS = 2;
+    /** The tab last looked at: the journal opens there again. */
+    private static int lastTab = STATS;
+
     private final JournalPayload journal;
-    private boolean skillsTab;
+    private int tab;
     private int selected = -1;
     /** First skill row shown: the list scrolls rather than running into the Done button. */
     private int firstRow;
     private static final int ROW = 18;
-    /** How far the stats, or the chosen skill's text, is scrolled - each in its own box above Done. */
+    /** How far the stats, the tasks, or the chosen skill's text, is scrolled - each in its own box above Done. */
     private int textScroll;
     private int textHeight;
 
-    private JournalScreen(JournalPayload journal, boolean skillsTab, int selected) {
+    private JournalScreen(JournalPayload journal, int tab, int selected) {
         super(Component.literal("Journal"));
         this.journal = journal;
-        this.skillsTab = skillsTab;
+        this.tab = tab;
         this.selected = selected;
     }
 
     public static void open(JournalPayload journal) {
-        Minecraft.getInstance().setScreen(new JournalScreen(journal, false, -1));
+        Minecraft.getInstance().setScreen(new JournalScreen(journal, lastTab, -1));
     }
 
     private int known() {
@@ -54,24 +62,39 @@ public class JournalScreen extends Screen {
         return count;
     }
 
+    /** Tasks that want doing - the season line is always there, and is not one. */
+    private int urgent() {
+        int count = 0;
+        for (String task : journal.tasks()) {
+            if (!task.startsWith("S|")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void show(int which) {
+        tab = which;
+        lastTab = which;
+        textScroll = 0;
+        rebuildWidgets();
+    }
+
     @Override
     protected void init() {
         int top = 28;
-        addRenderableWidget(Button.builder(Component.literal(skillsTab ? "Stats" : "> Stats <"), b -> {
-            skillsTab = false;
-            textScroll = 0;
-            rebuildWidgets();
-        }).bounds(width / 2 - 124, top, 80, 20).build());
-        addRenderableWidget(Button.builder(Component.literal(skillsTab ? "> Skills <" : "Skills"), b -> {
-            skillsTab = true;
-            textScroll = 0;
-            rebuildWidgets();
-        }).bounds(width / 2 - 40, top, 80, 20).build());
+        int urgent = urgent();
+        String[] labels = {"Stats", "Skills", urgent > 0 ? "Event log (" + urgent + ")" : "Event log"};
+        for (int i = 0; i < labels.length; i++) {
+            int which = i;
+            addRenderableWidget(Button.builder(Component.literal(tab == i ? "> " + labels[i] + " <" : labels[i]),
+                    b -> show(which)).bounds(width / 2 - 162 + i * 82, top, 78, 20).build());
+        }
         addRenderableWidget(Button.builder(Component.literal("Map"), b -> PacketDistributor.sendToServer(
                 new dev.hominin.evolution.network.MapActionPayload(dev.hominin.evolution.network.MapActionPayload.OPEN, -1, "")))
-                .bounds(width / 2 + 44, top, 80, 20).build());
+                .bounds(width / 2 - 162 + 3 * 82, top, 78, 20).build());
 
-        if (skillsTab) {
+        if (tab == SKILLS) {
             int left = width / 2 - (LIST_WIDTH + PANEL_WIDTH + 12) / 2;
             int y = top + 44;
             List<String> titles = journal.titles();
@@ -109,8 +132,10 @@ public class JournalScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
         graphics.drawCenteredString(font, Component.literal("Journal - " + journal.heading()), width / 2, 12, GOLD);
-        if (skillsTab) {
+        if (tab == SKILLS) {
             renderSkills(graphics);
+        } else if (tab == TASKS) {
+            renderTasks(graphics);
         } else {
             renderStats(graphics);
         }
@@ -132,6 +157,63 @@ public class JournalScreen extends Screen {
         graphics.disableScissor();
         textHeight = y + textScroll - top;
         scrollHint(graphics, width / 2 + 150, top);
+    }
+
+    /** Colours by Alerts.Kind code: need, warning, danger, season, band. */
+    private static int colourOf(char code) {
+        return switch (code) {
+            case 'N' -> 0xE8A83A;
+            case 'W' -> 0xE8553A;
+            case 'D' -> 0xFF4040;
+            case 'S' -> 0x7CC870;
+            case 'B' -> 0xC08AF0;
+            default -> PALE;
+        };
+    }
+
+    private void renderTasks(GuiGraphics graphics) {
+        int top = 60;
+        int left = width / 2 - TASK_WIDTH / 2;
+        graphics.enableScissor(0, top - 2, width, boxBottom());
+        int y = top - textScroll;
+        graphics.drawString(font, "Right now", left, y, GOLD);
+        y += 14;
+        boolean any = false;
+        for (String task : journal.tasks()) {
+            y = entry(graphics, task, left, y, 0xFFFFFF);
+            any |= !task.startsWith("S|");
+        }
+        if (!any) {
+            graphics.drawString(font, "Nothing urgent. The band is fed, nobody is coming, nothing needs you.", left, y,
+                    PALE);
+            y += LINE;
+        }
+        y += 10;
+        graphics.drawString(font, "Recent", left, y, GOLD);
+        y += 14;
+        if (journal.recent().isEmpty()) {
+            graphics.drawString(font, "No urgent news yet.", left, y, PALE);
+            y += LINE;
+        }
+        for (String alert : journal.recent()) {
+            y = entry(graphics, alert, left, y, PALE);
+        }
+        graphics.disableScissor();
+        textHeight = y + textScroll - top;
+        scrollHint(graphics, left + TASK_WIDTH + 6, top);
+    }
+
+    /** One line of the Event log: a coloured bar for its kind, the text wrapped beside it. Returns the y below. */
+    private int entry(GuiGraphics graphics, String line, int left, int y, int colour) {
+        char code = line.length() > 1 && line.charAt(1) == '|' ? line.charAt(0) : '?';
+        String text = code == '?' ? line : line.substring(2);
+        int start = y;
+        for (FormattedCharSequence part : font.split(Component.literal(text), TASK_WIDTH - 10)) {
+            graphics.drawString(font, part, left + 8, y, colour);
+            y += LINE - 2;
+        }
+        graphics.fill(left, start - 1, left + 3, y - 1, 0xFF000000 | colourOf(code));
+        return y + 4;
     }
 
     /** A small arrow when there is more above or below. */
@@ -201,13 +283,13 @@ public class JournalScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int panelLeft = width / 2 - (LIST_WIDTH + PANEL_WIDTH + 12) / 2 + LIST_WIDTH + 12;
-        boolean overText = !skillsTab || mouseX >= panelLeft - 4;
-        int room = boxBottom() - (skillsTab ? 72 : 60);
+        boolean overText = tab != SKILLS || mouseX >= panelLeft - 4;
+        int room = boxBottom() - (tab == SKILLS ? 72 : 60);
         if (overText && textHeight > room) {
             textScroll = Math.max(0, Math.min(textHeight - room, textScroll - (int) (scrollY * 20)));
             return true;
         }
-        if (skillsTab && journal.titles().size() > visibleRows()) {
+        if (tab == SKILLS && journal.titles().size() > visibleRows()) {
             firstRow = Math.max(0, Math.min(journal.titles().size() - visibleRows(), firstRow - (int) Math.signum(scrollY)));
             rebuildWidgets();
             return true;

@@ -38,7 +38,7 @@ public final class ModItems {
 
     /** A few dozen blows. Enough to be worth making, few enough to replace. */
     private static final int LOMEKWIAN_DURABILITY = 24;
-    private static final int OLDOWAN_MULTITOOL_DURABILITY = 96;
+    private static final int OLDOWAN_MULTITOOL_DURABILITY = 80;
 
     /**
      * Grinding wears the stone flat as well as the edge sharp. A tool now, so it has
@@ -121,10 +121,12 @@ public final class ModItems {
      */
     public static final DeferredItem<Item> CHOPPER = ITEMS.registerSimpleItem("chopper",
             new Item.Properties()
-                    .durability(96)
+                    .durability(72)
                     .component(DataComponents.TOOL, chopping()));
 
-    public static final DeferredItem<Item> HAMMERSTONE = ITEMS.registerSimpleItem("hammerstone", new Item.Properties());
+    /** Battered a little more with every blow: sooner or later it cracks. */
+    public static final DeferredItem<Item> HAMMERSTONE = ITEMS.registerSimpleItem("hammerstone",
+            new Item.Properties().durability(64));
 
     /**
      * A hammerstone struck out of a chert seam. It works like any hammerstone, but
@@ -150,11 +152,11 @@ public final class ModItems {
      * A spindle and a hearth board: the trick of making fire instead of finding it.
      * Carrying one is proof you worked it out, which is what erectus is waiting for.
      */
-    public static final DeferredItem<Item> FIRE_DRILL =
-            ITEMS.registerSimpleItem("fire_drill", new Item.Properties());
+    public static final DeferredItem<Item> FIRE_DRILL = ITEMS.register("fire_drill",
+            () -> new dev.hominin.evolution.item.FireDrillItem(new Item.Properties()));
 
     public static final DeferredItem<Item> CHERT_HAMMERSTONE =
-            ITEMS.registerSimpleItem("chert_hammerstone", new Item.Properties());
+            ITEMS.registerSimpleItem("chert_hammerstone", new Item.Properties().durability(96));
 
     /** Three logs round a bed of sticks. Made at the work station; lit with a drill. */
     public static final DeferredItem<Item> FIRE_PIT = ITEMS.register("fire_pit",
@@ -173,7 +175,8 @@ public final class ModItems {
     public static final DeferredItem<Item> CHARRED_MEAT = ITEMS.registerSimpleItem("charred_meat",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.15F).build()));
 
-    public static final DeferredItem<Item> DIGGING_STICK = ITEMS.registerSimpleItem("digging_stick", new Item.Properties());
+    public static final DeferredItem<Item> DIGGING_STICK = ITEMS.registerSimpleItem("digging_stick",
+            new Item.Properties().durability(80));
 
     /**
      * The raw shaft: grind it against a rock for a spear, craft it into a digging
@@ -191,7 +194,16 @@ public final class ModItems {
      */
     public static final DeferredItem<Item> WOODEN_CLUB = ITEMS.registerItem("wooden_club",
             WoodenWeaponItem::new,
-            new Item.Properties().durability(140).attributes(weapon(2.5D, 0.8D, 1.0D))
+            new Item.Properties().durability(100).attributes(weapon(2.5D, 0.8D, 1.0D))
+                    .rarity(net.minecraft.world.item.Rarity.UNCOMMON));
+
+    /**
+     * The thighbone of something enormous, knuckle end up: heavier than any wooden club and harder, and it does not
+     * split. Only the great beasts leave one - a mammoth, a giant hyena, a sabre-tooth - and not every time.
+     */
+    public static final DeferredItem<Item> BONE_CLUB = ITEMS.registerItem("bone_club",
+            WoodenWeaponItem::new,
+            new Item.Properties().durability(180).attributes(weapon(3.5D, 0.8D, 1.0D))
                     .rarity(net.minecraft.world.item.Rarity.UNCOMMON));
 
     /**
@@ -215,14 +227,14 @@ public final class ModItems {
      * earliest weapon we know of, and about as much use against anything large.
      */
     public static final DeferredItem<Item> SHARPENED_STICK = ITEMS.registerSimpleItem("sharpened_stick",
-            new Item.Properties().attributes(weapon(1.0D, 2.5D, 0.0D)));
+            new Item.Properties().durability(24).attributes(weapon(1.0D, 2.5D, 0.0D)));
 
     /**
      * The same stick finished with a flake instead of teeth: a long, even taper and a
      * point fine enough to open a wound. The first thing a stone edge makes better.
      */
     public static final DeferredItem<Item> POINTY_STICK = ITEMS.registerSimpleItem("pointy_stick",
-            new Item.Properties().attributes(weapon(2.5D, 2.5D, 0.0D)));
+            new Item.Properties().durability(40).attributes(weapon(2.5D, 2.5D, 0.0D)));
 
     /**
      * A wooden spear ground to a point against a rock - the Schoeningen kit.
@@ -231,7 +243,7 @@ public final class ModItems {
      * longer than one ground against a fresh cobble.
      */
     public static final DeferredItem<Item> SHARPENED_SPEAR = ITEMS.registerItem("sharpened_spear",
-            WoodenWeaponItem::new,
+            dev.hominin.evolution.item.SpearItem::new,
             new Item.Properties().durability(40).attributes(weapon(3.5D, 1.6D, 2.0D)));
 
     /**
@@ -240,8 +252,24 @@ public final class ModItems {
      * that stage is defined by.
      */
     public static final DeferredItem<Item> FIRE_HARDENED_SPEAR = ITEMS.registerItem("fire_hardened_spear",
-            WoodenWeaponItem::new,
-            new Item.Properties().durability(140).attributes(weapon(4.5D, 1.6D, 2.0D)));
+            dev.hominin.evolution.item.SpearItem::new,
+            new Item.Properties().durability(100).attributes(weapon(4.5D, 1.6D, 2.0D)));
+
+    /**
+     * The Schoningen spear: not a point on a stick but the whole shaft, hardened in a fire end to end and balanced
+     * like a javelin, heaviest a third of the way along. The spears found at Schoningen brought down horses. It
+     * opens a wound that does not close, and often one that does not stop.
+     */
+    public static final DeferredItem<Item> SCHONINGEN_SPEAR = ITEMS.registerItem("schoningen_spear",
+            dev.hominin.evolution.item.SpearItem::new,
+            new Item.Properties().durability(180).attributes(weapon(5.0D, 1.6D, 2.0D))
+                    .rarity(net.minecraft.world.item.Rarity.RARE));
+
+    /** A Levallois blade hafted on the end of a shaft with twine: the stone-tipped spear, the Kathu Pan points. */
+    public static final DeferredItem<Item> STONE_TIPPED_SPEAR = ITEMS.registerItem("stone_tipped_spear",
+            dev.hominin.evolution.item.SpearItem::new,
+            new Item.Properties().durability(150).attributes(weapon(6.0D, 1.4D, 2.0D))
+                    .rarity(net.minecraft.world.item.Rarity.RARE));
 
     /**
      * A Lomekwi-style core: a big cobble with a flake knocked off it and nothing
@@ -270,10 +298,6 @@ public final class ModItems {
                     .attributes(weapon(2.5D, 1.4D, 1.0D))
                     .component(DataComponents.TOOL, chopping()));
 
-    /** A fist-sized cobble. Knapping stock, and coarse enough to grind a shaft to a point. */
-    public static final DeferredItem<Item> ROCK = ITEMS.registerSimpleItem("rock",
-            new Item.Properties().stacksTo(ROCKS_PER_STACK));
-
     /**
      * A rough, flat-faced stone for putting an edge back on worn tools. Knapped
      * deliberately rather than worn in by accident, and good in soft stone too.
@@ -287,6 +311,12 @@ public final class ModItems {
     // armful-sized stack limit rather than the block-item default of 64.
     public static final DeferredItem<BlockItem> CHERT_ROCK = ITEMS.registerSimpleBlockItem(
             ModBlocks.CHERT_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
+    public static final DeferredItem<BlockItem> FINE_CHERT_ROCK = ITEMS.registerSimpleBlockItem(
+            ModBlocks.FINE_CHERT_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
+    /** A fist of volcanic glass: a Levallois core, a terrible thing to throw, and no hammerstone at all. */
+    public static final DeferredItem<Item> OBSIDIAN_CHUNK = ITEMS.registerItem("obsidian_chunk",
+            dev.hominin.evolution.item.ObsidianChunkItem::new, new Item.Properties().stacksTo(4)
+                    .rarity(net.minecraft.world.item.Rarity.UNCOMMON));
     public static final DeferredItem<BlockItem> GRANITE_ROCK = ITEMS.registerSimpleBlockItem(
             ModBlocks.GRANITE_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
     public static final DeferredItem<BlockItem> LIMESTONE_ROCK = ITEMS.registerSimpleBlockItem(
@@ -297,8 +327,19 @@ public final class ModItems {
             ModBlocks.BASALT_ROCK, new Item.Properties().stacksTo(ROCKS_PER_STACK));
 
     // The bedrock outcrops. Full blocks, so ordinary stack sizes.
+    public static final DeferredItem<BlockItem> SALT_BLOCK = ITEMS.registerSimpleBlockItem(
+            ModBlocks.SALT_BLOCK, new Item.Properties());
+    public static final DeferredItem<BlockItem> WET_SAND = ITEMS.registerSimpleBlockItem(
+            ModBlocks.WET_SAND, new Item.Properties());
+    /** A chunk of salt struck off a lick: licked later, wherever you are. */
+    public static final DeferredItem<Item> SALT_CHUNK = ITEMS.registerItem("salt_chunk",
+            dev.hominin.evolution.item.SaltChunkItem::new, new Item.Properties().stacksTo(16));
     public static final DeferredItem<BlockItem> CHERT_DEPOSIT = ITEMS.registerSimpleBlockItem(
             ModBlocks.CHERT_DEPOSIT, new Item.Properties());
+    public static final DeferredItem<BlockItem> FINE_CHERT_DEPOSIT = ITEMS.registerSimpleBlockItem(
+            ModBlocks.FINE_CHERT_DEPOSIT, new Item.Properties());
+    public static final DeferredItem<BlockItem> OBSIDIAN_DEPOSIT = ITEMS.registerSimpleBlockItem(
+            ModBlocks.OBSIDIAN_DEPOSIT, new Item.Properties());
     public static final DeferredItem<BlockItem> QUARTZITE_DEPOSIT = ITEMS.registerSimpleBlockItem(
             ModBlocks.QUARTZITE_DEPOSIT, new Item.Properties());
     public static final DeferredItem<BlockItem> BASALT_DEPOSIT = ITEMS.registerSimpleBlockItem(
@@ -347,13 +388,48 @@ public final class ModItems {
      * and makes a fearsome weapon.
      */
     public static final DeferredItem<Item> HAND_AXE = ITEMS.register("hand_axe",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(240, 3.5D, 1.2D, true, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(160, 3.5D, 1.2D, true, new Item.Properties()
                     .component(DataComponents.TOOL, handAxe())));
 
     /** A broad straight edge: a butcher's knife that lasts - meat, marrow, grass. */
     public static final DeferredItem<Item> CLEAVER = ITEMS.register("cleaver",
-            () -> new dev.hominin.evolution.item.AcheuleanToolItem(200, 3.0D, 1.6D, false, new Item.Properties()
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(140, 3.0D, 1.6D, false, new Item.Properties()
                     .component(DataComponents.TOOL, chopping())));
+
+    /**
+     * Struck off a core shaped first - the Levallois technique. The core is worked until one blow brings off
+     * exactly the flake wanted: thinner, straighter and sharper all round than anything struck at random, and two
+     * from a stone where the old way got one. Everyone who knaps this way makes them the same; skill does not show.
+     */
+    public static final DeferredItem<Item> LEVALLOIS_FLAKE = ITEMS.register("levallois_flake",
+            () -> new StoneEdgeItem(new Item.Properties().durability(52).attributes(weapon(4.0D, 3.0D, 0.0D))));
+
+    /** A Levallois flake twice as long as it is wide: a blade. Bound with twine it is a knife - or a spear's point. */
+    public static final DeferredItem<Item> LEVALLOIS_BLADE = ITEMS.register("levallois_blade",
+            () -> new StoneEdgeItem(new Item.Properties().durability(64).attributes(weapon(4.5D, 2.8D, 0.0D))));
+
+    /**
+     * A Levallois blade with twine wound round one end for a grip. It cuts, chops, scrapes and butchers - everything
+     * a multi tool does, except be a hammerstone.
+     */
+    public static final DeferredItem<Item> KNIFE = ITEMS.register("knife",
+            () -> new StoneEdgeItem(new Item.Properties().durability(220).attributes(weapon(5.0D, 2.4D, 0.0D))
+                    .component(DataComponents.TOOL, chopping())));
+
+    /**
+     * A hand axe struck from a prepared core: a hammerstone of the stone it is to be, shaped first and then taken
+     * down. Thinner and more even than any Acheulean hand axe - it hits harder, lasts longer, and cuts deeper.
+     */
+    public static final DeferredItem<Item> LEVALLOIS_HAND_AXE = ITEMS.register("levallois_hand_axe",
+            () -> new dev.hominin.evolution.item.AcheuleanToolItem(160, 3.5D, 1.2D, true, new Item.Properties()
+                    .component(DataComponents.TOOL, handAxe())).levallois());
+
+    /**
+     * An idea not had yet: what a work station shows for something that has to be thought of before it can be
+     * made. It cannot be taken out.
+     */
+    public static final DeferredItem<Item> UNWORKED_IDEA = ITEMS.registerSimpleItem("unworked_idea",
+            new Item.Properties().stacksTo(1));
 
     /**
      * The primitive work station: a branch driven into a base of rocks, hide lashed round it.
@@ -389,6 +465,8 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.BUILDING_BRANCH.get(), new Item.Properties()));
 
     /** A forked stick, two blocks tall. Two of them, a branch across, and a fire between: meat cooks right. */
+    public static final DeferredItem<Item> TOOL_RACK = ITEMS.register("tool_rack",
+            () -> new BlockItem(ModBlocks.TOOL_RACK.get(), new Item.Properties().stacksTo(16)));
     public static final DeferredItem<Item> COOKING_RACK = ITEMS.register("cooking_rack",
             () -> new BlockItem(ModBlocks.COOKING_RACK.get(), new Item.Properties().stacksTo(16)));
 
@@ -407,7 +485,7 @@ public final class ModItems {
 
     /** Rich, and a gamble: about one brain in three carries kuru. */
     public static final DeferredItem<Item> HOMININ_BRAIN = ITEMS.registerSimpleItem("hominin_brain",
-            new Item.Properties().stacksTo(4).food(new FoodProperties.Builder().nutrition(6).saturationModifier(0.8F)
+            new Item.Properties().stacksTo(4).food(new FoodProperties.Builder().nutrition(14).saturationModifier(1.0F)
                     .build()));
 
     /** Somebody's skull, to hold up and make a promise to. */
@@ -439,7 +517,25 @@ public final class ModItems {
      * chunk made by cutting carries its own food values, a quarter of its source.
      */
     public static final DeferredItem<Item> MEAT_CHUNK = ITEMS.registerSimpleItem("meat_chunk",
-            new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.2F).build()));
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(3).saturationModifier(0.2F).build()));
+
+    // Out of the tide pools: eaten raw, or cooked on a hearth for more.
+    public static final DeferredItem<Item> OYSTER = ITEMS.registerSimpleItem("oyster",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
+    public static final DeferredItem<Item> CLAM = ITEMS.registerSimpleItem("clam",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
+    public static final DeferredItem<Item> SMALL_FISH = ITEMS.registerSimpleItem("small_fish",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.2F).build()));
+    public static final DeferredItem<Item> OCTOPUS = ITEMS.registerSimpleItem("octopus",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.3F).build()));
+    public static final DeferredItem<Item> ROASTED_OYSTER = ITEMS.registerSimpleItem("roasted_oyster",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).build()));
+    public static final DeferredItem<Item> ROASTED_CLAM = ITEMS.registerSimpleItem("roasted_clam",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).build()));
+    public static final DeferredItem<Item> COOKED_SMALL_FISH = ITEMS.registerSimpleItem("cooked_small_fish",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).build()));
+    public static final DeferredItem<Item> COOKED_OCTOPUS = ITEMS.registerSimpleItem("cooked_octopus",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(8).saturationModifier(0.8F).build()));
 
     /** A portion of meat, cooked on a hearth: more in it, and nothing in it to make you ill. */
     public static final DeferredItem<Item> COOKED_MEAT_CHUNK = ITEMS.registerSimpleItem("cooked_meat_chunk",
@@ -463,6 +559,10 @@ public final class ModItems {
      */
     public static final DeferredItem<Item> TICK = ITEMS.registerSimpleItem("tick",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.1F).build()));
+
+    /** A branch off a dead tree: grubs in it, and no use as a weapon. */
+    public static final DeferredItem<Item> DEAD_BRANCH = ITEMS.registerItem("dead_branch",
+            dev.hominin.evolution.item.DeadBranchItem::new, new Item.Properties().stacksTo(16));
 
     public static final DeferredItem<Item> BEETLE = ITEMS.registerSimpleItem("beetle",
             new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build()));
@@ -497,6 +597,10 @@ public final class ModItems {
                     .usingConvertsTo(LONG_BONE.get())
                     .build())));
 
+
+    /** Dug up under a tree with a hand axe or a digging stick. Food when there is none - but gritty, and teeth pay. */
+    public static final DeferredItem<Item> ROOTS = ITEMS.registerSimpleItem("roots",
+            new Item.Properties().food(new FoodProperties.Builder().nutrition(3).saturationModifier(0.25F).build()));
 
     // Marrow is fatty and calorie-dense - the whole reason cracking bones open
     // was worth the effort, so it feeds better than the insect forage items.

@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "name": "stone_tipped_thrust",
+  "description": "Stone-tipped spear, overhand stab: drawn up and back with the free arm reaching out to aim and the body sitting back, then driven forward and down, the free arm pulled back and the weight thrown in behind it, held, and brought back to the carry",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 18,
+    "stopTick": 18,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeOutQuad",
+        "rightArm": {
+          "pitch": -150,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -28,
+          "yaw": 14,
+          "roll": -6
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 3,
+        "easing": "easeInCubic",
+        "rightArm": {
+          "pitch": -168,
+          "yaw": -6,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -62,
+          "yaw": 18,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 5,
+          "yaw": -4,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeOutCubic",
+        "rightArm": {
+          "pitch": -122,
+          "yaw": -12,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": -8,
+          "roll": -8
+        },
+        "body": {
+          "pitch": -10,
+          "yaw": 6,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 9,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -120,
+          "yaw": -12,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": -8,
+          "roll": -8
+        },
+        "body": {
+          "pitch": -10,
+          "yaw": 6,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "tick": 18,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -150,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -28,
+          "yaw": 14,
+          "roll": -6
+        },
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  }
+}

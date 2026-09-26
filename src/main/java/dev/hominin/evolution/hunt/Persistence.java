@@ -17,11 +17,12 @@ import net.minecraft.world.entity.animal.Animal;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 /**
- * Persistence hunting as a skill: level 3 (anyone) down to level 1 (a hunter people follow).
+ * Persistence hunting as a skill: level 3 (anyone) down to level 1 (a hunter people follow), and past that level 0 -
+ * flawless: the animal is never really out of sight.
  *
  * <p>The better the hunter, the more often the animal stays in sight when it breaks and runs -
- * 20%, 40%, 60% - so the chase does not have to be thought back together. And experience lands
- * harder: half a heart more at level 2, a whole heart at level 1, on anything hunted.
+ * 20%, 40%, 60%, 80% - so the chase does not have to be thought back together. And experience lands
+ * harder: half a heart more at level 2, a whole heart at level 1, a heart and a half at 0, on anything hunted.
  *
  * <p>It is also where a new body's starting skills are rolled. From erectus on, every species you
  * become starts with its own hands: mostly ordinary, now and then gifted - which is what makes
@@ -32,8 +33,8 @@ public final class Persistence {
     private static final String PROGRESS = EvolutionManager.SKILL_PREFIX + "hunting_progress";
     /** Starting skills rolled for this body and not yet told: said once the new band is round you. */
     private static final String UNTOLD = EvolutionManager.SKILL_PREFIX + "skills_untold";
-    /** Persistence kills to make at each level before the next: level 3 needs 2, level 2 needs 3. */
-    private static final int[] TO_ADVANCE = {0, 0, 3, 2};
+    /** Persistence kills to make at each level before the next: level 3 needs 2, level 2 needs 3, level 1 needs 5. */
+    private static final int[] TO_ADVANCE = {0, 5, 3, 2};
 
     // ------------------------------------------------------------ the rolls
 
@@ -43,10 +44,10 @@ public final class Persistence {
         return roll < 0.06F ? 1 : roll < 0.22F ? 2 : roll < 0.60F ? 3 : 4;
     }
 
-    /** Hunting, 3 to 1: mostly 3, sometimes 2, rarely 1. */
+    /** Hunting, 3 to 0: mostly 3, sometimes 2, rarely 1, very rarely 0. */
     public static int rollHunting(RandomSource random) {
         float roll = random.nextFloat();
-        return roll < 0.08F ? 1 : roll < 0.33F ? 2 : 3;
+        return roll < 0.02F ? 0 : roll < 0.08F ? 1 : roll < 0.33F ? 2 : 3;
     }
 
     /** Erectus and every species after it: where bodies start to differ in what their hands can do. */
@@ -72,7 +73,7 @@ public final class Persistence {
         int hunting = rollHunting(random);
         if (dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.EARLY_TRACKING)) {
             // Habilis learned to hold a chase in its head; its descendants are born better at it.
-            hunting = Math.max(1, hunting - 1);
+            hunting = hunting > 1 ? hunting - 1 : hunting;
         }
         counters.put(LEVEL, hunting);
         counters.remove(PROGRESS);
@@ -95,6 +96,10 @@ public final class Persistence {
                 .withStyle(knapping <= 2 ? ChatFormatting.YELLOW : ChatFormatting.GRAY));
         player.sendSystemMessage(Component.literal("  Persistence hunting - level " + hunting + " " + huntingWord(hunting))
                 .withStyle(hunting <= 2 ? ChatFormatting.YELLOW : ChatFormatting.GRAY));
+        int talking = dev.hominin.evolution.band.Negotiation.level(player);
+        player.sendSystemMessage(Component.literal("  Negotiating - level " + talking + " "
+                + dev.hominin.evolution.band.Negotiation.word(talking))
+                .withStyle(talking <= 1 ? ChatFormatting.YELLOW : ChatFormatting.GRAY));
         player.sendSystemMessage(Component.literal(knapping >= 3 && hunting >= 3
                 ? "Ordinary hands. Anyone in the band who is better is worth keeping close - Tribe stats shows who."
                 : "Better than most. The band will notice.").withStyle(ChatFormatting.DARK_GRAY));
@@ -102,6 +107,7 @@ public final class Persistence {
 
     public static String knappingWord(int level) {
         return switch (level) {
+            case 0 -> "(flawless)";
             case 1 -> "(master - rare)";
             case 2 -> "(skilled - uncommon)";
             case 3 -> "(able)";
@@ -111,6 +117,7 @@ public final class Persistence {
 
     public static String huntingWord(int level) {
         return switch (level) {
+            case 0 -> "(flawless - nothing gets away)";
             case 1 -> "(a hunter people follow - rare)";
             case 2 -> "(a good tracker - uncommon)";
             default -> "(ordinary)";
@@ -129,12 +136,15 @@ public final class Persistence {
 
     /** One more animal run down. Returns true if it took you up a level. */
     public static boolean practise(ServerPlayer player) {
+        dev.hominin.evolution.mind.Knacks.ranDown(player);
         int level = level(player);
-        if (level <= 1) {
+        if (level <= 0) {
             return false;
         }
         Map<String, Integer> counters = counters(player);
-        int progress = counters.getOrDefault(PROGRESS, 0) + 1;
+        // A jack of all trades picks it up faster.
+        int progress = counters.getOrDefault(PROGRESS, 0)
+                + (dev.hominin.evolution.mind.Skills.knows(player, dev.hominin.evolution.mind.Skills.Skill.JACK) ? 2 : 1);
         if (progress < TO_ADVANCE[level]) {
             counters.put(PROGRESS, progress);
             return false;
@@ -142,32 +152,33 @@ public final class Persistence {
         counters.put(PROGRESS, 0);
         counters.put(LEVEL, level - 1);
         player.sendSystemMessage(Component.literal("You read the ground better now. Persistence hunting: level "
-                + (level - 1) + (level - 1 == 1 ? " - the band will follow you anywhere." : "."))
+                + (level - 1) + (level - 1 == 0 ? " - flawless. Nothing you run gets away."
+                        : level - 1 == 1 ? " - the band will follow you anywhere." : "."))
                 .withStyle(ChatFormatting.GOLD));
         return true;
     }
 
     public static String describe(ServerPlayer player) {
         int level = level(player);
-        if (level <= 1) {
-            return "level 1 " + huntingWord(1) + " - 60% keep it in sight, +1 heart on the hunt";
+        if (level <= 0) {
+            return "level 0 " + huntingWord(0) + " - 80% keep it in sight, +1.5 hearts on the hunt";
         }
         int progress = counters(player).getOrDefault(PROGRESS, 0);
         return "level " + level + " - " + Math.round(highlightChance(level) * 100) + "% keep it in sight"
-                + (level == 2 ? ", +half a heart on the hunt" : "") + " (" + progress + "/" + TO_ADVANCE[level]
-                + " runs-down to the next)";
+                + (level == 1 ? ", +1 heart on the hunt" : level == 2 ? ", +half a heart on the hunt" : "")
+                + " (" + progress + "/" + TO_ADVANCE[level] + " runs-down to the next)";
     }
 
     // ------------------------------------------------------------ what the level does
 
     /** The chance an animal that breaks and runs stays marked out, without having to think it back. */
     public static float highlightChance(int level) {
-        return level <= 1 ? 0.6F : level == 2 ? 0.4F : 0.2F;
+        return level <= 0 ? 0.8F : level == 1 ? 0.6F : level == 2 ? 0.4F : 0.2F;
     }
 
     /** Extra damage on anything hunted: experience knows where to put the blow. */
     public static float damageBonus(int level) {
-        return level <= 1 ? 2.0F : level == 2 ? 1.0F : 0.0F;
+        return level <= 0 ? 3.0F : level == 1 ? 2.0F : level == 2 ? 1.0F : 0.0F;
     }
 
     /** Game animals: anything that is not a predator and is not people. */

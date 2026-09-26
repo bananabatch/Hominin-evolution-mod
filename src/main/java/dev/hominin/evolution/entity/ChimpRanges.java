@@ -23,7 +23,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class ChimpRanges extends SavedData {
     private static final String NAME = "hominin_chimp_ranges";
     /** How far a community's ground runs from its heart. */
-    public static final int RADIUS = 40;
+    public static final int RADIUS = 50;
 
     public record Range(UUID community, BlockPos home, Set<UUID> known) {
     }

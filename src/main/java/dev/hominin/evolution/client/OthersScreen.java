@@ -1,5 +1,6 @@
 package dev.hominin.evolution.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import dev.hominin.evolution.network.OthersActionPayload;
@@ -28,14 +29,25 @@ public class OthersScreen extends Screen {
     private int linesScroll;
     private int linesHeight;
 
-    private OthersScreen(List<OthersPayload.View> bands, int index) {
+    /** The talk menu this was opened from: Done goes back to it, not out of everything. */
+    @javax.annotation.Nullable
+    private final Screen parent;
+
+    private OthersScreen(List<OthersPayload.View> bands, int index, @javax.annotation.Nullable Screen parent) {
         super(Component.literal("The others"));
         this.bands = bands;
         this.index = index;
+        this.parent = parent;
     }
 
     public static void open(OthersPayload payload) {
-        Minecraft.getInstance().setScreen(new OthersScreen(payload.bands(), 0));
+        Screen current = Minecraft.getInstance().screen;
+        Minecraft.getInstance().setScreen(new OthersScreen(payload.bands(), 0, current instanceof SocialScreen ? current : null));
+    }
+
+    @Override
+    public void onClose() {
+        Minecraft.getInstance().setScreen(parent);
     }
 
     @Override
@@ -53,48 +65,76 @@ public class OthersScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal(">"), b -> cycle(1)).bounds(left + WIDTH - 20, 36, 20, 20).build());
         }
         OthersPayload.View band = bands.get(index);
-        int y = bottom - 26;
-        int half = (WIDTH - 4) / 2;
-        addRenderableWidget(Button.builder(Component.literal("Lead me there"), b -> act(band, OthersActionPayload.LEAD))
-                .bounds(left, y, half, 20).build());
-        linesBottom = y - 6;
+        if (!band.nomadic()) {
+            // Small, and off to the side under the standing bar: it never sits on the details.
+            addRenderableWidget(Button.builder(Component.literal(showWays ? "What we know" : "Their ways"),
+                    b -> {
+                        showWays = !showWays;
+                        linesScroll = 0;
+                        rebuildWidgets();
+                    }).bounds(left + WIDTH - 76, 76, 76, 12).build());
+        }
+        // Every action, three to a row, from the bottom up: as many rows as there are things to do, and the details
+        // above get everything that is left.
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Button.builder(Component.literal("Lead me there"), b -> act(band, OthersActionPayload.LEAD)).build());
+        if (!band.nomadic()) {
+            buttons.add(Button.builder(Component.literal("Send a party"),
+                    b -> Minecraft.getInstance().setScreen(new PartyIntentScreen(this, band.id(), band.name()))).build());
+        }
         if (band.ransom()) {
-            addRenderableWidget(Button.builder(Component.literal("Pay them"), b -> act(band, OthersActionPayload.RANSOM))
-                    .bounds(left + half + 4, y, half, 20).build());
+            buttons.add(Button.builder(Component.literal("Pay them"), b -> act(band, OthersActionPayload.RANSOM)).build());
         }
         if (band.near()) {
-            y -= 24;
-            linesBottom = y - 6;
-            Button gift = Button.builder(Component.literal("Offer a gift..."), b -> act(band, OthersActionPayload.GIFT))
-                    .bounds(left, y, half, 20).build();
-            addRenderableWidget(gift);
-            Button trade = Button.builder(Component.literal("Trade"), b -> act(band, OthersActionPayload.TRADE))
-                    .bounds(left + half + 4, y, half, 20).build();
-            addRenderableWidget(trade);
+            buttons.add(Button.builder(Component.literal("Offer a gift"), b -> act(band, OthersActionPayload.GIFT)).build());
+            buttons.add(Button.builder(Component.literal("Trade"), b -> act(band, OthersActionPayload.TRADE)).build());
             if (!band.nomadic()) {
-                y -= 24;
-                linesBottom = y - 6;
                 Button travel = Button.builder(Component.literal("Travel with us"),
-                        b -> act(band, OthersActionPayload.TRAVEL)).bounds(left, y, half, 20).build();
+                        b -> act(band, OthersActionPayload.TRAVEL)).build();
                 travel.active = band.canTravel();
-                addRenderableWidget(travel);
+                buttons.add(travel);
                 // What you know of the country is worth something to them.
                 Button tell = Button.builder(Component.literal("Tell of places"),
-                        b -> act(band, OthersActionPayload.TELL_PLACES)).bounds(left + half + 4, y, half, 20).build();
+                        b -> act(band, OthersActionPayload.TELL_PLACES)).build();
                 tell.active = band.standing() > 20;
-                addRenderableWidget(tell);
+                buttons.add(tell);
+                // And what they know of it is worth something to you.
+                Button ask = Button.builder(Component.literal("What they know"),
+                        b -> act(band, OthersActionPayload.ASK_PLACES)).build();
+                ask.active = band.standing() >= 30;
+                buttons.add(ask);
+                // What they know how to do - one thing a day, to friends.
+                Button learn = Button.builder(Component.literal("Learn their skills"),
+                        b -> act(band, OthersActionPayload.LEARN)).build();
+                learn.active = band.standing() >= 35;
+                buttons.add(learn);
+                buttons.add(Button.builder(Component.literal("How do you fight?"),
+                        b -> act(band, OthersActionPayload.ASK_POSTURE)).build());
+                if (band.canJoin()) {
+                    // Down to two: better one band than two halves of nothing.
+                    buttons.add(Button.builder(Component.literal("Join them").withStyle(ChatFormatting.GOLD),
+                            b -> act(band, OthersActionPayload.JOIN_THEM)).build());
+                }
                 // Leaning on them: only worth offering to a band that does not already count you a friend.
                 if (band.standing() < 35) {
-                    y -= 24;
-                    linesBottom = y - 6;
-                    addRenderableWidget(Button.builder(Component.literal("Demand tribute"),
-                            b -> act(band, OthersActionPayload.DEMAND)).bounds(left, y, half, 20).build());
-                    addRenderableWidget(Button.builder(Component.literal(raidArmed ? "Again - no going back"
-                            : "Raid them").withStyle(ChatFormatting.RED),
-                            b -> confirmRaid(band)).bounds(left + half + 4, y, half, 20).build());
+                    buttons.add(Button.builder(Component.literal("Demand tribute"),
+                            b -> act(band, OthersActionPayload.DEMAND)).build());
+                    buttons.add(Button.builder(Component.literal(raidArmed ? "Sure? Raid!" : "Raid them")
+                            .withStyle(ChatFormatting.RED), b -> confirmRaid(band)).build());
                 }
             }
         }
+        int columns = 3;
+        int gap = 3;
+        int cell = (WIDTH - gap * (columns - 1)) / columns;
+        int rows = (buttons.size() + columns - 1) / columns;
+        int top = bottom - 4 - rows * 18;
+        for (int i = 0; i < buttons.size(); i++) {
+            Button button = buttons.get(i);
+            button.setRectangle(cell, 16, left + (i % columns) * (cell + gap), top + (i / columns) * 18);
+            addRenderableWidget(button);
+        }
+        linesBottom = top - 4;
     }
 
     /** A raid is not something to click by accident: the button asks once. */
@@ -110,8 +150,12 @@ public class OthersScreen extends Screen {
         act(band, OthersActionPayload.RAID);
     }
 
+    /** Showing their ways of life instead of the rest. */
+    private boolean showWays;
+
     private void cycle(int step) {
         raidArmed = false;
+        showWays = false;
         linesScroll = 0;
         index = Math.floorMod(index + step, bands.size());
         rebuildWidgets();
@@ -120,7 +164,8 @@ public class OthersScreen extends Screen {
     private void act(OthersPayload.View band, int action) {
         PacketDistributor.sendToServer(new OthersActionPayload(band.id(), action));
         if (action != OthersActionPayload.GIFT) {
-            onClose();
+            // Something was done: out of the menus altogether.
+            Minecraft.getInstance().setScreen(null);
         }
     }
 
@@ -149,7 +194,7 @@ public class OthersScreen extends Screen {
             int x = left + WIDTH * mark / 50;
             graphics.fill(x, barY - 1, x + 1, barY + 6, 0xFF8C8578);
         }
-        int y = barY + 12;
+        int y = barY + 24;
         int boxTop = y;
         graphics.enableScissor(left - 2, boxTop - 2, left + WIDTH + 2, linesBottom);
         y -= linesScroll;
@@ -165,12 +210,28 @@ public class OthersScreen extends Screen {
             }
             y += 14;
         }
-        for (String line : band.lines()) {
-            for (FormattedCharSequence part : font.split(Component.literal(line), WIDTH)) {
-                graphics.drawString(font, part, left, y, 0xDDDDDD);
+        List<String> shown = showWays ? (band.ways().isEmpty()
+                ? List.of("They hold no rules of their kind - nothing you could share, or hold against them.")
+                : band.ways()) : band.lines();
+        if (showWays && !band.ways().isEmpty()) {
+            graphics.drawString(font, "Their ways:", left, y, 0xE9D8A6);
+            y += 12;
+        }
+        for (String line : shown) {
+            boolean shared = line.startsWith("Shared: ");
+            for (FormattedCharSequence part : font.split(Component.literal(showWays && !band.ways().isEmpty()
+                    ? "- " + (shared ? line.substring(8) + " (you hold it too)" : line) : line), WIDTH)) {
+                graphics.drawString(font, part, left, y, shared ? 0x7CD07C : 0xDDDDDD);
                 y += 10;
             }
             y += 2;
+        }
+        if (showWays && !band.ways().isEmpty()) {
+            for (FormattedCharSequence part : font.split(Component.literal("Ways you share warm them to you. Different "
+                    + "ones they do not mind - until they are looking for a reason."), WIDTH)) {
+                graphics.drawString(font, part, left, y + 4, 0x8C8578);
+                y += 10;
+            }
         }
         graphics.disableScissor();
         linesHeight = y + linesScroll - boxTop;
@@ -187,7 +248,7 @@ public class OthersScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        int room = linesBottom - 80;
+        int room = linesBottom - 92;
         if (linesHeight > room) {
             linesScroll = Math.max(0, Math.min(linesHeight - room, linesScroll - (int) (scrollY * 20)));
             return true;

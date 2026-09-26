@@ -15,6 +15,22 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Basalt$() is lava that cooled: dark, heavy and fine-grained, a tier behind chert. It lies scattered for forty blocks around lava - out in the open, and down in caves - thinning out as you go.$(br2)So a scatter of dark cobbles is a sign. Follow it in: where lava ran and cooled fast it went to glass, and $(#b87333)obsidian$() lies at the lava's edge."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Now and then an outcrop has a vein of $(#b87333)obsidian$() in its foot - three or four blocks of black glass at the bottom, where it meets the ground. Strike it like any face: a piece of glass each time. Ground with glass in it is worth more than any chert, and bands know it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Gravel$() is worth sifting: sneak-use it with your hands free. Chert, often; now and then $(l)fine chert$() - glassier and redder than any seam gives, and keener; rarely obsidian that washed a long way; and once in a long while a whole $(l)chunk$() of it. Each patch is worth two goes."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "An $(l)obsidian chunk$() is no hammerstone - strike with it and it bursts. It is the core an obsidian Levallois hand axe is struck from: lay it out among the stone at the station. Break it down for eight pieces. Or throw it, and watch it burst on whatever it hits."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Fine chert is in the living rock too, if you look: a block or two in the foot of a chert outcrop, now and then, and loose pieces of it weathered out round the edge. Very rarely a small seam of it stands on its own. Break a chunk of obsidian down by using it twice, quickly - it does not come apart by accident."
     }
   ]
 }

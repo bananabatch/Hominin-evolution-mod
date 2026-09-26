@@ -15,6 +15,18 @@
     {
       "type": "patchouli:text",
       "text": "Ground gives only so much. Forage one chunk of it successfully a dozen times or so - ten in the dry, eight on a dry day, fifteen in the rains, twenty-five on a $(l)prosperous day$() - and it is picked clean: five days to come back, two in the rains, overnight after a prosperous day.$(br2)$(l)Fertile$() ground gives around fifty and comes back in three days - but nothing marks it. You have to notice it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Roots.$() Under a tree, dig with a hand axe or a digging stick: a few strokes and you have roots, which fill you well enough. Live on them, though, and a tooth goes bad - a $(l)dental abscess$(). Draw it out with sweet berries (ten handfuls) or a great deal of water - you can drink past full while it lasts. Leave it two days and it goes into the blood."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Pull at leaves and now and then there are $(l)sweet berries$() in them. Leaves torn off a living tree grow back in a few minutes.$(br2)A $(l)meat chunk$() fills a bar and a half."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Take a $(l)chopper$() to a dead tree and a $(l)dead branch$() comes away - three to a tree. It is no weapon: it breaks on anything it hits. Pick through it for grubs, once; or break it open (sneak) for everything at once, more in hard times. It keeps on a pile with the bones."
     }
   ]
 }

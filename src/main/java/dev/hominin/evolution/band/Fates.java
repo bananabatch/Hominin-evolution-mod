@@ -69,7 +69,7 @@ public final class Fates {
             return;
         }
         float chance = 0.012F + Math.max(0, band.desperation - 3) * 0.015F + (band.cohesion < 10 ? 0.02F : 0.0F)
-                + (band.presence < 10 ? 0.01F : 0.0F) - (band.presence >= 35 ? 0.006F : 0.0F);
+                + (band.presence < 4 ? 0.01F : 0.0F) - (band.presence >= Presence.STRONG ? 0.006F : 0.0F);
         if (Bands.desperateTimes(level)) {
             chance *= 2.0F;
         }
@@ -160,7 +160,7 @@ public final class Fates {
         player.level().playSound(null, player.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.AMBIENT, 0.7F,
                 1.3F);
         int distance = (int) Math.sqrt(Bands.horizontal(player.blockPosition(), band.home));
-        player.sendSystemMessage(Component.literal("Screaming on the wind - " + band.name + ", your allies: " + cause
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, Component.literal("Screaming on the wind - " + band.name + ", your allies: " + cause
                 + "! They are " + distance + " blocks " + WildBands.bearingTo(player, band.home) + ". You have 150 "
                 + "seconds to get there. ").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
                 .append(Relations.leadLink(band)));

@@ -147,7 +147,7 @@ public class StoreGoal extends Goal {
     }
 
     private boolean hasStone() {
-        return member.count(ModItems.ROCK.get()) > 0 || member.count(ModItems.HAMMERSTONE.get()) > 0
+        return member.countRocks() > 0 || member.count(ModItems.HAMMERSTONE.get()) > 0
                 || member.count(ModItems.FLAKE.get()) > 0
                 || member.getMainHandItem().is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)
                 || member.getMainHandItem().is(dev.hominin.evolution.ModTags.Items.HAMMERSTONES);
@@ -211,7 +211,7 @@ public class StoreGoal extends Goal {
             dev.hominin.evolution.block.ToolPileBlockEntity.Access access) {
         BlockPos best = null;
         for (BlockPos pos : ToolPiles.piles(level, owner)) {
-            // Any of the band's piles: food only ever lies in a store, but a bone can be put by anywhere.
+            // Any of the band's piles: food piles lie anywhere on your ground now, and bones with them.
             if (pos.distSqr(near) > RANGE * RANGE || !level.isLoaded(pos)
                     || !(level.getBlockEntity(pos) instanceof dev.hominin.evolution.block.ToolPileBlockEntity pile)
                     || pile.total(wanted, access) == 0) {
@@ -230,7 +230,9 @@ public class StoreGoal extends Goal {
         for (BlockPos pos : ToolPiles.piles(level, owner)) {
             if (pos.distSqr(near) <= RANGE * RANGE && level.isLoaded(pos) && Sites.isStore(level, pos)
                     && level.getBlockEntity(pos) instanceof dev.hominin.evolution.block.ToolPileBlockEntity pile
-                    && !pile.isFull()) {
+                    && !pile.isFull() && (pile.isEmpty()
+                            || pile.kind() == dev.hominin.evolution.block.ToolPileBlockEntity.Kind.FOOD)) {
+                // Food goes on a food pile - never onto the band's tools.
                 return pos;
             }
         }

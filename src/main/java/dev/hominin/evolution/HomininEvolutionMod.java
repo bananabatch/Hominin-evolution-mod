@@ -46,6 +46,7 @@ public class HomininEvolutionMod {
         ModEntities.ENTITY_TYPES.register(modEventBus);
 
         modEventBus.addListener(ModNetworking::register);
+        dev.hominin.evolution.hunt.PredatorLull.register();
 
         BuiltinMilestones.bootstrap();
         ModGameRules.bootstrap();
@@ -69,6 +70,10 @@ public class HomininEvolutionMod {
                 dev.hominin.evolution.build.Building.syncSites(player);
             }
         });
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH,
+                dev.hominin.evolution.item.FireHardening::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH,
+                dev.hominin.evolution.survival.Roots::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinishUsingItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onItemCrafted);
@@ -79,10 +84,21 @@ public class HomininEvolutionMod {
                 dev.hominin.evolution.survival.Soils.tidy(level);
                 dev.hominin.evolution.survival.Termites.tick(level);
                 dev.hominin.evolution.survival.TreeFelling.tick(level);
+                dev.hominin.evolution.survival.LeafRegrowth.tickLevel(level);
                 dev.hominin.evolution.food.Spoilage.tickLevel(level);
             }
         });
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.tool.ToolUse::onDamageDealt);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.TreeFelling::onHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Hides::onDrops);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) -> {
+            var dead = event.getEntity();
+            if ((dead instanceof dev.hominin.evolution.entity.Megafauna || dev.hominin.evolution.hunt.Predation.giant(dead))
+                    && dead.getRandom().nextFloat() < 0.35F) {
+                event.getDrops().add(new net.minecraft.world.entity.item.ItemEntity(dead.level(), dead.getX(), dead.getY(),
+                        dead.getZ(), new net.minecraft.world.item.ItemStack(ModItems.BONE_CLUB.get())));
+            }
+        });
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.survival.Hearths::onDrops);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent event) -> {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
@@ -96,6 +112,9 @@ public class HomininEvolutionMod {
         // After everything else has added its drops, so the season scales the lot.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW,
                 dev.hominin.evolution.survival.Seasons::onDrops);
+        // And a run-down animal gives more of whatever the season left.
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST,
+                dev.hominin.evolution.hunt.Quarry::onDrops);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onRightClickItem);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(EvolutionEventHandler::onEntityJoinLevel);
@@ -120,6 +139,7 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST,
                 dev.hominin.evolution.stage.CutsceneGuard::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.combat.Scare::onChangeTarget);
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.PredatorMood::onChangeTarget);
         NeoForge.EVENT_BUS.addListener(Band::onMemberHurt);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.hunt.Quarry::onHurt);
         // Anything hurt by anything runs - properly, and far.

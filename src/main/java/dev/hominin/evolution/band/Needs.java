@@ -66,9 +66,13 @@ public final class Needs {
         }
 
         boolean accepts(ItemStack stack, int step) {
+            if (dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
+                // Nobody in need is helped by meat that has turned.
+                return false;
+            }
             return switch (this) {
                 case BIG_MEAL -> bigMeal(stack);
-                case STONE -> Wants.isGoodStone(stack) && !stack.is(ModItems.ROCK.get());
+                case STONE -> Wants.isGoodStone(stack);
                 case LOOK_AFTER -> Wants.isGoodStone(stack) || stack.has(DataComponents.FOOD);
                 case HANG_OUT -> step == 1 && bigMeal(stack);
             };
@@ -111,7 +115,7 @@ public final class Needs {
             if (now >= need.until()) {
                 settle(player, now);
                 member.addBond(-IGNORED_BOND);
-                player.sendSystemMessage(Component.literal(member.getName().getString() + " went without "
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.BAND, Component.literal(member.getName().getString() + " went without "
                         + need.kind().what() + ". Everyone saw it. (Bond -" + IGNORED_BOND + ")")
                         .withStyle(ChatFormatting.DARK_RED));
                 Cohesion.add(player, -IGNORED_COHESION, "gave " + member.getName().getString() + " "
@@ -124,8 +128,8 @@ public final class Needs {
             if (!need.reminded() && now >= need.until() - NEED_LASTS / 2) {
                 needs.put(player.getUUID(), new Need(need.member(), need.kind(), need.until(), true, need.step()));
                 mark(member);
-                player.sendSystemMessage(Component.literal(member.getName().getString() + " is still waiting for "
-                        + need.kind().what() + ". Half the time is gone.").withStyle(ChatFormatting.RED));
+                dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.NEED, Component.literal(member.getName().getString() + " is still waiting "
+                        + "for " + need.kind().what() + ". Half the time is gone.").withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -175,7 +179,7 @@ public final class Needs {
             announceTrouble(player, member, kind);
             return;
         }
-        player.sendSystemMessage(Component.literal(member.getName().getString() + " " + kind.says + " "
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.NEED, Component.literal(member.getName().getString() + " " + kind.says + " "
                 + kind.what() + ".").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(" A need, not a want - it comes first, and the band will not forget if it "
                         + "goes unmet. (Hand it over with \"Here, take this\".)").withStyle(ChatFormatting.GRAY)));
@@ -205,7 +209,7 @@ public final class Needs {
         } else {
             player.sendSystemMessage(Component.literal(line).withStyle(ChatFormatting.GOLD));
         }
-        player.sendSystemMessage(Component.literal(kind == Kind.LOOK_AFTER
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.NEED, Component.literal(kind == Kind.LOOK_AFTER
                 ? "(A need: sit with " + name + " a while, groom them, or give them a good stone or something to eat.)"
                 : "(A need: hang out with " + name + ". They will ask for things - give them what they ask for.)")
                 .withStyle(ChatFormatting.GRAY));
@@ -231,6 +235,13 @@ public final class Needs {
 
     private static void mark(BandMember member) {
         member.addEffect(new MobEffectInstance(MobEffects.GLOWING, 10 * 20, 0, false, false));
+    }
+
+    /** Whether this, handed over, would meet the band's need - the leader's band, for a co-leader too. */
+    public static boolean wouldMeet(BandMember member, Player player, ItemStack held) {
+        Player lead = member.isCoLedBy(player) && member.leaderPlayer() != null ? member.leaderPlayer() : player;
+        Need need = needs.get(lead.getUUID());
+        return need != null && need.member().equals(member.getUUID()) && need.kind().accepts(held, need.step());
     }
 
     /** Handed something: returns true if it met the band's need. */

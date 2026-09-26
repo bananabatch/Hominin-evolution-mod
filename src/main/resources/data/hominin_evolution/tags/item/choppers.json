@@ -4,6 +4,8 @@
     "hominin_evolution:lomekwian_tool",
     "hominin_evolution:oldowan_multitool",
     "hominin_evolution:hand_axe",
-    "hominin_evolution:cleaver"
+    "hominin_evolution:cleaver",
+    "hominin_evolution:knife",
+    "hominin_evolution:levallois_hand_axe"
   ]
 }

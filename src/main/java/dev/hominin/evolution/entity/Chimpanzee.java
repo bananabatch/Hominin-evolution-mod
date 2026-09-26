@@ -234,6 +234,50 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
 
     // ------------------------------------------------------------ every tick
 
+    /** How far outside the range a trusted friend is met. */
+    private static final double MEET_OUT = 30.0D;
+    private static final java.util.Map<String, Long> met = new java.util.HashMap<>();
+
+    /**
+     * A friend the community trusts, coming near: the two of them nearest go out to meet them - up to thirty blocks
+     * past the edge of the range - and walk with them while they are on it. The rest go about their business.
+     */
+    private boolean escort(BlockPos heart) {
+        Player friend = null;
+        for (Player player : level().players()) {
+            if (!player.isSpectator() && TroopRelations.isTrusted(player, communityId)
+                    && heart.closerToCenterThan(player.position(), TERRITORY + MEET_OUT)) {
+                friend = player;
+                break;
+            }
+        }
+        if (friend == null) {
+            return false;
+        }
+        Player to = friend;
+        List<Chimpanzee> all = level().getEntitiesOfClass(Chimpanzee.class, to.getBoundingBox().inflate(TERRITORY * 2 + MEET_OUT),
+                c -> c.isAlive() && communityId.equals(c.communityId));
+        all.sort(java.util.Comparator.comparingDouble(c -> c.distanceToSqr(to)));
+        int index = all.indexOf(this);
+        if (index < 0 || index >= 2) {
+            return false;
+        }
+        if (distanceToSqr(to) > 16.0D) {
+            getNavigation().moveTo(to, 1.15D);
+        } else {
+            getNavigation().stop();
+        }
+        getLookControl().setLookAt(to, 20.0F, 20.0F);
+        String key = to.getUUID() + "|" + communityId;
+        long now = level().getGameTime();
+        if (index == 0 && distanceToSqr(to) > 20.0D * 20.0D && now - met.getOrDefault(key, -99999L) > 3600L) {
+            met.put(key, now);
+            to.displayClientMessage(Component.literal("Two of the chimpanzees come out to meet you, hooting softly.")
+                    .withStyle(net.minecraft.ChatFormatting.GREEN), true);
+        }
+        return true;
+    }
+
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
@@ -260,6 +304,9 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
             return;
         }
         BlockPos heart = level() instanceof ServerLevel server ? ChimpRanges.note(server, communityId, home) : home;
+        if (escort(heart)) {
+            return;
+        }
         for (Player player : level().players()) {
             if (player.isCreative() || player.isSpectator()) {
                 continue;

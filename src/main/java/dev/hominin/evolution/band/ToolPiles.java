@@ -53,6 +53,11 @@ public final class ToolPiles extends SavedData {
     private final Map<UUID, List<BlockPos>> piles = new HashMap<>();
     /** Bands whose camp has been given its pile: once. Take it all and it is gone. */
     private final java.util.Set<UUID> stocked = new java.util.HashSet<>();
+    /**
+     * Per player: piles left by a kind of them that is gone - not the band's any more, still waiting to be found and
+     * aged the first time they are near enough to be loaded.
+     */
+    private final Map<UUID, List<BlockPos>> relics = new HashMap<>();
 
     private static ToolPiles of(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ToolPiles::new, ToolPiles::load), NAME);
@@ -89,7 +94,13 @@ public final class ToolPiles extends SavedData {
                 return pos;
             }
         }
-        return list.isEmpty() ? null : list.get(0);
+        for (BlockPos pos : list) {
+            if (!level.isLoaded(pos) || level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile
+                    && pile.kind() == ToolPileBlockEntity.Kind.TOOLS) {
+                return pos;
+            }
+        }
+        return null;
     }
 
     /** Bones, kept for their marrow: laid down wherever a tool can be, and cracked when someone is hungry. */
@@ -98,9 +109,25 @@ public final class ToolPiles extends SavedData {
                 || stack.is(net.minecraft.world.item.Items.BONE);
     }
 
-    /** What can be laid down anywhere on your own ground: stone tools, and bones. */
+    /** What can be laid down anywhere on your own ground: tools and weapons, bones, food, and rocks - each on its own pile. */
     public static boolean layable(ItemStack stack) {
-        return stack.is(ModTags.Items.STONE_TOOLS) || isBone(stack);
+        // Nothing big and wooden - spears, clubs, branches: those lean on a rack. Sticks lie with the tools (but not a
+        // plain stick, which sneak-use forages with).
+        return !stack.isEmpty() && !ToolPileBlockEntity.bigWood(stack) && (stack.is(ModTags.Items.STONE_TOOLS)
+                || isBone(stack) || stack.is(ModItems.DEAD_BRANCH.get()) || BandMember.isWeapon(stack)
+                || ToolPileBlockEntity.smallStick(stack) && !stack.is(net.minecraft.world.item.Items.STICK)
+                || stack.has(net.minecraft.core.component.DataComponents.FOOD) || stack.is(ModTags.Items.ROCKS)
+                || stack.is(ModTags.Items.KNAPPABLE_STONE)
+                // What the band heaps by the work station: thatch, twine, hides.
+                || ErectusWork.MATERIAL.test(stack)) && !(stack.getItem() instanceof dev.hominin.evolution.item.PileBundleItem);
+    }
+
+    /**
+     * What can go onto a pile you use directly: anything layable, and a plain stick too - it only forages when you
+     * sneak-use the ground with it, not when you put it on the pile.
+     */
+    public static boolean pileable(ItemStack stack) {
+        return layable(stack) || stack.is(net.minecraft.world.item.Items.STICK);
     }
 
     /** A player takes what is for everyone, and what they marked for themselves. */
@@ -164,6 +191,154 @@ public final class ToolPiles extends SavedData {
         return true;
     }
 
+    // ------------------------------------------------------------ stock: stone and food put by
+
+    /**
+     * Where a heap of stock goes: beside the knapping station for stone, the work station for food - from erectus
+     * on, if there is one near the band's pile - and otherwise beside the pile itself.
+     */
+    @Nullable
+    public static BlockPos stockAnchor(ServerLevel level, UUID owner, BandMember member, boolean stone) {
+        BlockPos pile = store(level, owner);
+        if (pile == null) {
+            // No tool pile yet: nothing to keep stock beside, and a heap must never become the band's pile.
+            return null;
+        }
+        BlockPos around = pile;
+        if (Bands.erectusOn(member.getStage())) {
+            net.minecraft.world.level.block.Block wanted = stone ? ModBlocks.KNAPPING_STATION.get() : ModBlocks.WORK_STATION.get();
+            BlockPos best = null;
+            for (BlockPos pos : BlockPos.betweenClosed(around.offset(-16, -4, -16), around.offset(16, 4, 16))) {
+                if (level.getBlockState(pos).is(wanted) && (best == null || pos.distSqr(around) < best.distSqr(around))) {
+                    best = pos.immutable();
+                }
+            }
+            if (best != null) {
+                return best;
+            }
+        }
+        return pile;
+    }
+
+    /** A heap of the same stock near the anchor with room on it - or clear ground beside it for a new one. */
+    @Nullable
+    public static BlockPos stockSpot(ServerLevel level, BlockPos anchor, java.util.function.Predicate<ItemStack> kind) {
+        BlockPos free = null;
+        for (int ring = 1; ring <= 3; ring++) {
+            for (int dx = -ring; dx <= ring; dx++) {
+                for (int dz = -ring; dz <= ring; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) {
+                        continue;
+                    }
+                    for (int dy : new int[] {0, 1, -1}) {
+                        BlockPos at = anchor.offset(dx, dy, dz);
+                        if (level.getBlockEntity(at) instanceof ToolPileBlockEntity heap && !heap.isFull() && !heap.isEmpty()
+                                && heap.contents().stream().allMatch(kind)) {
+                            return at;
+                        }
+                        if (free == null && placeable(level, at)) {
+                            free = at;
+                        }
+                    }
+                }
+            }
+        }
+        return free;
+    }
+
+    // ------------------------------------------------------------ artifacts
+
+    private static final java.util.Map<BlockPos, Long> toldOld = new java.util.HashMap<>();
+
+    /**
+     * Every five seconds: piles of yours from a kind of you long gone are still lying where they were left - worn,
+     * cruder than they were, some of them gone altogether. The tools on them are artifacts now: still usable.
+     */
+    public static void tickArtifacts(ServerPlayer player) {
+        if (player.tickCount % 100 != 71) {
+            return;
+        }
+        ServerLevel level = player.serverLevel();
+        ToolPiles data = of(level);
+        int generation = dev.hominin.evolution.world.Pois.generationOf(level, player.getUUID());
+        List<BlockPos> old = data.relics.getOrDefault(player.getUUID(), List.of());
+        for (BlockPos pos : new ArrayList<>(old)) {
+            if (!level.isLoaded(pos) || pos.distSqr(player.blockPosition()) > 96.0D * 96.0D) {
+                continue;
+            }
+            if (level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile) {
+                retire(player, level, pos, pile, generation);
+            }
+            forgetRelic(data, player.getUUID(), pos);
+        }
+        for (BlockPos pos : piles(level, player.getUUID())) {
+            if (!level.isLoaded(pos) || pos.distSqr(player.blockPosition()) > 96.0D * 96.0D
+                    || !(level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile)) {
+                continue;
+            }
+            if (pile.generation() < 0) {
+                pile.setGeneration(generation);
+            } else if (pile.generation() < generation) {
+                // Laid down by a kind of you that is gone - from a world saved before evolving moved piles on.
+                retire(player, level, pos, pile, generation);
+            }
+        }
+    }
+
+    /**
+     * Evolving: a long time passes. The band's piles are not the band's any more - nobody now living laid anything on
+     * them, and nobody expects you to have. They lie where they were left, for whoever finds them; the ones near enough
+     * to be loaded are aged at once, the rest the first time you come near.
+     */
+    public static void passDown(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        ToolPiles data = of(level);
+        List<BlockPos> list = data.piles.remove(player.getUUID());
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        data.setDirty();
+        int generation = dev.hominin.evolution.world.Pois.generationOf(level, player.getUUID());
+        for (BlockPos pos : list) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile) {
+                retire(player, level, pos, pile, generation);
+            } else {
+                data.relics.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(pos.immutable());
+            }
+        }
+    }
+
+    /** One pile from before: aged into artifacts, no longer anybody's, and gone from the band's list. */
+    private static void retire(ServerPlayer player, ServerLevel level, BlockPos pos, ToolPileBlockEntity pile, int generation) {
+        int was = pile.generation();
+        int aged = pile.ageArtifacts(Math.max(1, generation - Math.max(0, was)), player.getRandom());
+        pile.setGeneration(generation);
+        pile.forgetPeople();
+        pile.setOwner(null);
+        forgetPile(level, pos, player.getUUID());
+        if (pile.isEmpty()) {
+            level.removeBlock(pos, false);
+            return;
+        }
+        if (aged > 0 && !toldOld.containsKey(pos) && pos.distSqr(player.blockPosition()) < 96.0D * 96.0D) {
+            toldOld.put(pos.immutable(), level.getGameTime());
+            player.sendSystemMessage(Component.literal("Tools your people left here long ago are still lying where "
+                    + "they were - worn, cruder than they were made, some of them gone. They are nobody's now: "
+                    + "take what is worth taking, or lay something on the pile to make it the band's again.")
+                    .withStyle(ChatFormatting.GRAY));
+        }
+    }
+
+    private static void forgetRelic(ToolPiles data, UUID player, BlockPos pos) {
+        List<BlockPos> list = data.relics.get(player);
+        if (list != null && list.remove(pos)) {
+            if (list.isEmpty()) {
+                data.relics.remove(player);
+            }
+            data.setDirty();
+        }
+    }
+
     /** Somewhere clear on the floor of the store this spot is in, for another pile. */
     @Nullable
     public static BlockPos storeSpot(ServerLevel level, BlockPos near) {
@@ -191,6 +366,11 @@ public final class ToolPiles extends SavedData {
             }
         }
         return count;
+    }
+
+    /** A pile laid down some other way (the Pile), taken into the band's list. */
+    public static void adopt(ServerLevel level, UUID owner, BlockPos pos) {
+        register(level, owner, pos);
     }
 
     private static void register(ServerLevel level, UUID owner, BlockPos pos) {
@@ -227,7 +407,9 @@ public final class ToolPiles extends SavedData {
         ItemStack stack = player.getMainHandItem();
         ServerLevel level = player.serverLevel();
         boolean tool = stack.is(ModTags.Items.STONE_TOOLS);
-        if (!storable(stack) || player.distanceToSqr(clicked.getCenter()) > 49.0D || !level.isLoaded(clicked)) {
+        // Rocks are blocks as well, and still go on a pile like anything the band lays down.
+        if (!storable(stack) && !layable(stack) || player.distanceToSqr(clicked.getCenter()) > 49.0D
+                || !level.isLoaded(clicked)) {
             return;
         }
         BlockState clickedState = level.getBlockState(clicked);
@@ -258,7 +440,11 @@ public final class ToolPiles extends SavedData {
             player.displayClientMessage(Component.literal("There is no room to lay it down there."), true);
             return;
         }
-        boolean first = tool && store(level, player.getUUID()) == null;
+        if (SacredPile.start(player, at, stack)) {
+            return;
+        }
+        boolean first = tool && store(level, player.getUUID()) == null && ToolPileBlockEntity.kindOf(stack)
+                == ToolPileBlockEntity.Kind.TOOLS;
         ItemStack one = laid(stack);
         newPile(level, at, player.getUUID(), one, player.getUUID(), nameOf(player));
         PileEthics.returned(player, one);
@@ -287,7 +473,12 @@ public final class ToolPiles extends SavedData {
             @Nullable UUID by, String byName) {
         level.setBlock(at, ModBlocks.TOOL_PILE.get().defaultBlockState(), 3);
         if (level.getBlockEntity(at) instanceof ToolPileBlockEntity pile) {
+            pile.setMadeAt(level.getGameTime());
             pile.setOwner(owner);
+            if (owner != null) {
+                // Laid down in this kind's time: evolve, and it is from before.
+                pile.setGeneration(dev.hominin.evolution.world.Pois.generationOf(level, owner));
+            }
             if (!first.isEmpty()) {
                 pile.addStack(first.copy(), by, byName);
             }
@@ -302,6 +493,12 @@ public final class ToolPiles extends SavedData {
     /** Somewhere beside a full pile for the next one: tools go together. */
     @Nullable
     private static BlockPos besides(ServerLevel level, BlockPos pile) {
+        return besides(level, pile, null);
+    }
+
+    /** Beside a pile: another pile this can go on, or clear ground for a new one. */
+    @Nullable
+    private static BlockPos besides(ServerLevel level, BlockPos pile, @Nullable ItemStack what) {
         for (int ring = 1; ring <= 2; ring++) {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
@@ -311,7 +508,8 @@ public final class ToolPiles extends SavedData {
                     for (int dy : new int[] {0, 1, -1}) {
                         BlockPos at = pile.offset(dx, dy, dz);
                         if (level.getBlockState(at).is(ModBlocks.TOOL_PILE.get())
-                                && level.getBlockEntity(at) instanceof ToolPileBlockEntity other && !other.isFull()) {
+                                && level.getBlockEntity(at) instanceof ToolPileBlockEntity other && !other.isFull()
+                                && (what == null || other.accepts(what))) {
                             return at;
                         }
                         if (placeable(level, at)) {
@@ -328,13 +526,38 @@ public final class ToolPiles extends SavedData {
     public static void layOn(ServerPlayer player, BlockPos pos, ItemStack stack) {
         ServerLevel level = player.serverLevel();
         boolean inStore = ownStore(level, player, pos);
-        if (!(level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile) || !layable(stack) && !(storable(stack) && inStore)) {
+        if (!(level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile) || !pileable(stack) && !(storable(stack) && inStore)) {
             return;
         }
         UUID owner = pile.owner();
         if (owner != null && !owner.equals(player.getUUID())) {
             player.displayClientMessage(Component.literal("That is somebody else's pile."), true);
             return;
+        }
+        if (pile.kind() == ToolPileBlockEntity.Kind.SACRED) {
+            // The Pile is its own thing, laid on only when something happens that deserves it.
+            dev.hominin.evolution.band.SacredPile.offer(player, pos, stack);
+            return;
+        }
+        if (!pile.accepts(stack)) {
+            // Not this pile's kind: its own pile, beside this one.
+            BlockPos next = besides(level, pos, stack);
+            if (next == null) {
+                player.displayClientMessage(Component.literal("That is a " + pile.kind().label().toLowerCase()
+                        + " - and there is no room beside it for a pile of its own."), true);
+                return;
+            }
+            if (!(level.getBlockEntity(next) instanceof ToolPileBlockEntity)) {
+                ItemStack one = laid(stack);
+                newPile(level, next, owner != null ? owner : player.getUUID(), one, player.getUUID(), nameOf(player));
+                PileEthics.returned(player, one);
+                player.displayClientMessage(Component.literal("That is a " + pile.kind().label().toLowerCase()
+                        + ": you start a " + ToolPileBlockEntity.kindOf(one).label().toLowerCase() + " beside it."), true);
+                player.swing(InteractionHand.MAIN_HAND, true);
+                return;
+            }
+            pos = next;
+            pile = (ToolPileBlockEntity) level.getBlockEntity(next);
         }
         if (owner == null && (inStore || dev.hominin.evolution.hunt.Predation.onOwnGround(player, pos))) {
             // An old deposit on your ground: yours now.
@@ -349,7 +572,7 @@ public final class ToolPiles extends SavedData {
         pile.addStack(heap, player.getUUID(), name);
         if (!heap.isEmpty()) {
             // The pile is full: the rest goes beside it - in a store, on its floor.
-            BlockPos next = inStore ? storeSpot(level, pos) : besides(level, pos);
+            BlockPos next = inStore ? storeSpot(level, pos) : besides(level, pos, heap);
             if (next == null && heap.getCount() == offered) {
                 player.displayClientMessage(Component.literal(inStore ? "The store is full - there is no floor left in it."
                         : "The pile is as big as it gets, and there is no room beside it."), true);
@@ -409,13 +632,42 @@ public final class ToolPiles extends SavedData {
      * kind - and if you have never laid anything on it yourself, somebody says so.
      */
     public static void taking(ServerPlayer player, ToolPileBlockEntity pile, @Nullable UUID layer, ItemStack taken) {
+        if (pile.kind() == ToolPileBlockEntity.Kind.SACRED) {
+            SacredPile.takenBack(player, taken);
+            return;
+        }
         if (!player.getUUID().equals(pile.owner()) || player.getUUID().equals(layer)) {
             return;
         }
+        if (pile.madeAt() > 0L && player.level().getGameTime() - pile.madeAt() < PILE_GRACE) {
+            // A new pile: everybody is still sorting out what goes where. Nobody keeps count yet.
+            return;
+        }
         PileEthics.borrowed(player, taken);
-        if (!pile.contributed(player.getUUID()) && pile.othersContributed(player.getUUID())) {
+        if (!contributedAround(player, pile) && pile.othersContributed(player.getUUID())) {
             PileEthics.freeloaded(player);
         }
+    }
+
+    /** How long a new pile is left alone before anybody minds who takes what. */
+    private static final long PILE_GRACE = 12000L;
+
+    /**
+     * Whether you have laid something here - on this pile, or on one right beside it. Piles grow sideways; what you put
+     * on the heap next door counts just the same.
+     */
+    private static boolean contributedAround(ServerPlayer player, ToolPileBlockEntity pile) {
+        if (pile.contributed(player.getUUID())) {
+            return true;
+        }
+        BlockPos at = pile.getBlockPos();
+        for (BlockPos near : BlockPos.betweenClosed(at.offset(-3, -1, -3), at.offset(3, 1, 3))) {
+            if (!near.equals(at) && player.level().getBlockEntity(near) instanceof ToolPileBlockEntity other
+                    && other.contributed(player.getUUID())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether a pile could lie here. */
@@ -429,10 +681,22 @@ public final class ToolPiles extends SavedData {
         if (!(level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile)) {
             return ItemStack.EMPTY;
         }
+        if (pile.kind() == ToolPileBlockEntity.Kind.SACRED) {
+            player.displayClientMessage(Component.literal("The Pile stays where it was made."), true);
+            return ItemStack.EMPTY;
+        }
         UUID owner = pile.owner();
+        if (owner != null && !owner.equals(player.getUUID()) && Bands.get(level, owner) != null
+                && !piles(level, owner).contains(pos)) {
+            // Left behind when its band moved on: nobody's now.
+            owner = null;
+            pile.setOwner(null);
+        }
         boolean ours = player.getUUID().equals(owner) || owner == null
                 && (dev.hominin.evolution.hunt.Predation.onOwnGround(player, pos) || ownStore(level, player, pos));
-        if (!ours) {
+        // Another band's pile can be carried off too - if you dare.
+        Bands.Record theirs = ours || owner == null ? null : Bands.get(level, owner);
+        if (!ours && theirs == null) {
             player.displayClientMessage(Component.literal("That is not your band's to move."), true);
             return ItemStack.EMPTY;
         }
@@ -453,6 +717,11 @@ public final class ToolPiles extends SavedData {
         level.removeBlock(pos, false);
         ItemStack bundle = dev.hominin.evolution.item.PileBundleItem.of(saved, count, foreign);
         level.playSound(null, pos, SoundEvents.BUNDLE_INSERT, SoundSource.PLAYERS, 0.8F, 0.9F);
+        forgetPile(level, pos, owner);
+        if (theirs != null) {
+            stole(player, level, theirs, count);
+            return bundle;
+        }
         player.displayClientMessage(Component.literal(foreign > 0
                 ? "You gather the pile up. " + foreign + " of those things are other people's - set it down again soon, "
                         + "on your own ground."
@@ -571,17 +840,21 @@ public final class ToolPiles extends SavedData {
         if (!(level.getBlockEntity(store) instanceof ToolPileBlockEntity pile)) {
             return false;
         }
-        if (!pile.isFull()) {
+        if (ToolPileBlockEntity.bigWood(tool)) {
+            // Too big for a pile: that goes on a rack, or stays in hand.
+            return false;
+        }
+        if (!pile.isFull() && pile.accepts(tool)) {
             level.playSound(null, store, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 0.5F, 1.3F);
             return pile.add(tool, by, byName);
         }
         for (BlockPos pos : piles(level, owner)) {
             if (pos.distSqr(store) < 36.0D && level.getBlockEntity(pos) instanceof ToolPileBlockEntity other
-                    && !other.isFull()) {
+                    && !other.isFull() && other.accepts(tool)) {
                 return other.add(tool, by, byName);
             }
         }
-        BlockPos next = besides(level, store);
+        BlockPos next = besides(level, store, tool);
         if (next == null) {
             return false;
         }
@@ -714,6 +987,38 @@ public final class ToolPiles extends SavedData {
         return spot;
     }
 
+    /** A band has moved on: its old camp's piles are left there, anybody's - and its new camp gets one of its own. */
+    public static void leftBehind(ServerLevel level, UUID band) {
+        orphan(level, band);
+        ToolPiles data = of(level);
+        if (data.stocked.remove(band)) {
+            data.setDirty();
+        }
+    }
+
+    /**
+     * A band's pile carried off. Seen, it is theft to their faces - and they come at you for it. Unseen, it is missed
+     * soon enough, and they work out who.
+     */
+    private static void stole(ServerPlayer player, ServerLevel level, Bands.Record band, int count) {
+        BandMember saw = Relations.nearestMember(level, band, player, 24.0D);
+        if (saw != null) {
+            saw.ensureName();
+            player.sendSystemMessage(Component.literal("<" + saw.getName().getString() + "> ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("Thief! That's our pile!").withStyle(ChatFormatting.RED)));
+            Relations.change(player, band, -10, "you carried off their tool pile");
+            for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(24.0D),
+                    m -> m.isAlive() && band.id.equals(m.getBandId()) && !m.isBaby())) {
+                member.defendAgainst(player);
+            }
+            return;
+        }
+        band.owed.merge(player.getUUID(), count * 2, Integer::sum);
+        Bands.changed(level);
+        player.sendSystemMessage(Component.literal("Nobody saw you take it. " + BandNames.capital(band.name) + " will miss "
+                + "it, though - and work out who.").withStyle(ChatFormatting.GRAY));
+    }
+
     /** A band gone: its piles are nobody's now - old deposits. Returns where its store was, if anywhere. */
     @Nullable
     public static BlockPos orphan(ServerLevel level, UUID owner) {
@@ -803,6 +1108,19 @@ public final class ToolPiles extends SavedData {
         for (Tag entry : tag.getList("Stocked", Tag.TAG_COMPOUND)) {
             data.stocked.add(((CompoundTag) entry).getUUID("Band"));
         }
+        for (Tag entry : tag.getList("Relics", Tag.TAG_COMPOUND)) {
+            CompoundTag owner = (CompoundTag) entry;
+            if (!owner.hasUUID("Owner")) {
+                continue;
+            }
+            List<BlockPos> list = new ArrayList<>();
+            for (Tag pos : owner.getList("At", Tag.TAG_LONG)) {
+                list.add(BlockPos.of(((LongTag) pos).getAsLong()));
+            }
+            if (!list.isEmpty()) {
+                data.relics.put(owner.getUUID("Owner"), list);
+            }
+        }
         return data;
     }
 
@@ -827,6 +1145,18 @@ public final class ToolPiles extends SavedData {
             stockedList.add(b);
         }
         tag.put("Stocked", stockedList);
+        ListTag relicList = new ListTag();
+        for (var entry : relics.entrySet()) {
+            CompoundTag owner = new CompoundTag();
+            owner.putUUID("Owner", entry.getKey());
+            ListTag at = new ListTag();
+            for (BlockPos pos : entry.getValue()) {
+                at.add(LongTag.valueOf(pos.asLong()));
+            }
+            owner.put("At", at);
+            relicList.add(owner);
+        }
+        tag.put("Relics", relicList);
         return tag;
     }
 

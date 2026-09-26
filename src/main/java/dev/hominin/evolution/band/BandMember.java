@@ -104,7 +104,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     /** One in-game day from conception to birth; two more to grow up. */
     private static final int PREGNANCY_TICKS = 24000;
-    private static final int GROW_UP_TICKS = 48000;
+    private static final int GROW_UP_TICKS = 24000;
+    /** One birth in six is two. */
+    private static final float TWINS = 0.14F;
+    /** And now and then, three. */
+    private static final float TRIPLETS = 0.03F;
     /** How long after being fed a member is ready to pair with another who was fed. */
     private static final int READY_TICKS = 200;
 
@@ -119,7 +123,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     /** Weapons in order of preference, worst first. */
     private static final List<Supplier<Item>> WEAPONS = List.of(
             ModItems.LONG_BRANCH, ModItems.SHARPENED_STICK, ModItems.POINTY_STICK,
-            ModItems.WOODEN_CLUB, ModItems.SHARPENED_SPEAR, ModItems.FIRE_HARDENED_SPEAR);
+            ModItems.WOODEN_CLUB, ModItems.BONE_CLUB, ModItems.SHARPENED_SPEAR, ModItems.FIRE_HARDENED_SPEAR, ModItems.SCHONINGEN_SPEAR,
+            ModItems.STONE_TIPPED_SPEAR);
 
     private static final String[] SYLLABLES = {"ka", "nu", "ba", "mo", "ti", "ra", "ku", "sha", "do", "le",
             "ma", "gu", "ri", "ya", "zo", "en", "ok", "wa", "hu", "ji"};
@@ -236,12 +241,27 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private long nextThought;
     private long nextGift;
 
+    /**
+     * What anybody out here has always eaten: what can be found, dug or picked. A cooked meal, a steak, is not
+     * something to long for until it has been eaten - that favourite comes from eating it (maybeAcquireTaste).
+     */
     private static final String[] FOOD_CHOICES = {
             "hominin_evolution:grub", "hominin_evolution:beetle", "hominin_evolution:earthworm",
-            "hominin_evolution:termite_stick", "hominin_evolution:bone_marrow", "hominin_evolution:meat_chunk",
-            "minecraft:sweet_berries", "minecraft:apple", "minecraft:carrot", "minecraft:melon_slice",
-            "minecraft:glow_berries", "minecraft:beef", "minecraft:porkchop", "minecraft:chicken",
-            "minecraft:cooked_beef", "minecraft:cooked_porkchop", "minecraft:potato", "minecraft:beetroot"};
+            "hominin_evolution:termite_stick", "hominin_evolution:meat_chunk", "hominin_evolution:roots",
+            "minecraft:sweet_berries", "minecraft:apple", "minecraft:melon_slice", "minecraft:glow_berries"};
+
+    /** Whether this is one of the things anybody has always eaten, rather than something that has to be tasted. */
+    private static boolean wildFood(ResourceLocation id) {
+        for (String food : FOOD_CHOICES) {
+            if (food.equals(id.toString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Everything this one has actually eaten. */
+    private final java.util.Set<ResourceLocation> tasted = new java.util.HashSet<>();
 
     /** Joins in with whatever the leader attacks. Turned off with "Don't hunt with me". */
     private boolean huntWithLeader = true;
@@ -309,6 +329,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(0, new dev.hominin.evolution.band.goal.FreezeGoal(this));
         goalSelector.addGoal(0, new dev.hominin.evolution.band.goal.GrieveGoal(this));
+        goalSelector.addGoal(1, new dev.hominin.evolution.band.goal.MissionGoal(this));
+        goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.AvoidEntityGoal<>(this,
+                dev.hominin.evolution.entity.Dinopithecus.class, 10.0F, 1.1D, 1.4D,
+                giant -> getTarget() != giant && !isHunting()));
         goalSelector.addGoal(1, new FleeToTreeGoal(this));
         goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.GuideGoal(this));
@@ -329,12 +353,23 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SleepInNestGoal(this));
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SentryGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ToolPileGoal(this));
+        goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.StockGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.StoreGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.PlayGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.TinkerGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CraftGoal(this));
+        // Erectus on: what the player does at erectus - beds, hides, twine, build materials, and the builds.
+        goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.HideHuntGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.ErectusCraftGoal(this));
+        // The Feast: getting ready for it, and coming to the fire when it begins. And the fire itself, kept fed.
+        goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.FeastGoal(this));
+        goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.PractiseGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.FireTendGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.BuildHelpGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.GatherThatchGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ExcursionGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.RoamGoal(this));
+        goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.GravelGoal(this));
         goalSelector.addGoal(7, new FollowLeaderGoal(this, 1.1D, 10.0F, 4.0F));
         goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -376,6 +411,16 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return player.getUUID().equals(leader);
     }
 
+    /** Led by this player's band-mate: they lead this member's band together. */
+    public boolean isCoLedBy(Player player) {
+        return leader != null && !player.getUUID().equals(leader) && leader.equals(Newcomers.hostOf(player));
+    }
+
+    /** Takes orders and gifts from this player: its leader, or one of its co-leaders. */
+    public boolean answersTo(Player player) {
+        return isLedBy(player) || isCoLedBy(player);
+    }
+
     @Nullable
     public UUID getBandId() {
         return bandId;
@@ -391,6 +436,38 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         this.alpha = alphaId;
         this.leader = null;
         entityData.set(WILD, true);
+    }
+
+    /** Asleep, nothing moves them - not following, not wandering, not anything. */
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 input) {
+        if (isSleeping()) {
+            getNavigation().stop();
+            setDeltaMovement(getDeltaMovement().multiply(0.0D, 1.0D, 0.0D));
+            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            return;
+        }
+        super.travel(input);
+    }
+
+    /** Leaves its own band for a player's. */
+    public void joinPlayerBand(UUID leader) {
+        this.bandId = null;
+        this.alpha = null;
+        this.leader = leader;
+        entityData.set(WILD, false);
+        setPersistenceRequired();
+        if (level().getServer() != null
+                && level().getServer().getPlayerList().getPlayer(leader) instanceof net.minecraft.server.level.ServerPlayer player) {
+            ensureName();
+            Chatter.news(player, "news_join", getName().getString());
+        }
+    }
+
+    /** Into a real fight: whatever it gave up on before, it does not give up on this. */
+    public void fightFor(LivingEntity target) {
+        gaveUpOn = null;
+        defendAgainst(target);
     }
 
     /** Client-safe: whether this is a member of some other band. */
@@ -471,6 +548,107 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return best;
     }
 
+    /** A night slept through: whoever was carrying has had the child by morning. */
+    public void deliverNow() {
+        if (pregnancyTicks > 0) {
+            pregnancyTicks = 0;
+            labourSpot = null;
+            birth();
+        }
+    }
+
+    /** The child - and one time in seven a second with it, and now and then a third. */
+    private void birth() {
+        Band.giveBirth(this);
+        float roll = random.nextFloat();
+        int more = roll < TRIPLETS ? 2 : roll < TRIPLETS + TWINS ? 1 : 0;
+        int born = 1;
+        for (int i = 0; i < more && (leaderPlayer() == null || Band.hasRoomFor(leaderPlayer())); i++) {
+            Band.giveBirth(this);
+            born++;
+        }
+        if (born > 1 && leaderPlayer() instanceof net.minecraft.server.level.ServerPlayer leader) {
+            ensureName();
+            leader.sendSystemMessage(Component.literal((born == 3 ? "Triplets! " : "Twins! ") + getName().getString()
+                    + " has had " + (born == 3 ? "three." : "two.")).withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
+    }
+
+    /** Come to the band already carrying: this far along, as a fraction of the whole left to go. */
+    public void arriveCarrying(float left) {
+        if (female && !isBaby()) {
+            readyTicks = 0;
+            pregnancyTicks = Math.max(1200, (int) (PREGNANCY_TICKS * left));
+        }
+    }
+
+    public void setSex(boolean female) {
+        this.female = female;
+    }
+
+    // ------------------------------------------------------------ a grudge
+
+    /**
+     * A band this one holds something against - the one that destroyed theirs. Every day they spend with yours, your
+     * band hears about it, and likes that band a little less.
+     */
+    @Nullable
+    private UUID grudge;
+
+    @Nullable
+    public UUID getGrudge() {
+        return grudge;
+    }
+
+    public void setGrudge(@Nullable UUID band) {
+        this.grudge = band;
+    }
+
+    // ------------------------------------------------------------ carried
+
+    /**
+     * Before erectus a child is carried: it clings to its mother's fur and rides on her back, where it is easy to keep
+     * an eye on - until it is grown, or she is gone.
+     */
+    private void cling() {
+        if (tickCount % 20 != 7 || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        boolean carried = isBaby() && mother != null && !Bands.erectusOn(getStage());
+        BandMember mom = carried && server.getEntity(mother) instanceof BandMember m && m.isAlive() && !m.isBaby() ? m : null;
+        if (mom == null) {
+            if (getVehicle() instanceof BandMember) {
+                stopRiding();
+            }
+            return;
+        }
+        if (getVehicle() == mom) {
+            return;
+        }
+        if (!isPassenger() && mom.getPassengers().isEmpty() && distanceToSqr(mom) < 16.0D && !mom.isInWater()) {
+            startRiding(mom, true);
+        }
+    }
+
+    /** A child on its mother's back: high on it, a little behind her shoulders. */
+    @Override
+    protected void positionRider(net.minecraft.world.entity.Entity passenger, MoveFunction move) {
+        if (passenger instanceof BandMember child && child.isBaby()) {
+            float yaw = yBodyRot * ((float) Math.PI / 180.0F);
+            move.accept(passenger, getX() + net.minecraft.util.Mth.sin(yaw) * 0.28D, getY() + getBbHeight() * 0.52D,
+                    getZ() - net.minecraft.util.Mth.cos(yaw) * 0.28D);
+            return;
+        }
+        super.positionRider(passenger, move);
+    }
+
+    /** Nobody steers anybody: a child on a back is carried, not driving. */
+    @Override
+    @Nullable
+    public LivingEntity getControllingPassenger() {
+        return null;
+    }
+
     public void startPregnancy() {
         readyTicks = 0;
         if (female && pregnancyTicks <= 0) {
@@ -514,8 +692,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
      */
     private int knapLevel;
     private int knapPractice;
-    /** Persistence hunting, 3 to 1; 0 until first needed. Mostly 3, sometimes 2, rarely 1. */
-    private int huntLevel;
+    /** Persistence hunting, 3 to 0; -1 until first needed. Mostly 3, sometimes 2, rarely 1, very rarely 0. */
+    private int huntLevel = -1;
+    /** Negotiating, 4 to 0; -1 until first needed. A psychopath is always 0. */
+    private int negotiateLevel = -1;
 
     public int getKnapLevel() {
         if (knapLevel == 0) {
@@ -525,10 +705,25 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public int getHuntLevel() {
-        if (huntLevel == 0) {
+        if (huntLevel < 0) {
             huntLevel = dev.hominin.evolution.hunt.Persistence.rollHunting(random);
         }
         return huntLevel;
+    }
+
+    /** 4 (tongue-tied) to 0 (flawless). Whatever else they are, a psychopath talks flawlessly. */
+    public int getNegotiateLevel() {
+        if (isPsychopath()) {
+            return 0;
+        }
+        if (negotiateLevel < 0) {
+            negotiateLevel = Negotiation.rollMember(random);
+        }
+        return negotiateLevel;
+    }
+
+    public int getFightSkill() {
+        return fightSkill;
     }
 
     /** How much this one matters to the band's hands: lower is rarer. For picking out the valuable. */
@@ -536,9 +731,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return Math.min(getKnapLevel(), getHuntLevel() + 1);
     }
 
-    /** Anything they could be picked out for: a skilled or master knapper, or a good or great tracker. */
+    /** Anything they could be picked out for: a skilled or master knapper, a good tracker, a persuasive talker. */
     public boolean isGifted() {
-        return getKnapLevel() <= 2 || getHuntLevel() <= 2;
+        return getKnapLevel() <= 2 || getHuntLevel() <= 2 || getNegotiateLevel() <= 1;
     }
 
     // ------------------------------------------------------------ a commission
@@ -736,6 +931,67 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
     }
 
+    public boolean hasKuru() {
+        return kuruSince >= 0L;
+    }
+
+    /** A kinetic hunt: until this game time, they throw first and close after. */
+    private long throwFocusUntil;
+
+    public void focusOnThrowing(long ticks) {
+        throwFocusUntil = level().getGameTime() + ticks;
+    }
+
+    public boolean isThrowFocused() {
+        return level().getGameTime() < throwFocusUntil;
+    }
+
+    // ------------------------------------------------------------ brains
+
+    /**
+     * Before erectus nobody gives a brain a second look. From erectus on a brain is a great deal of food in one piece,
+     * and now and then somebody hungry goes for one lying about - and gambles on kuru. Not in a band that has learned
+     * not to.
+     */
+    private void tickBrains() {
+        if ((tickCount + getId()) % 200 != 0 || isBaby() || !Bands.erectusOn(getStage()) || hunger >= MAX_HUNGER - 2
+                || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        if (leaderPlayer() instanceof Player lead && Morals.holds(lead, Morals.Moral.NO_BRAINS)) {
+            return;
+        }
+        for (net.minecraft.world.entity.item.ItemEntity lying : server.getEntitiesOfClass(
+                net.minecraft.world.entity.item.ItemEntity.class, getBoundingBox().inflate(10.0D),
+                e -> e.isAlive() && e.getItem().is(ModItems.HOMININ_BRAIN.get()))) {
+            if (distanceToSqr(lying) <= 2.5D * 2.5D) {
+                ItemStack brain = lying.getItem().split(1);
+                if (lying.getItem().isEmpty()) {
+                    lying.discard();
+                }
+                eatBrain(brain);
+            } else if (random.nextFloat() < 0.35F) {
+                getNavigation().moveTo(lying, 1.0D);
+            }
+            return;
+        }
+    }
+
+    /** A brain, eaten: a great deal of food - and one time in three, kuru. */
+    private void eatBrain(ItemStack brain) {
+        hunger = MAX_HUNGER;
+        heal(4.0F);
+        playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 0.8F, 0.9F);
+        if (random.nextFloat() < dev.hominin.evolution.survival.Kuru.CHANCE) {
+            contractKuru();
+        }
+        if (leaderPlayer() instanceof Player lead && distanceToSqr(lead) < 32.0D * 32.0D) {
+            ensureName();
+            lead.displayClientMessage(Component.literal(getName().getString() + " eats the brain, every bit of it.")
+                    .withStyle(ChatFormatting.GRAY), true);
+        }
+    }
+
     private void tickMating() {
         if ((tickCount + getId()) % 1200 == 0) {
             Mating.tickMember(this);
@@ -760,7 +1016,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                     .withStyle(ChatFormatting.GRAY), true);
         }
         if (sick > KURU_TICKS) {
+            Player lead = leaderPlayer();
             hurt(level().damageSources().source(dev.hominin.evolution.survival.Kuru.DAMAGE), Float.MAX_VALUE);
+            if (!isAlive() && lead instanceof net.minecraft.server.level.ServerPlayer leader) {
+                Morals.kuruDeath(leader, this);
+            }
         }
     }
 
@@ -815,7 +1075,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public boolean isCompanionOf(Player player) {
-        return isLedBy(player) || isGuestOf(player);
+        // A player walking with this member's leader's band is one of them.
+        return isLedBy(player) || isGuestOf(player) || leader != null && leader.equals(Newcomers.hostOf(player));
     }
 
     /** Who this member keeps up with: its leader, or its wild band's alpha. */
@@ -902,7 +1163,21 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     /** Eats something handed over for a need: it goes further than an ordinary meal. */
+    /** Roots grumbled over, and counted against their teeth - and everything eaten remembered as tasted. */
+    private void noteEaten(ItemStack food) {
+        tasted.add(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(food.getItem()));
+        if (dev.hominin.evolution.survival.Diseases.isRoots(food) && random.nextInt(3) == 0) {
+            Lines.say(this, "roots_again");
+        }
+        dev.hominin.evolution.survival.Diseases.ate(this, food);
+    }
+
     public void feed(ItemStack stack) {
+        if (stack.is(ModItems.HOMININ_BRAIN.get())) {
+            eatBrain(stack);
+            return;
+        }
+        noteEaten(stack);
         net.minecraft.world.food.FoodProperties food = stack.get(DataComponents.FOOD);
         hunger = Math.min(MAX_HUNGER, hunger + (food != null ? Math.max(4, food.nutrition()) : 6));
         heal(2.0F);
@@ -1151,8 +1426,33 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     /** How many of this item it carries, hands included. */
+    /** How many loose rocks of any stone this one carries. */
+    public int countRocks() {
+        return countCarried(s -> s.is(dev.hominin.evolution.ModTags.Items.ROCKS));
+    }
+
     public int count(Item item) {
         return countCarried(s -> s.is(item));
+    }
+
+    /** How many of whatever this is it carries - main hand and pack. */
+    public int countOf(java.util.function.Predicate<ItemStack> test) {
+        return countCarried(test);
+    }
+
+    /** The carried stack itself (to wear it down, say): main hand first, then the pack. */
+    @javax.annotation.Nullable
+    public ItemStack findCarried(java.util.function.Predicate<ItemStack> test) {
+        if (!getMainHandItem().isEmpty() && test.test(getMainHandItem())) {
+            return getMainHandItem();
+        }
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (!stack.isEmpty() && test.test(stack)) {
+                return stack;
+            }
+        }
+        return null;
     }
 
     /** One of this item out of the pack or hands, or empty. */
@@ -1177,7 +1477,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     public ItemStack takeFood() {
-        return takeFirst(s -> s.has(DataComponents.FOOD));
+        return takeFirst(BandMember::edible);
+    }
+
+    /** Food, and not food that has turned: nobody of the band will touch that. A brain is its own thing (see brains). */
+    public static boolean edible(ItemStack stack) {
+        return stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack)
+                && !stack.is(ModItems.HOMININ_BRAIN.get());
     }
 
     /** Picks three favourite foods, the first time they are needed. */
@@ -1231,6 +1537,20 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
     }
 
+    /** Ticks until the birth; zero if not expecting. */
+    public int getPregnancyTicks() {
+        return Math.max(0, pregnancyTicks);
+    }
+
+    /** "due in about 6 minutes (a quarter of a day)". */
+    public String dueIn() {
+        int minutes = Math.max(1, (pregnancyTicks + 1199) / 1200);
+        float days = pregnancyTicks / 24000.0F;
+        String dayText = days >= 0.9F ? "about a day" : days >= 0.6F ? "most of a day" : days >= 0.4F ? "half a day"
+                : days >= 0.2F ? "a quarter of a day" : "any time now";
+        return "due in about " + minutes + (minutes == 1 ? " minute" : " minutes") + " (" + dayText + ")";
+    }
+
     public boolean isPregnant() {
         return pregnancyTicks > 0;
     }
@@ -1245,12 +1565,21 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return hunger < HUNGRY;
     }
 
+    public void setHunger(int hunger) {
+        this.hunger = Math.max(0, Math.min(MAX_HUNGER, hunger));
+    }
+
+    /** Nobody's: no band of its own and no leader. Food held out wins it over. */
+    public boolean isStray() {
+        return leader == null && bandId == null;
+    }
+
     public boolean hasFood() {
-        if (getOffhandItem().has(DataComponents.FOOD)) {
+        if (edible(getOffhandItem())) {
             return true;
         }
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            if (inventory.getItem(slot).has(DataComponents.FOOD)) {
+            if (edible(inventory.getItem(slot))) {
                 return true;
             }
         }
@@ -1259,7 +1588,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     private boolean eatFromInventory() {
         ItemStack inHand = getOffhandItem();
-        FoodProperties handFood = inHand.get(DataComponents.FOOD);
+        FoodProperties handFood = edible(inHand) ? inHand.get(DataComponents.FOOD) : null;
         if (handFood != null) {
             consume(handFood);
             inHand.shrink(1);
@@ -1267,7 +1596,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack stack = inventory.getItem(slot);
-            FoodProperties food = stack.get(DataComponents.FOOD);
+            FoodProperties food = edible(stack) ? stack.get(DataComponents.FOOD) : null;
             if (food != null) {
                 consume(food);
                 stack.shrink(1);
@@ -1286,10 +1615,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             eatFromInventory();
             return;
         }
-        if (!getOffhandItem().has(DataComponents.FOOD)) {
+        if (!edible(getOffhandItem())) {
             int foodSlot = -1;
             for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-                if (inventory.getItem(slot).has(DataComponents.FOOD)) {
+                if (edible(inventory.getItem(slot))) {
                     foodSlot = slot;
                     break;
                 }
@@ -1330,8 +1659,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         if (--eatingTicks == 0) {
             maybeAcquireTaste(food);
+            noteEaten(food);
             consume(properties);
             food.shrink(1);
+            if (!isBaby() && random.nextFloat() < 0.12F && leaderPlayer() instanceof net.minecraft.server.level.ServerPlayer lead
+                    && distanceToSqr(lead) < 32.0D * 32.0D) {
+                Cohesion.addLimited(lead, "member_fed", 1, 3 * 60 * 20L);
+            }
         }
     }
 
@@ -1429,7 +1763,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     /** Food, and things to hit with, and a stick or two for termites. The rest is left for the player. */
     @Override
     public boolean wantsToPickUp(ItemStack stack) {
-        boolean useful = stack.has(DataComponents.FOOD) || isWeapon(stack)
+        // A weapon only if it is better than the best they have: nobody needs two spears.
+        boolean useful = edible(stack) || isWeapon(stack) && weaponRank(stack) > bestWeaponRank()
                 || (stack.is(net.minecraft.world.item.Items.STICK) && countCarried(s -> s.is(stack.getItem())) < 2)
                 || (stack.is(ModItems.OBSIDIAN_ROCK.get()) && isObsessedWithObsidian())
                 || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this)
@@ -1480,6 +1815,20 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return worst >= 0 && keepValue(inventory.getItem(worst)) < keepValue(stack);
     }
 
+    /**
+     * Something you handed over: they take it, whatever it is. Hands full, the least use of everything they carry is
+     * the thing that goes - dropped at their feet, not what you gave them.
+     */
+    public void takeGift(ItemStack stack) {
+        if (!inventory.canAddItem(stack)) {
+            int worst = leastValuableSlot();
+            if (worst >= 0) {
+                spawnAtLocation(inventory.removeItemNoUpdate(worst));
+            }
+        }
+        addToInventory(stack);
+    }
+
     /** Hands full: drops the least valuable thing carried, if the new one is worth more. */
     private void makeRoomFor(ItemStack stack) {
         if (inventory.canAddItem(stack)) {
@@ -1491,13 +1840,156 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
     }
 
+    /** The last of a band that yours destroyed: the day they joined, or 0. They stay only if they come to trust you. */
+    private long survivorSince;
+
+    public boolean isSurvivor() {
+        return survivorSince > 0L;
+    }
+
+    public void becomeSurvivor() {
+        survivorSince = Math.max(1L, level().getDayTime() / 24000L);
+    }
+
+    /**
+     * Once a day, for a survivor: bond 4 and they are yours for good. Two days on and still under 3, they may go -
+     * to another band, if one is near enough, or off on their own.
+     */
+    private void checkSurvivor() {
+        if (!isSurvivor() || tickCount % 1200 != 611 || !(level() instanceof net.minecraft.server.level.ServerLevel server)) {
+            return;
+        }
+        Player leader = leaderPlayer();
+        ensureName();
+        if (getBond() >= 4) {
+            survivorSince = 0L;
+            if (leader != null) {
+                leader.sendSystemMessage(Component.literal(getName().getString() + " has stopped looking back the way "
+                        + "they came. One of you, for good.").withStyle(ChatFormatting.GREEN));
+            }
+            return;
+        }
+        long days = level().getDayTime() / 24000L - survivorSince;
+        if (days < 2 || getBond() >= 3 || random.nextFloat() >= 0.3F) {
+            return;
+        }
+        survivorSince = 0L;
+        Bands.Record nearest = null;
+        for (Bands.Record band : Bands.all(server)) {
+            if (!band.nomadic() && Bands.horizontal(band.home, blockPosition()) < 200.0D * 200.0D
+                    && (nearest == null || Bands.horizontal(band.home, blockPosition())
+                            < Bands.horizontal(nearest.home, blockPosition()))) {
+                nearest = band;
+            }
+        }
+        if (leader != null) {
+            dev.hominin.evolution.guide.Alerts.urgent(leader, dev.hominin.evolution.guide.Alerts.Kind.BAND,
+                    Component.literal(getName().getString() + " never came to trust you, and has gone"
+                            + (nearest != null ? " - to " + nearest.name + "." : ", alone.")).withStyle(ChatFormatting.GOLD));
+        }
+        if (nearest != null) {
+            joinWildBand(nearest.id, null);
+            nearest.size++;
+            Bands.changed(server);
+            getNavigation().moveTo(nearest.home.getX() + 0.5D, nearest.home.getY(), nearest.home.getZ() + 0.5D, 1.0D);
+        } else {
+            discard();
+        }
+    }
+
+    /** Who has held something out to be given, and when: a second right-click in time hands it over. */
+    private final java.util.Map<UUID, Long> offeredAt = new java.util.HashMap<>();
+    /** When they last thanked anyone for a gift: once in a while, not for every stick. */
+    private long lastThanked = -3000L;
+
+    /**
+     * A spare weapon - one worse than the best they carry - handed down: to one of the band whose best is worse,
+     * or laid on the band's tool pile if it is near. Every ten seconds, for your own band.
+     */
+    private void handDownSpares() {
+        if (!(level() instanceof net.minecraft.server.level.ServerLevel server) || isWild() || isBaby()
+                || tickCount % 200 != 37) {
+            return;
+        }
+        int best = bestWeaponRank();
+        // Something better leaning on a rack nearby: taken down and carried.
+        var rackAccess = ToolPiles.access(this);
+        dev.hominin.evolution.block.ToolRackBlockEntity racked = dev.hominin.evolution.block.ToolRackBlockEntity.nearest(
+                server, blockPosition(), 16.0D, r -> r.has(s -> weaponRank(s) > best, rackAccess));
+        if (racked != null) {
+            ItemStack taken = racked.takeFirst(s -> weaponRank(s) > best, rackAccess);
+            if (!taken.isEmpty()) {
+                addToInventory(taken);
+                ensureName();
+                Band.announce(this, " takes a " + taken.getHoverName().getString().toLowerCase() + " down off the rack.");
+                return;
+            }
+        }
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack spare = inventory.getItem(slot);
+            int rank = weaponRank(spare);
+            if (rank < 0 || rank > best || rank == best && countCarried(s -> weaponRank(s) == best) < 2
+                    || rank <= 1) {
+                continue;
+            }
+            for (BandMember other : Band.near(this, 12.0D)) {
+                if (other != this && !other.isBaby() && leaderPlayer() != null && other.isLedBy(leaderPlayer())
+                        && other.bestWeaponRank() < rank) {
+                    other.addToInventory(inventory.removeItem(slot, 1));
+                    ensureName();
+                    other.ensureName();
+                    Band.announceDiscovery(this, " hands their spare " + spare.getHoverName().getString().toLowerCase()
+                            + " to " + other.getName().getString() + ".");
+                    return;
+                }
+            }
+            dev.hominin.evolution.block.ToolRackBlockEntity rack = dev.hominin.evolution.block.ToolRackBlockEntity.nearest(
+                    server, blockPosition(), 16.0D, r -> !r.isFull());
+            if (rack != null && dev.hominin.evolution.block.ToolRackBlockEntity.rackable(spare)) {
+                ItemStack one = inventory.removeItem(slot, 1);
+                ensureName();
+                if (rack.lean(one, getUUID(), getName().getString())) {
+                    ensureName();
+                    Band.announce(this, " leans their spare " + spare.getHoverName().getString().toLowerCase()
+                            + " on the rack.");
+                    return;
+                }
+                addToInventory(one);
+            }
+            UUID owner = ToolPiles.ownerOf(this);
+            net.minecraft.core.BlockPos store = owner == null ? null : ToolPiles.storeWithin(server, owner, blockPosition(), 24.0D);
+            if (store != null && ToolPiles.putBack(server, owner, store, inventory.removeItem(slot, 1), this)) {
+                return;
+            }
+        }
+    }
+
     /** Makers keep a little raw material: a couple of sticks, a few stones, a flake. */
     private boolean wantsMaterial(ItemStack stack) {
+        if (dev.hominin.evolution.band.ErectusWork.works(this)) {
+            // Erectus keeps what beds and builds are made of - a few of each.
+            if (stack.is(ModItems.HIDE.get())) {
+                return countCarried(s -> s.is(ModItems.HIDE.get())) < 4;
+            }
+            if (stack.is(ModItems.THATCH.get()) || stack.is(ModItems.TWINE.get())) {
+                return countCarried(s -> s.is(stack.getItem())) < 16;
+            }
+            if (stack.is(ModItems.THATCH_BEDDING.get())) {
+                return countCarried(s -> s.is(stack.getItem())) < 2;
+            }
+            if (stack.is(ModItems.THATCH_BLOCK.get()) || stack.is(ModItems.BUILDING_BRANCH.get())) {
+                return countCarried(s -> s.is(stack.getItem())) < 12;
+            }
+            if (stack.is(ModItems.WORKABLE_BRANCH.get())) {
+                return countCarried(s -> s.is(stack.getItem())) < 3;
+            }
+        }
         if (stack.is(net.minecraft.world.item.Items.STICK)) {
             return countCarried(s -> s.is(net.minecraft.world.item.Items.STICK)) < 2;
         }
-        if (stack.is(ModItems.ROCK.get()) || stack.is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)) {
-            return countCarried(s -> s.is(ModItems.ROCK.get()) || s.is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)) < 4;
+        if (stack.is(dev.hominin.evolution.ModTags.Items.ROCKS) || stack.is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)) {
+            return countCarried(s -> s.is(dev.hominin.evolution.ModTags.Items.ROCKS)
+                    || s.is(dev.hominin.evolution.ModTags.Items.KNAPPABLE_STONE)) < 4;
         }
         if (stack.is(dev.hominin.evolution.ModTags.Items.FLAKES)) {
             return countCarried(s -> s.is(dev.hominin.evolution.ModTags.Items.FLAKES)) < 2;
@@ -1508,7 +2000,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         return false;
     }
 
-    private int countCarried(java.util.function.Predicate<ItemStack> test) {
+    public int countCarried(java.util.function.Predicate<ItemStack> test) {
         int count = test.test(getMainHandItem()) ? getMainHandItem().getCount() : 0;
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             if (test.test(inventory.getItem(slot))) {
@@ -1600,11 +2092,22 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
      * with; fishing, the stick. Otherwise a weapon if there is one, or the best tool. And a
      * hungry member keeps food ready in the other hand.
      */
+    /** What a hunting party asked them to carry: that, in hand, while there is something to fight. */
+    @javax.annotation.Nullable
+    private java.util.function.Predicate<ItemStack> huntWeapon;
+
+    public void setHuntWeapon(@javax.annotation.Nullable java.util.function.Predicate<ItemStack> weapon) {
+        huntWeapon = weapon;
+    }
+
     public void updateHands() {
         if (isBaby() || level().isClientSide()) {
             return;
         }
-        if (inDanger()) {
+        java.util.function.Predicate<ItemStack> asked = huntWeapon;
+        if ((inDanger() || getTarget() != null) && asked != null && countCarried(asked) > 0) {
+            wieldBest(s -> asked.test(s) ? 100 + Math.max(0, weaponRank(s)) : -1);
+        } else if (inDanger()) {
             wieldBest(BandMember::weaponRank);
         } else if (handTask == HandTask.FORAGE) {
             wieldBest(BandMember::foragingRank);
@@ -1722,9 +2225,52 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             SocialSelection.selectedAtMillis = net.minecraft.Util.getMillis();
             return InteractionResult.SUCCESS;
         }
+        if (player.getMainHandItem().is(ModItems.HOMININ_BRAIN.get()) && !Bands.erectusOn(getStage())) {
+            // Nothing in them says this is food.
+            ensureName();
+            player.displayClientMessage(Component.literal(getName().getString() + " sniffs it and turns away."), true);
+            return InteractionResult.CONSUME;
+        }
+        if (player.getMainHandItem().is(ModItems.HOMININ_BRAIN.get()) && leaderPlayer() instanceof Player lead
+                && Morals.holds(lead, Morals.Moral.NO_BRAINS)) {
+            ensureName();
+            player.displayClientMessage(Component.literal(getName().getString() + " will not touch it. \"Not the flesh "
+                    + "of the thought.\""), true);
+            return InteractionResult.CONSUME;
+        }
         // Food held out is food held out: they take it, and nobody needs a menu for that.
         if (food) {
             receiveFromHand(player);
+            return InteractionResult.CONSUME;
+        }
+        ItemStack held = player.getMainHandItem();
+        if (answersTo(player) && !held.isEmpty() && (held.is(getWant() == null ? net.minecraft.world.item.Items.AIR
+                : getWant()) || Needs.wouldMeet(this, player, held))) {
+            // Exactly what they asked for, or what they need: no menu, no second click - it is given.
+            receiveFromHand(player);
+            return InteractionResult.CONSUME;
+        }
+        if (answersTo(player) && (isWeapon(held) || held.is(dev.hominin.evolution.ModTags.Items.STONE_TOOLS))) {
+            // Held out once, it is shown; held out again, it is given.
+            long now = level().getGameTime();
+            Long first = offeredAt.get(player.getUUID());
+            if (first != null && now - first < 60L) {
+                offeredAt.remove(player.getUUID());
+                receiveFromHand(player);
+                return InteractionResult.CONSUME;
+            }
+            offeredAt.put(player.getUUID(), now);
+            ensureName();
+            attendTo(player, ATTEND_TICKS);
+            player.displayClientMessage(Component.literal(getName().getString() + " looks at the "
+                    + held.getHoverName().getString().toLowerCase() + ". Right-click again to give it to them.")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return InteractionResult.CONSUME;
+        }
+        if (isStray()) {
+            ensureName();
+            player.displayClientMessage(Component.literal(getName().getString() + " watches you, wary, alone. Hold out "
+                    + "some food - or just come and sit close.").withStyle(ChatFormatting.GRAY), true);
             return InteractionResult.CONSUME;
         }
         // Everything else is said from the H menu: a right-click only picks them out.
@@ -1744,6 +2290,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     public void receiveFromHand(Player player) {
         ensureName();
         ItemStack held = player.getMainHandItem();
+        if (dev.hominin.evolution.food.Spoilage.isSpoiled(held)) {
+            player.displayClientMessage(Component.literal(getName().getString() + " smells it, pulls a face and pushes "
+                    + "it away. It has gone off."), true);
+            return;
+        }
         if (isWild()) {
             FoodProperties guestFood = held.get(DataComponents.FOOD);
             if (guestFood != null && isGuestOf(player)) {
@@ -1754,37 +2305,54 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             }
             return;
         }
+        // A co-leader gives as the band's leader would: what the band needs is the band's, whoever meets it.
+        Player lead = isCoLedBy(player) && leaderPlayer() != null ? leaderPlayer() : player;
+        boolean ours = isLedBy(lead);
         if (held.isEmpty()) {
             if (!(isLedBy(player) && shareObsidian(player))) {
                 player.displayClientMessage(Component.literal("Your hand is empty. Hold what you want to give."), true);
             }
             return;
         }
-        if (isLedBy(player) && player instanceof net.minecraft.server.level.ServerPlayer giver) {
+        if (ours && lead instanceof net.minecraft.server.level.ServerPlayer giver) {
             // Anything handed over counts as giving back - even a bite of food.
             Mood.gave(giver, 1);
         }
-        if (isLedBy(player) && Needs.receive(this, player, held)) {
+        if (ours && Needs.receive(this, lead, held)) {
             return;
         }
-        if (isLedBy(player) && Commissions.receive(this, player, held)) {
+        if (ours && Commissions.receive(this, lead, held)) {
             return;
         }
-        if (isLedBy(player) && Wants.receive(this, player, held)) {
+        if (ours && Wants.receive(this, lead, held)) {
             return;
         }
-        if (isLedBy(player) && player instanceof net.minecraft.server.level.ServerPlayer giver
+        if (ours && lead instanceof net.minecraft.server.level.ServerPlayer giver
                 && RareFinds.treasured(this, giver, held)) {
             return;
         }
         FoodProperties food = held.get(DataComponents.FOOD);
         if (food != null) {
             feedFromHand(player, held, food);
-        } else if (isLedBy(player)) {
-            addToInventory(held.copyWithCount(1));
+        } else if (ours) {
+            boolean better = isWeapon(held) && weaponRank(held) > bestWeaponRank()
+                    || held.is(dev.hominin.evolution.ModTags.Items.STONE_TOOLS) && countCarried(s -> s.is(held.getItem())) == 0;
+            int worth = Trading.tierOf(held, getStage());
+            takeGift(held.copyWithCount(1));
             playSound(SoundEvents.ITEM_PICKUP, 0.6F, 1.0F);
-            player.displayClientMessage(Component.literal(getName().getString() + " takes ")
-                    .append(held.getHoverName()).append("."), true);
+            long now = level().getGameTime();
+            if ((better || worth >= 2) && now - lastThanked > 3000L) {
+                // Something they will use, or something worth having: it is appreciated.
+                lastThanked = now;
+                addBond(1);
+                player.displayClientMessage(Component.literal(getName().getString() + " turns the ")
+                        .append(held.getHoverName()).append(Component.literal(" over in their hands - "
+                                + (better ? "better than what they had. " : "a good thing to be given. ") + "(Bond +1)"))
+                        .withStyle(ChatFormatting.GREEN), true);
+            } else {
+                player.displayClientMessage(Component.literal(getName().getString() + " takes ")
+                        .append(held.getHoverName()).append("."), true);
+            }
             if (!player.getAbilities().instabuild) {
                 held.shrink(1);
             }
@@ -1799,11 +2367,12 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     private void feedFromHand(Player player, ItemStack held, FoodProperties food) {
-        if (hunger >= MAX_HUNGER) {
+        boolean recruiting = leader == null && bandId == null;
+        // A stray takes food held out to it whether it is hungry or not: it is the offer that matters.
+        if (hunger >= MAX_HUNGER && !recruiting) {
             player.displayClientMessage(Component.literal(getName().getString() + " is not hungry."), true);
             return;
         }
-        boolean recruiting = leader == null && bandId == null;
         if (recruiting && !Band.hasRoomFor(player)) {
             player.displayClientMessage(Component.literal("Your band is as big as the land can feed."), true);
             return;
@@ -1823,11 +2392,16 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             player.displayClientMessage(Component.literal(getName().getString() + " seems grateful.")
                     .withStyle(ChatFormatting.LIGHT_PURPLE), true);
         }
+        boolean wasHungry = isHungry();
         if (!player.getAbilities().instabuild) {
             held.shrink(1);
         }
         ((ServerLevel) level()).sendParticles(ParticleTypes.HEART, getX(), getEyeY() + 0.3D, getZ(),
                 3, 0.3D, 0.2D, 0.3D, 0.0D);
+        if (!recruiting && isLedBy(player) && player instanceof net.minecraft.server.level.ServerPlayer feeder) {
+            // Feeding one of your own, by hand, is seen by all of them.
+            Cohesion.addLimited(feeder, "fed_by_hand", favourite || wasHungry ? 2 : 1, 60 * 20L);
+        }
         if (recruiting) {
             leader = player.getUUID();
             player.displayClientMessage(Component.literal(getName().getString()
@@ -1932,6 +2506,17 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     public void startHunt(int ticks) {
         huntWithLeader = true;
         huntTicks = ticks;
+    }
+
+    /** The simple names of the goals running right now - what they are busy with. */
+    public List<String> runningGoals() {
+        List<String> names = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.ai.goal.WrappedGoal goal : goalSelector.getAvailableGoals()) {
+            if (goal.isRunning()) {
+                names.add(goal.getGoal().getClass().getSimpleName());
+            }
+        }
+        return names;
     }
 
     public boolean isHunting() {
@@ -2160,8 +2745,25 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     // ------------------------------------------------------------ danger
 
+    /**
+     * Nobody turns on their own. Whatever sets a target - a fight response, a defence, a hunt - it is never one of the
+     * same band: a stray spear or a swing that clipped the wrong back used to set off a feud that ran through the
+     * whole band, one killing the next.
+     */
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target instanceof BandMember other && other != this && isAlliedTo(other)) {
+            return;
+        }
+        super.setTarget(target);
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        if (source.getEntity() instanceof BandMember other && other != this && isAlliedTo(other)) {
+            // One of your own: a spear gone astray, an elbow in the crush. It does not wound, and it starts nothing.
+            return false;
+        }
         boolean hurt = super.hurt(source, amount);
         if (hurt && !level().isClientSide() && source.getEntity() instanceof net.minecraft.server.level.ServerPlayer by) {
             Paranthropus.struck(this, by);
@@ -2327,7 +2929,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     /** Flight fired: run for a tree - or, at erectus and later, for the safety of the band. */
     public boolean fleesToSafety() {
-        String stage = getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(getStage());
         return !stage.equals("ardipithecus") && !stage.equals("australopithecus") && !stage.equals("homo_habilis");
     }
 
@@ -2475,6 +3077,24 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         for (dev.hominin.evolution.mind.Skills.Skill skill : Species.nativeSkills(getStage())) {
             knownSkills.add(skill.name());
         }
+    }
+
+    /** Just shown how to do something, and wanting to try it. Not saved: the urge passes with the session. */
+    @javax.annotation.Nullable
+    private dev.hominin.evolution.mind.Skills.Skill practising;
+
+    @javax.annotation.Nullable
+    public dev.hominin.evolution.mind.Skills.Skill practising() {
+        return practising;
+    }
+
+    /** Something with the hands, just learned: go and try it. */
+    public void startPractising(dev.hominin.evolution.mind.Skills.Skill skill) {
+        practising = skill;
+    }
+
+    public void stopPractising() {
+        practising = null;
     }
 
     public void learnSkill(dev.hominin.evolution.mind.Skills.Skill skill) {
@@ -2917,7 +3537,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     @Override
     protected void customServerAiStep() {
+        cling();
+        handDownSpares();
+        Throwing.tick(this);
+        Postures.tick(this);
+        checkSurvivor();
         super.customServerAiStep();
+        dev.hominin.evolution.survival.Diseases.tick(this);
         if (tickCount == 1) {
             ensureName();
             applyFightSkill();
@@ -2927,8 +3553,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                 removeEffect(net.minecraft.world.effect.MobEffects.GLOWING);
             }
         }
-        // Eating for two: a pregnancy burns through food twice as fast.
-        if (!isBaby() && (hungerClock += (isPregnant() ? 2 : 1)
+        // Eating for two: a pregnancy burns through food twice as fast. Full after a feast, a quarter as fast.
+        if (!isBaby() && (!hasEffect(dev.hominin.evolution.ModEffects.FULL) || tickCount % 4 == 0)
+                && (hungerClock += (isPregnant() ? 2 : 1)
                 + (dev.hominin.evolution.survival.Seasons.isDry(level()) && tickCount % 2 == 0 ? 1 : 0)) >= HUNGER_TICKS) {
             hungerClock = 0;
             hunger = Math.max(0, hunger - 1);
@@ -3000,6 +3627,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         tickInfestation();
         tickKuru();
+        tickBrains();
         tickMating();
         repayGrooming();
         if (tickCount % 100 == 0 && guestOf != null && level().isNight()) {
@@ -3032,7 +3660,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         if (pregnancyTicks > 0 && --pregnancyTicks == 0) {
             labourSpot = null;
-            Band.giveBirth(this);
+            birth();
         }
         if (growUpTicks > 0 && --growUpTicks == 0) {
             entityData.set(BABY, false);
@@ -3115,7 +3743,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putInt("MemorySlots", memorySlots);
         tag.putInt("KnapLevel", knapLevel);
         tag.putInt("KnapPractice", knapPractice);
-        tag.putInt("HuntLevel", huntLevel);
+        // Stored one up, so 0 can mean "not rolled yet" - hunting reaches level 0 now.
+        tag.putInt("HuntLevelPlus", huntLevel + 1);
+        tag.putInt("NegotiateLevelPlus", negotiateLevel + 1);
         tag.putBoolean("Antisocial", antisocial);
         tag.putBoolean("TemperRolled", temperRolled);
         tag.putBoolean("NativeSkills", nativeSkillsGiven);
@@ -3125,6 +3755,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putBoolean("Psychopath", psychopath);
         tag.putBoolean("PsychopathRolled", psychopathRolled);
         tag.putBoolean("PsychopathKnown", psychopathKnown);
+        if (grudge != null) {
+            tag.putUUID("Grudge", grudge);
+        }
         if (mother != null) {
             tag.putUUID("Mother", mother);
         }
@@ -3161,6 +3794,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putInt("FightSkill", fightSkill);
         tag.putBoolean("HuntWithLeader", huntWithLeader);
         tag.putInt("Bond", bond);
+        tag.putLong("SurvivorSince", survivorSince);
         tag.putBoolean("MadeChopper", madeChopper);
         tag.putInt("Party", party);
         if (partyHead != null) {
@@ -3196,6 +3830,11 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             favourites.add(net.minecraft.nbt.StringTag.valueOf(food.toString()));
         }
         tag.put("FavouriteFoods", favourites);
+        net.minecraft.nbt.ListTag tastes = new net.minecraft.nbt.ListTag();
+        for (ResourceLocation food : tasted) {
+            tastes.add(net.minecraft.nbt.StringTag.valueOf(food.toString()));
+        }
+        tag.put("Tasted", tastes);
         if (leader != null) {
             tag.putUUID("Leader", leader);
         }
@@ -3224,7 +3863,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         memorySlots = tag.getInt("MemorySlots");
         knapLevel = tag.getInt("KnapLevel");
         knapPractice = tag.getInt("KnapPractice");
-        huntLevel = tag.getInt("HuntLevel");
+        if (tag.contains("HuntLevelPlus")) {
+            huntLevel = tag.getInt("HuntLevelPlus") - 1;
+        } else {
+            int old = tag.getInt("HuntLevel");
+            huntLevel = old == 0 ? -1 : old;
+        }
+        negotiateLevel = tag.getInt("NegotiateLevelPlus") - 1;
         antisocial = tag.getBoolean("Antisocial");
         temperRolled = tag.getBoolean("TemperRolled");
         nativeSkillsGiven = tag.getBoolean("NativeSkills");
@@ -3234,6 +3879,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         psychopath = tag.getBoolean("Psychopath");
         psychopathRolled = tag.getBoolean("PsychopathRolled");
         psychopathKnown = tag.getBoolean("PsychopathKnown");
+        grudge = tag.hasUUID("Grudge") ? tag.getUUID("Grudge") : null;
         mother = tag.hasUUID("Mother") ? tag.getUUID("Mother") : null;
         injuredUntil = tag.getLong("InjuredUntil");
         thoughtWhileDown = tag.getBoolean("ThoughtWhileDown");
@@ -3267,6 +3913,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         fightSkill = tag.getInt("FightSkill");
         huntWithLeader = !tag.contains("HuntWithLeader") || tag.getBoolean("HuntWithLeader");
         bond = tag.getInt("Bond");
+        survivorSince = tag.getLong("SurvivorSince");
         madeChopper = tag.getBoolean("MadeChopper");
         party = tag.getInt("Party");
         partyHead = tag.hasUUID("PartyHead") ? tag.getUUID("PartyHead") : null;
@@ -3292,10 +3939,18 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tradeOffer = tag.contains("TradeOffer") ? itemOf(tag.getString("TradeOffer")) : null;
         excursionTicks = tag.getInt("ExcursionTicks");
         excursionTarget = tag.contains("ExcursionTarget") ? BlockPos.of(tag.getLong("ExcursionTarget")) : null;
+        tasted.clear();
+        for (net.minecraft.nbt.Tag food : tag.getList("Tasted", net.minecraft.nbt.Tag.TAG_STRING)) {
+            ResourceLocation id = ResourceLocation.tryParse(food.getAsString());
+            if (id != null) {
+                tasted.add(id);
+            }
+        }
         favouriteFoods.clear();
         for (net.minecraft.nbt.Tag food : tag.getList("FavouriteFoods", net.minecraft.nbt.Tag.TAG_STRING)) {
             ResourceLocation id = ResourceLocation.tryParse(food.getAsString());
-            if (id != null) {
+            // A craving for something never eaten - a steak, from before tastes had to be learned - is dropped.
+            if (id != null && (wildFood(id) || tasted.contains(id))) {
                 favouriteFoods.add(id);
             }
         }
@@ -3323,12 +3978,18 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             mourner.sendSystemMessage(getCombatTracker().getDeathMessage().copy().withStyle(ChatFormatting.DARK_RED));
             Cohesion.add(mourner, -3, null);
             Mortuary.memberDied(mourner);
+            if (!isBaby()) {
+                Chatter.news(mourner, "news_death", getName().getString());
+            }
         }
         super.die(source);
         if (!level().isClientSide() && isBaby()) {
             Band.onChildDied(this);
         }
         if (!level().isClientSide() && leader != null) {
+            if (leaderPlayer() instanceof net.minecraft.server.level.ServerPlayer keeper) {
+                Tracking.forget(keeper, getUUID());
+            }
             Band.onMemberDied(this);
         }
     }

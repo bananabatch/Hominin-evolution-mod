@@ -83,6 +83,9 @@ public final class ItemInteractions {
 
     private static final int FIRE_RADIUS = 3;
 
+    /** "A rock" in a recipe: any loose rock will do. Shown as quartzite. */
+    private static final Supplier<Item> ANY_ROCK = () -> ModItems.GRANITE_ROCK.get();
+
     private static final List<HandRecipe> RECIPES = List.of(
             // Every stage: a nest is older than any of them. Great apes build one every night.
             new HandRecipe(id("nest"), ModItems.NESTING_MATERIAL, ModItems.NESTING_MATERIAL, ModItems.NEST,
@@ -108,7 +111,7 @@ public final class ItemInteractions {
             // Habilis: a flake against a cobble trims it down to a working edge. This
             // and the digging stick are what give habilis three separate things to
             // work out, which is what the stage asks for.
-            new HandRecipe(id("chopper"), ModItems.ROCK, ModItems.FLAKE, ModItems.CHOPPER,
+            new HandRecipe(id("chopper"), ANY_ROCK, ModItems.FLAKE, ModItems.CHOPPER,
                     FROM_HABILIS, false, false, true,
                     "You trim the cobble down until one side will cut.",
                     "The edge does not have to be thin. It has to be an edge."),
@@ -118,7 +121,7 @@ public final class ItemInteractions {
                     "You hack the branch down to a blunt, strong point.",
                     "Not everything worth eating is above the ground."),
             // Erectus: beating the end of a branch with a stone leaves the weight at one end.
-            new HandRecipe(id("wooden_club"), ModItems.LONG_BRANCH, ModItems.ROCK, ModItems.WOODEN_CLUB,
+            new HandRecipe(id("wooden_club"), ModItems.LONG_BRANCH, ANY_ROCK, ModItems.WOODEN_CLUB,
                     FROM_ERECTUS, false, false, true,
                     "You batter the end of the branch until it carries its own weight.",
                     "Weight at the far end. It would land harder if it were heavier where it lands."),
@@ -133,7 +136,7 @@ public final class ItemInteractions {
             // what lets a habilis stop waiting for lightning.
             new HandRecipe(id("fire_drill"), () -> net.minecraft.world.item.Items.STICK,
                     () -> net.minecraft.world.item.Items.STICK, ModItems.FIRE_DRILL,
-                    FROM_HABILIS, false, true, true,
+                    List.of(RUDOLFENSIS, HABILIS, ERECTUS, HEIDELBERGENSIS), false, true, true,
                     "You spin one stick against the other until the dust smoulders.",
                     "Rubbing it makes it hot. Rub it hard enough, for long enough, and hot becomes fire."),
             // Erectus: turning the point in a fire case-hardens the wood. Needs a free
@@ -158,7 +161,7 @@ public final class ItemInteractions {
 
     @Nullable
     private static TagKey<Item> roleOf(Supplier<Item> wanted) {
-        if (wanted == ModItems.ROCK) {
+        if (wanted == ANY_ROCK) {
             return ModTags.Items.ROCKS;
         }
         if (wanted == ModItems.FLAKE) {

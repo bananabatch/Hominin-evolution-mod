@@ -1,7 +1,7 @@
 {
   "values": [
-    "hominin_evolution:rock",
     "hominin_evolution:chert_rock",
+    "hominin_evolution:fine_chert_rock",
     "hominin_evolution:basalt_rock",
     "hominin_evolution:granite_rock",
     "hominin_evolution:limestone_rock",

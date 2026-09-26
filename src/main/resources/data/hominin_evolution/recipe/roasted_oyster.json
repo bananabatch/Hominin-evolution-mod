@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:oyster"
+  },
+  "result": {
+    "id": "hominin_evolution:roasted_oyster"
+  },
+  "experience": 0.1,
+  "cookingtime": 300
+}

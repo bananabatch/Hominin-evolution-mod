@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "struck=0": {
+      "model": "hominin_evolution:block/salt_block"
+    },
+    "struck=1": {
+      "model": "hominin_evolution:block/salt_block"
+    },
+    "struck=2": {
+      "model": "hominin_evolution:block/salt_block"
+    }
+  }
+}

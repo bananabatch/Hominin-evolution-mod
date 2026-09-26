@@ -126,8 +126,8 @@ public class BasaltScatterFeature extends Feature<NoneFeatureConfiguration> {
 
     /** Where lava has run and cooled fast, it went to glass: a few pieces lie right at its edge. */
     private static void glassAtTheEdge(WorldGenLevel level, RandomSource random, ChunkPos chunk, BlockPos lava) {
-        // One piece, now and then two: a pool spans several chunks, and each leaves its own.
-        int wanted = random.nextInt(3) == 0 ? 2 : 1;
+        // Two to four pieces: a pool spans several chunks, and each leaves its own.
+        int wanted = 2 + random.nextInt(3);
         for (int attempt = 0; attempt < 48 && wanted > 0; attempt++) {
             int x = lava.getX() + random.nextInt(11) - 5;
             int z = lava.getZ() + random.nextInt(11) - 5;
@@ -136,7 +136,7 @@ public class BasaltScatterFeature extends Feature<NoneFeatureConfiguration> {
             }
             BlockPos ground = groundAt(level, x, z);
             if (ground != null && besideLava(level, ground) && put(level, ground,
-                    ModBlocks.OBSIDIAN_ROCK.get().defaultBlockState().setValue(LooseRockBlock.ROCKS, 1 + random.nextInt(2)))) {
+                    ModBlocks.OBSIDIAN_ROCK.get().defaultBlockState().setValue(LooseRockBlock.ROCKS, 1 + random.nextInt(3)))) {
                 wanted--;
             }
         }

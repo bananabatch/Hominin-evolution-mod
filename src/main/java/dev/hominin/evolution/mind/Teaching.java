@@ -49,7 +49,7 @@ public final class Teaching {
         List<String> labels = new ArrayList<>();
         List<Integer> values = new ArrayList<>();
         for (Skills.Skill skill : Skills.Skill.values()) {
-            if (Skills.knows(player, skill)) {
+            if (Skills.knows(player, skill) && skill.teachable()) {
                 labels.add(skill.title() + (TOLD.contains(skill) ? "  (tell)" : "  (show)"));
                 values.add(skill.ordinal());
             }
@@ -118,6 +118,10 @@ public final class Teaching {
                 understood.add(member);
             }
         }
+        if (!understood.isEmpty()) {
+            dev.hominin.evolution.band.Cohesion.addLimited(player, "taught", 2, 6000L);
+            Knacks.taught(player);
+        }
         player.sendSystemMessage(Component.literal(understood.isEmpty()
                 ? "You try to put " + skill.title().toLowerCase() + " into sounds and gestures. Nobody quite gets it. Try again another time."
                 : "You explain " + skill.title().toLowerCase() + " as well as you can. " + names(understood)
@@ -165,6 +169,15 @@ public final class Teaching {
         if (!learned.isEmpty()) {
             player.sendSystemMessage(Component.literal(names(learned) + (learned.size() == 1 ? " has" : " have")
                     + " learned " + skill.title().toLowerCase() + " from you.").withStyle(ChatFormatting.AQUA));
+            // Showing them something is doing something together: the band holds a little tighter for it.
+            dev.hominin.evolution.band.Cohesion.addLimited(player, "taught", 2, 6000L);
+            Knacks.taught(player);
+            // And they want to try it, right now - anything done with the hands.
+            for (BandMember member : learned) {
+                if (!TOLD.contains(skill)) {
+                    member.startPractising(skill);
+                }
+            }
         }
     }
 

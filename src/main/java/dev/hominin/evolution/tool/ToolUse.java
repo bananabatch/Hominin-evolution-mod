@@ -35,6 +35,30 @@ public final class ToolUse {
     }
 
     /** One use of whatever is in this hand. A hammerstone has no durability and is untouched. */
+    /**
+     * A blow landed with one of the mod's tools in hand wears it. The hand axe, the flake, the wooden weapons and worked
+     * wood already wear themselves when they hit; everything else that has durability - a chopper, a core, a multi
+     * tool, a stick, a hammerstone - used to hit forever.
+     */
+    public static void onDamageDealt(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        if (!(event.getSource().getDirectEntity() instanceof ServerPlayer player) || event.getSource().getEntity() != player
+                || player.getAbilities().instabuild) {
+            return;
+        }
+        ItemStack held = player.getMainHandItem();
+        net.minecraft.world.item.Item item = held.getItem();
+        if (!held.isDamageableItem() || item instanceof dev.hominin.evolution.item.AcheuleanToolItem
+                || item instanceof dev.hominin.evolution.item.StoneEdgeItem
+                || item instanceof dev.hominin.evolution.item.WoodenWeaponItem
+                || item instanceof dev.hominin.evolution.item.WorkedBranchItem
+                || item instanceof dev.hominin.evolution.item.LitTorchItem
+                || !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).getNamespace()
+                        .equals(dev.hominin.evolution.HomininEvolutionMod.MODID)) {
+            return;
+        }
+        held.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+    }
+
     public static void wear(ServerPlayer player, InteractionHand hand) {
         ItemStack tool = player.getItemInHand(hand);
         if (tool.isDamageableItem()) {

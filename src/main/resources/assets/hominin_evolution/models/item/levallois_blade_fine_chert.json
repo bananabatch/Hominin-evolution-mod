@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/levallois_blade",
+  "textures": {
+    "body": "hominin_evolution:item/stone/fine_chert_body",
+    "scar": "hominin_evolution:item/stone/fine_chert_scar",
+    "edge": "hominin_evolution:item/stone/fine_chert_edge",
+    "particle": "hominin_evolution:item/stone/fine_chert_body"
+  }
+}

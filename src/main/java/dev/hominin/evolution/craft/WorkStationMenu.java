@@ -65,8 +65,14 @@ public class WorkStationMenu extends AbstractContainerMenu {
             }
 
             @Override
+            public boolean mayPickup(Player taker) {
+                // An idea not had yet is only something to look at.
+                return !getItem().is(dev.hominin.evolution.ModItems.UNWORKED_IDEA.get());
+            }
+
+            @Override
             public void onTake(Player taker, ItemStack stack) {
-                craft();
+                craft(stack);
                 super.onTake(taker, stack);
             }
         });
@@ -97,17 +103,37 @@ public class WorkStationMenu extends AbstractContainerMenu {
     @Override
     public void slotsChanged(Container changed) {
         super.slotsChanged(changed);
+        if (player.level().isClientSide()) {
+            // What comes out is the server's to say: some things have to be thought of before they can be made.
+            return;
+        }
         current = WorkRecipes.match(gridItems(), tool.getItem(0));
-        result.setItem(0, current == null ? ItemStack.EMPTY
-                : new ItemStack(current.result().get(), current.count()));
+        ItemStack out = current == null ? ItemStack.EMPTY : new ItemStack(current.result().get(), current.count());
+        if (current != null && !WorkRecipes.seen(player, current)) {
+            out = new ItemStack(dev.hominin.evolution.ModItems.UNWORKED_IDEA.get());
+        } else if (out.is(dev.hominin.evolution.ModItems.KNIFE.get())) {
+            // The knife is the blade's stone.
+            dev.hominin.evolution.item.StoneMaterial.stamp(out, bladeMaterial());
+        } else if (out.is(dev.hominin.evolution.ModItems.STONE_TIPPED_SPEAR.get())) {
+            // And so is the point of the spear.
+            dev.hominin.evolution.item.StoneMaterial.mark(out, bladeMaterial());
+        }
+        result.setItem(0, out);
         broadcastChanges();
     }
 
     /** Taking what was made: the grid is used up and the tool pays for it. */
-    private void craft() {
+    private void craft(ItemStack made) {
         WorkRecipes.WorkRecipe recipe = current;
-        if (recipe == null) {
+        if (recipe == null || made.is(dev.hominin.evolution.ModItems.UNWORKED_IDEA.get())) {
             return;
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            if (made.is(dev.hominin.evolution.ModItems.KNIFE.get())) {
+                dev.hominin.evolution.EvolutionManager.incrementCriterion(server, "make_knife", 1);
+            } else if (dev.hominin.evolution.item.SuperWeapons.isSuperWeapon(made)) {
+                dev.hominin.evolution.item.SuperWeapons.made(server, made);
+            }
         }
         for (int i = 0; i < 9; i++) {
             if (!grid.getItem(i).isEmpty()) {
@@ -128,6 +154,17 @@ public class WorkStationMenu extends AbstractContainerMenu {
         tool.setChanged();
     }
 
+    /** What the blade in the grid was struck from. */
+    @Nullable
+    private dev.hominin.evolution.item.StoneMaterial bladeMaterial() {
+        for (int i = 0; i < 9; i++) {
+            if (grid.getItem(i).is(dev.hominin.evolution.ModItems.LEVALLOIS_BLADE.get())) {
+                return dev.hominin.evolution.item.StoneMaterial.of(grid.getItem(i));
+            }
+        }
+        return null;
+    }
+
     @Override
     public ItemStack quickMoveStack(Player who, int index) {
         Slot slot = slots.get(index);
@@ -140,7 +177,8 @@ public class WorkStationMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, INVENTORY_START, INVENTORY_END, true)) {
                 return ItemStack.EMPTY;
             }
-            slot.onTake(who, stack);
+            // What was made, as it was made - the stack itself is empty once moved.
+            slot.onTake(who, copy);
             return copy;
         }
         if (index < INVENTORY_START) {

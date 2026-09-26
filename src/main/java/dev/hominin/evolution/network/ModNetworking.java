@@ -61,6 +61,14 @@ public final class ModNetworking {
         registrar.playToClient(BodyAnimationPayload.TYPE, BodyAnimationPayload.STREAM_CODEC,
                 BodyAnimationPayload::handle);
         registrar.playToClient(TipPayload.TYPE, TipPayload.STREAM_CODEC, TipPayload::handle);
+        registrar.playToClient(AlertPayload.TYPE, AlertPayload.STREAM_CODEC, AlertPayload::handle);
+        registrar.playToClient(TrackPayload.TYPE, TrackPayload.STREAM_CODEC, TrackPayload::handle);
+        registrar.playToClient(ThreatPayload.TYPE, ThreatPayload.STREAM_CODEC, ThreatPayload::handle);
+        registrar.playToClient(RevealPayload.TYPE, RevealPayload.STREAM_CODEC, RevealPayload::handle);
+        registrar.playToClient(GoodsPayload.TYPE, GoodsPayload.STREAM_CODEC, GoodsPayload::handle);
+        registrar.playToServer(GoodsChoicePayload.TYPE, GoodsChoicePayload.STREAM_CODEC, GoodsChoicePayload::handle);
+        registrar.playToClient(HuntPayload.TYPE, HuntPayload.STREAM_CODEC, HuntPayload::handle);
+        registrar.playToServer(HuntStartPayload.TYPE, HuntStartPayload.STREAM_CODEC, HuntStartPayload::handle);
         registrar.playToClient(MapPayload.TYPE, MapPayload.STREAM_CODEC, MapPayload::handle);
         registrar.playToServer(MapActionPayload.TYPE, MapActionPayload.STREAM_CODEC, MapActionPayload::handle);
         registrar.playToClient(WaypointPayload.TYPE, WaypointPayload.STREAM_CODEC, WaypointPayload::handle);

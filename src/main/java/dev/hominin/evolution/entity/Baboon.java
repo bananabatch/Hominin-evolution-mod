@@ -624,6 +624,9 @@ public class Baboon extends PathfinderMob implements TroopAnimal, TreeClimber {
                 if (troopId != null) {
                     TroopRelations.goodwill(player, troopId, 1);
                 }
+                if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+                    BaboonBegging.fed(server, this);
+                }
                 return InteractionResult.CONSUME;
             }
         }
@@ -637,6 +640,9 @@ public class Baboon extends PathfinderMob implements TroopAnimal, TreeClimber {
         player.displayClientMessage(Component.literal("It takes it, and eats it in front of you. A gift."), true);
         if (troopId != null) {
             TroopRelations.goodwill(player, troopId, 2);
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            BaboonBegging.fed(server, this);
         }
         return InteractionResult.CONSUME;
     }

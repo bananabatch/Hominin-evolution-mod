@@ -95,6 +95,12 @@ public final class Knapping {
         if (choices.isEmpty()) {
             return false;
         }
+        if (off.is(ModItems.OBSIDIAN_CHUNK.get())) {
+            // Glass is no hammer: it bursts at the first blow.
+            off.shrink(1);
+            dev.hominin.evolution.item.ObsidianChunkItem.burst(player.serverLevel(), player.blockPosition(), player);
+            return true;
+        }
         if (!off.is(ModTags.Items.HAMMERSTONES)) {
             // A cobble is both knapping stock and a chopper blank, so anything else
             // in the off hand means this press was meant for a recipe instead.
@@ -240,6 +246,11 @@ public final class Knapping {
      * Lomekwian core is how you learn where not to strike.
      */
     private static void makeMultitool(ServerPlayer player, PlayerEvolutionData data, ItemStack main) {
+        if (!data.isDeveloperMode() && !dev.hominin.evolution.band.Species.makesMultitool(data.getStage())) {
+            player.displayClientMessage(Component.literal("Your kind never worked stone into one of these. Flakes "
+                    + "and choppers are what your hands know."), true);
+            return;
+        }
         int cost = multitoolCost(main);
         if (cost == 0) {
             player.displayClientMessage(Component.literal(

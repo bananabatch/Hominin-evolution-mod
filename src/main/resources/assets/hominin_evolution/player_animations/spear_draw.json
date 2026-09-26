@@ -1,0 +1,92 @@
+{
+  "version": 3,
+  "name": "spear_draw",
+  "description": "Any spear drawn back to throw: the throwing arm up and back behind the head, the body twisted right and leaning back, the free arm pointing at the mark",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 20,
+    "stopTick": 20,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -195,
+          "yaw": -18,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -95,
+          "yaw": -18,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 5,
+          "yaw": -18,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "head": {
+          "yaw": 18
+        }
+      },
+      {
+        "tick": 10,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -197,
+          "yaw": -18,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -96,
+          "yaw": -18,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 6,
+          "yaw": -19,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "head": {
+          "yaw": 19
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -195,
+          "yaw": -18,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -95,
+          "yaw": -18,
+          "roll": 0
+        },
+        "body": {
+          "pitch": 5,
+          "yaw": -18,
+          "roll": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "head": {
+          "yaw": 18
+        }
+      }
+    ]
+  }
+}

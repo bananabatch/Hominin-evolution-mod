@@ -2,6 +2,8 @@ package dev.hominin.evolution.world.feature;
 
 import com.mojang.serialization.Codec;
 
+import dev.hominin.evolution.ModBlocks;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -33,8 +35,117 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
     private static final Size MEDIUM = new Size(3, 2, 3, 0.35F);
     private static final Size LARGE = new Size(4, 3, 5, 0.8F);
 
+    /** How rare glass is: about one chert outcrop in thirty-three - and no other kind of outcrop at all. */
+    private static final float OBSIDIAN_CHANCE = 0.03F;
+
+    /** No outcrop stands within this many blocks of another: scattered over the country, not heaped up together. */
+    private static final int APART = 20;
+    /** Round a chert outcrop, now and then: loose fine chert weathered out of it, or a block or two in its foot. */
+    private static final float FINE_ROCKS_BY_CHERT = 0.3F;
+    private static final float FINE_SEAM_IN_CHERT = 0.12F;
+    /** Round any other workable outcrop: a loose piece of fine chert, rarely. */
+    private static final float FINE_ROCKS_BY_OTHER = 0.05F;
+
+    private static boolean isWorkable(BlockState stone) {
+        return stone.is(ModBlocks.CHERT_DEPOSIT.get()) || stone.is(ModBlocks.QUARTZITE_DEPOSIT.get())
+                || stone.is(ModBlocks.BASALT_DEPOSIT.get()) || stone.is(ModBlocks.LIMESTONE_DEPOSIT.get());
+    }
+
+    /**
+     * Three or four blocks of obsidian side by side on the face of the outcrop - the tops of its columns, where the
+     * weather has worn it bare: a vein of glass you can see from a way off.
+     */
+    private static void veinOfGlass(WorldGenLevel level, java.util.List<BlockPos> foot, RandomSource random) {
+        BlockState glass = ModBlocks.OBSIDIAN_DEPOSIT.get().defaultBlockState();
+        BlockPos start = foot.get(random.nextInt(foot.size()));
+        int want = 3 + random.nextInt(2);
+        java.util.List<BlockPos> vein = new java.util.ArrayList<>();
+        vein.add(start);
+        for (BlockPos pos : foot) {
+            if (vein.size() >= want) {
+                break;
+            }
+            if (!pos.equals(start) && Math.abs(pos.getX() - start.getX()) <= 1 && Math.abs(pos.getZ() - start.getZ()) <= 1) {
+                vein.add(pos);
+            }
+        }
+        for (BlockPos pos : foot) {
+            if (vein.size() >= want) {
+                break;
+            }
+            if (!vein.contains(pos) && Math.abs(pos.getX() - start.getX()) <= 2 && Math.abs(pos.getZ() - start.getZ()) <= 2) {
+                vein.add(pos);
+            }
+        }
+        for (BlockPos pos : vein) {
+            level.setBlock(pos, glass, 2);
+        }
+    }
+
     public OutcropFeature(Codec<BlockStateConfiguration> codec) {
         super(codec);
+    }
+
+    /**
+     * Whether another outcrop already stands near here. Only the chunks this feature may touch are looked at - its
+     * own and the ring round it - which is as far as {@link #APART} reaches from anywhere in the middle chunk.
+     */
+    private static boolean crowded(WorldGenLevel level, BlockPos origin, BlockPos site) {
+        int minX = (origin.getX() >> 4 << 4) - 16;
+        int minZ = (origin.getZ() >> 4 << 4) - 16;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = Math.max(minX, site.getX() - APART); x <= Math.min(minX + 47, site.getX() + APART); x += 2) {
+            for (int z = Math.max(minZ, site.getZ() - APART); z <= Math.min(minZ + 47, site.getZ() + APART); z += 2) {
+                if ((x - site.getX()) * (x - site.getX()) + (z - site.getZ()) * (z - site.getZ()) > APART * APART
+                        || !level.hasChunk(x >> 4, z >> 4)) {
+                    continue;
+                }
+                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, x, z);
+                for (int y = top - 1; y >= top - 4; y--) {
+                    if (SurfaceSite.isLandmark(level.getBlockState(at.set(x, y, z)))
+                            && !level.getBlockState(at).is(ModBlocks.TERMITE_MOUND.get())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** A few pieces of loose fine chert on the ground round the outcrop's edge. */
+    private static void fineRocks(WorldGenLevel level, BlockPos site, int r, RandomSource random) {
+        BlockState rock = ModBlocks.FINE_CHERT_ROCK.get().defaultBlockState();
+        int want = 1 + random.nextInt(3);
+        for (int attempt = 0; attempt < 16 && want > 0; attempt++) {
+            float angle = random.nextFloat() * (float) (Math.PI * 2.0D);
+            int reach = r + 1 + random.nextInt(3);
+            int x = site.getX() + Math.round((float) Math.cos(angle) * reach);
+            int z = site.getZ() + Math.round((float) Math.sin(angle) * reach);
+            int ground = SurfaceSite.groundY(level, x, z);
+            if (ground == SurfaceSite.NO_GROUND) {
+                continue;
+            }
+            BlockPos at = new BlockPos(x, ground + 1, z);
+            if (level.isEmptyBlock(at) && rock.canSurvive(level, at)) {
+                level.setBlock(at, rock, 2);
+                want--;
+            }
+        }
+    }
+
+    /** One or two blocks of fine chert on the face of a chert outcrop, side by side, where they show. */
+    private static void fineSeam(WorldGenLevel level, java.util.List<BlockPos> foot, RandomSource random) {
+        BlockState fine = ModBlocks.FINE_CHERT_DEPOSIT.get().defaultBlockState();
+        BlockPos start = foot.get(random.nextInt(foot.size()));
+        level.setBlock(start, fine, 2);
+        if (random.nextBoolean()) {
+            for (BlockPos pos : foot) {
+                if (!pos.equals(start) && Math.abs(pos.getX() - start.getX()) + Math.abs(pos.getZ() - start.getZ()) == 1) {
+                    level.setBlock(pos, fine, 2);
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -43,7 +154,9 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
         RandomSource random = context.random();
         BlockState stone = context.config().state;
         float roll = random.nextFloat();
-        Size size = roll < 0.4F ? SMALL : roll < 0.85F ? MEDIUM : LARGE;
+        // Fine chert only ever shows as a small seam.
+        boolean fineSeam = stone.is(ModBlocks.FINE_CHERT_DEPOSIT.get());
+        Size size = fineSeam || roll < 0.4F ? SMALL : roll < 0.85F ? MEDIUM : LARGE;
         BlockPos site = SurfaceSite.find(level, context.origin(), random, size.radius(),
                 size.radius() >= 3 ? 2 : 1, ATTEMPTS, SPREAD);
         if (site == null && size != SMALL) {
@@ -51,12 +164,12 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
             size = SMALL;
             site = SurfaceSite.find(level, context.origin(), random, size.radius(), 1, ATTEMPTS, SPREAD);
         }
-        if (site == null) {
+        if (site == null || crowded(level, context.origin(), site)) {
             return false;
         }
         int r = size.radius();
         int span = r * 2 + 1;
-        int peak = size.minPeak() + random.nextInt(size.maxPeak() - size.minPeak() + 1);
+        int peak = fineSeam ? 1 : size.minPeak() + random.nextInt(size.maxPeak() - size.minPeak() + 1);
         // A second, lower crest off to one side makes the big ones read as a ridge, not a pile.
         int crestX = 0;
         int crestZ = 0;
@@ -107,6 +220,9 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
         }
 
         int baseY = site.getY();
+        java.util.List<BlockPos> foot = new java.util.ArrayList<>();
+        // The top of each column: what shows. Glass and fine chert go where they can be seen, not buried in the foot.
+        java.util.List<BlockPos> surface = new java.util.ArrayList<>();
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 if (!exposed[dx + r][dz + r]) {
@@ -119,6 +235,7 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
                     continue;
                 }
                 setBlock(level, new BlockPos(x, ground, z), stone);
+                foot.add(new BlockPos(x, ground, z));
                 // Roots under the heart of the outcrop, so breaking the top layer turns up more of
                 // the same stone instead of plain dirt - deeper under a big one.
                 double distance = Math.sqrt(dx * dx + dz * dz);
@@ -134,7 +251,19 @@ public class OutcropFeature extends Feature<BlockStateConfiguration> {
                 for (int y = ground + 1; y <= top; y++) {
                     setBlock(level, new BlockPos(x, y, z), stone);
                 }
+                surface.add(new BlockPos(x, Math.max(ground, top), z));
             }
+        }
+        // Glass only ever shows in chert - which keeps it rare.
+        if (stone.is(ModBlocks.CHERT_DEPOSIT.get()) && random.nextFloat() < OBSIDIAN_CHANCE && foot.size() >= 4) {
+            veinOfGlass(level, surface, random);
+        }
+        boolean chert = stone.is(ModBlocks.CHERT_DEPOSIT.get());
+        if (chert && random.nextFloat() < FINE_SEAM_IN_CHERT && !foot.isEmpty()) {
+            fineSeam(level, surface, random);
+        }
+        if (random.nextFloat() < (chert || fineSeam ? FINE_ROCKS_BY_CHERT : isWorkable(stone) ? FINE_ROCKS_BY_OTHER : 0.0F)) {
+            fineRocks(level, site, r, random);
         }
         return true;
     }

@@ -66,7 +66,9 @@ public final class TipDisplay {
                 .replace("{H}", key(ModKeyMappings.SOCIAL))
                 .replace("{G}", key(ModKeyMappings.THREAT_DISPLAY))
                 .replace("{J}", key(ModKeyMappings.JOURNAL))
-                .replace("{T}", key(Minecraft.getInstance().options.keyChat));
+                .replace("{T}", key(Minecraft.getInstance().options.keyChat))
+                .replace("{jump}", key(Minecraft.getInstance().options.keyJump))
+                .replace("{sneak}", key(Minecraft.getInstance().options.keyShift));
     }
 
     private static String key(KeyMapping mapping) {

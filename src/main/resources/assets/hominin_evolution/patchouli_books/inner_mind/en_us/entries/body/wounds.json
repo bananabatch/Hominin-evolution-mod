@@ -19,6 +19,14 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Ticks$() find you two a day at most. Past six, you mend only so far until somebody grooms them off - and what they pick off, you can eat.$(br2)Ask with $(k:hominin_evolution.social): Social, $(o)Get these off me$(). Groom one of them first and they owe you the favour."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bleeding out, you can drink past full - and $(l)while you keep drinking$(), the bleeding stops. Stop drinking and the clock runs again.$(br2)Die with it, or lacerated, and it carries over to the next of you.$(br2)Eat $(l)spoiled meat$() with a wound torn open and the rot goes straight into the blood: $(l)toxic shock$(), and septic shock with it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Septic shock$() is poison in the blood: a minute of fever and shaking, then death. Nothing stops it once it starts."
     }
   ]
 }

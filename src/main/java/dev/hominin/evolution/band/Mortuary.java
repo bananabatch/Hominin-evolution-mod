@@ -93,13 +93,19 @@ public final class Mortuary {
                 Cohesion.add(player, 3);
                 player.sendSystemMessage(Component.literal("You eat of the dead with the band, as is right. They stay "
                         + "with you now.").withStyle(ChatFormatting.GOLD));
-                // Somebody at the feast takes the brain if you did not.
-                if (!brain && player.getRandom().nextFloat() < 0.5F) {
+                // Somebody at the feast takes the brain if you did not - unless the band has learned better.
+                if (!brain && !Morals.holds(player, Morals.Moral.NO_BRAINS) && player.getRandom().nextFloat() < 0.5F) {
                     BandMember taker = band.get(player.getRandom().nextInt(band.size()));
                     if (player.getRandom().nextFloat() < Kuru.CHANCE) {
                         taker.contractKuru();
                     }
                 }
+            }
+        } else if (dev.hominin.evolution.survival.Seasons.strained(player.level())) {
+            // A dry season: everyone is hungry, and nobody says a word about what keeps you alive.
+            if (!band.isEmpty()) {
+                player.displayClientMessage(Component.literal("Times are hard. The band looks away, and says nothing.")
+                        .withStyle(ChatFormatting.GRAY), true);
             }
         } else {
             // No rule says this is right, and everyone saw.
@@ -111,6 +117,11 @@ public final class Mortuary {
                 player.displayClientMessage(Component.literal("The band watches you eat it, and something in them pulls "
                         + "back. (Cohesion -1)").withStyle(ChatFormatting.GRAY), true);
             }
+        }
+        if (brain && Morals.holds(player, Morals.Moral.NO_BRAINS) && !band.isEmpty()) {
+            Cohesion.add(player, -8, "we don't consume the flesh of the thought");
+            player.sendSystemMessage(Component.literal("The band stares. You have eaten the flesh of the thought, after "
+                    + "everything. (Cohesion -8)").withStyle(ChatFormatting.RED));
         }
         if (brain) {
             // Nothing to feel yet - but something to taste. The trembling starts tomorrow.

@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(l)Chimpanzees$() hold ground at the jungle's edge - forty blocks round, half what a band holds, and held harder. A stranger on it is warned with hooting and drumming; stay, and the patrol comes for you. The alpha will walk up and stand too close - hand it something, or hold $(k:hominin_evolution.think), within five seconds. Feed them, and a community that trusts you lets you pass, grooms you and mobs whatever chases you."
+      "text": "$(l)Chimpanzees$() hold ground at the jungle's edge - fifty blocks round, and held hard. A stranger on it is warned with hooting and drumming; stay, and the patrol comes for you. The alpha will walk up and stand too close - hand it something, or hold $(k:hominin_evolution.think), within five seconds. Feed them, and a community that trusts you lets you pass, grooms you and mobs whatever chases you."
     },
     {
       "type": "patchouli:text",
@@ -23,6 +23,14 @@
     {
       "type": "patchouli:text",
       "text": "Baboons, chimpanzees and bonobos work the ground too: foraging within thirty-five blocks of them fails far more often than it should."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A baboon troop that trusts you comes $(l)begging$(). Hand one something within a minute and the troop grooms you and your band - and now and then leads you somewhere worth knowing. Ignore them and the trust goes: it has to be kept up with food.$(br2)Your band keeps well clear of the giant baboon now."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A chimpanzee community that trusts you comes out to meet you - two of them, well past the edge of their range - and walks with you while you are on their ground. The deeper into the jungle, the more communities, and the bigger."
     }
   ]
 }

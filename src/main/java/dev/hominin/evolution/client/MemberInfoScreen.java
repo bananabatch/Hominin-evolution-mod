@@ -109,6 +109,13 @@ public class MemberInfoScreen extends Screen {
             onClose();
             return true;
         }
+        if (index >= 0 && button == 1 && title.getString().equals("Your band")) {
+            // Keep an eye on them: tracked in the corner of the screen, or no longer.
+            PacketDistributor.sendToServer(new ChoosePayload(lines.get(index).entityId(),
+                    dev.hominin.evolution.band.Tracking.ACTION_TRACK, 0));
+            onClose();
+            return true;
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 

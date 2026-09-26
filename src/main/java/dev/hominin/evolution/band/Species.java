@@ -48,6 +48,14 @@ public final class Species {
                 && !path.equals("ardipithecus");
     }
 
+    /**
+     * The one kind that, whatever else it did, never made fire itself: ergaster carries it from where it finds it.
+     * (Habilis players still work the drill - that is how they come by fire at all.)
+     */
+    public static boolean neverMakesFire(ResourceLocation species) {
+        return species.getPath().equals("homo_ergaster");
+    }
+
     public static boolean makesFire(ResourceLocation species) {
         return Bands.erectusOn(species) && !species.getPath().equals("homo_ergaster");
     }
@@ -85,6 +93,8 @@ public final class Species {
             case "homo_habilis" -> "They knap Oldowan tools and crack bones for marrow.";
             case "homo_ergaster" -> "They knap hand axes, but crude ones - rough at best - and they have never made fire.";
             case "homo_erectus" -> "They knap fine hand axes and cleavers, and keep fire.";
+            case "homo_heidelbergensis" -> "They strike Levallois flakes and blades off prepared cores, haft knives, "
+                    + "and hunt the biggest game there is.";
             case "paranthropus_boisei" -> "They grind tough plants with huge jaws, and use little else.";
             default -> "";
         };

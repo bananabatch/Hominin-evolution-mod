@@ -38,7 +38,24 @@ public enum FetchKind {
     CHOPPER("A chopper", ModItems.CHOPPER, Source.MADE, 0.0F, 4),
     SHARPENED_SPEAR("A spear", ModItems.SHARPENED_SPEAR, Source.MADE, 0.0F, 5),
     WOODEN_CLUB("A club", ModItems.WOODEN_CLUB, Source.MADE, 0.0F, 6),
-    OLDOWAN_MULTITOOL("A multi tool", ModItems.OLDOWAN_MULTITOOL, Source.MADE, 0.0F, 8);
+    OLDOWAN_MULTITOOL("A multi tool", ModItems.OLDOWAN_MULTITOOL, Source.MADE, 0.0F, 8),
+
+    // Erectus on: what beds and builds are made of, and the Acheulean. From what they carry, or the heaps by the
+    // work station.
+    THATCH("Thatch", ModItems.THATCH, Source.MADE, 0.0F, 0),
+    TWINE("Twine", ModItems.TWINE, Source.MADE, 0.0F, 1),
+    HIDE("A hide", ModItems.HIDE, Source.MADE, 0.0F, 2),
+    WORKABLE_BRANCH("A workable branch", ModItems.WORKABLE_BRANCH, Source.MADE, 0.0F, 2),
+    THATCH_BLOCK("Thatch blocks", ModItems.THATCH_BLOCK, Source.MADE, 0.0F, 2),
+    BUILDING_BRANCH("Building branches", ModItems.BUILDING_BRANCH, Source.MADE, 0.0F, 2),
+    FIRE_HARDENED_SPEAR("A fire-hardened spear", ModItems.FIRE_HARDENED_SPEAR, Source.MADE, 0.0F, 7),
+    HAND_AXE("A hand axe", ModItems.HAND_AXE, Source.MADE, 0.0F, 6),
+    CLEAVER("A cleaver", ModItems.CLEAVER, Source.MADE, 0.0F, 7);
+
+    /** Only asked for from erectus on - nobody earlier makes them. */
+    public boolean erectusOnly() {
+        return ordinal() >= THATCH.ordinal();
+    }
 
     public enum Source {
         /** Torn out of a tree's leaves - some tries turn up nothing. */
@@ -98,7 +115,7 @@ public enum FetchKind {
     public ItemStack icon() {
         return switch (this) {
             case FOOD -> new ItemStack(ModItems.GRUB.get());
-            case ANY_ROCK -> new ItemStack(ModItems.ROCK.get());
+            case ANY_ROCK -> new ItemStack(ModItems.GRANITE_ROCK.get());
             default -> new ItemStack(item());
         };
     }
@@ -109,7 +126,7 @@ public enum FetchKind {
         }
         return switch (this) {
             case FOOD -> stack.has(DataComponents.FOOD);
-            case ANY_ROCK -> stack.is(ModItems.ROCK.get()) || stack.is(ModTags.Items.KNAPPABLE_STONE);
+            case ANY_ROCK -> stack.is(ModTags.Items.ROCKS) || stack.is(ModTags.Items.KNAPPABLE_STONE);
             default -> stack.is(item());
         };
     }

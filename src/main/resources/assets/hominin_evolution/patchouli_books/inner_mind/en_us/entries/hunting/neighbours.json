@@ -43,6 +43,10 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Crocodiles$() lie in warm water two blocks deep and wait for something to come and drink. If the jaws close, it rolls and drags you toward deep water.$(br2)Hit it hard - or have somebody else hit it - and it lets go. In a drought there are more of them."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Not everything that sees you wants you. A predator may look you over and let you pass - more often the more the country knows your band, by day, and in the good season. In a dry season, or on a dry day, it is the other way: everything is hungry, and far more of them come. Hurt one and it is past deciding; and whatever a camp that stayed too long draws in came for you."
     }
   ]
 }

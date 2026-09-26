@@ -37,7 +37,7 @@ public final class Grooming {
 
     /** How this stage grooms: by erectus there is not enough hair left to pick through. */
     public static boolean picksHair(BandMember member) {
-        String stage = member.getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(member.getStage());
         return stage.equals("ardipithecus") || stage.equals("australopithecus") || stage.equals("homo_habilis");
     }
 

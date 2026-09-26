@@ -91,7 +91,8 @@ public final class ClimbingServer {
                 && !player.getAbilities().flying
                 && !player.isPassenger()
                 && (Climbing.trunkNearby(player.level(), player.blockPosition(), SERVER_TRUNK_REACH)
-                        || Climbing.grippedWall(player, WALL_SLACK) != null);
+                        && Climbing.climbsTrees(player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage())
+                        || Climbing.grippedWall(player, WALL_SLACK) != null || Climbing.grippedLog(player) != null);
     }
 
     private static void set(ServerPlayer player, boolean climbing) {

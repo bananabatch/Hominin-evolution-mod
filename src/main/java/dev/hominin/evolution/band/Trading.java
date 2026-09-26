@@ -104,7 +104,7 @@ public final class Trading {
     private static final int TIERS_LOST_PER_STAGE = 3;
 
     private static int stageOrder(ResourceLocation stage) {
-        return switch (stage.getPath()) {
+        return switch (dev.hominin.evolution.stage.Kinds.line(stage.getPath())) {
             case "ardipithecus", "australopithecus", "australopithecus_anamensis", "paranthropus_boisei" -> 1;
             case "homo_habilis" -> 2;
             case "homo_erectus" -> 3;
@@ -114,6 +114,10 @@ public final class Trading {
 
     /** The trade tier of this item to a band at the given stage. */
     public static int tierOf(ItemStack stack, @javax.annotation.Nullable ResourceLocation stage) {
+        if (dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
+            // Nobody trades for meat that has turned.
+            return 0;
+        }
         if (stage == null || stack.isEmpty()) {
             return tierOf(stack);
         }
@@ -139,7 +143,7 @@ public final class Trading {
 
     /** The trade tier of one of this item, 0 if a band has no use for it. */
     public static int tierOf(ItemStack stack) {
-        if (stack.isEmpty()) {
+        if (stack.isEmpty() || dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
             return 0;
         }
         ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -285,7 +289,7 @@ public final class Trading {
         int wantedTier = tierOf(wanted, era);
         if (player instanceof net.minecraft.server.level.ServerPlayer server && offerTier > 0 && wantedTier > offerTier) {
             // One of yours who knows how to talk: what you offer is worth more, the way they tell it.
-            offerTier = Psychopaths.talkUp(server, member, offerTier);
+            offerTier = Negotiation.talkUp(server, member, offerTier);
         }
         if (offerTier <= 0) {
             say(player, dry ? name + " shakes their head. Nobody trades that cheaply while the land is this dry."
@@ -318,6 +322,9 @@ public final class Trading {
         if (member.isWild() && (species.equals("homo_erectus") || species.equals("homo_ergaster"))) {
             dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "trade_erectus", 1);
         }
+        if (member.isWild()) {
+            dev.hominin.evolution.EvolutionManager.incrementCriterion(player, "trade_band", 1);
+        }
         Component givenName = given.getHoverName();
         if (!player.getInventory().add(given)) {
             player.drop(given, false);
@@ -325,6 +332,9 @@ public final class Trading {
         member.playSound(SoundEvents.ITEM_PICKUP, 0.7F, 0.9F);
         ((ServerLevel) member.level()).sendParticles(ParticleTypes.HAPPY_VILLAGER, member.getX(), member.getEyeY(),
                 member.getZ(), 5, 0.3D, 0.3D, 0.3D, 0.0D);
+        if (member.isWild() && player instanceof net.minecraft.server.level.ServerPlayer dealer) {
+            Negotiation.practise(dealer);
+        }
         player.displayClientMessage(lowball
                 ? Component.literal(name + " turns it over, pleased, and hands you ").append(givenName)
                         .append(". You got the better of that one.").withStyle(net.minecraft.ChatFormatting.GOLD)

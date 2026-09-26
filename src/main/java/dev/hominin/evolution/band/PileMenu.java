@@ -37,11 +37,19 @@ public final class PileMenu {
     /** Bits in each row's code, over the mark in the low two bits. */
     public static final int YOURS = 4;
     public static final int MAY_TAKE = 8;
+    /** The slot each row stands for, above the flags: racks have gaps in them, piles do not. */
+    public static final int SLOT_SHIFT = 5;
 
     private static final double REACH = 8.0D;
 
     public static void handle(ServerPlayer player, BlockPos pos, int action, int slot) {
         ServerLevel level = player.serverLevel();
+        if (level.isLoaded(pos) && player.distanceToSqr(Vec3.atCenterOf(pos)) <= REACH * REACH
+                && level.getBlockEntity(pos) instanceof dev.hominin.evolution.block.Holding holding
+                && !(holding instanceof ToolPileBlockEntity)) {
+            handleHolding(player, pos, holding, action, slot);
+            return;
+        }
         if (!level.isLoaded(pos) || player.distanceToSqr(Vec3.atCenterOf(pos)) > REACH * REACH
                 || !level.getBlockState(pos).is(ModBlocks.TOOL_PILE.get())
                 || !(level.getBlockEntity(pos) instanceof ToolPileBlockEntity pile)) {
@@ -158,7 +166,7 @@ public final class PileMenu {
             UUID layer = pile.layerOf(slot);
             by.add(player.getUUID().equals(layer) ? "you" : pile.layerNameOf(slot).isEmpty() ? "nobody you know"
                     : pile.layerNameOf(slot));
-            int code = pile.markOf(slot);
+            int code = pile.markOf(slot) | slot << SLOT_SHIFT;
             if (player.getUUID().equals(layer)) {
                 code |= YOURS;
             }
@@ -171,6 +179,84 @@ public final class PileMenu {
                 && dev.hominin.evolution.hunt.Predation.onOwnGround(player, pos);
         PacketDistributor.sendToPlayer(player, new PilePayload(pos, List.of(title, first, movable ? "1" : "0"), stacks,
                 details, by, codes));
+    }
+
+    // ------------------------------------------------------------ racks
+
+    /** A rack looked over: take what you may, and say who what you put there is for. */
+    private static void handleHolding(ServerPlayer player, BlockPos pos, dev.hominin.evolution.block.Holding holding,
+            int action, int slot) {
+        ServerLevel level = player.serverLevel();
+        ToolPileBlockEntity.Access access = ToolPiles.access(player);
+        switch (action) {
+            case TAKE -> {
+                ItemStack taken = holding.takeSlot(slot, access);
+                if (!taken.isEmpty()) {
+                    give(player, taken);
+                    level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.5F, 1.0F);
+                }
+            }
+            case TAKE_ALL -> {
+                boolean any = false;
+                for (int i = 0; i < holding.slots(); i++) {
+                    ItemStack taken = holding.takeSlot(i, access);
+                    if (!taken.isEmpty()) {
+                        give(player, taken);
+                        any = true;
+                    }
+                }
+                if (any) {
+                    level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.6F, 0.9F);
+                }
+            }
+            case MARK -> {
+                if (player.getUUID().equals(holding.layerOf(slot))) {
+                    int mark = (holding.markOf(slot) + 1) % 3;
+                    holding.setMark(slot, mark);
+                    player.displayClientMessage(Component.literal(holding.at(slot).getHoverName().getString() + ": "
+                            + markText(mark) + ".").withStyle(ChatFormatting.GRAY), true);
+                }
+            }
+            default -> {
+            }
+        }
+        List<ItemStack> stacks = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        List<String> by = new ArrayList<>();
+        List<Integer> codes = new ArrayList<>();
+        for (int i = 0; i < holding.slots(); i++) {
+            ItemStack stack = holding.at(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            stacks.add(stack.copy());
+            String extra = holding.extra(i);
+            String detail = details(stack);
+            details.add(extra.isEmpty() ? detail : detail.isEmpty() ? extra : detail + " - " + extra);
+            UUID layer = holding.layerOf(i);
+            by.add(player.getUUID().equals(layer) ? "you" : holding.layerNameOf(i).isEmpty() ? "nobody you know"
+                    : holding.layerNameOf(i));
+            int code = holding.markOf(i) | i << SLOT_SHIFT;
+            if (player.getUUID().equals(layer)) {
+                code |= YOURS;
+            }
+            if (holding.mayTake(i, access)) {
+                code |= MAY_TAKE;
+            }
+            codes.add(code);
+        }
+        if (stacks.isEmpty()) {
+            close(player, pos);
+            if (action == OPEN) {
+                player.displayClientMessage(Component.literal(holding.holdingName() + ", with nothing on it."), true);
+            }
+            return;
+        }
+        String first = player.getUUID().equals(holding.firstBy()) ? "You put the first thing on it."
+                : !holding.firstName().isEmpty() ? "First used by " + holding.firstName() + "."
+                : "Nobody remembers who used it first.";
+        PacketDistributor.sendToPlayer(player, new PilePayload(pos, List.of(holding.holdingName(), first, "0", "rack"),
+                stacks, details, by, codes));
     }
 
     /** "Obsidian - Tier 1, Excellent - 80% left". */

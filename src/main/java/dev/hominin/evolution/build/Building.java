@@ -43,6 +43,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.event.EventHooks;
@@ -77,6 +78,12 @@ public final class Building {
     // ------------------------------------------------------------ from the client
 
     public static void handle(ServerPlayer player, BuildActionPayload payload) {
+        if (!Bands.erectusOn(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+            // Before erectus there is nothing to plan and nothing to build - creative or not.
+            player.displayClientMessage(Component.literal("Nobody of your kind builds yet - shelters come with "
+                    + "erectus and the work station."), true);
+            return;
+        }
         switch (payload.action()) {
             case BuildActionPayload.OPEN -> openMenu(player);
             case BuildActionPayload.PLAN -> {
@@ -96,7 +103,7 @@ public final class Building {
 
     /** Why this cannot be built yet - empty if it can. */
     public static String lock(ServerPlayer player, Blueprint blueprint) {
-        if (!player.isCreative() && !Bands.erectusOn(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+        if (!Bands.erectusOn(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
             return "Nobody of your kind builds yet - shelters come with erectus and the work station.";
         }
         ResourceLocation after = blueprint.after();
@@ -399,6 +406,10 @@ public final class Building {
             tell(player, "That is settled: " + site.label().toLowerCase() + ".", ChatFormatting.GRAY);
             return;
         }
+        if (!shelter(site)) {
+            tell(player, "The " + site.name() + " is for everyone - there is nothing to decide.", ChatFormatting.GRAY);
+            return;
+        }
         ask(player, site);
     }
 
@@ -417,6 +428,10 @@ public final class Building {
         if (cell == null || !(held.getItem() instanceof BlockItem item) || item.getBlock() != cell.block()
                 || player.distanceToSqr(Vec3.atCenterOf(pos)) > Math.pow(player.blockInteractionRange() + 1.5D, 2)
                 || !level.isLoaded(pos) || !level.mayInteract(player, pos)) {
+            return;
+        }
+        if (Blueprint.twoTall(cell.block())) {
+            fillTwoTall(player, level, footprint, cell, pos, held);
             return;
         }
         BlockState now = level.getBlockState(pos);
@@ -445,6 +460,148 @@ public final class Building {
             held.shrink(1);
         }
         player.swing(InteractionHand.MAIN_HAND, true);
+    }
+
+    /** A rack post goes in whole: its foot on the ground, its fork above - whichever half of the ghost was used. */
+    private static void fillTwoTall(ServerPlayer player, ServerLevel level, Footprint footprint, Blueprint.Cell cell,
+            BlockPos pos, ItemStack held) {
+        var half = net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF;
+        BlockPos foot = cell.look().hasProperty(half)
+                && cell.look().getValue(half) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER
+                ? pos.below() : pos;
+        BlockPos top = foot.above();
+        if (level.getBlockState(foot).is(cell.block())) {
+            return;
+        }
+        for (BlockPos at : List.of(foot, top)) {
+            BlockState there = level.getBlockState(at);
+            if (!Footprint.free(level, at, there, false) || !level.getFluidState(at).isEmpty()) {
+                tell(player, "Something is in the way.", ChatFormatting.GRAY);
+                return;
+            }
+        }
+        for (BlockPos at : List.of(foot, top)) {
+            if (!level.getBlockState(at).isAir()) {
+                level.destroyBlock(at, true, player);
+            }
+        }
+        BlockState lower = cell.block().defaultBlockState().setValue(half,
+                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER);
+        level.setBlock(foot, lower, Block.UPDATE_ALL);
+        level.setBlock(top, lower.setValue(half, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+                Block.UPDATE_ALL);
+        var sound = lower.getSoundType(level, foot, player);
+        level.playSound(null, foot, sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
+                sound.getPitch() * 0.8F);
+        if (!player.getAbilities().instabuild) {
+            held.shrink(1);
+        }
+        player.swing(InteractionHand.MAIN_HAND, true);
+    }
+
+    /**
+     * A camp that is already there when the descendants wake: a small hut, finished, somewhere near, and a fire
+     * pit in front of its door. Returns false if nowhere near is flat and clear enough for the hut.
+     */
+    public static boolean raiseCamp(ServerPlayer player, BlockPos near) {
+        ServerLevel level = player.serverLevel();
+        ResourceLocation hut = ResourceLocation.fromNamespaceAndPath(dev.hominin.evolution.HomininEvolutionMod.MODID,
+                "small_hut");
+        Blueprint blueprint = Blueprints.get(hut);
+        if (blueprint == null) {
+            return false;
+        }
+        var random = player.getRandom();
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int dx = random.nextInt(17) - 8;
+            int dz = random.nextInt(17) - 8;
+            if (Math.abs(dx) < 3 && Math.abs(dz) < 3) {
+                continue;
+            }
+            int x = near.getX() + dx;
+            int z = near.getZ() + dz;
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            Direction forward = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+            Footprint footprint = new Footprint(blueprint, new BlockPos(x, y, z), forward);
+            if (!footprint.fit(level, pos -> Sites.containing(level, pos) != null).ok()) {
+                continue;
+            }
+            for (var entry : footprint.cells().entrySet()) {
+                BlockPos pos = entry.getKey();
+                if (!level.getBlockState(pos).isAir()) {
+                    level.destroyBlock(pos, false);
+                }
+                level.setBlock(pos, entry.getValue().look(), Block.UPDATE_ALL);
+            }
+            Sites.Site site = Sites.of(level).add(hut, footprint.origin(), forward, player.getUUID());
+            site.built = true;
+            site.placed = site.total;
+            site.credited = true;
+            Sites.of(level).changed();
+            // The fire pit: out in front of the camp, on open ground clear of the hut.
+            BoundingBox box = footprint.box();
+            BlockPos centre = new BlockPos((box.minX() + box.maxX()) / 2, footprint.origin().getY(),
+                    (box.minZ() + box.maxZ()) / 2);
+            for (int step = 4; step <= 8; step++) {
+                for (Direction side : new Direction[] {forward.getOpposite(), forward, forward.getClockWise(),
+                        forward.getCounterClockWise()}) {
+                    BlockPos spot = centre.relative(side, step);
+                    spot = new BlockPos(spot.getX(), level.getHeight(
+                            net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spot.getX(),
+                            spot.getZ()), spot.getZ());
+                    if (!footprint.contains(spot) && Sites.containing(level, spot) == null
+                            && level.getBlockState(spot).canBeReplaced() && level.getFluidState(spot).isEmpty()
+                            && level.getBlockState(spot.below()).isFaceSturdy(level, spot.below(), Direction.UP)) {
+                        level.setBlock(spot, ModBlocks.FIRE_PIT.get().defaultBlockState(), Block.UPDATE_ALL);
+                        step = 99;
+                        break;
+                    }
+                }
+            }
+            syncAround(level, site);
+            return true;
+        }
+        return false;
+    }
+
+    private static final ResourceLocation COOKING_RACK = ResourceLocation.fromNamespaceAndPath(
+            dev.hominin.evolution.HomininEvolutionMod.MODID, "cooking_rack");
+
+    /** Whether a cooking rack - two posts, a fire pit between, a branch across - would stand here, facing north. */
+    public static boolean rackFits(ServerLevel level, BlockPos at) {
+        Blueprint blueprint = Blueprints.get(COOKING_RACK);
+        return blueprint != null && new Footprint(blueprint, at, Direction.NORTH)
+                .fit(level, pos -> Sites.containing(level, pos) != null).ok();
+    }
+
+    /** One of the band puts up a cooking rack whole, for a feast: it stands at once, and is the band's. */
+    public static boolean raiseRack(ServerLevel level, java.util.UUID owner, BlockPos at) {
+        Blueprint blueprint = Blueprints.get(COOKING_RACK);
+        if (blueprint == null || !rackFits(level, at)) {
+            return false;
+        }
+        Footprint footprint = new Footprint(blueprint, at, Direction.NORTH);
+        for (var entry : footprint.cells().entrySet()) {
+            BlockPos pos = entry.getKey();
+            if (!level.getBlockState(pos).isAir()) {
+                level.destroyBlock(pos, false);
+            }
+            level.setBlock(pos, entry.getValue().look(), Block.UPDATE_ALL);
+        }
+        level.playSound(null, at, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 0.8F, 0.9F);
+        Sites.Site site = Sites.of(level).add(COOKING_RACK, at, Direction.NORTH, owner);
+        site.built = true;
+        site.placed = site.total;
+        site.credited = true;
+        Sites.of(level).changed();
+        syncAround(level, site);
+        return true;
+    }
+
+    /** Whether a build is somewhere to be inside of, rather than something that stands in the open. */
+    public static boolean shelter(Sites.Site site) {
+        Blueprint blueprint = Blueprints.get(site.blueprint());
+        return blueprint == null || blueprint.shelter();
     }
 
     // ------------------------------------------------------------ what it is for
@@ -609,7 +766,19 @@ public final class Building {
             site.proposed = false;
             changed = true;
         }
-        if (!site.built && placed >= site.total) {
+        // Near enough is done: a block or two that will not go in (something in the way, a cell nobody can reach) no
+        // longer leaves a build forever unfinished. The last of it is put in for you.
+        int slack = Math.max(1, site.total / 20);
+        if (!site.built && placed >= site.total - slack && allLoaded(level, footprint)) {
+            for (var entry : footprint.cells().entrySet()) {
+                if (!footprint.filled(level, entry.getKey())) {
+                    if (!level.getBlockState(entry.getKey()).isAir()) {
+                        level.destroyBlock(entry.getKey(), false);
+                    }
+                    level.setBlock(entry.getKey(), entry.getValue().look(), Block.UPDATE_ALL);
+                }
+            }
+            site.placed = footprint.placed(level);
             complete(level, site);
             return;
         }
@@ -648,6 +817,14 @@ public final class Building {
         Sites.markFinished(level.getServer(), site.owner(), site.blueprint());
         level.playSound(null, site.origin(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5F, 0.7F);
         ServerPlayer owner = level.getServer().getPlayerList().getPlayer(site.owner());
+        if (!shelter(site)) {
+            // A rack: it stands, and it is for everyone. No roof, no question, no occasion.
+            if (owner != null && owner.level() == level) {
+                owner.sendSystemMessage(Component.literal("The " + site.name() + " stands.").withStyle(ChatFormatting.GREEN));
+            }
+            syncAround(level, site);
+            return;
+        }
         if (owner != null) {
             // Erectus has to have built something to go on.
             dev.hominin.evolution.EvolutionManager.incrementCriterion(owner, "build_structure", 1);
@@ -669,6 +846,8 @@ public final class Building {
                 Presence.add(owner, 2, "a roof on your ground");
             }
             Cohesion.addLimited(owner, "built_roof", 2, 12000L);
+            dev.hominin.evolution.band.SacredPile.event(owner, "the new " + site.name());
+            dev.hominin.evolution.band.Chatter.news(owner, "news_built", site.name());
             Tips.offer(owner, Tips.Tip.BUILT);
             for (BandMember member : Band.ownNear(owner, 24.0D)) {
                 Lines.say(member, "built");
@@ -715,6 +894,18 @@ public final class Building {
                 return;
             }
             later(level, site.id());
+        } else if (placed.is(ModBlocks.THATCH_BLOCK.get()) && !(event.getEntity() instanceof ServerPlayer creative
+                && creative.isCreative())
+                || placed.is(net.minecraft.tags.BlockTags.LOGS) && event.getEntity() instanceof ServerPlayer placer
+                        && !placer.isCreative()) {
+            // Thatch and logs are part of a building, or they are nothing: they go into a build's ghost, nowhere else.
+            // No walls and roofs thrown up anywhere - a structure is something the band plans and builds.
+            event.setCanceled(true);
+            if (event.getEntity() instanceof ServerPlayer player) {
+                tell(player, (placed.is(ModBlocks.THATCH_BLOCK.get()) ? "Thatch blocks" : "Logs")
+                        + " go into a build - mark one out (O) and set them into its ghost.", ChatFormatting.GRAY);
+            }
+            return;
         }
         if (placed.is(ModBlocks.NEST.get()) || placed.is(ModBlocks.THATCH_BEDDING.get())) {
             Sites.Site room = Sites.roomAt(level, pos);
@@ -741,6 +932,7 @@ public final class Building {
         if (!(event.getEntity() instanceof ServerPlayer player) || event.wakeImmediately()) {
             return;
         }
+        dev.hominin.evolution.band.Mating.nightSlept(player);
         BlockPos at = player.getSleepingPos().orElse(player.blockPosition());
         Sites.Site site = Sites.roomAt(player.serverLevel(), at);
         if (site == null) {
@@ -804,6 +996,15 @@ public final class Building {
     public static void tick(ServerPlayer player) {
         if (player.tickCount % 100 == 37) {
             syncSites(player);
+        }
+        if (player.tickCount % 200 == 137) {
+            // However the last block went in - by you, by the band, by anything - the build notices it is done.
+            ServerLevel level = player.serverLevel();
+            for (Sites.Site site : Sites.ownedBy(level, player.getUUID())) {
+                if (!site.built() && !site.proposed() && site.origin().distSqr(player.blockPosition()) < 96.0D * 96.0D) {
+                    check(level, site);
+                }
+            }
         }
         if (player.tickCount % 1200 == 611) {
             suggest(player);
@@ -934,6 +1135,37 @@ public final class Building {
                 other -> other != member && other.isSleeping()).isEmpty();
     }
 
+    /** Whether a band member could set this build's block in here now: nothing solid in the way, nobody standing in it. */
+    public static boolean canSetByHand(ServerLevel level, Sites.Site site, BlockPos pos) {
+        Footprint footprint = site.footprint();
+        if (footprint == null || !footprint.cells().containsKey(pos) || !level.isLoaded(pos)) {
+            return false;
+        }
+        BlockState now = level.getBlockState(pos);
+        return Footprint.free(level, pos, now, false) && level.getFluidState(pos).isEmpty()
+                && level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, new net.minecraft.world.phys.AABB(pos))
+                        .isEmpty();
+    }
+
+    /** One of the band sets a block into the ghost, as you would. Counted like any other. */
+    public static boolean setByMember(ServerLevel level, BandMember member, Sites.Site site, BlockPos pos) {
+        if (!canSetByHand(level, site, pos)) {
+            return false;
+        }
+        Blueprint.Cell cell = site.footprint().cells().get(pos);
+        if (!level.getBlockState(pos).isAir()) {
+            // Grass and flowers get trampled.
+            level.destroyBlock(pos, false, member);
+        }
+        BlockState state = Block.updateFromNeighbourShapes(cell.block().defaultBlockState(), level, pos);
+        level.setBlock(pos, state, Block.UPDATE_ALL);
+        var sound = state.getSoundType(level, pos, member);
+        level.playSound(null, pos, sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
+                sound.getPitch() * 0.8F);
+        later(level, site.id());
+        return true;
+    }
+
     /** Whether any of these spots is part of a build. */
     public static boolean anyBuilt(ServerLevel level, BlockPos... cells) {
         for (BlockPos cell : cells) {
@@ -942,6 +1174,36 @@ public final class Building {
             }
         }
         return false;
+    }
+
+    // ------------------------------------------------------------ a new age
+
+    /**
+     * Evolving is a long time later: whatever the kind before you built has long since fallen down. Every build of
+     * yours - finished or only marked out, huts, tents, racks - is gone, down to the ground.
+     */
+    public static void wipeOld(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        int gone = 0;
+        for (Sites.Site site : new ArrayList<>(Sites.ownedBy(level, player.getUUID()))) {
+            Footprint footprint = site.footprint();
+            if (footprint != null) {
+                for (var entry : footprint.cells().entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+                    if (level.getBlockState(pos).is(entry.getValue().block())) {
+                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                    }
+                }
+            }
+            Sites.of(level).remove(site);
+            gone++;
+        }
+        if (gone > 0) {
+            syncSites(player);
+            player.sendSystemMessage(Component.literal("Whatever the ones before you built has long since fallen down.")
+                    .withStyle(ChatFormatting.GRAY));
+        }
     }
 
     // ------------------------------------------------------------ developer

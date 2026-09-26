@@ -52,7 +52,8 @@ public final class Social {
         WORLD("The world"),
         OTHERS("Other bands"),
         PLACES("Places and tools"),
-        BUILDING("Building");
+        BUILDING("Building"),
+        NEWCOMERS("Newcomers and evolving");
 
         private final String label;
 
@@ -92,9 +93,11 @@ public final class Social {
         ASK_MEMORIES("What do you remember?", Topic.TOGETHER),
         SHUN("Shun them", Topic.TOGETHER),
         MAKE_MATE("Be my mate", Topic.TOGETHER),
-        SWAP("Let me live as you for a while", Topic.TOGETHER),
+        SWAP("Become them (swap bodies)", Topic.TOGETHER),
         HAVE_CHILD("Let's have a child", Topic.TOGETHER),
         CULTURE("Our ways: morals and norms", Topic.CULTURE),
+        PLAYER_BANDS("Other players' bands...", Topic.TOGETHER),
+        POSTURE("Defensive posture...", Topic.DANGER),
         // ------------------------------------------------ developer: your band
         DEV_BOND_UP("Bond +5", DevSection.BAND),
         DEV_BOND_DOWN("Bond -5", DevSection.BAND),
@@ -114,6 +117,8 @@ public final class Social {
         // ------------------------------------------------ developer: you
         DEV_TICKS_UP("Ticks +3", DevSection.YOU),
         DEV_HEAL_CLEAR("Clear ticks, afflictions", DevSection.YOU),
+        DEV_PLACE_CAMP("Lone camp here (with a loner)", DevSection.YOU),
+        DEV_PLACE_CHERT("Chert super deposit here", DevSection.YOU),
         DEV_SPOIL_HELD("Spoil the meat I hold", DevSection.YOU),
         DEV_FOOD_ILL("Make me sick (bad meat)", DevSection.YOU),
         DEV_WATER("Fill water", DevSection.YOU),
@@ -163,7 +168,35 @@ public final class Social {
         DEV_BUILD_UNLOCK("Unlock every blueprint", DevSection.BUILDING),
         DEV_BUILD_ASK("Ask what it's for again", DevSection.BUILDING),
         DEV_BUILD_CLEAR("Forget my builds", DevSection.BUILDING),
-        DEV_BUILD_SUGGEST("Someone suggests a build", DevSection.BUILDING);
+        DEV_BUILD_SUGGEST("Someone suggests a build", DevSection.BUILDING),
+        // ------------------------------------------------ developer: newcomers and evolving
+        DEV_SURVIVORS("Survivors arrive (any story)", DevSection.NEWCOMERS),
+        DEV_SURVIVORS_PREDATOR("Survivors: a predator", DevSection.NEWCOMERS),
+        DEV_SURVIVORS_RAID("Survivors: a band raided them", DevSection.NEWCOMERS),
+        DEV_SURVIVORS_FIGHT("Survivors: infighting", DevSection.NEWCOMERS),
+        DEV_SURVIVORS_PSYCHO("Survivors: with a psychopath", DevSection.NEWCOMERS),
+        DEV_MERGE("An ally dwindles, asks to merge", DevSection.NEWCOMERS),
+        DEV_GRUDGE_DAY("Grudges: a day passes", DevSection.NEWCOMERS),
+        DEV_WHO_GRUDGE("Who holds a grudge?", DevSection.NEWCOMERS),
+        DEV_PREGNANT("Make one pregnant", DevSection.NEWCOMERS),
+        DEV_BIRTH("Everyone carrying gives birth", DevSection.NEWCOMERS),
+        DEV_LULL("End the predator lull", DevSection.NEWCOMERS),
+        DEV_EVOLVE("Evolve now (intermission if others)", DevSection.NEWCOMERS),
+        DEV_PLAYER_BANDS("Other players' bands menu", DevSection.NEWCOMERS),
+        DEV_STONES("Fine chert, a chunk, dead branches", DevSection.YOU),
+        DEV_RIBCAGE("Giant carcass here", DevSection.PLACES),
+        DEV_FINE_SEAM("Fine chert seam here", DevSection.PLACES),
+        DEV_PLACE_OASIS("An oasis ahead", DevSection.PLACES),
+        DEV_PLACE_TIDE("Tide pools here", DevSection.PLACES),
+        DEV_PLACE_GRAVEL("Gravel super deposit here", DevSection.PLACES),
+        DEV_DAWN("Time: first light", DevSection.WORLD),
+        DEV_KNACKS("Learn clean eye, nomad, jack", DevSection.YOU),
+        DEV_BRAIN("Give me a hominin brain", DevSection.YOU),
+        DEV_LACERATE("Inflict lacerations", DevSection.YOU),
+        DEV_BLEED_EXTERNAL("Bleeding: external (tier 1)", DevSection.YOU),
+        DEV_BLEED_INTERNAL("Bleeding: internal (tier 2)", DevSection.YOU),
+        DEV_BLEED_CATASTROPHIC("Bleeding: catastrophic (tier 3)", DevSection.YOU),
+        DEV_BLEED_STOP("Stop all bleeding", DevSection.YOU);
 
         private final String label;
         private final Topic topic;
@@ -220,7 +253,7 @@ public final class Social {
 
     /** Only the tree-climbing stages will go up a tree when asked. */
     public static boolean canClimbOrder(ServerPlayer player) {
-        String stage = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath();
+        String stage = dev.hominin.evolution.stage.Kinds.line(player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage());
         return stage.equals("ardipithecus") || stage.equals("australopithecus") || stage.equals("homo_habilis");
     }
     private static final Map<UUID, Long> guardUntil = new HashMap<>();
@@ -237,6 +270,14 @@ public final class Social {
                 return;
             }
             Morals.send(player);
+            return;
+        }
+        if (command == Command.PLAYER_BANDS) {
+            Newcomers.openMenu(player);
+            return;
+        }
+        if (command == Command.POSTURE) {
+            Postures.open(player);
             return;
         }
         if (command == Command.TRAVEL && entityId < 0) {
@@ -326,10 +367,8 @@ public final class Social {
                     say(player, "They will not hunt for a stranger.");
                     return;
                 }
-                for (BandMember member : listeners) {
-                    member.startHunt(HUNT_TICKS);
-                }
-                say(player, who + (individual ? " is" : " are") + " with you - watching for anything small enough to catch.");
+                // The hunting party: what is about, who goes, what they carry.
+                dev.hominin.evolution.hunt.HuntParty.open(player);
             }
             case NO_HUNT -> {
                 for (BandMember member : listeners) {
@@ -467,7 +506,7 @@ public final class Social {
         // through the rest one at a time to see who is carrying what.
         BandMember nearest = null;
         for (BandMember member : listeners) {
-            if (member.isLedBy(player) && (nearest == null
+            if (member.answersTo(player) && (nearest == null
                     || member.distanceToSqr(player) < nearest.distanceToSqr(player))) {
                 nearest = member;
             }
@@ -832,6 +871,12 @@ public final class Social {
         lines.add("Health: " + Math.round(member.getHealth()) + " / " + Math.round(member.getMaxHealth()));
         lines.add("Hunger: " + member.getHunger() + " / " + BandMember.MAX_HUNGER);
         lines.add("Favourite foods: " + String.join(", ", member.favouriteFoodNames()));
+        if (member.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            Bands.Record felt = Opinions.strongestFeeling(member, server);
+            if (felt != null) {
+                lines.add("Of other bands: " + Opinions.describe(member, felt) + ".");
+            }
+        }
         lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
         if (member.isAntisocial()) {
             lines.add("Antisocial: steals, hoards, begs, will not teach, picks fights (erectus: Shun them)");
@@ -853,6 +898,8 @@ public final class Social {
                 + dev.hominin.evolution.hunt.Persistence.knappingWord(member.getKnapLevel()));
         lines.add("Persistence hunting: level " + member.getHuntLevel() + " "
                 + dev.hominin.evolution.hunt.Persistence.huntingWord(member.getHuntLevel()));
+        lines.add("Negotiating: level " + member.getNegotiateLevel() + " " + Negotiation.word(member.getNegotiateLevel()));
+        lines.add("Fighting: " + member.getFightSkill() + "/" + BandMember.MAX_FIGHT_SKILL);
         List<String> knows = member.knownSkillTitles();
         lines.add("Knows: " + (knows.isEmpty() ? "nothing they were taught" : String.join(", ", knows)));
         lines.add("Ticks on them: " + (member.getTicksOnMe() == 0 ? "none" : String.valueOf(member.getTicksOnMe()))
@@ -868,6 +915,11 @@ public final class Social {
         }
         if (member.getParty() > 0) {
             lines.add("Off with party " + member.getParty() + " today");
+        }
+        if (member.isPregnant()) {
+            String father = Mating.mateName(member, player.serverLevel());
+            lines.add((member.isInLabour() ? "Giving birth, alone - find her" : "Pregnant - " + member.dueIn())
+                    + (father != null ? " (father: " + father + ")" : ""));
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new dev.hominin.evolution.network.MemberInfoPayload(member.getName().getString(), lines));
@@ -886,7 +938,12 @@ public final class Social {
      * The whole band at a glance: who matters most to it, who is asking you for what, who is
      * expecting and who the children are - and then everyone. Every name finds its owner.
      */
-    private static void sendTribe(ServerPlayer player) {
+    /** A co-leader sees the band they lead - its numbers are its leader's. */
+    private static void sendTribe(ServerPlayer asker) {
+        sendTribe(Newcomers.leadOf(asker), asker);
+    }
+
+    private static void sendTribe(ServerPlayer player, ServerPlayer to) {
         List<BandMember> band = Band.all(player);
         band.forEach(BandMember::ensureName);
         var counters = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
@@ -894,8 +951,9 @@ public final class Social {
         long children = band.stream().filter(BandMember::isBaby).count();
         int cohesion = Cohesion.get(player);
         lines.add(BandNames.capital(Relations.ownName(player)));
-        lines.add("Cohesion: " + cohesion + "/" + Cohesion.MAX + " - " + Cohesion.label(cohesion)
-                + (Cohesion.promised(player) ? " (you promised to do better)" : ""));
+        int barrier = Cohesion.barrier(player);
+        lines.add("Cohesion: " + cohesion + (barrier > 0 ? " (+" + barrier + ")" : "") + "/" + Cohesion.MAX + " - "
+                + Cohesion.label(cohesion) + (Cohesion.promised(player) ? " (you promised to do better)" : ""));
         String need = Needs.describe(player);
         if (need != null) {
             BandMember needy = Needs.needy(player);
@@ -931,8 +989,9 @@ public final class Social {
         lines.add("Desperation: " + desperate + "/5 - " + Claims.desperationLabel(desperate));
         long known = Bands.all(player.serverLevel()).stream().filter(b -> b.knownTo(player.getUUID())).count();
         lines.add("Other bands you know of: " + known + " (H: The others)");
-        lines.add("Your hands: knapping " + dev.hominin.evolution.knapping.Acheulean.level(player)
-                + ", persistence hunting " + dev.hominin.evolution.hunt.Persistence.level(player));
+        lines.add("You: knapping " + dev.hominin.evolution.knapping.Acheulean.level(player)
+                + ", persistence hunting " + dev.hominin.evolution.hunt.Persistence.level(player)
+                + ", negotiating " + Negotiation.level(player) + " (0 is flawless, lower is better)");
 
         List<BandMember> gifted = new ArrayList<>(band.stream().filter(m -> !m.isBaby() && m.isGifted()).toList());
         gifted.sort(java.util.Comparator.comparingInt(BandMember::talent).thenComparing(m -> -m.getBond()));
@@ -943,14 +1002,19 @@ public final class Social {
         }
         for (BandMember member : gifted.subList(0, Math.min(5, gifted.size()))) {
             StringBuilder line = new StringBuilder(member.getName().getString()).append(" - ");
+            List<String> good = new ArrayList<>();
             if (member.getKnapLevel() <= 2) {
-                line.append("knapping ").append(member.getKnapLevel())
-                        .append(member.getKnapLevel() == 1 ? " (master)" : " (skilled)");
+                good.add("knapping " + member.getKnapLevel() + (member.getKnapLevel() == 1 ? " (master)" : " (skilled)"));
             }
             if (member.getHuntLevel() <= 2) {
-                line.append(member.getKnapLevel() <= 2 ? ", " : "").append("hunting ").append(member.getHuntLevel())
-                        .append(member.getHuntLevel() == 1 ? " (great tracker)" : " (good tracker)");
+                good.add("hunting " + member.getHuntLevel() + (member.getHuntLevel() == 0 ? " (flawless)"
+                        : member.getHuntLevel() == 1 ? " (great tracker)" : " (good tracker)"));
             }
+            if (member.getNegotiateLevel() <= 1) {
+                good.add("negotiating " + member.getNegotiateLevel()
+                        + (member.getNegotiateLevel() == 0 ? " (flawless)" : " (persuasive)"));
+            }
+            line.append(String.join(", ", good));
             line.append(" - bond ").append(member.getBond());
             if (member.getBond() >= Wants.HUNTS_FOR_YOU_BOND) {
                 line.append(" (looks after you)");
@@ -987,7 +1051,7 @@ public final class Social {
             for (BandMember member : expecting) {
                 String father = Mating.mateName(member, player.serverLevel());
                 lines.add(link(member, member.getName().getString() + (member.isInLabour() ? " - GIVING BIRTH, alone"
-                        : " - pregnant") + (father != null ? " (father: " + father + ")" : "")));
+                        : " - pregnant, " + member.dueIn()) + (father != null ? " (father: " + father + ")" : "")));
             }
         }
 
@@ -1009,6 +1073,8 @@ public final class Social {
 
         lines.add("");
         lines.add(header("Everyone"));
+        lines.add("(skills: 4 or 3 is ordinary, 0 is flawless - lower is better; fight counts up to "
+                + BandMember.MAX_FIGHT_SKILL + ")");
         band.sort((x, y) -> Integer.compare(y.getBond(), x.getBond()));
         for (BandMember member : band) {
             if (member.isBaby()) {
@@ -1019,8 +1085,8 @@ public final class Social {
                     .append(member.isAntisocial() ? " ANTISOCIAL" : "")
                     .append(member.getTrouble() == Troubles.TROUBLED ? " - grieving" : "")
                     .append(member.isPsychopathKnown() ? " - you know what they are" : "")
-                    .append(" - bond ").append(member.getBond())
-                    .append(" - knap ").append(member.getKnapLevel()).append(", hunt ").append(member.getHuntLevel());
+                    .append(Tracking.isTracked(player, member) ? " [tracked]" : "")
+                    .append(" - bond ").append(member.getBond());
             String mate = Mating.mateName(member, player.serverLevel());
             if (mate != null) {
                 line.append(" - mate: ").append(mate);
@@ -1031,16 +1097,22 @@ public final class Social {
                 line.append(" - closest to ").append(close.getName().getString());
             }
             lines.add(link(member, line.toString()));
+            lines.add(link(member, "    knap " + member.getKnapLevel() + " / hunt " + member.getHuntLevel() + " / talk "
+                    + member.getNegotiateLevel() + " / fight " + member.getFightSkill() + " - "
+                    + Math.round(member.getHealth()) + "/" + Math.round(member.getMaxHealth()) + " hp"
+                    + (member.isHungry() ? ", hungry" : ", fed") + (member.isInjured() ? ", injured" : "")
+                    + " - " + Tracking.doing(member)));
         }
         lines.add("");
-        lines.add("(Click a name to find them. Hover one and press P if you think they are using everyone.)");
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+        lines.add("(Click a name to find them. Right-click one to keep track of them on screen (up to 4). "
+                + "Hover one and press P if you think they are using everyone.)");
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(to,
                 new dev.hominin.evolution.network.MemberInfoPayload("Your band", lines));
     }
 
     /** A name clicked in the band list: that member glows for a while, and you are told which way. */
     public static void find(ServerPlayer player, int entityId) {
-        if (!(player.level().getEntity(entityId) instanceof BandMember member) || !member.isLedBy(player)) {
+        if (!(player.level().getEntity(entityId) instanceof BandMember member) || !member.answersTo(player)) {
             player.displayClientMessage(Component.literal("They are too far off to find from here."), true);
             return;
         }
@@ -1075,7 +1147,8 @@ public final class Social {
         }
         member.ensureName();
         // Everyone in the band close enough to ask, nearest first, so the screen can page.
-        List<BandMember> band = new ArrayList<>(Band.ownNear(player, GROUP_RADIUS));
+        List<BandMember> band = new ArrayList<>(Band.companionsNear(player, GROUP_RADIUS).stream()
+                .filter(m -> m.answersTo(player)).toList());
         band.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(player)));
         List<Integer> ids = new ArrayList<>();
         for (BandMember other : band) {
@@ -1091,7 +1164,7 @@ public final class Social {
     /** The screen asked to see a different member of the band. */
     public static void viewInventory(ServerPlayer player, int entityId) {
         if (player.level().getEntity(entityId) instanceof BandMember member && member.isAlive()
-                && member.isLedBy(player) && member.distanceToSqr(player) <= GROUP_RADIUS * GROUP_RADIUS) {
+                && member.answersTo(player) && member.distanceToSqr(player) <= GROUP_RADIUS * GROUP_RADIUS) {
             showInventory(player, member);
         }
     }
@@ -1099,7 +1172,7 @@ public final class Social {
     /** The player picked something from a member's list. */
     public static void takeItem(ServerPlayer player, int entityId, int slot) {
         if (!(player.level().getEntity(entityId) instanceof BandMember member) || !member.isAlive()
-                || !member.isLedBy(player) || member.distanceToSqr(player) > INDIVIDUAL_RADIUS * INDIVIDUAL_RADIUS) {
+                || !member.answersTo(player) || member.distanceToSqr(player) > INDIVIDUAL_RADIUS * INDIVIDUAL_RADIUS) {
             return;
         }
         ItemStack peek = slot == -1 ? member.getMainHandItem()
@@ -1150,7 +1223,7 @@ public final class Social {
             say(player, "Nobody is free to go and get it.");
             return;
         }
-        if (!runner.isLedBy(player)) {
+        if (!runner.answersTo(player)) {
             say(player, "They won't run errands for someone outside their band.");
             return;
         }

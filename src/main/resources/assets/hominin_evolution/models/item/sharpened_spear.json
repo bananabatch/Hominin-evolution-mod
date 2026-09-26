@@ -703,5 +703,13 @@
         1.6
       ]
     }
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "hominin_evolution:throwing": 1
+      },
+      "model": "hominin_evolution:item/sharpened_spear_throwing"
+    }
+  ]
 }

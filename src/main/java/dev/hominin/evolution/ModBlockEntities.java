@@ -27,6 +27,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("cooking_spit", () -> BlockEntityType.Builder.of(
                     dev.hominin.evolution.block.CookingSpitBlockEntity::new, ModBlocks.COOKING_SPIT.get()).build(null));
 
+    public static final Supplier<BlockEntityType<dev.hominin.evolution.block.ToolRackBlockEntity>> TOOL_RACK =
+            BLOCK_ENTITIES.register("tool_rack", () -> BlockEntityType.Builder.of(
+                    dev.hominin.evolution.block.ToolRackBlockEntity::new, ModBlocks.TOOL_RACK_BAR.get()).build(null));
+
     private ModBlockEntities() {
     }
 }

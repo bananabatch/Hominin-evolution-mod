@@ -35,6 +35,10 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Living as another.$() Someone of your band close to you - bond 3 and up - will let you live as them for a while. You open your eyes where they stood, as hurt and as hungry as they were, holding in mind what they held; the one you were carries on where you stood. What you carry stays with you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Teaching$() pulls the band together a little - and whoever learned goes off and tries it out, and says so. What can only be told, not shown, they do not practise.$(br2)They only ask for foods they have eaten."
     }
   ]
 }

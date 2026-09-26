@@ -1,0 +1,44 @@
+{
+  "name": "Homo heidelbergensis",
+  "icon": "hominin_evolution:levallois_hand_axe",
+  "category": "hominin_evolution:kinds",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)700,000 years ago.$() The last ancestor we share with the Neanderthals. Becoming heidelbergensis, you choose which way your people go: towards $(l)Homo sapiens$(), staying in East Africa - or towards $(l)the Neanderthals$(), going north. Your goals depend on it, and you wake a long way off, in that country."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "You wake with a $(l)hand axe$(), a $(l)sharpened spear$() and a $(l)fire drill$(). Four times in ten - six, if your ancestors ever put up a roof - it is in a camp the band keeps: a small hut and a fire pit, and \"you wake up in a familiar camp\". Otherwise, out on the open plains with nothing else."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At the knapping station, a new industry: $(l)Acheulean - the Levallois technique$(). The core is shaped first, then one blow takes off exactly what was wanted. $(l)Levallois flakes$(): two a stone, sharper and longer-lived than any old flake. $(l)Blades$(): one a stone. Everyone makes them the same - skill does not show."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The Levallois hand axe$() is taken down from a hammerstone of the stone you want: lay one out among the stone, beside the hammerstone you strike with, and a bone. Skill sets its tier. It hits half a heart to a heart harder than an Acheulean one, lasts longer, and 20% of its cuts - 55% at its best - go a bleeding tier deeper."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A $(l)knife$(): a Levallois blade with four twine wound round one end - the twine in the work station's slot, or laid round the blade in the grid. It cuts, chops, scrapes and butchers: a multi tool in everything but being a hammerstone."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Great weapons.$() Which one you come to depends on your path, and neither comes until your people are far enough along: two hard requirements and three tasks done, and two nights survived. Then hold $(k:hominin_evolution.think) with a $(l)workable shaft$() in hand - or, for the stone tip, a blade."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)North, towards the Neanderthals: the Schöningen spear.$() Once seen, harden a workable shaft end to end in a fire - right-click a fire with it four times, or hold it there. 5 damage in the hand, far more thrown. A wound it opens is catastrophic more than half the time, and deep three times in four of the rest."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)East Africa, towards us: the early stone-tipped spear.$() At the work station, a Levallois blade above a workable shaft in the middle, five twine in the slot. Until you have thought it through, the station shows only a question mark."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Your first great weapon teaches you $(l)Great weapons$(). Show your band and they make them too, now and then. And in whatever you become, the weapon comes sooner: one hard requirement and one task fewer."
+    }
+  ]
+}

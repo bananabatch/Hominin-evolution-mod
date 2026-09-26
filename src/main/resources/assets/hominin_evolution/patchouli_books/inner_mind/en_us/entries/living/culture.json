@@ -27,6 +27,30 @@
     {
       "type": "patchouli:text",
       "text": "$(l)Nobody lords it over the rest$() - always. The band keeps its bullies in line: most fights are stopped before they start, a thief who does not care is caught like anyone else, and those who stopped caring come round sooner.$(br2)It makes $(o)Shun them$() (under Social) far more likely to work: they bend, or they walk away for good."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)We don't betray our own.$() In hard times far fewer in the band steal from each other; and when the band's faith in you falls to 20, it holds there - 20 more to wear through first (tribe stats show it as +20). It does not come back until it has been worn right through."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The Pile.$() A culture. When something matters - a birth, a new roof, a new ally - lay the best thing you carry on the Pile before the next night is out: +8 cohesion each, -12 if nothing goes on. Only what is hard to give up is taken, and nothing comes back off it. The first time, sneak-use the ground on your own ground with something worth it: the Pile starts there."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A desperate band may one day creep in at night and take from the Pile. Their standing with you falls through the floor, and your band never forgets it: going after them - raids, demands - is something the band is glad of.$(br2)Other bands have $(l)ways of life$() too (The others: $(o)Their way of life$()). Ways you share warm them to you; different ones they do not mind - until they want a reason."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)The Feast.$() A culture. When something big happens - ready to become something new, a band of a people's size, a great weapon, the first great beast - the band feasts, two days later. Until then everyone gathers: food to piles by the fire, meat hung on racks, racks put up over fire pits, the fires fed."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When the feast begins, come to the fire: your hunger is forgotten, and everyone eats their fill - of what was gathered, and of what they carry. After it everyone is $(l)full$(): hunger falls a quarter as fast for a day and a half. Cohesion +4, and every bond grows - and a close band steals and fights far less."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Take up $(l)the Pile$() and you choose where it stands. On a $(l)stone outcrop$() every gift pulls the band closer; on the $(l)highest ground$() near you every gift makes your presence felt. Things can be taken back off it - but everyone sees you do it."
     }
   ]
 }

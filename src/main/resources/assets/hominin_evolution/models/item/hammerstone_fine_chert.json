@@ -1,0 +1,7 @@
+{
+  "parent": "hominin_evolution:item/hammerstone",
+  "textures": {
+    "0": "hominin_evolution:item/hammerstone_fine_chert",
+    "particle": "hominin_evolution:item/hammerstone_fine_chert"
+  }
+}

@@ -73,6 +73,12 @@ public class GiantCarcassBlock extends HorizontalDirectionalBlock {
         }
         ServerLevel level = params.getLevel();
         dev.hominin.evolution.survival.Seasons.adjust(level, drops, level.random);
+        net.minecraft.world.phys.Vec3 origin = params.getOptionalParameter(
+                net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN);
+        if (origin != null) {
+            dev.hominin.evolution.hunt.CarcassAge.spoilIfLeft(level, BlockPos.containing(origin), drops,
+                    dev.hominin.evolution.hunt.CarcassAge.GIANT_DAYS);
+        }
         return drops;
     }
 
@@ -84,5 +90,17 @@ public class GiantCarcassBlock extends HorizontalDirectionalBlock {
     @Override
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         dev.hominin.evolution.hunt.Carcasses.clanFeeds(level, pos);
+        if (level.getBlockState(pos).is(this)) {
+            dev.hominin.evolution.hunt.CarcassAge.age(level, pos, dev.hominin.evolution.hunt.CarcassAge.GIANT_DAYS);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, net.minecraft.world.level.Level level, BlockPos pos, BlockState newState,
+            boolean moved) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel server) {
+            dev.hominin.evolution.hunt.CarcassAge.forget(server, pos);
+        }
+        super.onRemove(state, level, pos, newState, moved);
     }
 }

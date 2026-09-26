@@ -159,7 +159,7 @@ public class CraftGoal extends Goal {
         // Good stone gets knapped whenever there is some; limestone only rarely, and grudgingly.
         boolean workable = (goodStones() >= 2 || (stones() >= 2 && limestoneAnyway()))
                 && dev.hominin.evolution.band.Species.knaps(member.getStage());
-        if (count(ModItems.FLAKE.get()) < 2 && workable) {
+        if (count(ModItems.FLAKE.get()) + count(ModItems.LEVALLOIS_FLAKE.get()) < 2 && workable) {
             return Plan.FLAKE;
         }
         if (flake && !has(s -> s.is(ModItems.CHOPPER.get())) && !member.hasMadeChopper() && workable) {
@@ -231,7 +231,12 @@ public class CraftGoal extends Goal {
             }
             case FLAKE -> {
                 if (takeStone()) {
-                    make(ModItems.FLAKE.get(), "craft_flake");
+                    boolean levallois = dev.hominin.evolution.knapping.Acheulean.levalloisKind(member.getStage());
+                    make(levallois ? ModItems.LEVALLOIS_FLAKE.get() : ModItems.FLAKE.get(), "craft_flake");
+                    if (levallois) {
+                        member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stamp(
+                                new ItemStack(ModItems.LEVALLOIS_FLAKE.get()), worked));
+                    }
                 }
             }
             case CHOPPER -> {
@@ -351,7 +356,7 @@ public class CraftGoal extends Goal {
     }
 
     private static boolean isStone(ItemStack stack) {
-        return stack.is(ModItems.ROCK.get()) || stack.is(ModTags.Items.KNAPPABLE_STONE);
+        return stack.is(ModTags.Items.ROCKS) || stack.is(ModTags.Items.KNAPPABLE_STONE);
     }
 
     private int stones() {

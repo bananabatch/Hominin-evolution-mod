@@ -1,0 +1,9 @@
+{
+  "parent": "hominin_evolution:item/levallois_flake",
+  "textures": {
+    "body": "hominin_evolution:item/stone/quartzite_body",
+    "scar": "hominin_evolution:item/stone/quartzite_scar",
+    "edge": "hominin_evolution:item/stone/quartzite_edge",
+    "particle": "hominin_evolution:item/stone/quartzite_body"
+  }
+}

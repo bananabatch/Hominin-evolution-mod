@@ -80,7 +80,7 @@ public final class HeadTraumaHandler {
     private static final Profile CLUB = new Profile(true, 1, CLUB_CONCUSS_CHANCE, CLUB_BLEED_CHANCE);
 
     private static Profile profileFor(ItemStack stack) {
-        if (stack.is(ModItems.WOODEN_CLUB.get())) {
+        if (stack.is(ModItems.WOODEN_CLUB.get()) || stack.is(ModItems.BONE_CLUB.get())) {
             return CLUB;
         }
         if (ModItems.isLongBranch(stack)) {
@@ -104,7 +104,7 @@ public final class HeadTraumaHandler {
         }
         PlayerEvolutionData self = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
         boolean falling = player.fallDistance >= MACE_FALL_DISTANCE && !player.onGround()
-                && CLIMBING_STAGES.contains(self.getStage());
+                && CLIMBING_STAGES.contains(dev.hominin.evolution.stage.Kinds.lineOf(self.getStage()));
 
         HeadTrauma trauma = target.getData(Attachments.HEAD_TRAUMA);
         trauma.addBlow();

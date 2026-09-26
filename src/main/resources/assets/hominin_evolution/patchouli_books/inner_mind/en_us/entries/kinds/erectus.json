@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Everything habilis makes, and more. $(l)Two hands$(): a long branch and a rock - a $(l)club$(). Thatch and thatch - $(l)twine$(). A sharpened spear held in a fire, the other hand empty - a $(l)fire-hardened spear$(). Four sticks and a hide - a $(l)knapping station$(). A log and a hide - a $(l)work station$()."
+      "text": "Everything habilis makes, and more. $(l)Two hands$(): a long branch and a rock - a $(l)club$(). Thatch and thatch - $(l)twine$(). A sharpened spear turned in a fire - right-click the fire with it four times, or hold it there - a $(l)fire-hardened spear$(). Four sticks and a hide - a $(l)knapping station$(). A log and a hide - a $(l)work station$()."
     },
     {
       "type": "patchouli:text",
@@ -26,11 +26,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Nine thatch, four twine in the slot - $(l)thatch blocks$(). Three hide over three thatch, ten twine - $(l)bedding$(). Three logs along the bottom, five sticks above, nothing in the slot - a $(l)fire pit$(). Thatch over a stick, three twine - a $(l)torch$(). A branch and a hammerstone side by side, ten twine - a $(l)digging stick$()."
+      "text": "Nine thatch, four twine in the slot - $(l)thatch blocks$(). Three hide over three thatch, ten twine - $(l)bedding$(). Three sticks along the bottom, a log in the middle, nothing in the slot - a $(l)fire pit$(). Thatch over a stick, three twine - a $(l)torch$(). A branch and a hammerstone side by side, ten twine - a $(l)digging stick$()."
     },
     {
       "type": "patchouli:text",
       "text": "$(l)Fire$(): a fire pit, filled and lit with a drill - meat laid on it cooks. Two cooking racks with a branch across and a fire under it: ribs, chunks, marrow and the rest $(l)hung to cook$(). Blueprints ($(k:hominin_evolution.build)): a small hut, then a thatch tent."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)An erectus band does what you do.$() They cut grass for thatch and hunt grazers for hides when the band is short, twist twine, and make thatch bedding at the work station - and sleep on a bed of their own rather than a nest. Spare thatch, twine and hides go in heaps by the work station for whoever is making something. They make clubs, cleavers and fire-hardened spears for themselves, too."
     }
   ]
 }

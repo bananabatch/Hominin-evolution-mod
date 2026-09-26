@@ -199,6 +199,59 @@ public final class Paranthropus {
      * A predator has come into the country. If a Paranthropus troop is within earshot, they
      * saw it first, and they are screaming about it.
      */
+    /** Something the troop screamed about: after a little while, it comes looking for you. */
+    private record Coming(BlockPos from, long startAt, long until, java.util.Set<UUID> hunters) {
+    }
+
+    private static final Map<UUID, Coming> coming = new HashMap<>();
+    /** How long after the alarm it sets off towards you, and how long it keeps coming. */
+    private static final long COMING_DELAY = 100L;
+    private static final long COMING_FOR = 900L;
+
+    /** Once a second: whatever the troop warned about works its way towards you. */
+    public static void tickWarned(ServerPlayer player) {
+        Coming come = coming.get(player.getUUID());
+        if (come == null || player.tickCount % 20 != 7) {
+            return;
+        }
+        long now = player.level().getGameTime();
+        if (now < come.startAt()) {
+            return;
+        }
+        if (now > come.until() || player.isCreative() || player.isSpectator()) {
+            coming.remove(player.getUUID());
+            return;
+        }
+        var level = player.serverLevel();
+        if (come.hunters().isEmpty()) {
+            for (net.minecraft.world.entity.PathfinderMob mob : level.getEntitiesOfClass(
+                    net.minecraft.world.entity.PathfinderMob.class, new net.minecraft.world.phys.AABB(come.from()).inflate(24.0D),
+                    m -> m.isAlive() && (m.getType().is(dev.hominin.evolution.ModTags.EntityTypes.PREDATORS)
+                            || m instanceof dev.hominin.evolution.entity.Dinopithecus))) {
+                come.hunters().add(mob.getUUID());
+            }
+            if (come.hunters().isEmpty()) {
+                coming.remove(player.getUUID());
+                return;
+            }
+        }
+        boolean anyStillComing = false;
+        for (UUID id : come.hunters()) {
+            if (!(level.getEntity(id) instanceof net.minecraft.world.entity.PathfinderMob mob) || !mob.isAlive()
+                    || dev.hominin.evolution.combat.Scare.isScared(mob) || mob.getTarget() != null) {
+                continue;
+            }
+            if (mob.distanceToSqr(player) > 10.0D * 10.0D) {
+                // It has your scent, or the band's: it comes on at a steady walk, and its own ways take over close in.
+                mob.getNavigation().moveTo(player, 1.0D);
+                anyStillComing = true;
+            }
+        }
+        if (!anyStillComing) {
+            coming.remove(player.getUUID());
+        }
+    }
+
     public static void warn(ServerPlayer player, BlockPos danger) {
         List<BandMember> troop = near(player, WARN_RADIUS);
         if (troop.isEmpty()) {
@@ -210,10 +263,20 @@ public final class Paranthropus {
         }
         lastWarned.put(player.getUUID(), now);
         BandMember caller = troop.get(0);
+        if (dev.hominin.evolution.entity.Bonobo.sanctuary(player.serverLevel(), player.blockPosition())) {
+            // Bonobo country: nothing that hunts comes in here, and the band knows it.
+            player.serverLevel().playSound(null, caller.blockPosition(), ModSounds.BAND_CALL.get(), SoundSource.NEUTRAL,
+                    2.0F, 1.4F);
+            player.sendSystemMessage(Component.literal("Paranthropus are shrieking somewhere. Your band ignores them - "
+                    + "nothing hurts anyone here.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
         player.serverLevel().playSound(null, caller.blockPosition(), ModSounds.BAND_CALL.get(), SoundSource.NEUTRAL,
                 3.0F, 1.4F);
-        player.sendSystemMessage(Component.literal("Paranthropus are shrieking alarm calls. Something is coming in, "
-                + WildBands.bearingFrom(player, danger) + ".").withStyle(ChatFormatting.GOLD));
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER, Component.literal("Paranthropus are shrieking alarm calls. Something is "
+                + "coming in, " + WildBands.bearingFrom(player, danger) + ".").withStyle(ChatFormatting.GOLD));
+        coming.put(player.getUUID(), new Coming(danger.immutable(), now + COMING_DELAY, now + COMING_DELAY + COMING_FOR,
+                new java.util.HashSet<>()));
     }
 
     /** Somebody made a stone tool in front of them. They watch the hands. */
@@ -308,9 +371,11 @@ public final class Paranthropus {
 
     private static boolean valuable(BlockState state, boolean obsidian) {
         if (obsidian) {
-            return state.is(ModBlocks.OBSIDIAN_ROCK.get()) || state.is(Blocks.OBSIDIAN);
+            return state.is(ModBlocks.OBSIDIAN_ROCK.get()) || state.is(Blocks.OBSIDIAN)
+                    || state.is(ModBlocks.OBSIDIAN_DEPOSIT.get());
         }
         return state.is(ModBlocks.CHERT_DEPOSIT.get()) || state.is(ModBlocks.QUARTZITE_DEPOSIT.get())
+                || state.is(ModBlocks.FINE_CHERT_DEPOSIT.get()) || state.is(ModBlocks.FINE_CHERT_ROCK.get())
                 || state.is(ModBlocks.CHERT_ROCK.get()) || state.is(ModBlocks.BASALT_ROCK.get());
     }
 

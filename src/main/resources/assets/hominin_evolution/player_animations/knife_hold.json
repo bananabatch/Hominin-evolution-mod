@@ -1,0 +1,59 @@
+{
+  "version": 3,
+  "name": "knife_hold",
+  "description": "Knife held low and ready in front, the blade up and forward",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 40,
+    "stopTick": 40,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -42,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": 0,
+          "roll": -5
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -40,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -11,
+          "yaw": 0,
+          "roll": -5
+        }
+      },
+      {
+        "tick": 40,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -42,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": 0,
+          "roll": -5
+        }
+      }
+    ]
+  }
+}

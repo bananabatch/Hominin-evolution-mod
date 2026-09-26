@@ -31,6 +31,12 @@ public class ThrownObject extends ThrowableItemProjectile {
     private static final float SHATTER_ON_GROUND = 0.1F;
     /** Whether this one has already gone to pieces. */
     private boolean shattered;
+    /** An aimed throw, from an arm built for it - not a heave in a display. */
+    private boolean aimed;
+
+    public void setAimed(boolean aimed) {
+        this.aimed = aimed;
+    }
 
     public ThrownObject(EntityType<? extends ThrownObject> type, Level level) {
         super(type, level);
@@ -44,9 +50,31 @@ public class ThrownObject extends ThrowableItemProjectile {
         this.damage = damage;
     }
 
+    /**
+     * Not your own people: whatever you throw goes past your band - a chunk of glass would open them up as surely as
+     * it opens anything else. A band member's throw passes its own, and its leader.
+     */
+    @Override
+    protected boolean canHitEntity(Entity target) {
+        if (!super.canHitEntity(target)) {
+            return false;
+        }
+        Entity owner = getOwner();
+        if (target instanceof dev.hominin.evolution.band.BandMember member) {
+            if (owner instanceof net.minecraft.world.entity.player.Player player && member.isCompanionOf(player)) {
+                return false;
+            }
+            if (owner instanceof dev.hominin.evolution.band.BandMember thrower && member.isAlliedTo(thrower)) {
+                return false;
+            }
+        }
+        return !(target instanceof net.minecraft.world.entity.player.Player
+                && owner instanceof dev.hominin.evolution.band.BandMember thrower && thrower.isAlliedTo(target));
+    }
+
     @Override
     protected Item getDefaultItem() {
-        return ModItems.ROCK.get();
+        return ModItems.GRANITE_ROCK.get();
     }
 
     @Override
@@ -54,10 +82,27 @@ public class ThrownObject extends ThrowableItemProjectile {
         super.onHitEntity(result);
         Entity target = result.getEntity();
         boolean landed = target.hurt(damageSources().thrown(this, getOwner()), damage);
+        if (getItem().is(ModItems.OBSIDIAN_CHUNK.get()) && !level().isClientSide()) {
+            // It bursts on whatever it hits: a cloud of glass, and the worst wound there is.
+            if (target instanceof LivingEntity living) {
+                dev.hominin.evolution.combat.Bleeding.inflict(living, dev.hominin.evolution.combat.Bleeding.Tier.CATASTROPHIC);
+                if (getOwner() instanceof net.minecraft.server.level.ServerPlayer thrower) {
+                    dev.hominin.evolution.advancement.HomininAdvancements.award(thrower, "hominin/death_by_a_million_cuts");
+                }
+            }
+            burstGlass();
+            return;
+        }
         boolean hammerstone = dev.hominin.evolution.combat.ThreatDisplay.isHammerstone(getItem());
         if (hammerstone && landed && target instanceof LivingEntity living && !level().isClientSide()) {
-            // Stone that heavy to the head: it rings the skull.
-            dev.hominin.evolution.combat.HeadTraumaHandler.stoneToTheHead(getOwner(), living);
+            if (aimed) {
+                // Stone that heavy, thrown hard, to the head: it rings the skull.
+                dev.hominin.evolution.combat.HeadTraumaHandler.stoneToTheHead(getOwner(), living);
+            } else {
+                // A heave stings and staggers. It does not break anything.
+                living.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 30, 1, false, false, true));
+            }
         }
         if (hammerstone && !level().isClientSide() && random.nextFloat() < SHATTER_ON_HIT) {
             shatter();
@@ -74,7 +119,11 @@ public class ThrownObject extends ThrowableItemProjectile {
         }
     }
 
-    /** The hammerstone flies apart: gone - though now and then a piece of it is worth keeping as a flake. */
+    /**
+     * The hammerstone flies apart: gone. Only chert breaks clean enough to leave anything worth keeping - and then,
+     * now and then, a sharp flake. The Kanzi method: taught to knap, the bonobo Kanzi worked out that throwing the
+     * stone hard at the ground got him an edge faster.
+     */
     private void shatter() {
         shattered = true;
         level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.STONE_BREAK,
@@ -84,20 +133,51 @@ public class ThrownObject extends ThrowableItemProjectile {
                     net.minecraft.core.particles.ParticleTypes.ITEM, getItem()), getX(), getY(), getZ(), 12, 0.1D, 0.1D,
                     0.1D, 0.08D);
         }
-        if (random.nextBoolean()) {
+        if (getItem().is(ModItems.CHERT_HAMMERSTONE.get()) && random.nextBoolean()) {
             ItemStack flake = dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(ModItems.FLAKE.get()),
-                    getItem().is(ModItems.CHERT_HAMMERSTONE.get()) ? dev.hominin.evolution.item.StoneMaterial.CHERT
-                            : dev.hominin.evolution.item.StoneMaterial.of(getItem()));
+                    dev.hominin.evolution.item.StoneMaterial.CHERT);
             level().addFreshEntity(new ItemEntity(level(), getX(), getY(), getZ(), flake));
+            if (getOwner() instanceof net.minecraft.server.level.ServerPlayer thrower) {
+                dev.hominin.evolution.advancement.HomininAdvancements.award(thrower, "hominin/kanzi_method");
+                thrower.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        "It shatters - and one piece of it has an edge you could cut with."), true);
+                return;
+            }
         }
         if (getOwner() instanceof net.minecraft.world.entity.player.Player player) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("The hammerstone shatters."), true);
         }
     }
 
+    /** The obsidian chunk, burst: glass everywhere, a few pieces worth picking up. */
+    private void burstGlass() {
+        shattered = true;
+        level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.GLASS_BREAK,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.2F, 0.8F);
+        if (level() instanceof net.minecraft.server.level.ServerLevel server) {
+            server.sendParticles(new net.minecraft.core.particles.ItemParticleOption(
+                    net.minecraft.core.particles.ParticleTypes.ITEM, getItem()), getX(), getY(), getZ(), 30, 0.3D, 0.3D,
+                    0.3D, 0.2D);
+        }
+        level().addFreshEntity(new ItemEntity(level(), getX(), getY(), getZ(),
+                new ItemStack(ModItems.OBSIDIAN_ROCK.get(), 1 + random.nextInt(2))));
+        if (random.nextFloat() < 0.4F) {
+            // Some of the glass comes down with an edge on it.
+            level().addFreshEntity(new ItemEntity(level(), getX(), getY(), getZ(), dev.hominin.evolution.item.StoneMaterial
+                    .stamp(new ItemStack(ModItems.FLAKE.get()), dev.hominin.evolution.item.StoneMaterial.OBSIDIAN)));
+        }
+        discard();
+    }
+
     @Override
     protected void onHit(HitResult result) {
         super.onHit(result);
+        if (!level().isClientSide() && !isRemoved() && getItem().is(ModItems.OBSIDIAN_CHUNK.get())) {
+            if (!shattered) {
+                burstGlass();
+            }
+            return;
+        }
         if (!level().isClientSide()) {
             if (!shattered && result.getType() == HitResult.Type.BLOCK
                     && dev.hominin.evolution.combat.ThreatDisplay.isHammerstone(getItem())

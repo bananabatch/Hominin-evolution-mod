@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "hominin_evolution:small_fish"
+  },
+  "result": {
+    "id": "hominin_evolution:cooked_small_fish"
+  },
+  "experience": 0.1,
+  "cookingtime": 300
+}

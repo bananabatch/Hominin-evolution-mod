@@ -68,8 +68,11 @@ public final class ThreatDisplay {
     private record Throw(float speed, float inaccuracy, float rockDamage, float branchDamage) {
     }
 
-    /** A hammerstone is denser than any cobble: it lands half again as hard, and more besides. */
-    private static final float HAMMERSTONE_EXTRA = 2.0F;
+    /** A hammerstone is denser than any cobble: an aimed one lands this hard. A heave, barely more than a rock. */
+    private static final float HAMMERSTONE_AIMED = 6.0F;
+    private static final float HAMMERSTONE_HEAVED = 1.5F;
+    /** And it takes longer to wind up for. */
+    private static final int HAMMERSTONE_COOLDOWN_TICKS = 40;
 
     private static final int POINTLESS_DISPLAYS = 3;
     private static final long POINTLESS_WINDOW_TICKS = 60 * 20;
@@ -82,8 +85,9 @@ public final class ThreatDisplay {
     private static final Map<UUID, Long> nextHop = new HashMap<>();
 
     public static boolean isThrowable(ItemStack stack) {
-        return ModItems.isLongBranch(stack)
-                || stack.is(ModItems.ROCK.get())
+        // A branch is waved, not thrown: it is what you hold a display with.
+        return stack.is(ModItems.OBSIDIAN_CHUNK.get())
+                || stack.is(dev.hominin.evolution.ModTags.Items.ROCKS)
                 || stack.is(ModTags.Items.KNAPPABLE_STONE)
                 || isHammerstone(stack);
     }
@@ -94,7 +98,24 @@ public final class ThreatDisplay {
     }
 
     private static boolean displays(ServerPlayer player) {
-        return DISPLAY_STAGES.contains(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
+        return DISPLAY_STAGES.contains(dev.hominin.evolution.stage.Kinds.lineOf(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage()));
+    }
+
+    /**
+     * From erectus on, a display backed by weapons: you with one in your hand, and every grown one of your band near you
+     * carrying one. Before erectus, nothing - a stick waved about is only a stick.
+     */
+    private static int armed(ServerPlayer player, double radius) {
+        if (!dev.hominin.evolution.band.Bands.erectusOn(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+            return 0;
+        }
+        int armed = dev.hominin.evolution.band.BandMember.isWeapon(player.getMainHandItem()) ? 1 : 0;
+        for (dev.hominin.evolution.band.BandMember member : Band.ownNear(player, radius)) {
+            if (!member.isBaby() && member.carriesWeapon()) {
+                armed++;
+            }
+        }
+        return armed;
     }
 
     /** Empty-handed: pant-hoot and leap, and call the band in. */
@@ -113,10 +134,17 @@ public final class ThreatDisplay {
         boolean threatNearby = !player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(radius),
                 mob -> mob.getType().is(ModTags.EntityTypes.PREDATORS)).isEmpty();
-        int startled = EvolutionEventHandler.startleNearby(player, radius,
-                Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player), true);
-        startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band);
-        startled += dev.hominin.evolution.entity.Crocuta.displayAt(player, radius + 8.0D, band);
+        float chance = Band.chanceWith(SCREAM_CHANCE, band) + dev.hominin.evolution.hunt.Predation.displayBonus(player);
+        int armed = armed(player, radius);
+        if (armed > 0) {
+            // Every raised weapon is another reason to leave: the odds of it holding its ground halve with each one.
+            chance = 1.0F - (float) Math.pow(1.0F - Math.min(0.95F, chance), 1 + armed);
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal(armed == 1 ? "A weapon raised behind the display."
+                    : armed + " weapons raised behind the display.").withStyle(net.minecraft.ChatFormatting.GOLD), true);
+        }
+        int startled = EvolutionEventHandler.startleNearby(player, radius, chance, true);
+        startled += dev.hominin.evolution.entity.Pachycrocuta.scareNear(player, radius + 8.0D, band + armed * 2);
+        startled += dev.hominin.evolution.entity.Crocuta.displayAt(player, radius + 8.0D, band + armed * 2);
         startled += dev.hominin.evolution.band.Paranthropus.scareNear(player, radius + 8.0D);
         if (dev.hominin.evolution.band.Mating.guarding(player)) {
             // Guarding a birth: nothing gets past this, not even what fears nothing.
@@ -155,18 +183,30 @@ public final class ThreatDisplay {
         if (player.getCooldowns().isOnCooldown(held.getItem())) {
             return false;
         }
+        if (held.is(ModItems.OBSIDIAN_CHUNK.get())) {
+            int wait = dev.hominin.evolution.item.ObsidianChunkItem.secondsBeforeThrow(player);
+            if (wait > 0) {
+                // Too precious to lose to a slip of the hand: held a moment first.
+                player.displayClientMessage(Component.literal("You weigh the chunk in your hand... (" + wait
+                        + "s before you can throw it)").withStyle(net.minecraft.ChatFormatting.GRAY), true);
+                return true;
+            }
+        }
         boolean displaying = displays(player);
         Throw style = displaying ? WILD_THROW : AIMED_THROW;
         boolean branch = ModItems.isLongBranch(held);
 
         ThrownObject thrown = new ThrownObject(player.level(), player);
         thrown.setItem(held.copyWithCount(1));
-        thrown.setDamage(branch ? style.branchDamage() : isHammerstone(held)
-                ? style.rockDamage() * 1.5F + (displaying ? 0.0F : HAMMERSTONE_EXTRA) : style.rockDamage());
+        boolean hammerstone = isHammerstone(held);
+        thrown.setDamage(branch ? style.branchDamage() : hammerstone
+                ? (displaying ? HAMMERSTONE_HEAVED : HAMMERSTONE_AIMED) : style.rockDamage());
+        // Only a real, aimed throw puts a stone into a skull hard enough to matter.
+        thrown.setAimed(!displaying);
         thrown.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, style.speed(), style.inaccuracy());
         player.level().addFreshEntity(thrown);
 
-        player.getCooldowns().addCooldown(held.getItem(), THROW_COOLDOWN_TICKS);
+        player.getCooldowns().addCooldown(held.getItem(), hammerstone ? HAMMERSTONE_COOLDOWN_TICKS : THROW_COOLDOWN_TICKS);
         if (!player.getAbilities().instabuild) {
             held.shrink(1);
         }

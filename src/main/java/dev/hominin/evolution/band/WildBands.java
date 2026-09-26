@@ -59,7 +59,7 @@ public final class WildBands {
         ServerLevel level = player.serverLevel();
         ResourceLocation era = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
         long near = Bands.all(level).stream().filter(b -> !b.nomadic() && !isExtinctBy(b.species, era)
-                && Bands.horizontal(b.home, player.blockPosition()) < 260.0D * 260.0D).count();
+                && Bands.horizontal(b.home, player.blockPosition()) < 360.0D * 360.0D).count();
         if (near < 3 && player.getRandom().nextFloat() < SPAWN_CHANCE) {
             int least = Bands.radiusFor(era) * 2 + 8;
             spawnNear(player, least, least + 90);
@@ -69,6 +69,8 @@ public final class WildBands {
     /** Bands whose people are not about - nobody near their ground until now - are there again when you come. */
     private static void materialize(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
+        Moves.tickLeaving(player);
+        WildCamps.tick(player);
         ResourceLocation era = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage();
         for (Bands.Record band : Bands.all(level)) {
             if (Bands.horizontal(band.home, player.blockPosition()) > 150.0D * 150.0D || isExtinctBy(band.species, era)
@@ -276,6 +278,11 @@ public final class WildBands {
             } else {
                 equip(member, random);
             }
+            Bands.Record held = Bands.get(level, bandId);
+            if (held != null && held.haven != null) {
+                // A haven's people: the best armed of their kind.
+                dev.hominin.evolution.world.Havens.arm(member, random);
+            }
             Bands.Record record = Bands.get(level, bandId);
             if (record != null && record.desperation >= 3) {
                 for (int n = 0; n < record.desperation - 2 && member.hasFood(); n++) {
@@ -396,6 +403,7 @@ public final class WildBands {
                     || state.is(dev.hominin.evolution.ModBlocks.CARCASS.get()))) {
                 food = true;
             } else if (!stone && !troop && (state.is(dev.hominin.evolution.ModBlocks.CHERT_DEPOSIT.get())
+                    || state.is(dev.hominin.evolution.ModBlocks.FINE_CHERT_DEPOSIT.get())
                     || state.is(dev.hominin.evolution.ModBlocks.QUARTZITE_DEPOSIT.get())
                     || state.is(dev.hominin.evolution.ModBlocks.BASALT_DEPOSIT.get())
                     || state.is(dev.hominin.evolution.ModBlocks.CHERT_ROCK.get())

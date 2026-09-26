@@ -1037,6 +1037,12 @@
         "hominin_evolution:material": 0.5
       },
       "model": "hominin_evolution:item/cleaver_obsidian"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.6
+      },
+      "model": "hominin_evolution:item/cleaver_fine_chert"
     }
   ]
 }

@@ -36,6 +36,12 @@ import net.minecraft.world.phys.Vec3;
 public final class TreeFelling {
     private static final int MOST_LOGS = 160;
     private static final int MOST_LEAVES = 600;
+    /** Only this many of the crown's leaves drop anything - the rest just break up. */
+    private static final int MOST_LEAF_DROPS = 120;
+    /** Every so many leaves of the crown, a stick comes down with them. */
+    private static final int STICK_EVERY = 5;
+    /** What the falling trunk is marked with, so the band is not what it lands on. */
+    public static final String FELLED = "hominin_felled";
     /** How far a crown reaches from its wood: vanilla leaves die past six. */
     private static final int LEAF_REACH = 6;
     private static final float DAMAGE_PER_BLOCK = 2.0F;
@@ -116,7 +122,12 @@ public final class TreeFelling {
         int shown = 0;
         for (BlockPos leaf : leaves) {
             BlockState state = level.getBlockState(leaf);
-            Block.dropResources(state, level, leaf);
+            if (shown < MOST_LEAF_DROPS) {
+                Block.dropResources(state, level, leaf);
+            }
+            if (shown % STICK_EVERY == 0) {
+                Block.popResource(level, leaf, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK));
+            }
             level.removeBlock(leaf, false);
             if (shown++ % 5 == 0) {
                 level.levelEvent(2001, leaf, Block.getId(state));
@@ -136,6 +147,7 @@ public final class TreeFelling {
             double speed = Math.sqrt(height / 50.0D) * 1.1D;
             falling.setDeltaMovement(new Vec3(fall.getStepX() * speed, 0.05D, fall.getStepZ() * speed));
             falling.setHurtsEntities(DAMAGE_PER_BLOCK, MOST_DAMAGE);
+            falling.addTag(FELLED);
         }
         level.playSound(null, base, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.BLOCKS, 1.0F, 0.6F);
         level.playSound(null, base.relative(fall, 4), SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1.5F, 0.5F);
@@ -143,6 +155,14 @@ public final class TreeFelling {
             if (player.blockPosition().closerThan(base, 16.0D)) {
                 player.displayClientMessage(Component.literal("The tree cracks, leans, and comes down."), true);
             }
+        }
+    }
+
+    /** A felled trunk landing on one of the band - yours or anyone's, grown or child: they saw it coming. */
+    public static void onHurt(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (event.getSource().getDirectEntity() instanceof FallingBlockEntity falling && falling.getTags().contains(FELLED)
+                && event.getEntity() instanceof dev.hominin.evolution.band.BandMember) {
+            event.setCanceled(true);
         }
     }
 

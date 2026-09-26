@@ -39,6 +39,34 @@ public record ChoosePayload(int entityId, int action, int value) implements Cust
             dev.hominin.evolution.band.Psychopaths.suspect(player, payload.entityId());
         } else if (payload.action() == dev.hominin.evolution.band.Psychopaths.ACTION_VERDICT) {
             dev.hominin.evolution.band.Psychopaths.verdict(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Intruders.ACTION) {
+            dev.hominin.evolution.band.Intruders.choose(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Tracking.ACTION_TRACK) {
+            dev.hominin.evolution.band.Tracking.toggle(player, payload.entityId());
+        } else if (payload.action() == dev.hominin.evolution.stage.Lineage.ACTION) {
+            dev.hominin.evolution.stage.Lineage.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.SacredPile.ACTION_WHERE) {
+            dev.hominin.evolution.band.SacredPile.chooseWhere(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Refugees.ACTION) {
+            dev.hominin.evolution.band.Refugees.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Refugees.ACTION_MERGE) {
+            dev.hominin.evolution.band.Refugees.chooseMerge(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Postures.ACTION) {
+            dev.hominin.evolution.band.Postures.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Newcomers.ACTION_PLAYERS) {
+            dev.hominin.evolution.band.Newcomers.choosePlayer(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Newcomers.ACTION_REQUEST) {
+            dev.hominin.evolution.band.Newcomers.answerRequest(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.stage.Intermission.ACTION) {
+            dev.hominin.evolution.stage.Intermission.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.stage.Intermission.ACTION_SPLIT) {
+            dev.hominin.evolution.stage.Intermission.chooseSplit(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.Newcomers.ACTION) {
+            dev.hominin.evolution.band.Newcomers.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.PileAsk.ACTION) {
+            dev.hominin.evolution.band.PileAsk.choose(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.world.Havens.ACTION_CONQUERED) {
+            dev.hominin.evolution.world.Havens.choose(player, payload.value());
         } else if (payload.action() == ACTION_FIND) {
             dev.hominin.evolution.band.Social.find(player, payload.entityId());
         }

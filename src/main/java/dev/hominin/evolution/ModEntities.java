@@ -21,6 +21,15 @@ public final class ModEntities {
                     .updateInterval(10)
                     .build("thrown_object"));
 
+    /** A thrown spear: tracked often, since it rides whatever it is stuck in. */
+    public static final Supplier<EntityType<dev.hominin.evolution.entity.ThrownSpear>> THROWN_SPEAR =
+            ENTITY_TYPES.register("thrown_spear", () -> EntityType.Builder.<dev.hominin.evolution.entity.ThrownSpear>of(
+                    dev.hominin.evolution.entity.ThrownSpear::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(4)
+                    .updateInterval(2)
+                    .build("thrown_spear"));
+
     /** A burning torch, thrown: flies like a snowball, lands still burning. */
     public static final Supplier<EntityType<dev.hominin.evolution.entity.ThrownTorch>> THROWN_TORCH =
             ENTITY_TYPES.register("thrown_torch", () -> EntityType.Builder.<dev.hominin.evolution.entity.ThrownTorch>of(

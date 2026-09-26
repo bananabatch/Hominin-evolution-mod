@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(l)Erectus$()$(li)Long branch + rock = wooden club$(li)Sharpened spear, empty hand, beside a fire = fire-hardened spear$(br2)A grinding rock, held against a blunted edge, puts the edge back."
+      "text": "$(l)Erectus$()$(li)Long branch + rock = wooden club$(li)Sharpened spear, right-clicked on a fire four times (or held there) = fire-hardened spear$(br2)A grinding rock, held against a blunted edge, puts the edge back."
     },
     {
       "type": "patchouli:spotlight",

@@ -109,6 +109,11 @@ public final class Blueprint {
         return inside;
     }
 
+    /** Somewhere to be inside of - a hut, a tent - rather than a thing that stands in the open, like a rack. */
+    public boolean shelter() {
+        return !inside.isEmpty();
+    }
+
     public List<BlockPos> clear() {
         return clear;
     }
@@ -144,12 +149,27 @@ public final class Blueprint {
     }
 
     public String materialsText() {
+        // What it takes in hand, not in blocks: a two-tall post is one post, and a bar across two is a branch.
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (Cell cell : cells) {
+            if (twoTall(cell.block()) && cell.look().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF)
+                    && cell.look().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF)
+                            == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER) {
+                continue;
+            }
+            String name = cell.block() == ModBlocks.COOKING_SPIT.get() || cell.block() == ModBlocks.TOOL_RACK_BAR.get()
+                    ? "workable branch" : cell.block().getName().getString().toLowerCase();
+            counts.merge(name, 1, Integer::sum);
+        }
         List<String> parts = new ArrayList<>();
-        materials().forEach((block, n) -> {
-            String name = block.getName().getString().toLowerCase();
-            parts.add(n + " " + name + (n == 1 || name.endsWith("s") ? "" : name.endsWith("h") ? "es" : "s"));
-        });
+        counts.forEach((name, n) -> parts.add(n + " " + name
+                + (n == 1 || name.endsWith("s") ? "" : name.endsWith("h") ? "es" : "s")));
         return String.join(", ", parts);
+    }
+
+    /** A block that stands two high from one item: a rack's post. */
+    public static boolean twoTall(Block block) {
+        return block instanceof dev.hominin.evolution.block.CookingRackBlock;
     }
 
     // ------------------------------------------------------------ reading

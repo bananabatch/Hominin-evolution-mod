@@ -22,11 +22,15 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Your knapping skill runs from level 4 to level 1, and your journal shows it. One tool takes you off 4; two more off 3; three more off 2. Turning a good stone or a good tool over in your mind sometimes teaches the hands as well."
+      "text": "Your knapping skill runs from level 4 to level 1 - and past that, level 0 - and your journal shows it. One tool takes you off 4; two more off 3; three more off 2. Turning a good stone or a good tool over in your mind sometimes teaches the hands as well."
     },
     {
       "type": "patchouli:text",
       "text": "Limestone is only ever crude. Quartzite gets no better than rough, unless your hands are the best there are. Basalt is excellent in good hands, but never flawless. Chert, in a master's hands, can be flawless. Obsidian flakes so cleanly that even a beginner gets a strong edge - and a master may get a perfect one."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Level 0 - flawless.$() Only you get there, never the band: at level 1, make two flawless tools. At level 0 chert comes out flawless four times in ten, obsidian three times in four."
     }
   ]
 }

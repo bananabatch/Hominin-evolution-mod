@@ -1,0 +1,28 @@
+{
+  "parent": "hominin_evolution:hominin/australopithecus",
+  "display": {
+    "icon": {
+      "id": "hominin_evolution:chert_hammerstone"
+    },
+    "title": {
+      "translate": "advancements.hominin_evolution.kanzi_method.title"
+    },
+    "description": {
+      "translate": "advancements.hominin_evolution.kanzi_method.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "granted"
+    ]
+  ]
+}

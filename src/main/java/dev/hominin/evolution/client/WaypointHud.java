@@ -36,6 +36,11 @@ public final class WaypointHud {
         active = false;
     }
 
+    /** Whether the pointer is up: urgent banners go below it. */
+    public static boolean showing() {
+        return active;
+    }
+
     public static void register(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, ID, WaypointHud::render);
     }

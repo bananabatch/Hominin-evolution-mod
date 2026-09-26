@@ -140,6 +140,19 @@ public final class ClientMapCache {
 
     // ------------------------------------------------------------ keeping it
 
+    /** Country told about: drawn in where you have never been - what you have seen yourself is never overwritten. */
+    public static void reveal(java.util.List<Long> keys, byte[] data) {
+        for (int i = 0; i < keys.size(); i++) {
+            if (chunks.containsKey(keys.get(i)) || (i + 1) * PATCHES * PATCHES > data.length) {
+                continue;
+            }
+            byte[] patches = new byte[PATCHES * PATCHES];
+            System.arraycopy(data, i * PATCHES * PATCHES, patches, 0, PATCHES * PATCHES);
+            chunks.put(keys.get(i), patches);
+            dirty = true;
+        }
+    }
+
     public static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
         chunks.clear();
         file = fileFor(Minecraft.getInstance());

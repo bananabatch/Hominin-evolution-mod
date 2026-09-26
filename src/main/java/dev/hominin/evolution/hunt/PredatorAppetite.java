@@ -77,6 +77,9 @@ public final class PredatorAppetite {
         }
         leave(predator, striker.position());
         predator.setTarget(null);
+        if (predator.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            PredatorLull.quiet(server, predator.blockPosition());
+        }
         BandMember caller = null;
         for (BandMember member : Band.near(predator, 24.0D)) {
             if (member.getTarget() == predator) {

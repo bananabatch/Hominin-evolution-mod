@@ -100,7 +100,7 @@ public class TermiteMoundFeature extends Feature<NoneFeatureConfiguration> {
      * Three great mounds round a patch of bare, packed ground, a dozen blocks apart: one colony. Every
      * block stays within sixteen blocks of the centre, inside what this chunk's decoration may touch.
      */
-    private static boolean placeColony(WorldGenLevel level, RandomSource random, BlockPos centre) {
+    public static boolean placeColony(WorldGenLevel level, RandomSource random, BlockPos centre) {
         float start = random.nextFloat() * Mth.TWO_PI;
         int built = 0;
         for (int i = 0; i < 3; i++) {
@@ -128,6 +128,55 @@ public class TermiteMoundFeature extends Feature<NoneFeatureConfiguration> {
         }
         dev.hominin.evolution.survival.Termites.generated(level.getLevel(), centre);
         return true;
+    }
+
+    /**
+     * A haven's colony: it is there, whatever the ground. Worldgen may skip a mound it cannot find flat, open ground
+     * for - and with fewer than two, there is no colony at all. A haven always feeds its people, so here every mound
+     * that will not sit is set down anyway: the ground under it cleared of brush and trees, and built on where it is.
+     */
+    public static void placeHavenColony(net.minecraft.server.level.ServerLevel level, RandomSource random, BlockPos centre) {
+        float start = random.nextFloat() * Mth.TWO_PI;
+        for (int i = 0; i < 3; i++) {
+            float angle = start + i * Mth.TWO_PI / 3.0F + (random.nextFloat() - 0.5F) * 0.5F;
+            int distance = 7 + random.nextInt(2);
+            BlockPos at = centre.offset(Math.round(Mth.cos(angle) * distance), 0, Math.round(Mth.sin(angle) * distance));
+            if (placeMound(level, random, at, true)) {
+                continue;
+            }
+            int radius = 4;
+            int peak = 8 + random.nextInt(3);
+            int ground = SurfaceSite.groundY(level, at.getX(), at.getZ());
+            if (ground == SurfaceSite.NO_GROUND) {
+                ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        at.getX(), at.getZ()) - 1;
+            }
+            // Clear what stands in the way: brush, saplings, trees.
+            for (int dx = -radius - 1; dx <= radius + 1; dx++) {
+                for (int dz = -radius - 1; dz <= radius + 1; dz++) {
+                    for (int dy = 1; dy <= peak + 10; dy++) {
+                        BlockPos pos = new BlockPos(at.getX() + dx, ground + dy, at.getZ() + dz);
+                        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+                        if (!state.isAir() && state.getFluidState().isEmpty() && (state.canBeReplaced()
+                                || state.is(net.minecraft.tags.BlockTags.LEAVES) || state.is(net.minecraft.tags.BlockTags.LOGS))) {
+                            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                        }
+                    }
+                }
+            }
+            BlockPos site = new BlockPos(at.getX(), ground, at.getZ());
+            build(level, random, site, shape(random, radius, peak, true), radius, peak, true);
+        }
+        for (int attempt = 0; attempt < 40; attempt++) {
+            int x = centre.getX() + random.nextInt(15) - 7;
+            int z = centre.getZ() + random.nextInt(15) - 7;
+            int ground = SurfaceSite.groundY(level, x, z);
+            if (ground != SurfaceSite.NO_GROUND) {
+                level.setBlock(new BlockPos(x, ground, z), (random.nextBoolean() ? Blocks.PACKED_MUD : Blocks.COARSE_DIRT)
+                        .defaultBlockState(), 2);
+            }
+        }
+        dev.hominin.evolution.survival.Termites.generated(level, centre);
     }
 
     /**

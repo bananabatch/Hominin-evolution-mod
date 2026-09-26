@@ -65,6 +65,11 @@ public class Pachycrocuta extends PathfinderMob {
     private LivingEntity quarry;
     private int unwatchedTicks;
     private int watchedTicks;
+    /** How long it has been caught staring, all told: past a point it stops circling and decides. */
+    private int staredDownTicks;
+    /** Which way it circles while it is watched. */
+    private boolean circlesLeft;
+    private static final int STARE_LIMIT_TICKS = 20 * 20;
     private int fleeTicks;
     @Nullable
     private Vec3 fleeFrom;
@@ -157,8 +162,24 @@ public class Pachycrocuta extends PathfinderMob {
         if (watcher != null && isWatchedBy(watcher)) {
             watchedTicks = 40;
             unwatchedTicks = 0;
+            staredDownTicks += 10;
+            if (staredDownTicks >= STARE_LIMIT_TICKS) {
+                // It will not circle forever. Either it has the measure of you, or it does not.
+                staredDownTicks = 0;
+                if (random.nextFloat() < 0.5F || quarry.isBaby()) {
+                    setTarget(quarry);
+                    playSound(ModSounds.PACHYCROCUTA_GROWL.get(), 2.0F, 0.8F);
+                    watcher.displayClientMessage(Component.literal("The giant hyena stops circling, lowers its head, "
+                            + "and comes in.").withStyle(ChatFormatting.RED), true);
+                } else {
+                    flee(watcher.position());
+                    watcher.displayClientMessage(Component.literal("The giant hyena holds your stare a moment longer, "
+                            + "then turns and lopes off."), true);
+                }
+            }
             return;
         }
+        staredDownTicks = Math.max(0, staredDownTicks - 5);
         watchedTicks = Math.max(0, watchedTicks - 10);
         unwatchedTicks += 10;
         if (unwatchedTicks >= UNWATCHED_TICKS_TO_ATTACK && distanceToSqr(quarry) < ATTACK_RANGE * ATTACK_RANGE) {
@@ -436,9 +457,21 @@ public class Pachycrocuta extends PathfinderMob {
                 return;
             }
             if (watchedTicks > 0) {
-                // Caught out: freeze and stare back.
-                getNavigation().stop();
+                // Caught out: it does not freeze - it circles, just out of reach, eyes on you, looking for a way in.
                 getLookControl().setLookAt(quarry, 20.0F, 20.0F);
+                if (tickCount % 20 == 0) {
+                    Vec3 away = position().subtract(quarry.position()).multiply(1.0D, 0.0D, 1.0D);
+                    if (away.lengthSqr() < 1.0E-3D) {
+                        away = new Vec3(1.0D, 0.0D, 0.0D);
+                    }
+                    if (random.nextInt(6) == 0) {
+                        circlesLeft = !circlesLeft;
+                    }
+                    double angle = Math.atan2(away.z, away.x) + (circlesLeft ? 0.5D : -0.5D);
+                    double reach = STALK_DISTANCE * 0.75D;
+                    getNavigation().moveTo(quarry.getX() + Math.cos(angle) * reach, quarry.getY(),
+                            quarry.getZ() + Math.sin(angle) * reach, 0.8D);
+                }
                 return;
             }
             if (tickCount % 20 != 0) {

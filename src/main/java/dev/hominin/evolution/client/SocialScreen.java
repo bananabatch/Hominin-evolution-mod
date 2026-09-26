@@ -63,9 +63,9 @@ public class SocialScreen extends Screen {
         }
         BandMember nearest = nearest(mc.player);
         if (nearest == null) {
-            // Alone: nobody to talk to but the others, far off - what you know of them.
-            PacketDistributor.sendToServer(new dev.hominin.evolution.network.OthersActionPayload("",
-                    dev.hominin.evolution.network.OthersActionPayload.OPEN));
+            // Alone: nobody near to talk to. The menu still opens - The others is always there, and so is the
+            // developer tab - rather than dropping you into The others every time you press H.
+            mc.setScreen(new SocialScreen(-1, Component.literal("nobody - nobody is near"), false, false, false, true));
             return;
         }
         boolean paranthropus = dev.hominin.evolution.band.Paranthropus.is(nearest);
@@ -158,9 +158,17 @@ public class SocialScreen extends Screen {
     }
 
     private final boolean paranthropus;
+    /** Nobody near at all: only The others, and the developer tab. */
+    private final boolean alone;
 
     private SocialScreen(int targetId, Component name, boolean otherBand, boolean otherBandNear, boolean paranthropus) {
+        this(targetId, name, otherBand, otherBandNear, paranthropus, false);
+    }
+
+    private SocialScreen(int targetId, Component name, boolean otherBand, boolean otherBandNear, boolean paranthropus,
+            boolean alone) {
         super(Component.literal("Talk to ").append(name));
+        this.alone = alone;
         this.paranthropus = paranthropus;
         this.targetId = targetId;
         this.otherBand = otherBand;
@@ -179,6 +187,9 @@ public class SocialScreen extends Screen {
         if (command.topic() == Social.Topic.DEVELOPER) {
             return ClientSync.devMode;
         }
+        if (alone) {
+            return false;
+        }
         boolean guiding = command == Social.Command.LEAD_STONE || command == Social.Command.LEAD_OBSIDIAN;
         if (paranthropus) {
             // Not much in common to talk about: a trade, or being shown the way.
@@ -194,6 +205,14 @@ public class SocialScreen extends Screen {
         if (command == Social.Command.TRIBE || command == Social.Command.ASK_MEMORIES) {
             return targetId < 0 && !otherBand;
         }
+        if (command == Social.Command.POSTURE) {
+            return targetId < 0 && !otherBand;
+        }
+        if (command == Social.Command.PLAYER_BANDS) {
+            // Only with somebody else in the world to lead a band with.
+            return targetId < 0 && !otherBand && Minecraft.getInstance().getConnection() != null
+                    && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1;
+        }
         LocalPlayer self = Minecraft.getInstance().player;
         if (command == Social.Command.FOOD) {
             return self != null && self.getFoodData().needsFood();
@@ -203,7 +222,7 @@ public class SocialScreen extends Screen {
         }
         if (command == Social.Command.CLIMB) {
             var stage = self == null ? null : ClientSync.stageOf(self.getUUID());
-            String path = stage == null ? "" : stage.getPath();
+            String path = dev.hominin.evolution.stage.Kinds.line(stage);
             if (!path.equals("ardipithecus") && !path.equals("australopithecus") && !path.equals("homo_habilis")) {
                 return false;
             }
@@ -225,17 +244,12 @@ public class SocialScreen extends Screen {
         if (command == Social.Command.HAVE_CHILD || command == Social.Command.MAKE_MATE) {
             return targetId >= 0 && !otherBand;
         }
-        if (command == Social.Command.WATCH) {
-            // Only someone close to you stays up for you: bond 4 and up.
+        if (command == Social.Command.WATCH || command == Social.Command.SWAP) {
+            // Only someone close to you will (bond 4 to keep watch, 3 to swap) - but bond lives on the server, so
+            // it is offered to any grown member picked out, and they say whether they are close enough.
             return targetId >= 0 && !otherBand && Minecraft.getInstance().level != null
                     && Minecraft.getInstance().level.getEntity(targetId) instanceof BandMember member
-                    && member.getBond() >= 4 && !member.isBaby();
-        }
-        if (command == Social.Command.SWAP) {
-            // Only someone close to you: bond 3 and up.
-            return targetId >= 0 && !otherBand && Minecraft.getInstance().level != null
-                    && Minecraft.getInstance().level.getEntity(targetId) instanceof BandMember member
-                    && member.getBond() >= 3 && !member.isBaby();
+                    && !member.isBaby();
         }
         if (command == Social.Command.CULTURE) {
             // A rule for your own band, and only for a mind that can hold one: erectus on.
@@ -283,7 +297,7 @@ public class SocialScreen extends Screen {
 
     /** The errand list is a screen of its own, and belongs with the other asking-for-things. */
     private boolean hasFetch(Social.Topic wanted) {
-        return wanted == Social.Topic.THINGS && !otherBand && !paranthropus;
+        return wanted == Social.Topic.THINGS && !otherBand && !paranthropus && !alone;
     }
 
     @Override

@@ -4,7 +4,8 @@
   "features": [
     "hominin_evolution:quartzite_deposit",
     "hominin_evolution:limestone_deposit",
-    "hominin_evolution:chert_deposit"
+    "hominin_evolution:chert_deposit",
+    "hominin_evolution:fine_chert_deposit"
   ],
   "step": "local_modifications"
 }

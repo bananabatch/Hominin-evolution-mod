@@ -22,13 +22,28 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.GRANITE_ROCK.get());
                         output.accept(ModItems.LIMESTONE_ROCK.get());
                         output.accept(ModItems.OBSIDIAN_ROCK.get());
+                        output.accept(ModItems.FINE_CHERT_ROCK.get());
+                        output.accept(ModItems.OBSIDIAN_CHUNK.get());
                         output.accept(ModItems.FACE_PEBBLE.get());
                         output.accept(ModItems.QUARTZ_CRYSTAL.get());
                         output.accept(ModItems.CHERT_DEPOSIT.get());
+                        output.accept(ModItems.FINE_CHERT_DEPOSIT.get());
+                        output.accept(ModItems.DEAD_BRANCH.get());
+                        output.accept(ModItems.SALT_CHUNK.get());
+                        output.accept(ModItems.SALT_BLOCK.get());
+                        output.accept(ModItems.WET_SAND.get());
+                        output.accept(ModItems.OYSTER.get());
+                        output.accept(ModItems.CLAM.get());
+                        output.accept(ModItems.SMALL_FISH.get());
+                        output.accept(ModItems.OCTOPUS.get());
+                        output.accept(ModItems.ROASTED_OYSTER.get());
+                        output.accept(ModItems.ROASTED_CLAM.get());
+                        output.accept(ModItems.COOKED_SMALL_FISH.get());
+                        output.accept(ModItems.COOKED_OCTOPUS.get());
+                        output.accept(ModItems.OBSIDIAN_DEPOSIT.get());
                         output.accept(ModItems.QUARTZITE_DEPOSIT.get());
                         output.accept(ModItems.LIMESTONE_DEPOSIT.get());
                         output.accept(ModItems.BASALT_DEPOSIT.get());
-                        output.accept(ModItems.ROCK.get());
                         output.accept(ModItems.TICK.get());
                         output.accept(ModItems.THATCH.get());
                         output.accept(ModItems.TWINE.get());
@@ -51,6 +66,27 @@ public final class ModCreativeTabs {
                                     .make(quality));
                         }
                         output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(2));
+                        // Heidelbergensis: the Levallois technique, in every stone, and the great weapons.
+                        output.accept(ModItems.LEVALLOIS_FLAKE.get());
+                        output.accept(ModItems.LEVALLOIS_BLADE.get());
+                        output.accept(ModItems.KNIFE.get());
+                        for (int quality = 4; quality >= 0; quality--) {
+                            output.accept(((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.LEVALLOIS_HAND_AXE.get())
+                                    .make(quality));
+                        }
+                        for (dev.hominin.evolution.item.StoneMaterial stone : dev.hominin.evolution.item.StoneMaterial.values()) {
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.mark(
+                                    new ItemStack(ModItems.LEVALLOIS_FLAKE.get()), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.mark(
+                                    new ItemStack(ModItems.LEVALLOIS_BLADE.get()), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.mark(
+                                    new ItemStack(ModItems.KNIFE.get()), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.mark(
+                                    ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.LEVALLOIS_HAND_AXE.get())
+                                            .make(1), stone));
+                            output.accept(dev.hominin.evolution.item.StoneMaterial.mark(
+                                    new ItemStack(ModItems.STONE_TIPPED_SPEAR.get()), stone));
+                        }
                         // One of each stone, to see them side by side.
                         for (dev.hominin.evolution.item.StoneMaterial stone : dev.hominin.evolution.item.StoneMaterial.values()) {
                             output.accept(dev.hominin.evolution.item.StoneMaterial.stamp(
@@ -65,6 +101,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.WORKABLE_SHAFT.get());
                         output.accept(ModItems.BUILDING_BRANCH.get());
                         output.accept(ModItems.COOKING_RACK.get());
+                        output.accept(ModItems.TOOL_RACK.get());
                         output.accept(ModItems.THATCH_BLOCK.get());
                         output.accept(ModItems.THATCH_BEDDING.get());
                         output.accept(ModItems.COOKED_MEAT_CHUNK.get());
@@ -86,7 +123,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.POINTY_STICK.get());
                         output.accept(ModItems.SHARPENED_SPEAR.get());
                         output.accept(ModItems.FIRE_HARDENED_SPEAR.get());
+                        output.accept(ModItems.SCHONINGEN_SPEAR.get());
+                        output.accept(ModItems.STONE_TIPPED_SPEAR.get());
                         output.accept(ModItems.WOODEN_CLUB.get());
+                        output.accept(ModItems.BONE_CLUB.get());
                         output.accept(ModItems.TERMITE_MOUND.get());
                         output.accept(ModItems.DECAYING_LOG.get());
                         output.accept(ModItems.DECAYED_LOG.get());
@@ -115,6 +155,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.EARTHWORM.get());
                         output.accept(ModItems.LONG_BONE.get());
                         output.accept(ModItems.BONE_MARROW.get());
+                        output.accept(ModItems.ROOTS.get());
                     })
                     .build());
 

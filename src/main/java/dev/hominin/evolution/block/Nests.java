@@ -58,18 +58,59 @@ public final class Nests {
     @Nullable
     public static BlockPos[] siteNear(LevelReader level, BlockPos origin, int radius,
             net.minecraft.util.RandomSource random) {
-        for (int attempt = 0; attempt < 16; attempt++) {
+        // A good place to sleep: under a tree, or down by the water - and not on top of anyone else.
+        BlockPos[] best = null;
+        float bestScore = Float.NEGATIVE_INFINITY;
+        for (int attempt = 0; attempt < 24; attempt++) {
             BlockPos corner = origin.offset(random.nextInt(radius * 2 + 1) - radius, 0,
                     random.nextInt(radius * 2 + 1) - radius);
             boolean alongX = random.nextBoolean();
             for (int dy : new int[] {0, -1, 1}) {
                 BlockPos[] cells = cells(corner.above(dy), alongX);
-                if (fits(level, cells)) {
-                    return cells;
+                if (!fits(level, cells)) {
+                    continue;
                 }
+                float score = score(level, cells) + random.nextFloat();
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = cells;
+                }
+                break;
             }
         }
-        return null;
+        return best != null && bestScore > -50.0F ? best : null;
+    }
+
+    /** Under leaves +3, by the water +2, crowding another bed -5 - and right up against one, not at all. */
+    private static float score(LevelReader level, BlockPos[] cells) {
+        BlockPos corner = cells[0];
+        float score = 0.0F;
+        boolean canopy = false;
+        for (int up = 2; up <= 9 && !canopy; up++) {
+            canopy = level.getBlockState(corner.above(up)).is(net.minecraft.tags.BlockTags.LEAVES);
+        }
+        if (canopy) {
+            score += 3.0F;
+        }
+        boolean shore = false;
+        for (BlockPos near : BlockPos.betweenClosed(corner.offset(-3, -1, -3), corner.offset(3, 0, 3))) {
+            if (level.getFluidState(near).is(net.minecraft.tags.FluidTags.WATER)) {
+                shore = true;
+                break;
+            }
+        }
+        if (shore) {
+            score += 2.0F;
+        }
+        for (BlockPos near : BlockPos.betweenClosed(corner.offset(-4, -1, -4), corner.offset(4 + WIDTH, 1, 4 + WIDTH))) {
+            var state = level.getBlockState(near);
+            if (state.is(ModBlocks.NEST.get()) || state.is(ModBlocks.THATCH_BEDDING.get())) {
+                double d = Math.sqrt(near.distSqr(corner));
+                score -= d <= 2.0D ? 100.0F : 5.0F;
+                break;
+            }
+        }
+        return score;
     }
 
     private static BlockPos[] cells(BlockPos corner, boolean alongX) {

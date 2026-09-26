@@ -70,6 +70,29 @@ public final class Morals {
                 "The band keeps its bullies down together: most fights are stopped before they start, thieves who "
                         + "do not care are caught like anyone else, shunning works far better, and the antisocial come "
                         + "round in time.",
+                When.ALWAYS),
+        NO_BETRAYAL(key("no_betrayal"), "We don't betray our own",
+                "Far fewer help themselves to each other's things in hard times. And when the band's faith in you falls "
+                        + "to 20, it holds there: 20 more to wear through first (shown as +20). It does not come back "
+                        + "until it has been worn right through.",
+                When.ALWAYS),
+        THE_PILE(key("the_pile"), "The Pile",
+                "Culture. When something matters - a birth, a new roof, a new ally - the best thing you carry goes on "
+                        + "the Pile before the next night is out: +8 cohesion for each thing given, -12 if nothing is. "
+                        + "Only what is hard to give up is taken, and nothing comes back off it. A desperate band may "
+                        + "one day steal from it - and your band will not forget who.",
+                When.ALWAYS),
+        THE_FEAST(key("the_feast"), "The Feast",
+                "Culture. When something big happens - ready to become something new, a band of a people's size, a "
+                        + "great weapon, the first great beast - the band feasts. Two days of gathering first: food to "
+                        + "piles by the fire, racks over fire pits, fires fed. Then everyone eats their fill, and after it "
+                        + "is full - hunger slows for a day and a half. +4 cohesion, and every bond grows; close bands "
+                        + "steal and fight less.",
+                When.ALWAYS),
+        NO_BRAINS(key("no_brains"), "We don't consume the flesh of the thought",
+                "Learned the hard way: one of you died of the shaking sickness. Nobody of the band eats a brain now - "
+                        + "no kuru comes into the band that way - and eating one yourself goes against all of them "
+                        + "(cohesion -8).",
                 When.ALWAYS);
 
         private final String key;
@@ -108,6 +131,8 @@ public final class Morals {
     public static final int HELD = 1;
     public static final int FADING = 2;
     public static final int COOLING = 3;
+    /** Not a way the band has any reason for yet: not shown at all. */
+    public static final int LOCKED = 4;
 
     /** Two days to let go of a rule, and a day before it can come back - in minutes of game time. */
     private static final int FADE_MINUTES = 40;
@@ -153,6 +178,9 @@ public final class Morals {
 
     public static int state(ServerPlayer player, Moral moral) {
         Map<String, Integer> counters = counters(player);
+        if (moral == Moral.NO_BRAINS && counters.getOrDefault(moral.key + "_known", 0) <= 0) {
+            return LOCKED;
+        }
         if (counters.getOrDefault(moral.key, 0) > 0) {
             return counters.getOrDefault(moral.key + "_fading", 0) > 0 ? FADING : HELD;
         }
@@ -170,6 +198,10 @@ public final class Morals {
     // ------------------------------------------------------------ taking up and letting go
 
     public static void adopt(ServerPlayer player, Moral moral) {
+        if (state(player, moral) == LOCKED) {
+            say(player, "Your band has no reason for a rule like that - yet.");
+            return;
+        }
         if (!Mortuary.canAdopt(player)) {
             say(player, "Your band cannot hold a rule like that yet. (Erectus and later.)");
             return;
@@ -200,6 +232,9 @@ public final class Morals {
             Mortuary.adopt(player);
         } else {
             counters.put(moral.key, 1);
+            if (moral == Moral.THE_PILE) {
+                SacredPile.askWhere(player);
+            }
             EvolutionManager.incrementCriterion(player, "adopt_norm", 1);
             player.sendSystemMessage(Component.literal("It is decided: \"" + moral.title + ".\"")
                     .withStyle(ChatFormatting.GOLD));
@@ -233,6 +268,25 @@ public final class Morals {
             return days + (days == 1 ? " day" : " days") + (hours > 0 ? " " + hours + "h" : "");
         }
         return Math.max(1, minutes * 24 / 20) + "h";
+    }
+
+    /**
+     * One of the band is dead of kuru. The band has seen where it comes from - and makes a rule of it, there and
+     * then: nobody eats the flesh of the thought.
+     */
+    public static void kuruDeath(ServerPlayer player, BandMember dead) {
+        Map<String, Integer> counters = counters(player);
+        dead.ensureName();
+        boolean first = counters.getOrDefault(Moral.NO_BRAINS.key + "_known", 0) <= 0;
+        counters.put(Moral.NO_BRAINS.key + "_known", 1);
+        player.sendSystemMessage(Component.literal(dead.getName().getString() + " is dead of the shaking sickness. The "
+                + "band stands round the body a long time, and nobody says what everyone is thinking.")
+                .withStyle(ChatFormatting.DARK_PURPLE));
+        if (first && Mortuary.canAdopt(player) && !holds(player, Moral.NO_BRAINS)) {
+            counters.put(Moral.NO_BRAINS.key, 1);
+            player.sendSystemMessage(Component.literal("It is decided: \"" + Moral.NO_BRAINS.title + ".\" (A new way of "
+                    + "your people - see Culture.)").withStyle(ChatFormatting.GOLD));
+        }
     }
 
     // ------------------------------------------------------------ the tab
@@ -278,6 +332,14 @@ public final class Morals {
     // ------------------------------------------------------------ theft
 
     /**
+     * How much one member's closeness keeps them from turning on another: their bond with the band's leader, and
+     * how close the two of them are. Up to four in five times, for the closest.
+     */
+    public static float closeness(BandMember from, BandMember to) {
+        return Math.min(0.8F, Math.max(0, from.getBond()) * 0.05F + Math.max(0, from.affinityWith(to.getUUID())) * 0.08F);
+    }
+
+    /**
      * Now and then somebody helps themselves to what another has. Hungry mouths in hard times
      * take food; in good times it is the things people covet. A rule against it, in the times it
      * is about, stops most of it and turns the rest back - at the cost of the thief's goodwill.
@@ -295,7 +357,9 @@ public final class Morals {
         var random = player.getRandom();
         boolean hard = Seasons.strained(player.level());
         boolean plenty = Seasons.plentiful(player.level());
-        if (random.nextFloat() >= Math.min(0.9F, (hard ? 0.35F : 0.15F) * Mood.theftFactor(player))) {
+        // Under "we don't betray our own", hard times do not turn the band on itself.
+        float betrayal = hard && applies(player, Moral.NO_BETRAYAL) ? 0.35F : 1.0F;
+        if (random.nextFloat() >= Math.min(0.9F, (hard ? 0.35F : 0.15F) * Mood.theftFactor(player) * betrayal)) {
             return;
         }
         BandMember thief = band.get(random.nextInt(band.size()));
@@ -325,6 +389,10 @@ public final class Morals {
             }
         }
         if (victim == null) {
+            return;
+        }
+        // A thief close to the band - or to the one they would take from - mostly thinks better of it.
+        if (random.nextFloat() < closeness(thief, victim)) {
             return;
         }
         thief.ensureName();

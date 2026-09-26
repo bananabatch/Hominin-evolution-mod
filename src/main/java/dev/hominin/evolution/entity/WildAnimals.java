@@ -33,16 +33,16 @@ public final class WildAnimals {
     private static final int TROOP_MAX = 20;
 
     /** The giant hyena is a loner, and a rare one. */
-    private static final float HYENA_CHANCE = 0.08F;
+    private static final float HYENA_CHANCE = 0.055F;
     /** Clans roam the grass, and ignore you unless you come near their food. */
-    private static final float CLAN_CHANCE = 0.2F;
-    private static final float SABERTOOTH_CHANCE = 0.07F;
+    private static final float CLAN_CHANCE = 0.14F;
+    private static final float SABERTOOTH_CHANCE = 0.05F;
     /** One bird over the country at a time, and only by day. */
-    private static final float EAGLE_CHANCE = 0.12F;
+    private static final float EAGLE_CHANCE = 0.09F;
     /** The scimitar cat hunts in the open, in daylight, usually in pairs. */
-    private static final float HOMOTHERIUM_CHANCE = 0.14F;
+    private static final float HOMOTHERIUM_CHANCE = 0.1F;
     /** Rare on purpose: meeting one should be an event, not a feature of the landscape. */
-    private static final float DINOPITHECUS_CHANCE = 0.09F;
+    private static final float DINOPITHECUS_CHANCE = 0.065F;
     /** Common where the forest starts; a rare sight out on the grass, and only later on. */
     private static final float CHIMP_JUNGLE_CHANCE = 0.6F;
     /** Out of the trees but within reach of them: savanna woodland near a jungle. */
@@ -58,7 +58,7 @@ public final class WildAnimals {
     private static final float GRAZER_CHANCE = 0.3F;
 
     /** A crocodile in any warm water worth drinking from - and twice as likely in a drought. */
-    private static final float CROCODILE_CHANCE = 0.3F;
+    private static final float CROCODILE_CHANCE = 0.22F;
 
     public static void tick(ServerPlayer player) {
         if (player.tickCount % TROOP_CHECK_TICKS == 300 && !player.isSpectator()
@@ -88,7 +88,9 @@ public final class WildAnimals {
                 && random.nextFloat() < HOMOTHERIUM_CHANCE) {
             spawnGroup(player, ModEntities.HOMOTHERIUM.get(), random.nextBoolean() ? 2 : 1, 45, 80);
         }
-        if (none(player, dev.hominin.evolution.entity.Chimpanzee.class, 128.0D)) {
+        // Deep in the jungle communities lie close together; at its edge, far apart.
+        double chimpSpacing = 128.0D - 56.0D * jungleDepth(player.serverLevel(), player.blockPosition());
+        if (none(player, dev.hominin.evolution.entity.Chimpanzee.class, chimpSpacing)) {
             spawnCommunity(player, random);
         }
         if (!stillAround(player) && none(player, Bonobo.class, 160.0D) && random.nextFloat() < BONOBO_CHANCE) {
@@ -130,7 +132,8 @@ public final class WildAnimals {
         }
         boolean jungle = level.getBiome(site).is(net.minecraft.tags.BiomeTags.IS_JUNGLE);
         boolean late = !stillAround(player);
-        float chance = jungle ? CHIMP_JUNGLE_CHANCE
+        double depth = jungleDepth(level, site);
+        float chance = jungle ? CHIMP_JUNGLE_CHANCE + (1.0F - CHIMP_JUNGLE_CHANCE) * (float) depth
                 : jungleWithin(level, site, CHIMP_EDGE_DISTANCE) ? CHIMP_EDGE_CHANCE
                 : late ? CHIMP_SAVANNA_CHANCE : 0.0F;
         if (random.nextFloat() >= chance) {
@@ -138,7 +141,7 @@ public final class WildAnimals {
         }
         UUID community = UUID.randomUUID();
         UUID alpha = null;
-        int size = 4 + random.nextInt(4);
+        int size = 4 + random.nextInt(4) + (int) Math.round(depth * 4.0D);
         for (int i = 0; i < size; i++) {
             dev.hominin.evolution.entity.Chimpanzee chimp = place(level, ModEntities.CHIMPANZEE.get(), site,
                     random.nextInt(5));
@@ -149,6 +152,23 @@ public final class WildAnimals {
                 }
             }
         }
+    }
+
+    /** How deep into the jungle a spot is, 0 at its edge or outside it, 1 with jungle all round for 96 blocks. */
+    static double jungleDepth(net.minecraft.server.level.ServerLevel level, BlockPos at) {
+        int jungle = 0;
+        int samples = 0;
+        for (int ring = 32; ring <= 96; ring += 32) {
+            for (int i = 0; i < 8; i++) {
+                double angle = Math.PI * 2.0D * i / 8.0D;
+                BlockPos p = at.offset((int) (Math.cos(angle) * ring), 0, (int) (Math.sin(angle) * ring));
+                samples++;
+                if (level.getBiome(p).is(net.minecraft.tags.BiomeTags.IS_JUNGLE)) {
+                    jungle++;
+                }
+            }
+        }
+        return level.getBiome(at).is(net.minecraft.tags.BiomeTags.IS_JUNGLE) ? jungle / (double) samples : 0.0D;
     }
 
     /** Erectus or anything after it: the era when the world opens up. */

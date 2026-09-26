@@ -153,7 +153,13 @@ public class QuarryGoal extends Goal {
         member.level().playSound(null, target, SoundEvents.STONE_BREAK, SoundSource.NEUTRAL, 0.8F, 1.1F);
         Item stone;
         int count;
-        if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
+        if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+            stone = ModItems.OBSIDIAN_ROCK.get();
+            count = 1;
+        } else if (state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())) {
+            stone = ModItems.FINE_CHERT_ROCK.get();
+            count = 1;
+        } else if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
             stone = ModItems.CHERT_ROCK.get();
             count = 2;
         } else if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
@@ -228,8 +234,14 @@ public class QuarryGoal extends Goal {
         if (!hasHammer) {
             return null;
         }
+        if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+            return ModItems.OBSIDIAN_ROCK.get();
+        }
         if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
             return ModItems.CHERT_ROCK.get();
+        }
+        if (state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())) {
+            return ModItems.FINE_CHERT_ROCK.get();
         }
         if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
             return ModItems.GRANITE_ROCK.get();

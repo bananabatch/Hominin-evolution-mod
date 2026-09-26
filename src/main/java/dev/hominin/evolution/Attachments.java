@@ -60,6 +60,25 @@ public final class Attachments {
                     .build());
 
     /**
+     * The urgent news of late, for the journal's Event log: "K|dayTime|text", newest first. Kept through death,
+     * logging out and evolving - so nothing urgent is lost.
+     */
+    public static final Supplier<AttachmentType<java.util.List<String>>> ALERTS = ATTACHMENT_TYPES.register(
+            "alerts",
+            () -> AttachmentType.<java.util.List<String>>builder(() -> java.util.List.of())
+                    .serialize(com.mojang.serialization.Codec.STRING.listOf())
+                    .copyOnDeath()
+                    .build());
+
+    /** Band members the player is keeping an eye on (tribe stats: right-click a name), by UUID. */
+    public static final Supplier<AttachmentType<java.util.List<String>>> TRACKED = ATTACHMENT_TYPES.register(
+            "tracked",
+            () -> AttachmentType.<java.util.List<String>>builder(() -> java.util.List.of())
+                    .serialize(com.mojang.serialization.Codec.STRING.listOf())
+                    .copyOnDeath()
+                    .build());
+
+    /**
      * Whether a player is up a tree right now. Never saved: a player who logs out
      * mid-climb comes back standing, not clinging. Both sides keep a copy, because
      * leaf collision is checked on both and has to agree.

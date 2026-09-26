@@ -640,6 +640,12 @@
         "hominin_evolution:material": 0.5
       },
       "model": "hominin_evolution:item/lomekwian_tool_obsidian"
+    },
+    {
+      "predicate": {
+        "hominin_evolution:material": 0.6
+      },
+      "model": "hominin_evolution:item/lomekwian_tool_fine_chert"
     }
   ]
 }

@@ -63,6 +63,42 @@
     {
       "type": "patchouli:text",
       "text": "If the last of them dies, you do not simply carry on. Your chest closes, your eyes shut, and you come back to yourself ninety blocks away with a new band around you.$(br2)What you were stays where it happened, sitting with its head in its hands. Walk back and find it, and it will get up and come with you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Close enough to someone (bond 3), you can live as them for a while: pick them out, then $(o)Become them$() under Together. You open your eyes where they stood; they carry on as you. Their info says when a mother is due, and nobody follows you in their sleep."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They talk among themselves, too. Stay near and you overhear it: what one of them is doing, what the band is building, the dark coming on, the season, the strangers over the ridge - and the other's answer. Something that has just happened - a birth, a death, a new roof, a kill - is talked over for a while after. Say something aloud and someone may have a word to add."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)Negotiating$(), 4 to 0 - lower is better. You start at 2 or 1. Whoever near you talks best does the talking - at trades, gifts, offers for your ground - and a party talks as well as the best of it. A good talker gets a tier more in trades, more ground-worth when haggling, more for a gift. Good deals teach you. Some of the band are good at it; one kind of person is always flawless."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Tribe stats shows everyone's everything: knapping, hunting, talking, fighting, health, hunger, and what they are doing. $(l)Right-click a name$() to keep track of them - up to four, in the top right corner of the screen: which way, how far, how they are, what they are up to. Right-click again to stop."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "They do what they say: talk of grubs and they have one; say they will find a stone and they come back with it. Sleep the night through and whoever was carrying has had the child by morning - sometimes two. Before erectus, a child rides on its mother's back."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When their hands are full and you give them something, they drop the least use of what they carry. When they carry more tools than they need and there is no pile, they ask you where it should be."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Others may walk this world too. Coming into it after them, you choose: walk with one of their bands - one of them, your blows pulled with theirs and theirs with yours - or make a band of your own, a long walk from anyone. Wherever they are, the others are on your map."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Lead a band with someone and you are both its leaders: what it needs, what other bands want of it, either of you hears and either of you can answer. And when a band evolves with others in the world, everyone has a few breaths to choose - go with it, split off, keep to their own, or join it. A band left behind is carried along, a little of its road already walked."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A brain is a great deal of food. Before erectus nobody will touch one; after, the hungry are drawn to them - and some carry the shaking sickness. When the band loses someone to it, it learns: we don't consume the flesh of the thought."
     }
   ]
 }

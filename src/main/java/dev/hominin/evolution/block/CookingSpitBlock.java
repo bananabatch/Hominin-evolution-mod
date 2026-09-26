@@ -78,6 +78,13 @@ public class CookingSpitBlock extends BaseEntityBlock {
         builder.add(AXIS, NEG, POS);
     }
 
+    /** Posts and spits over a fire are walked round, not through. */
+    @Override
+    public net.minecraft.world.level.pathfinder.PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos,
+            @Nullable net.minecraft.world.entity.Mob mob) {
+        return net.minecraft.world.level.pathfinder.PathType.BLOCKED;
+    }
+
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.getValue(AXIS) == Direction.Axis.Z ? HANGING_Z : HANGING_X;

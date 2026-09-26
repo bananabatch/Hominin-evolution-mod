@@ -42,8 +42,17 @@ public class ForageGoal extends Goal {
     public boolean canUse() {
         // Foraging beside the leader skips the dawdle: they asked for this.
         boolean together = member.isForagingTogether();
-        if (member.isUpATree() || (member.hasFood() && !together)) {
+        // Getting ready for a feast: out gathering whether hungry or not, until they carry plenty.
+        boolean feast = dev.hominin.evolution.band.Feast.gathering(member);
+        if (member.isUpATree() || (member.hasFood() && !together && !feast)) {
             return false;
+        }
+        if (feast && !together) {
+            if (member.getRandom().nextInt(10) != 0) {
+                return false;
+            }
+            spot = findSpot();
+            return spot != null;
         }
         // A pregnancy keeps them foraging whether or not they feel hungry.
         boolean eatingForTwo = member.isPregnant();
@@ -80,7 +89,8 @@ public class ForageGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return spot != null && ticks < GIVE_UP_TICKS && (!member.hasFood() || member.isForagingTogether());
+        return spot != null && ticks < GIVE_UP_TICKS && (!member.hasFood() || member.isForagingTogether()
+                || dev.hominin.evolution.band.Feast.gathering(member));
     }
 
     @Override
@@ -124,6 +134,13 @@ public class ForageGoal extends Goal {
     private void finish() {
         Level level = member.level();
         BlockState state = level.getBlockState(spot);
+        // With a digging stick or a hand axe, under a tree, it is roots they bring up.
+        if (member.findCarried(dev.hominin.evolution.survival.Roots::digsRoots) != null
+                && dev.hominin.evolution.survival.Roots.underATree(level, spot) && member.getRandom().nextFloat() < 0.5F) {
+            member.addToInventory(new ItemStack(ModItems.ROOTS.get(), 1 + member.getRandom().nextInt(2)));
+            level.playSound(null, spot, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.NEUTRAL, 0.8F, 0.9F);
+            return;
+        }
         if (isRipeBush(state)) {
             level.setBlock(spot, state.setValue(SweetBerryBushBlock.AGE, 1), 2);
             level.playSound(null, spot, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.NEUTRAL, 1.0F, 1.0F);

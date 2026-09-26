@@ -32,6 +32,11 @@
         "id": "build_structure",
         "description": "Build a structure from a blueprint (O).",
         "count": 1
+      },
+      {
+        "id": "big_band",
+        "description": "Grow your band to 14.",
+        "count": 1
       }
     ],
     "optional_pool": [
@@ -61,17 +66,12 @@
         "count": 1
       },
       {
-        "id": "big_band",
-        "description": "Grow your band to 14.",
-        "count": 1
-      },
-      {
         "id": "adopt_norm",
         "description": "Give your people a rule to live by.",
         "count": 1
       }
     ],
-    "choose": 3
+    "choose": 4
   },
   "milestone": {
     "type": "hominin_evolution:fine_acheulean",

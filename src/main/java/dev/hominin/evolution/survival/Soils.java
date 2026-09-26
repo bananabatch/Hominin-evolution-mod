@@ -54,17 +54,26 @@ public final class Soils extends SavedData {
     }
 
     /** Whether this chunk is part of a fertile patch. Worked out from the seed: nothing to save. */
+    /** A patch is five chunks by five: 25 chunks of good ground round its middle. */
+    private static final int PATCH_RADIUS = 2;
+
     public static boolean fertile(ServerLevel level, int cx, int cz) {
         int cellX = Math.floorDiv(cx, CELL);
         int cellZ = Math.floorDiv(cz, CELL);
-        long h = mix(level.getSeed() ^ 0x5F3E11L, cellX, cellZ);
-        if ((Math.abs(h) % 1000L) >= (long) (FERTILE_CHANCE * 1000.0F)) {
-            return false;
+        boolean inside = false;
+        // A patch near the edge of its cell runs over into the next: look at the cells round this one as well.
+        for (int dx = -1; dx <= 1 && !inside; dx++) {
+            for (int dz = -1; dz <= 1 && !inside; dz++) {
+                long h = mix(level.getSeed() ^ 0x5F3E11L, cellX + dx, cellZ + dz);
+                if ((Math.abs(h) % 1000L) >= (long) (FERTILE_CHANCE * 1000.0F)) {
+                    continue;
+                }
+                int centreX = (cellX + dx) * CELL + (int) (Math.abs(h >> 8) % CELL);
+                int centreZ = (cellZ + dz) * CELL + (int) (Math.abs(h >> 16) % CELL);
+                inside = Math.abs(cx - centreX) <= PATCH_RADIUS && Math.abs(cz - centreZ) <= PATCH_RADIUS;
+            }
         }
-        int centreX = cellX * CELL + (int) (Math.abs(h >> 8) % CELL);
-        int centreZ = cellZ * CELL + (int) (Math.abs(h >> 16) % CELL);
-        int radius = 1 + (int) (Math.abs(h >> 24) % 2);
-        if (Math.abs(cx - centreX) > radius || Math.abs(cz - centreZ) > radius) {
+        if (!inside) {
             return false;
         }
         var biome = level.getBiome(new BlockPos((cx << 4) + 8, 64, (cz << 4) + 8));
@@ -99,6 +108,10 @@ public final class Soils extends SavedData {
     public static int capacity(Level level, boolean fertile) {
         if (Drought.isProsperousDay(level)) {
             return fertile ? 65 : 25;
+        }
+        if (fertile && !Seasons.superDry(level)) {
+            // Good ground holds its water: an ordinary dry season or a dry day does not touch it. A super-dry one does.
+            return 55;
         }
         if (Drought.isActive(level)) {
             return fertile ? 35 : 8;

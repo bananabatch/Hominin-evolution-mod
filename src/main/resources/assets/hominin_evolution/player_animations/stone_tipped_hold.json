@@ -1,0 +1,59 @@
+{
+  "version": 3,
+  "name": "stone_tipped_hold",
+  "description": "Stone-tipped spear, carried overhand in one hand: the hand high over the shoulder, the point forward and angled down, the free arm a little out in front for balance - breathing slightly",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 40,
+    "stopTick": 40,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -150,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -28,
+          "yaw": 14,
+          "roll": -6
+        }
+      },
+      {
+        "tick": 20,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -148,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -26,
+          "yaw": 14,
+          "roll": -6
+        }
+      },
+      {
+        "tick": 40,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -150,
+          "yaw": -8,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -28,
+          "yaw": 14,
+          "roll": -6
+        }
+      }
+    ]
+  }
+}

@@ -64,6 +64,15 @@ public final class Cohesion {
     private static final String GRACE_UNTIL = "cohesion_grace_minute";
     /** Gains count for 1.4 each: the tenths carried over. */
     private static final String GAIN_TENTHS = "cohesion_gain_tenths";
+    /** "We don't betray our own": how much the band's faith still holds at 20 before it gives. */
+    private static final String BARRIER = "cohesion_barrier";
+    private static final int BARRIER_AT = 20;
+    private static final int BARRIER_SIZE = 20;
+
+    /** What is left of the barrier - 0 if there is none. */
+    public static int barrier(Player player) {
+        return counters(player).getOrDefault(BARRIER, 0);
+    }
     /** A promise to do better is judged after a day: it has to have risen by this much. */
     private static final int PROMISE_MINUTES = 20;
     private static final int PROMISE_RISE = 3;
@@ -108,6 +117,15 @@ public final class Cohesion {
     }
 
     // ------------------------------------------------------------ changing it
+
+    /** A band starting over with you at this cohesion - people who have yet to find out whether to trust you. */
+    public static void startAt(Player player, int value) {
+        reset(player);
+        counters(player).put(Band.COHESION, value);
+        if (player instanceof ServerPlayer server) {
+            sync(server);
+        }
+    }
 
     /** A fresh band has no history with you. */
     public static void reset(Player player) {
@@ -166,8 +184,33 @@ public final class Cohesion {
                 return;
             }
         }
+        int barrier = barrier(player);
+        if (delta < 0 && barrier > 0) {
+            // It holds: the loss wears the barrier down first.
+            int absorbed = Math.min(barrier, -delta);
+            barrier -= absorbed;
+            delta += absorbed;
+            counters(player).put(BARRIER, barrier);
+            player.displayClientMessage(Component.literal(barrier > 0 ? "The band holds together - we don't betray our "
+                    + "own. (Barrier " + barrier + " left)" : "The band's faith has worn through. It gives now.")
+                    .withStyle(barrier > 0 ? ChatFormatting.GOLD : ChatFormatting.RED), true);
+            sync(player);
+            if (delta == 0) {
+                return;
+            }
+        }
         int before = get(player);
         int after = Math.max(MIN, Math.min(MAX, before + delta));
+        if (delta < 0 && before > BARRIER_AT && after <= BARRIER_AT && barrier(player) == 0
+                && Morals.applies(player, Morals.Moral.NO_BETRAYAL)) {
+            // Down to 20, and the band holds: what would have gone below it comes off the barrier instead.
+            int overshoot = BARRIER_AT - after;
+            after = BARRIER_AT;
+            counters(player).put(BARRIER, Math.max(1, BARRIER_SIZE - overshoot));
+            player.sendSystemMessage(Component.literal("The band's faith in you is down to " + BARRIER_AT + " - and there "
+                    + "it holds. We don't betray our own. (+" + barrier(player) + " to wear through before it falls "
+                    + "further)").withStyle(ChatFormatting.GOLD));
+        }
         counters(player).put(Band.COHESION, after);
         if (delta < 0) {
             if (fault != null) {
@@ -233,7 +276,10 @@ public final class Cohesion {
             message = "The band settles back into its ways with you.";
             style = ChatFormatting.GRAY;
         }
-        if (message != null) {
+        if (message != null && after < before) {
+            dev.hominin.evolution.guide.Alerts.urgent(player, after <= DIRE ? dev.hominin.evolution.guide.Alerts.Kind.DANGER : dev.hominin.evolution.guide.Alerts.Kind.WARNING,
+                    Component.literal(message + " (Cohesion " + after + "/" + MAX + ")").withStyle(style));
+        } else if (message != null) {
             player.sendSystemMessage(Component.literal(message + " (Cohesion " + after + "/" + MAX + ")").withStyle(style));
         }
     }

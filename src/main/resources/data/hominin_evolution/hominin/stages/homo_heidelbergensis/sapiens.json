@@ -1,0 +1,92 @@
+{
+  "display_name": "Homo heidelbergensis (East Africa)",
+  "years_ago": 600000,
+  "gate": {
+    "required": [
+      {
+        "id": "survive_days",
+        "description": "Survive 6 days.",
+        "count": 6
+      },
+      {
+        "id": "make_levallois_tool",
+        "description": "Knap 3 Levallois tools.",
+        "count": 3
+      },
+      {
+        "id": "hearth_night",
+        "description": "Spend a night by a lit hearth.",
+        "count": 1
+      },
+      {
+        "id": "big_band",
+        "description": "Grow your band to 16.",
+        "count": 1
+      },
+      {
+        "id": "trade_band",
+        "description": "Trade with other bands twice.",
+        "count": 2
+      },
+      {
+        "id": "super_weapon",
+        "description": "Make an early stone-tipped spear.",
+        "count": 1
+      }
+    ],
+    "optional_pool": [
+      {
+        "id": "make_knife",
+        "description": "Haft a Levallois blade into a knife.",
+        "count": 1
+      },
+      {
+        "id": "levallois_hand_axe",
+        "description": "Knap a Levallois hand axe.",
+        "count": 1
+      },
+      {
+        "id": "hunt_megafauna",
+        "description": "Hunt a megafauna animal.",
+        "count": 1
+      },
+      {
+        "id": "persistence_kill",
+        "description": "Run down big game you wounded.",
+        "count": 1
+      },
+      {
+        "id": "range_far",
+        "description": "Range 1000 blocks from where you began.",
+        "count": 1
+      },
+      {
+        "id": "adopt_norm",
+        "description": "Give your people a rule to live by.",
+        "count": 1
+      },
+      {
+        "id": "hold_feast",
+        "description": "Hold a feast.",
+        "count": 1
+      },
+      {
+        "id": "build_structure",
+        "description": "Build a structure from a blueprint (O).",
+        "count": 1
+      },
+      {
+        "id": "eat_cooked_meat",
+        "description": "Eat 5 pieces of cooked meat.",
+        "count": 5
+      }
+    ],
+    "choose": 4
+  },
+  "milestone": {
+    "type": "hominin_evolution:become_sapiens",
+    "description": "Homo sapiens is still to come - there is nothing further to evolve into yet."
+  },
+  "behaviors_gained": [],
+  "behaviors_lost": []
+}

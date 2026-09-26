@@ -47,6 +47,9 @@ public final class BlockBreakHandler {
     private static final long BLOCKED_MESSAGE_COOLDOWN_TICKS = 60L;
 
     private static final float NESTING_MATERIAL_CHANCE = 0.5F;
+    /** A dead twig in a handful of leaves; more, hacked at with a chopper. */
+    private static final float STICK_CHANCE = 0.3F;
+    private static final float STICK_CHOPPER_CHANCE = 0.45F;
 
     /**
      * Stripping foliage by hand almost never brings a usable branch down with it.
@@ -122,8 +125,37 @@ public final class BlockBreakHandler {
         }
         cutThatch(player, state, event.getPos());
         maybeDropLongBranch(player, state, event.getPos());
+        if (!player.isCreative() && state.is(dev.hominin.evolution.ModBlocks.OBSIDIAN_ROCK.get())
+                && player.getRandom().nextFloat() < 0.05F) {
+            // One piece of the scatter is not a piece at all, but a whole chunk.
+            Block.popResource(player.level(), event.getPos(), new ItemStack(dev.hominin.evolution.ModItems.OBSIDIAN_CHUNK.get()));
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal("Under the glass, a whole chunk of it.")
+                    .withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
+        }
+        if (!player.isCreative() && state.is(net.minecraft.tags.BlockTags.LEAVES)
+                && player.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            // A tree does not stay stripped: the leaves grow back.
+            dev.hominin.evolution.survival.LeafRegrowth.broken(server, event.getPos(), state);
+        }
+        // A dead bush is nothing but sticks.
+        if (!player.isCreative() && state.is(net.minecraft.world.level.block.Blocks.DEAD_BUSH)) {
+            Block.popResource(player.level(), event.getPos(), new ItemStack(net.minecraft.world.item.Items.STICK,
+                    1 + player.getRandom().nextInt(2)));
+        }
+        // A hammerstone or a digging stick wears breaking what only it can break.
+        ItemStack worn = player.getMainHandItem();
+        if (!player.isCreative() && worn.isDamageableItem() && !worn.has(net.minecraft.core.component.DataComponents.TOOL)
+                && (state.is(ModTags.Blocks.REQUIRES_HAMMERSTONE) || state.is(ModTags.Blocks.REQUIRES_DIGGING_STICK))) {
+            worn.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+        }
         if (player instanceof net.minecraft.server.level.ServerPlayer server) {
             dev.hominin.evolution.survival.TreeFelling.broke(server, event.getPos(), state);
+            // Stone off the ground, wood off the trees, grass for thatch: all of it is somebody's, somewhere.
+            if (!player.isCreative() && (state.getBlock() instanceof dev.hominin.evolution.block.LooseRockBlock
+                    || state.is(net.minecraft.tags.BlockTags.LOGS) || state.is(ModTags.Blocks.THATCH_SOURCE)
+                    || state.is(ModTags.Blocks.WORKABLE_STONE_DEPOSIT))) {
+                dev.hominin.evolution.band.Territory.usedResource(server, event.getPos());
+            }
         }
         // Picking over a scatter of pebbles: once in a long while, one of them looks back at you.
         if (state.getBlock() instanceof dev.hominin.evolution.block.LooseRockBlock && !player.isCreative()
@@ -159,6 +191,8 @@ public final class BlockBreakHandler {
      */
     private static boolean isWorkedNotMined(BlockState state) {
         return state.is(dev.hominin.evolution.ModBlocks.CHERT_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.FINE_CHERT_DEPOSIT.get())
+                || state.is(dev.hominin.evolution.ModBlocks.OBSIDIAN_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.QUARTZITE_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.LIMESTONE_DEPOSIT.get())
                 || state.is(dev.hominin.evolution.ModBlocks.BASALT_DEPOSIT.get())
@@ -234,6 +268,15 @@ public final class BlockBreakHandler {
             return;
         }
         Level level = player.level();
+        // Dead twigs come away with the leaves more often than not: sticks were never hard to find.
+        if (level.getRandom().nextFloat() < (player.getMainHandItem().is(ModTags.Items.CHOPPERS) ? STICK_CHOPPER_CHANCE
+                : STICK_CHANCE)) {
+            dropAt(level, pos, net.minecraft.world.item.Items.STICK);
+        }
+        // Now and then a bush tangled in with the leaves: sweet berries - one more thing to forage for.
+        if (level.getRandom().nextFloat() < 0.05F) {
+            dropAt(level, pos, net.minecraft.world.item.Items.SWEET_BERRIES);
+        }
         // Leafy twigs come away with almost every handful - the stuff of a night's nest.
         if (level.getRandom().nextFloat() < NESTING_MATERIAL_CHANCE) {
             dropAt(level, pos, ModItems.NESTING_MATERIAL.get());

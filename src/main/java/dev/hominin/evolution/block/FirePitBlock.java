@@ -85,6 +85,20 @@ public class FirePitBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
+    /** Nobody walks through a fire pit - lit or not. Beside a burning one, they keep their distance. */
+    @Override
+    public net.minecraft.world.level.pathfinder.PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos,
+            @Nullable net.minecraft.world.entity.Mob mob) {
+        return net.minecraft.world.level.pathfinder.PathType.BLOCKED;
+    }
+
+    @Override
+    public net.minecraft.world.level.pathfinder.PathType getAdjacentBlockPathType(BlockState state, BlockGetter level,
+            BlockPos pos, @Nullable net.minecraft.world.entity.Mob mob,
+            net.minecraft.world.level.pathfinder.PathType originalType) {
+        return state.getValue(LIT) ? net.minecraft.world.level.pathfinder.PathType.DANGER_FIRE : null;
+    }
+
     @Override
     protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
@@ -99,7 +113,7 @@ public class FirePitBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide() ? null
+        return level.isClientSide() ? createTickerHelper(type, ModBlockEntities.FIRE_PIT.get(), FirePitBlockEntity::clientTick)
                 : createTickerHelper(type, ModBlockEntities.FIRE_PIT.get(), FirePitBlockEntity::serverTick);
     }
 
@@ -172,9 +186,6 @@ public class FirePitBlock extends BaseEntityBlock {
         if (random.nextInt(10) == 0) {
             level.playLocalSound(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, SoundEvents.CAMPFIRE_CRACKLE,
                     SoundSource.BLOCKS, 0.5F + random.nextFloat(), random.nextFloat() * 0.7F + 0.6F, false);
-        }
-        if (random.nextInt(3) == 0) {
-            CampfireBlock.makeParticles(level, pos, false, false);
         }
         if (random.nextInt(5) == 0) {
             level.addParticle(ParticleTypes.LAVA, pos.getX() + 0.5D, pos.getY() + 0.4D, pos.getZ() + 0.5D,

@@ -133,6 +133,12 @@ public final class EvolutionEventHandler {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        // A stick worked through a tide pool: the water is not a block the click lands on, so it is looked for here.
+        if (event.getHand() == InteractionHand.MAIN_HAND && dev.hominin.evolution.survival.TidePools.search(player)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         // A fire pit takes care of everything done to it: fuel, a drill, a torch, meat. Sneaking with something in
         // hand never reaches the block, so that - a handful of fuel at once - is handled here.
         if (event.getLevel().getBlockState(event.getPos()).is(dev.hominin.evolution.ModBlocks.FIRE_PIT.get())) {
@@ -147,6 +153,16 @@ public final class EvolutionEventHandler {
         // A cooking rack takes a branch laid across it, and its spit takes food - a hookful at once when sneaking,
         // which never reaches the block on its own. Neither is somewhere to knock a branch.
         net.minecraft.world.level.block.state.BlockState clicked = event.getLevel().getBlockState(event.getPos());
+        if (clicked.is(dev.hominin.evolution.ModBlocks.TOOL_RACK.get())
+                || clicked.is(dev.hominin.evolution.ModBlocks.TOOL_RACK_BAR.get())) {
+            if (player.isShiftKeyDown() && event.getLevel().getBlockEntity(event.getPos())
+                    instanceof dev.hominin.evolution.block.ToolRackBlockEntity rack
+                    && rack.put(player, event.getItemStack(), event.getHitVec().getLocation())) {
+                player.swing(event.getHand(), true);
+                event.setCanceled(true);
+            }
+            return;
+        }
         if (clicked.is(dev.hominin.evolution.ModBlocks.COOKING_RACK.get())
                 || clicked.is(dev.hominin.evolution.ModBlocks.COOKING_SPIT.get())) {
             if (player.isShiftKeyDown() && !event.getItemStack().isEmpty()
@@ -170,22 +186,39 @@ public final class EvolutionEventHandler {
         // The drill works anywhere there is dry ground to work against, so like the
         // branch it is checked before any block's own interaction.
         if (event.getItemStack().is(ModItems.FIRE_DRILL.get())) {
-            if (dev.hominin.evolution.survival.Hearths.use(player, event.getPos(), event.getItemStack())) {
+            if (dev.hominin.evolution.band.Species.neverMakesFire(
+                    player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())) {
+                player.displayClientMessage(Component.literal("Your kind never learned to make fire. Find it burning, "
+                        + "and carry it."), true);
                 event.setCanceled(true);
                 return;
             }
-            workTheDrill(player, event.getLevel(), event.getPos(), event.getFace());
+            // The rest is the drill's own: held to it for three seconds (FireDrillItem).
             return;
         }
         BlockState state = event.getLevel().getBlockState(event.getPos());
-        // A salt lick: bare-handed, a lick of it.
+        // Salt: a hammerstone strikes a chunk off it to carry; bare-handed, a lick of it.
+        if (event.getHand() == InteractionHand.MAIN_HAND && event.getItemStack().is(ModTags.Items.HAMMERSTONES)
+                && dev.hominin.evolution.world.Pois.strikeSalt(player, event.getPos())) {
+            event.setCanceled(true);
+            return;
+        }
         if (event.getHand() == InteractionHand.MAIN_HAND && event.getItemStack().isEmpty()
-                && state.is(net.minecraft.world.level.block.Blocks.CALCITE)
+                && (state.is(net.minecraft.world.level.block.Blocks.CALCITE)
+                        || state.is(dev.hominin.evolution.ModBlocks.SALT_BLOCK.get()))
                 && dev.hominin.evolution.world.Pois.lickSalt(player, event.getPos())) {
             event.setCanceled(true);
             return;
         }
         // A dead trunk, cracked open for the grubs in it.
+        if (state.is(dev.hominin.evolution.ModBlocks.DECAYING_LOG.get())
+                && event.getItemStack().is(dev.hominin.evolution.ModTags.Items.CHOPPERS)) {
+            // A chopper takes the dead branches off it instead.
+            if (dev.hominin.evolution.survival.DeadWood.snapBranch(player, event.getPos())) {
+                event.setCanceled(true);
+            }
+            return;
+        }
         if (state.is(dev.hominin.evolution.ModBlocks.DECAYING_LOG.get())
                 && !(event.getItemStack().getItem() instanceof net.minecraft.world.item.BlockItem)) {
             if (dev.hominin.evolution.survival.DeadWood.crack(player, event.getPos())) {
@@ -205,18 +238,32 @@ public final class EvolutionEventHandler {
             fishForTermites(player, event.getLevel(), event.getPos(), event.getItemStack());
             return;
         }
+        if (state.is(net.minecraft.world.level.block.Blocks.GRAVEL) && player.isShiftKeyDown()
+                && event.getHand() == InteractionHand.MAIN_HAND
+                && !(event.getItemStack().getItem() instanceof net.minecraft.world.item.BlockItem)
+                && !dev.hominin.evolution.band.ToolPiles.pileable(event.getItemStack())) {
+            // Sifted for stone: chert, fine chert, now and then obsidian.
+            if (dev.hominin.evolution.survival.Gravel.search(player, event.getPos())) {
+                event.setCanceled(true);
+                return;
+            }
+        }
         if (state.is(ModTags.Blocks.WORKABLE_STONE_DEPOSIT)) {
             // The deposit is only a quarry now. Striking a flake happens in the
             // knapping screen, on a rock you are holding, which is the one place
             // the player actually chooses what they are trying to make.
-            if (player.isShiftKeyDown()) {
-                EvolutionManager.incrementCriterion(player, "notice_stone_deposit", 1);
-                String deposit = dev.hominin.evolution.mind.MentalMap.depositName(state);
-                if (deposit != null) {
-                    dev.hominin.evolution.mind.MentalMap.noticed(player, "deposit", deposit, event.getPos().immutable());
-                }
-            } else {
+            // Using it at all takes note of it - sneaking or not - and with a hammerstone to hand, it is struck too.
+            EvolutionManager.incrementCriterion(player, "notice_stone_deposit", 1);
+            String deposit = dev.hominin.evolution.mind.MentalMap.depositName(state);
+            if (deposit != null) {
+                dev.hominin.evolution.mind.MentalMap.noticed(player, "deposit", deposit, event.getPos().immutable());
+            }
+            if (!player.isShiftKeyDown() && ToolUse.handWith(player, ModTags.Items.HAMMERSTONES) != null) {
                 knapRock(player, event.getLevel(), event.getPos());
+            } else if (!player.isShiftKeyDown() && event.getItemStack().is(ModItems.OBSIDIAN_CHUNK.get())) {
+                // Struck against a rock face, glass loses.
+                event.getItemStack().shrink(1);
+                dev.hominin.evolution.item.ObsidianChunkItem.burst(player.serverLevel(), event.getPos(), player);
             }
         } else if (state.is(ModTags.Blocks.FORAGING_GROUND)) {
             // Sneaking is required so that ordinary right-clicks - placing a block,
@@ -245,7 +292,7 @@ public final class EvolutionEventHandler {
      * you can keep it. The drill is spent doing it: it is a worn spindle and a charred
      * board afterwards, and the next one is another two sticks.
      */
-    private static void workTheDrill(ServerPlayer player, Level level, BlockPos pos, @Nullable Direction face) {
+    public static void workTheDrill(ServerPlayer player, Level level, BlockPos pos, @Nullable Direction face) {
         BlockPos above = face != null ? pos.relative(face) : pos.above();
         if (!level.getBlockState(above).canBeReplaced() || !level.getBlockState(pos).isSolid()) {
             player.displayClientMessage(Component.literal(
@@ -271,7 +318,8 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.mind.Skills.learn(player, dev.hominin.evolution.mind.Skills.Skill.FIRE);
         player.sendSystemMessage(Component.literal(hearth
                 ? "The smoke thickens, catches, and goes up - and there is nothing here to keep it. Build a fire pit "
-                        + "(work station: three logs along the bottom, five sticks above) and drill it: that fire keeps."
+                        + "(work station: three sticks along the bottom, a log in the middle, nothing in the slot) and "
+                        + "drill it: that fire keeps."
                 : "The smoke thickens, catches, and goes up. You made that.")
                 .withStyle(ChatFormatting.GOLD));
         if (EvolutionManager.isReadyForMilestone(player, BuiltinMilestones.FIRE_TRANSFER)) {
@@ -399,6 +447,7 @@ public final class EvolutionEventHandler {
             // Cold, clean, and plenty of it: a spring does not run dry.
             dev.hominin.evolution.survival.Thirst.drink(player, dev.hominin.evolution.survival.Thirst.DRINK_FROM_SOURCE);
             player.displayClientMessage(Component.literal("Spring water - cold and clean. You drink deep."), true);
+            dev.hominin.evolution.survival.Springs.drank(player);
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS,
                 0.6F, 1.0F + player.getRandom().nextFloat() * 0.2F);
@@ -458,8 +507,17 @@ public final class EvolutionEventHandler {
      * mixed quarry and rolls for it.
      */
     private static ItemStack yieldOf(BlockState state, Level level) {
+        if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
+            // Now and then the face comes away whole: a chunk.
+            return level.getRandom().nextFloat() < 0.12F ? new ItemStack(ModItems.OBSIDIAN_CHUNK.get())
+                    : new ItemStack(ModItems.OBSIDIAN_ROCK.get(), 1);
+        }
         if (state.is(ModBlocks.CHERT_DEPOSIT.get())) {
             return new ItemStack(ModItems.CHERT_ROCK.get(), CHERT_YIELD);
+        }
+        if (state.is(ModBlocks.FINE_CHERT_DEPOSIT.get())) {
+            // The best of it comes away one piece at a time.
+            return new ItemStack(ModItems.FINE_CHERT_ROCK.get(), 1 + (level.getRandom().nextFloat() < 0.3F ? 1 : 0));
         }
         if (state.is(ModBlocks.QUARTZITE_DEPOSIT.get())) {
             return new ItemStack(ModItems.GRANITE_ROCK.get(), QUARTZITE_YIELD);
@@ -586,11 +644,21 @@ public final class EvolutionEventHandler {
 
         boolean digging = player.getMainHandItem().is(ModItems.DIGGING_STICK.get())
                 || player.getOffhandItem().is(ModItems.DIGGING_STICK.get());
+        if (digging) {
+            ToolUse.wear(player, player.getMainHandItem().is(ModItems.DIGGING_STICK.get()) ? InteractionHand.MAIN_HAND
+                    : InteractionHand.OFF_HAND);
+        }
         boolean withStick = player.getMainHandItem().is(ModItems.SHARPENED_STICK.get())
                 || player.getOffhandItem().is(ModItems.SHARPENED_STICK.get());
         float successChance = digging ? FORAGE_SUCCESS_CHANCE_DIGGING
                 : withStick ? FORAGE_SUCCESS_CHANCE_WITH_STICK : FORAGE_SUCCESS_CHANCE;
-        successChance *= dev.hominin.evolution.survival.Drought.forageMultiplier(level);
+        float weather = dev.hominin.evolution.survival.Drought.forageMultiplier(level);
+        if (dev.hominin.evolution.survival.Soils.fertile(player.serverLevel(), pos)
+                && !dev.hominin.evolution.survival.Seasons.superDry(level)) {
+            // Fertile ground does not dry out in an ordinary dry season.
+            weather = Math.max(1.0F, weather);
+        }
+        successChance *= weather;
         // Paranthropus and the other primates were here first.
         successChance *= dev.hominin.evolution.band.Paranthropus.forageShare(player);
         // Ground lived off for days gives less and less.
@@ -764,6 +832,11 @@ public final class EvolutionEventHandler {
             return;
         }
         ItemStack held = event.getItemStack();
+        if (event.getHand() == InteractionHand.MAIN_HAND && dev.hominin.evolution.survival.TidePools.search(player)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         if (event.getHand() == InteractionHand.MAIN_HAND && player.isShiftKeyDown()
                 && ThreatDisplay.isThrowable(held) && ThreatDisplay.throwHeld(player, held)) {
             event.setCanceled(true);
@@ -801,6 +874,18 @@ public final class EvolutionEventHandler {
 
     /** Handles both our long bone and the vanilla bone, so bones from any mod's animals work. */
     private static void crackBone(ServerPlayer player, ItemStack bone, int marrowYield) {
+        if (!dev.hominin.evolution.band.Species.cracksMarrow(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage())
+                && !player.getData(Attachments.PLAYER_EVOLUTION_DATA).isDeveloperMode()) {
+            // Your kind never worked out there is anything inside. The scraps on the outside, then.
+            player.getFoodData().eat(1, 0.2F);
+            bone.shrink(1);
+            EvolutionManager.incrementCriterion(player, "scavenge_bones", 1);
+            player.getData(Attachments.PLAYER_EVOLUTION_DATA).addMeatScavenged(1);
+            player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 0.6F, 0.8F);
+            player.displayClientMessage(Component.literal("You gnaw the last scraps off the bone and drop it. Your kind "
+                    + "has never thought to break one open."), true);
+            return;
+        }
         if (!hasFlake(player)) {
             player.sendSystemMessage(Component.literal("You need a flake to crack this bone open."));
             return;
@@ -919,6 +1004,23 @@ public final class EvolutionEventHandler {
             ChecklistTracker.forget(leaving);
             dev.hominin.evolution.band.Relations.forget(playerId);
             dev.hominin.evolution.band.Voices.forget(playerId);
+            dev.hominin.evolution.band.Chatter.forget(playerId);
+            dev.hominin.evolution.band.Intruders.forget(playerId);
+            dev.hominin.evolution.stage.Lineage.forget(leaving);
+            dev.hominin.evolution.stage.Intermission.forget(leaving);
+            dev.hominin.evolution.band.Feast.forget(playerId);
+            dev.hominin.evolution.item.FireHardening.forget(playerId);
+            dev.hominin.evolution.item.FireDrillItem.forget(playerId);
+            dev.hominin.evolution.survival.Roots.forget(playerId);
+            dev.hominin.evolution.entity.BaboonBegging.forget(playerId);
+            dev.hominin.evolution.world.Havens.forget(playerId);
+            dev.hominin.evolution.survival.Springs.forget(playerId);
+            dev.hominin.evolution.hunt.PredatorLull.forget(playerId);
+            dev.hominin.evolution.item.ObsidianChunkItem.forget(playerId);
+            dev.hominin.evolution.band.Newcomers.forget(playerId);
+            dev.hominin.evolution.band.Haul.logout(leaving);
+            dev.hominin.evolution.band.Refugees.logout(leaving);
+            dev.hominin.evolution.guide.Alerts.forget(playerId);
             dev.hominin.evolution.mind.Insights.forget(playerId);
             dev.hominin.evolution.band.Grooming.forget(playerId);
             dev.hominin.evolution.hunt.Quarry.forget(playerId);
@@ -949,6 +1051,7 @@ public final class EvolutionEventHandler {
         climbedTrees.remove(playerId);
         BlockBreakHandler.forget(playerId);
         dev.hominin.evolution.guide.Tips.forget(playerId);
+        dev.hominin.evolution.guide.Nudges.forget(playerId);
     }
 
     /** How far a lightning strike is noticeable from - it's the flash people react to, not proximity to the char mark. */
@@ -1026,11 +1129,20 @@ public final class EvolutionEventHandler {
         if (entity.level().isClientSide() || entity instanceof Player) {
             return;
         }
-        creditHunt(event.getSource().getEntity(), entity);
+        if (event.getSource().getDirectEntity() instanceof dev.hominin.evolution.entity.ThrownSpear
+                && event.getSource().getEntity() instanceof ServerPlayer thrower) {
+            EvolutionManager.incrementCriterion(thrower, "hunt_with_spear", 1);
+        } else if (event.getSource().getDirectEntity() instanceof dev.hominin.evolution.entity.ThrownSpear
+                && event.getSource().getEntity() instanceof dev.hominin.evolution.band.BandMember thrower) {
+            Band.contribute(thrower, "hunt_with_spear");
+        } else {
+            creditHunt(event.getSource().getEntity(), entity);
+        }
         creditMegafauna(event.getSource().getEntity(), entity);
         dev.hominin.evolution.hunt.Quarry.creditPersistence(entity);
         checkArmsRace(event, entity);
         dev.hominin.evolution.hunt.Carcasses.onDeath(entity);
+        dev.hominin.evolution.world.Oases.died(entity, event.getSource().getEntity());
         checkTaungChild(event, entity);
         if (entity instanceof dev.hominin.evolution.band.BandMember member
                 && event.getSource().getEntity() instanceof LivingEntity killer) {
@@ -1038,7 +1150,14 @@ public final class EvolutionEventHandler {
         }
         if (entity instanceof dev.hominin.evolution.band.BandMember member && member.isWild() && member.getBandId() != null
                 && entity.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            dev.hominin.evolution.band.Bands.Record dying = dev.hominin.evolution.band.Bands.get(level, member.getBandId());
+            boolean lastOfHaven = dying != null && dying.haven != null && dying.size <= 1;
             dev.hominin.evolution.band.Bands.memberDied(level, member.getBandId());
+            if (lastOfHaven) {
+                dev.hominin.evolution.world.Havens.wipedOut(level, dying, event.getSource().getEntity());
+            } else {
+                dev.hominin.evolution.band.Claims.lastStanding(level, member, event.getSource().getEntity());
+            }
         }
         if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(entity)) {
             // A predator brought down by you or yours makes your band felt on this ground.
@@ -1047,10 +1166,13 @@ public final class EvolutionEventHandler {
                             && own.leaderPlayer() instanceof ServerPlayer lead ? lead : null;
             if (slayer != null) {
                 dev.hominin.evolution.band.Presence.predatorKilled(slayer, entity);
+                dev.hominin.evolution.hunt.PredatorLull.quiet(slayer.serverLevel(), entity.blockPosition());
+                dev.hominin.evolution.hunt.Predation.giantKilled(slayer, entity);
             }
         }
         if (dev.hominin.evolution.hunt.PredatorAppetite.isPredator(entity)) {
             dev.hominin.evolution.hunt.PredatorAppetite.forget(entity.getUUID());
+            dev.hominin.evolution.hunt.PredatorMood.forget(entity.getUUID());
         }
         dropAt(entity, new ItemStack(Items.BONE));
         if (entity.getBbHeight() >= LONG_BONE_MIN_HEIGHT
@@ -1089,7 +1211,7 @@ public final class EvolutionEventHandler {
                 || !(thrown.getOwner() instanceof ServerPlayer player)) {
             return;
         }
-        if (!thrown.getItem().is(ModItems.ROCK.get()) && !thrown.getItem().is(ModTags.Items.KNAPPABLE_STONE)
+        if (!thrown.getItem().is(ModTags.Items.ROCKS) && !thrown.getItem().is(ModTags.Items.KNAPPABLE_STONE)
                 && !ThreatDisplay.isHammerstone(thrown.getItem())) {
             return;
         }
@@ -1125,6 +1247,8 @@ public final class EvolutionEventHandler {
         hunter.sendSystemMessage(Component.literal("The " + victim.getName().getString().toLowerCase()
                 + " is down. There is more meat on it than the band has seen in a season.")
                 .withStyle(ChatFormatting.GOLD));
+        dev.hominin.evolution.band.Chatter.news(hunter, "news_kill", victim.getName().getString().toLowerCase());
+        dev.hominin.evolution.band.Feast.broughtDown(hunter, victim.getName().getString().toLowerCase());
     }
 
     private static void creditHunt(@Nullable net.minecraft.world.entity.Entity killer, LivingEntity victim) {
@@ -1132,7 +1256,7 @@ public final class EvolutionEventHandler {
             ItemStack weapon = member.getMainHandItem();
             if (weapon.is(ModItems.SHARPENED_STICK.get())) {
                 Band.contribute(member, "hunt_with_stick");
-            } else if (weapon.is(ModItems.SHARPENED_SPEAR.get()) || weapon.is(ModItems.FIRE_HARDENED_SPEAR.get())) {
+            } else if (dev.hominin.evolution.item.SpearItem.isSpear(weapon)) {
                 Band.contribute(member, "hunt_with_spear");
             }
             return;
@@ -1143,7 +1267,7 @@ public final class EvolutionEventHandler {
         ItemStack weapon = player.getMainHandItem();
         if (weapon.is(ModItems.SHARPENED_STICK.get())) {
             EvolutionManager.incrementCriterion(player, "hunt_with_stick", 1);
-        } else if (weapon.is(ModItems.SHARPENED_SPEAR.get()) || weapon.is(ModItems.FIRE_HARDENED_SPEAR.get())) {
+        } else if (dev.hominin.evolution.item.SpearItem.isSpear(weapon)) {
             EvolutionManager.incrementCriterion(player, "hunt_with_spear", 1);
         }
     }
@@ -1158,6 +1282,16 @@ public final class EvolutionEventHandler {
             return;
         }
         ItemStack stack = event.getItem();
+        if (stack.has(DataComponents.FOOD)) {
+            dev.hominin.evolution.survival.Diseases.ate(player, stack);
+        }
+        // Rotten meat into a wound already torn open: the rot goes straight into the blood.
+        var torn = dev.hominin.evolution.survival.Afflictions.current(player);
+        if (dev.hominin.evolution.food.Spoilage.isSpoiled(stack)
+                && (torn == dev.hominin.evolution.survival.Afflictions.Affliction.LACERATED
+                        || torn == dev.hominin.evolution.survival.Afflictions.Affliction.INFECTED)) {
+            dev.hominin.evolution.survival.Diseases.rotIntoTheWound(player);
+        }
         // Meat that lay on the ground too long.
         if (dev.hominin.evolution.food.Spoilage.isSpoiled(stack)) {
             dev.hominin.evolution.survival.FoodIllness.ate(player, stack);
@@ -1264,11 +1398,14 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.survival.Infestation.tick(player);
         dev.hominin.evolution.entity.TroopRelations.tick(player);
         dev.hominin.evolution.hunt.Carcasses.tickMortality(player);
-        dev.hominin.evolution.hunt.Carcasses.tickLoners(player);
         dev.hominin.evolution.hunt.Predation.tick(player);
         dev.hominin.evolution.hunt.Quarry.tick(player.serverLevel());
+        dev.hominin.evolution.world.Oases.tick(player.serverLevel());
         dev.hominin.evolution.band.Needs.tick(player);
         dev.hominin.evolution.item.StoneMaterial.tick(player.serverLevel());
+        if (player.tickCount % 100 == 63) {
+            dev.hominin.evolution.item.StoneMaterial.tidyHammerstones(player);
+        }
         dev.hominin.evolution.band.Cohesion.tick(player);
         dev.hominin.evolution.band.Mood.tick(player);
         ThreatDisplay.tick(player);
@@ -1278,14 +1415,39 @@ public final class EvolutionEventHandler {
         ClimbingServer.tick(player);
         WildBands.tick(player);
         dev.hominin.evolution.band.Paranthropus.tick(player);
+        dev.hominin.evolution.band.Paranthropus.tickWarned(player);
+        dev.hominin.evolution.band.Band.tickAbsorb(player);
+        dev.hominin.evolution.band.ToolPiles.tickArtifacts(player);
+        dev.hominin.evolution.band.SacredPile.tick(player);
+        dev.hominin.evolution.band.Parties.tick(player);
+        dev.hominin.evolution.hunt.HuntParty.tick(player);
         dev.hominin.evolution.survival.Kuru.tick(player);
         dev.hominin.evolution.band.Mating.tick(player);
         dev.hominin.evolution.survival.Hearths.tickPlayer(player);
         dev.hominin.evolution.stage.ErectusGoals.tick(player);
         dev.hominin.evolution.band.Mortuary.tick(player);
         dev.hominin.evolution.guide.Tips.tick(player);
+        dev.hominin.evolution.guide.Nudges.tick(player);
         dev.hominin.evolution.band.Relations.tick(player);
         dev.hominin.evolution.band.Voices.tick(player);
+        dev.hominin.evolution.band.Chatter.tick(player);
+        dev.hominin.evolution.band.Tracking.tick(player);
+        dev.hominin.evolution.band.Intruders.tick(player);
+        dev.hominin.evolution.stage.Lineage.tick(player);
+        dev.hominin.evolution.survival.Diseases.tick(player);
+        dev.hominin.evolution.entity.PredatorRivalry.tick(player);
+        dev.hominin.evolution.band.Opinions.tick(player);
+        dev.hominin.evolution.hunt.PileRaids.tick(player);
+        dev.hominin.evolution.world.Havens.tick(player);
+        dev.hominin.evolution.band.Haul.tick(player);
+        dev.hominin.evolution.survival.Springs.tick(player);
+        dev.hominin.evolution.band.PileAsk.tick(player);
+        dev.hominin.evolution.band.Newcomers.tick(player);
+        dev.hominin.evolution.stage.Intermission.tick(player);
+        dev.hominin.evolution.mind.Knacks.tick(player);
+        dev.hominin.evolution.band.Refugees.tick(player);
+        dev.hominin.evolution.band.Feast.tick(player);
+        dev.hominin.evolution.band.Feast.fullTick(player);
         dev.hominin.evolution.band.Claims.tick(player);
         dev.hominin.evolution.survival.TorchLight.tick(player);
         dev.hominin.evolution.mind.Insights.tick(player);

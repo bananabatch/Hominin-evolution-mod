@@ -40,7 +40,7 @@ public final class InventoryLimits {
         if (stage == null) {
             return 4;
         }
-        return switch (stage.getPath()) {
+        return switch (dev.hominin.evolution.stage.Kinds.line(stage.getPath())) {
             case "ardipithecus", "australopithecus", "homo_habilis" -> 1;
             case "homo_erectus" -> 2;
             case "homo_heidelbergensis", "homo_sapiens" -> 3;

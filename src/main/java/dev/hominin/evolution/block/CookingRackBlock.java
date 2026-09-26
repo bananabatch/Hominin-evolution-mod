@@ -66,6 +66,13 @@ public class CookingRackBlock extends Block {
         builder.add(HALF, FACING);
     }
 
+    /** Posts and spits over a fire are walked round, not through. */
+    @Override
+    public net.minecraft.world.level.pathfinder.PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos,
+            @Nullable net.minecraft.world.entity.Mob mob) {
+        return net.minecraft.world.level.pathfinder.PathType.BLOCKED;
+    }
+
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.getValue(HALF) == DoubleBlockHalf.LOWER ? LOWER : UPPER;
@@ -157,11 +164,11 @@ public class CookingRackBlock extends Block {
                 boolean clear = true;
                 for (int i = 1; i <= between; i++) {
                     BlockState cell = level.getBlockState(top.relative(dir, i));
-                    spanned |= cell.is(ModBlocks.COOKING_SPIT.get());
+                    spanned |= isBar(cell);
                     clear &= cell.canBeReplaced();
                 }
                 if (spanned) {
-                    blocked = "There is a spit across these two already.";
+                    blocked = "There is a branch across these two already.";
                     continue;
                 }
                 if (!clear) {
@@ -173,7 +180,7 @@ public class CookingRackBlock extends Block {
                 }
                 for (int i = 1; i <= between; i++) {
                     BlockPos cell = top.relative(dir, i);
-                    level.setBlock(cell, CookingSpitBlock.across(dir.getAxis(), i == 1, i == between, dir), 3);
+                    level.setBlock(cell, bar(dir.getAxis(), i == 1, i == between, dir), 3);
                 }
                 face(level, top, dir);
                 face(level, top.relative(dir, between + 1), dir.getOpposite());
@@ -182,12 +189,25 @@ public class CookingRackBlock extends Block {
                 }
                 level.playSound(null, top, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 0.9F);
                 player.displayClientMessage(Component.literal("You lay the branch" + (between > 1 ? "es" : "")
-                        + " across the forks. Hang meat from it - over a fire, it cooks."), true);
+                        + " across the forks. " + laidText()), true);
                 return null;
             }
         }
         return blocked != null ? blocked
                 : "Set a second rack in line with this one, one or two blocks away, then lay the branch across.";
+    }
+
+    /** What lies across two of these: the cooking rack's spit. */
+    protected boolean isBar(BlockState state) {
+        return state.is(ModBlocks.COOKING_SPIT.get());
+    }
+
+    protected BlockState bar(Direction.Axis axis, boolean first, boolean last, Direction dir) {
+        return CookingSpitBlock.across(axis, first, last, dir);
+    }
+
+    protected String laidText() {
+        return "Hang meat from it - over a fire, it cooks.";
     }
 
     /** Turns both halves of a rack so the fork opens across the spit. */

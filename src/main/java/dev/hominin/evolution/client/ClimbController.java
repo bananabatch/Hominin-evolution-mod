@@ -63,15 +63,17 @@ public final class ClimbController {
         boolean unable = player.isPassenger() || player.getAbilities().flying || player.isSpectator()
                 || player.isInWater() || player.isFallFlying();
 
+        boolean trees = Climbing.climbsTrees(ClientSync.stageOf(player.getUUID()));
         if (!Climbing.isClimbing(player)) {
             if (unable || regripCooldown > 0) {
                 return;
             }
             boolean pushing = jump && player.horizontalCollision;
-            boolean grabTrunk = pushing && Climbing.grippedLog(player) != null;
+            // From erectus on a trunk is only a wall: it has to be pushed against like one.
+            boolean grabTrunk = trees && pushing && Climbing.grippedLog(player) != null;
             wallPushTicks = pushing && Climbing.grippedWall(player) != null ? wallPushTicks + 1 : 0;
             boolean grabWall = wallPushTicks >= WALL_PUSH_TICKS;
-            boolean dropIntoCanopy = sneak && player.getXRot() > LOOK_DOWN_PITCH && Climbing.onCanopy(player);
+            boolean dropIntoCanopy = trees && sneak && player.getXRot() > LOOK_DOWN_PITCH && Climbing.onCanopy(player);
             if (grabTrunk || grabWall || dropIntoCanopy) {
                 wallPushTicks = 0;
                 climbStartY = player.getY();
@@ -80,7 +82,7 @@ public final class ClimbController {
             return;
         }
 
-        if (unable || !Climbing.canHold(player)) {
+        if (unable || !Climbing.canHold(player, trees)) {
             // Out of the top of the leaves, over the rim of a wall, or away from it: let go.
             set(player, false);
             if (jump && !unable) {
@@ -89,12 +91,12 @@ public final class ClimbController {
             }
             return;
         }
-        if (player.onGround() && !jump && !Climbing.inLeaves(player)) {
+        if (player.onGround() && !jump && (!trees || !Climbing.inLeaves(player))) {
             // Back down on solid ground.
             set(player, false);
             return;
         }
-        boolean atWallLimit = player.getY() >= climbStartY + Climbing.WALL_CLIMB_LIMIT && Climbing.onlyWall(player);
+        boolean atWallLimit = player.getY() >= climbStartY + Climbing.WALL_CLIMB_LIMIT && Climbing.onlyWall(player, trees);
         double vertical = jump && !atWallLimit ? Climbing.climbSpeed(ClientSync.stageOf(player.getUUID()))
                 : sneak ? -Climbing.DESCEND_SPEED : 0.0D;
         Vec3 motion = player.getDeltaMovement();

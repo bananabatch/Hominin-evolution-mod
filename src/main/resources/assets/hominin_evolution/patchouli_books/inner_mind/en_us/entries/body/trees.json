@@ -27,6 +27,14 @@
     {
       "type": "patchouli:text",
       "text": "A tree cut through at the trunk comes $(l)down$() - the way you are facing, away from you. The trunk lands lying along the ground, to be worked where it fell, and the crown breaks up into sticks and saplings. Do not be where it lands.$(br2)A tree with another trunk beside the one you cut stays up until that goes too."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Dead twigs often come away with the leaves - pull at a tree for $(l)sticks$(), or hack at it with a chopper for more. A dead bush is nothing but sticks, and a felled crown drops plenty."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "From $(l)erectus$() on, trees are behind you: long legs, not a climber's shoulders. A trunk is only a wall to you now - four blocks up and no further."
     }
   ]
 }
