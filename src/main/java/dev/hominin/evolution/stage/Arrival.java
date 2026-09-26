@@ -51,8 +51,11 @@ public final class Arrival {
     /** Ticks of fade before the move. The client's cutscene is timed to match. */
     public static final int FADE_TICKS = 20;
 
-    /** How long the player is held still and unharmed while the screen is dark. */
-    private static final int PROTECTED_TICKS = 160;
+    /**
+     * How long the player is held still and unharmed while the screen is dark: the counted-down cutscene runs ten and
+     * a half seconds, covered with a little to spare.
+     */
+    private static final int PROTECTED_TICKS = 220;
 
     private static final int MIN_DISTANCE = 400;
     private static final int MAX_DISTANCE = 500;
@@ -83,7 +86,7 @@ public final class Arrival {
         String age = StageAge.ago(to.yearsAgo());
         PacketDistributor.sendToPlayer(player, new CutsceneStartPayload(
                 StageAge.later(from.yearsAgo(), to.yearsAgo()),
-                age.isEmpty() ? to.displayName() : to.displayName() + " - " + age));
+                age.isEmpty() ? to.displayName() : to.displayName() + " - " + age, from.yearsAgo(), to.yearsAgo()));
         pending.put(player.getUUID(), new Pending(player.level().getGameTime() + FADE_TICKS, to));
     }
 

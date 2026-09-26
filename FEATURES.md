@@ -33,7 +33,7 @@ You play a hominin, not a person, and you earn your way up the line.
 - Fallback species ask less: 1 required criterion and 2 of 4.
 
 **Evolving**
-- A cutscene, deep time passing, and your descendants wake somewhere else in the world.
+- A cutscene, deep time passing, and your descendants wake somewhere else in the world. The years are counted down on screen from your old kind's age to the new one's - slowly at first, then faster and faster, ticking as they go, while the stars stream past into streaks - until the count slams to a stop on the new age with a flash and a deep note. Then how long it was (*400,000 years later*), and the new name written out beneath it, underlined, and how far you were moved.
 - You lose everything but the guidebook. Each stage has an arrival kit — habilis gets a stick and a flake, or half the time a hammerstone with 3 chert or 6 quartzite.
 - Your old band stays in the past; a new one forms around you, and bands of your new species appear nearby while the species you left begins to die out.
 - `/hominin become <stage>` runs exactly this sequence — cutscene, move, fresh inventory, new band — for testing.
