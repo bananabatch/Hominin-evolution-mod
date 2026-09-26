@@ -2,10 +2,13 @@ package dev.hominin.evolution.survival;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
@@ -22,8 +25,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -35,9 +42,10 @@ import net.minecraft.world.level.saveddata.SavedData;
  * against the same mound - yours, your band's, and a Paranthropus troop's that is working the ground.
  *
  * <p><b>Super colonies.</b> Now and then, out in the homeland, one vast colony raises three great mounds
- * together. They never run dry, and every stick comes out heavier. But a colony that size needs the
- * ground around it left alone: every block built within thirty blocks of it wears it down, a little at
- * once and more every day the building stands, until it fails and the great mounds are only mounds.
+ * together. They never run dry, and every stick comes out heavier. Building beside one does the colony no
+ * harm - it is the building that suffers: anything of wood or grass set down within thirty blocks of the
+ * mounds is eaten. Thatch, planks, branches go; a log rots through, decaying, then decayed, then gone. The
+ * nearer the mounds, the sooner. Anything holding things (a chest, a rack) is left alone.
  */
 public final class Termites extends SavedData {
     private static final String NAME = "hominin_evolution_termites";
@@ -45,16 +53,19 @@ public final class Termites extends SavedData {
     public static final int FISHINGS = 15;
     /** How long a fished-out mound stays shut: two days. */
     public static final long DRIED_TICKS = 48000L;
-    /** A colony's reach: building this close disturbs it. */
+    /** A colony's reach: what is built this close, the termites get into. */
     public static final int COLONY_REACH = 30;
-    private static final int COLONY_HEALTH = 100;
-    /** Below this a colony is struggling: it gives like an ordinary mound, and can be fished out like one. */
-    public static final int COLONY_STRUGGLING = 50;
+    /**
+     * The chance, each ten seconds, that the termites finish a block beside the mounds (or rot a log a stage
+     * further): about a day for thatch at the mounds' foot, two and a half out at the edge of their reach.
+     */
+    private static final float GNAW_CHANCE = 1.0F / 120.0F;
+    /** At most this many blocks are watched at once. */
+    private static final int MAX_GNAWED = 8192;
+    /** How often a builder is reminded, at most: every five minutes. */
+    private static final long WARN_TICKS = 6000L;
 
-    public record Colony(BlockPos centre, int health, int disturbance) {
-        public boolean thriving() {
-            return health >= COLONY_STRUGGLING;
-        }
+    public record Colony(BlockPos centre) {
     }
 
     private record Mound(int fished, long driedUntil) {
@@ -64,6 +75,10 @@ public final class Termites extends SavedData {
     private final Map<Long, Colony> colonies = new HashMap<>();
     /** Mounds that have been fished, by the column of their summit. */
     private final Map<Long, Mound> mounds = new HashMap<>();
+    /** Blocks set down on a colony's ground that the termites are eating. */
+    private final Set<Long> gnawed = new HashSet<>();
+    /** When each builder was last told, so it is not every block. Not saved. */
+    private final Map<UUID, Long> warned = new HashMap<>();
     private long lastDay = -1L;
 
     // ------------------------------------------------------------ worldgen hands colonies over here
@@ -90,11 +105,14 @@ public final class Termites extends SavedData {
         for (Tag entry : tag.getList("Colonies", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) entry;
             BlockPos centre = BlockPos.of(c.getLong("Centre"));
-            data.colonies.put(centre.asLong(), new Colony(centre, c.getInt("Health"), c.getInt("Disturbance")));
+            data.colonies.put(centre.asLong(), new Colony(centre));
         }
         for (Tag entry : tag.getList("Mounds", Tag.TAG_COMPOUND)) {
             CompoundTag m = (CompoundTag) entry;
             data.mounds.put(m.getLong("Summit"), new Mound(m.getInt("Fished"), m.getLong("DriedUntil")));
+        }
+        for (long pos : tag.getLongArray("Gnawed")) {
+            data.gnawed.add(pos);
         }
         data.lastDay = tag.getLong("LastDay");
         return data;
@@ -106,8 +124,6 @@ public final class Termites extends SavedData {
         for (Colony colony : colonies.values()) {
             CompoundTag c = new CompoundTag();
             c.putLong("Centre", colony.centre().asLong());
-            c.putInt("Health", colony.health());
-            c.putInt("Disturbance", colony.disturbance());
             list.add(c);
         }
         tag.put("Colonies", list);
@@ -120,6 +136,7 @@ public final class Termites extends SavedData {
             moundList.add(m);
         }
         tag.put("Mounds", moundList);
+        tag.putLongArray("Gnawed", gnawed.stream().mapToLong(Long::longValue).toArray());
         tag.putLong("LastDay", lastDay);
         return tag;
     }
@@ -131,7 +148,7 @@ public final class Termites extends SavedData {
         MOUND,
         /** That was the fifteenth: the mound has sealed itself. */
         LAST,
-        /** A thriving super colony: more than a stick can hold. */
+        /** A super colony: more than a stick can hold. */
         COLONY,
         /** Fished out: nothing comes up until it recovers. */
         DRIED
@@ -177,8 +194,7 @@ public final class Termites extends SavedData {
         if (!isMound(level.getBlockState(pos))) {
             return Catch.MOUND;
         }
-        Colony colony = colonyOf(level, pos);
-        if (colony != null && colony.thriving()) {
+        if (colonyOf(level, pos) != null) {
             return Catch.COLONY;
         }
         if (isDried(level, pos)) {
@@ -277,57 +293,81 @@ public final class Termites extends SavedData {
         return new ArrayList<>(of(level).colonies.values());
     }
 
-    /** A block set down by a player: if it is on a colony's ground, the colony feels it. */
-    public static void builtNear(ServerLevel level, BlockPos pos, @Nullable ServerPlayer builder) {
-        Termites data = of(level);
-        for (var entry : data.colonies.entrySet()) {
-            Colony colony = entry.getValue();
-            double dx = colony.centre().getX() - pos.getX();
-            double dz = colony.centre().getZ() - pos.getZ();
-            if (dx * dx + dz * dz > (double) COLONY_REACH * COLONY_REACH) {
-                continue;
-            }
-            int disturbance = Math.min(40, colony.disturbance() + 1);
-            int health = Math.max(0, colony.health() - 2);
-            entry.setValue(new Colony(colony.centre(), health, disturbance));
-            data.setDirty();
-            if (builder != null && (disturbance == 1 || disturbance % 10 == 0)) {
-                builder.displayClientMessage(Component.literal(disturbance == 1
-                        ? "The great mounds are close. Building here troubles the colony - it will wear it down."
-                        : "The colony under the great mounds is suffering for what has been built beside it.")
-                        .withStyle(ChatFormatting.GOLD), true);
-            }
-            if (health <= 0) {
-                collapse(level, colony);
-                data.colonies.remove(entry.getKey());
-            }
+    /** Wood and grass: what termites eat. Not anything holding things - that is left to its owner. */
+    public static boolean isTermiteFood(BlockState state) {
+        if (state.hasBlockEntity()) {
+            return false;
+        }
+        return state.is(BlockTags.MINEABLE_WITH_AXE) || state.is(BlockTags.LOGS) || state.is(BlockTags.PLANKS)
+                || state.is(ModBlocks.THATCH_BLOCK.get()) || state.is(ModBlocks.THATCH_BEDDING.get())
+                || state.is(ModBlocks.BUILDING_BRANCH.get()) || state.is(ModBlocks.TOOL_RACK_BAR.get())
+                || state.is(ModBlocks.COOKING_SPIT.get()) || state.is(Blocks.HAY_BLOCK);
+    }
+
+    /** A block set down: if it is on a colony's ground and made of something they eat, the termites find it. */
+    public static void builtNear(ServerLevel level, BlockPos pos, BlockState placed, @Nullable ServerPlayer builder) {
+        if (!isTermiteFood(placed) || nearestColony(level, pos, COLONY_REACH) == null) {
             return;
+        }
+        Termites data = of(level);
+        if (data.gnawed.size() < MAX_GNAWED && data.gnawed.add(pos.asLong())) {
+            data.setDirty();
+        }
+        if (builder != null) {
+            long now = level.getGameTime();
+            Long last = data.warned.get(builder.getUUID());
+            if (last == null || now - last >= WARN_TICKS) {
+                data.warned.put(builder.getUUID(), now);
+                builder.displayClientMessage(Component.literal("The great mounds are close. Their termites will eat "
+                        + "anything of wood or grass built here.").withStyle(ChatFormatting.GOLD), true);
+            }
         }
     }
 
-    /** The colony has failed: its great mounds are only mounds now, and can be fished out like any other. */
-    private static void collapse(ServerLevel level, Colony colony) {
-        BlockPos centre = colony.centre();
-        for (BlockPos pos : BlockPos.betweenClosed(centre.offset(-18, -8, -18), centre.offset(18, 16, 18))) {
+    /**
+     * The termites at work on what was built beside their mounds: a log rots a stage (decaying, then decayed,
+     * then gone), and anything else is simply eaten away. Nearer the mounds, the sooner.
+     */
+    private static void gnaw(ServerLevel level, Termites data) {
+        RandomSource random = level.getRandom();
+        for (Iterator<Long> it = data.gnawed.iterator(); it.hasNext(); ) {
+            BlockPos pos = BlockPos.of(it.next());
             if (!level.isLoaded(pos)) {
                 continue;
             }
             BlockState state = level.getBlockState(pos);
-            if (isMound(state) && state.getValue(TermiteMoundBlock.COLONY)) {
-                level.setBlock(pos, state.setValue(TermiteMoundBlock.COLONY, false), 2);
+            Colony colony = nearestColony(level, pos, COLONY_REACH);
+            if (colony == null || !isTermiteFood(state)) {
+                // Taken down, replaced, or the ground is no colony's: nothing left to eat here.
+                it.remove();
+                data.setDirty();
+                continue;
             }
-        }
-        for (ServerPlayer player : level.players()) {
-            if (player.blockPosition().distSqr(centre) < 96.0D * 96.0D) {
-                player.sendSystemMessage(Component.literal("The great termite colony has failed. Too much was built too "
-                        + "close - the three mounds are only mounds now.").withStyle(ChatFormatting.RED));
+            double dx = colony.centre().getX() - pos.getX();
+            double dz = colony.centre().getZ() - pos.getZ();
+            float closeness = 1.0F - (float) Math.min(1.0D, Math.sqrt(dx * dx + dz * dz) / COLONY_REACH);
+            if (random.nextFloat() >= GNAW_CHANCE * (0.4F + 0.6F * closeness)) {
+                continue;
+            }
+            data.setDirty();
+            if (state.is(ModBlocks.DECAYED_LOG.get()) || !state.is(BlockTags.LOGS)) {
+                level.destroyBlock(pos, false);
+                it.remove();
+            } else {
+                BlockState rotted = (state.is(ModBlocks.DECAYING_LOG.get()) ? ModBlocks.DECAYED_LOG.get()
+                        : ModBlocks.DECAYING_LOG.get()).defaultBlockState();
+                if (state.hasProperty(RotatedPillarBlock.AXIS)) {
+                    rotted = rotted.setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
+                }
+                level.setBlock(pos, rotted, 3);
+                level.levelEvent(2001, pos, Block.getId(state));
             }
         }
     }
 
     // ------------------------------------------------------------ once in a while
 
-    /** Per level: colonies from worldgen recorded, and once a day, building wears colonies down. */
+    /** Per level: colonies from worldgen recorded, what is built beside them eaten, and mounds forgotten. */
     public static void tick(ServerLevel level) {
         if (!GENERATED.isEmpty()) {
             Termites data = null;
@@ -337,8 +377,7 @@ public final class Termites extends SavedData {
                     if (data == null) {
                         data = of(level);
                     }
-                    data.colonies.putIfAbsent(generated.centre().asLong(),
-                            new Colony(generated.centre(), COLONY_HEALTH, 0));
+                    data.colonies.putIfAbsent(generated.centre().asLong(), new Colony(generated.centre()));
                     data.setDirty();
                     it.remove();
                 }
@@ -348,6 +387,9 @@ public final class Termites extends SavedData {
             return;
         }
         Termites data = of(level);
+        if (!data.gnawed.isEmpty()) {
+            gnaw(level, data);
+        }
         long day = level.getDayTime() / 24000L;
         if (data.lastDay == day) {
             return;
@@ -357,24 +399,6 @@ public final class Termites extends SavedData {
         long now = level.getGameTime();
         // Mounds that have recovered, and nobody has touched since, are forgotten.
         data.mounds.values().removeIf(m -> m.fished() == 0 && m.driedUntil() < now);
-        for (Iterator<Map.Entry<Long, Colony>> it = data.colonies.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<Long, Colony> entry = it.next();
-            Colony colony = entry.getValue();
-            if (colony.disturbance() == 0) {
-                // Left alone, a colony mends.
-                if (colony.health() < COLONY_HEALTH) {
-                    entry.setValue(new Colony(colony.centre(), Math.min(COLONY_HEALTH, colony.health() + 2), 0));
-                }
-                continue;
-            }
-            int health = colony.health() - Math.max(2, colony.disturbance() / 2);
-            if (health <= 0) {
-                collapse(level, colony);
-                it.remove();
-            } else {
-                entry.setValue(new Colony(colony.centre(), health, colony.disturbance()));
-            }
-        }
         paranthropusForage(level);
     }
 

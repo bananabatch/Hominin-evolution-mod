@@ -139,6 +139,9 @@ public final class HeldAnimationHandler {
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_hold"),
             // Held high overhand, or drawn back behind the head: in first person the arm would only fill the sky.
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "stone_tipped_hold"),
+            // Eating: first person has its own bite-by-bite view (EatingAnimation).
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat"),
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat_left"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_draw"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "knife_hold"));
 
@@ -158,6 +161,9 @@ public final class HeldAnimationHandler {
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_throw");
     private static final ResourceLocation FIRE_DRILL_SPIN =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "fire_drill_spin");
+    private static final ResourceLocation EAT = ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat");
+    private static final ResourceLocation EAT_LEFT =
+            ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat_left");
     /** What plays while an item is in use rather than swung: one-handed (the throw), and both hands (the drill). */
     private static final HeldAnims USING_ONE = HeldAnims.strikeOnly(() -> net.minecraft.world.item.Items.AIR,
             "spear_throw");
@@ -284,6 +290,18 @@ public final class HeldAnimationHandler {
         // Working a fire drill: bent over it, rubbing the spindle between the palms.
         if (player.isUsingItem() && player.getUseItem().is(ModItems.FIRE_DRILL.get())) {
             keep(layer, id, USING_BOTH, FIRE_DRILL_SPIN);
+            return;
+        }
+        // Eating something with some bulk to it: the hand brought up to the mouth, chewing - any food with a 3D model.
+        if (player.isUsingItem() && EatingAnimation.is3dFood(player.getUseItem(), player)) {
+            keep(layer, id, USING_ONE, EatingAnimation.eatingArm(player) == net.minecraft.world.entity.HumanoidArm.LEFT
+                    ? EAT_LEFT : EAT);
+            return;
+        }
+        // Done eating: the hand comes down, whatever else is held - the loop would not end on its own.
+        if (EAT.equals(PLAYING.get(id)) || EAT_LEFT.equals(PLAYING.get(id))) {
+            PLAYING.remove(id);
+            layer.replaceAnimationWithFade(fade(4, Ease.INOUTSINE), null);
             return;
         }
         // Let go after a proper draw: the throw and its follow-through, whatever is in the hand after it.

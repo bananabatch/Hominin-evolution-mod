@@ -18,7 +18,8 @@ import net.neoforged.neoforge.common.Tags;
  * Raw meat left lying on the ground turns. Hung on a rack, carried, cooked - it keeps; dropped in the dirt in the
  * sun, a few minutes is all it takes. It still looks like food, and it is still food, after a fashion: eat it and
  * you will be ill (see {@link dev.hominin.evolution.survival.FoodIllness}). Cooking spoiled meat does not make it
- * fresh, only less likely to lay you out.
+ * fresh, only less likely to lay you out. On a termite super colony's ground, where everything is being eaten, it
+ * turns in half the time.
  */
 public final class Spoilage {
     /** On the ground this long, and it has turned. */
@@ -67,6 +68,10 @@ public final class Spoilage {
         for (ItemEntity item : lying) {
             float heat = level.getBiome(item.blockPosition()).value().getBaseTemperature();
             int limit = heat >= 1.0F ? HOT_SPOIL_TICKS : SPOIL_TICKS;
+            if (dev.hominin.evolution.survival.Termites.nearestColony(level, item.blockPosition(),
+                    dev.hominin.evolution.survival.Termites.COLONY_REACH) != null) {
+                limit /= 2;
+            }
             if (item.getAge() < limit) {
                 continue;
             }

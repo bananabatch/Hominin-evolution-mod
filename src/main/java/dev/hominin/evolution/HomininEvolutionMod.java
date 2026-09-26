@@ -124,10 +124,10 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockBreak);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(BlockBreakHandler::onBlockPlace);
-        // Building on a super colony's ground wears the colony down.
+        // Wood or grass built on a super colony's ground: the termites get into it.
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent event) -> {
             if (!event.isCanceled() && event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
-                dev.hominin.evolution.survival.Termites.builtNear(level, event.getPos(),
+                dev.hominin.evolution.survival.Termites.builtNear(level, event.getPos(), event.getPlacedBlock(),
                         event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player ? player : null);
             }
         });

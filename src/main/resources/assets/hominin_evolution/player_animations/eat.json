@@ -1,0 +1,62 @@
+{
+  "version": 3,
+  "name": "eat",
+  "description": "Eating: the right hand held up at the mouth, bobbing with each bite",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 8,
+    "stopTick": 8,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -112,
+          "yaw": -36,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 2,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -121,
+          "yaw": -40,
+          "roll": 4
+        }
+      },
+      {
+        "tick": 4,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -112,
+          "yaw": -36,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 6,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -121,
+          "yaw": -40,
+          "roll": 4
+        }
+      },
+      {
+        "tick": 8,
+        "easing": "easeInOutSine",
+        "rightArm": {
+          "pitch": -112,
+          "yaw": -36,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

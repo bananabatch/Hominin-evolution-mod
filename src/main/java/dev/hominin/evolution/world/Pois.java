@@ -294,9 +294,6 @@ public final class Pois extends SavedData {
             }
         }
         for (dev.hominin.evolution.survival.Termites.Colony colony : dev.hominin.evolution.survival.Termites.colonies(level)) {
-            if (!colony.thriving()) {
-                continue;
-            }
             String id = "termites_" + (colony.centre().getX() >> 4) + "_" + (colony.centre().getZ() >> 4);
             found.put(id, data.intern(id, Kind.TERMITES, colony.centre(), Kind.TERMITES.label));
         }
