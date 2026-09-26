@@ -1485,6 +1485,7 @@ public final class Band {
         data.setStage(fallback);
         data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(EvolutionManager.SKILL_PREFIX));
         data.getCriterionCounters().remove(BANDS_LOST);
+        dev.hominin.evolution.world.Havens.newSpecies(player);
         data.getNotifiedReadyStages().clear();
         data.setStageStartWalkDistance(player.walkDist);
         data.setDistanceCredits(0);
@@ -1507,6 +1508,7 @@ public final class Band {
         data.setStage(ARDIPITHECUS);
         data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(EvolutionManager.SKILL_PREFIX));
         data.getCriterionCounters().remove(BANDS_LOST);
+        dev.hominin.evolution.world.Havens.newSpecies(player);
         data.getNotifiedReadyStages().clear();
         data.setStageStartWalkDistance(player.walkDist);
         data.setDistanceCredits(0);

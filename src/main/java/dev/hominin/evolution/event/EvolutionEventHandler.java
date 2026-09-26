@@ -1152,6 +1152,8 @@ public final class EvolutionEventHandler {
                 && entity.level() instanceof net.minecraft.server.level.ServerLevel level) {
             dev.hominin.evolution.band.Bands.Record dying = dev.hominin.evolution.band.Bands.get(level, member.getBandId());
             boolean lastOfHaven = dying != null && dying.haven != null && dying.size <= 1;
+            // Their dead are what make a band break off a fight; killing nobody forced on you is remembered.
+            dev.hominin.evolution.band.Relations.wildMemberKilled(level, member, dying, event.getSource().getEntity());
             dev.hominin.evolution.band.Bands.memberDied(level, member.getBandId());
             if (lastOfHaven) {
                 dev.hominin.evolution.world.Havens.wipedOut(level, dying, event.getSource().getEntity());

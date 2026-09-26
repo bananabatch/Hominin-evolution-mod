@@ -57,8 +57,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <p>Kill them all - they fight to the last, nobody asks to join you - and the haven is yours to decide: <b>take the
  * land</b> (your band moves there) or <b>set an example</b> (you leave it, and every band for miles learns what
  * happened: your own ground is left alone, even in desperate times, and the haven is open to you whoever lives there
- * after - but you may never make your ground on a haven, or within 200 blocks of one). An empty haven does not stay
- * empty: bands on the move go to it.
+ * after - but you may never make your ground on a haven, or within 200 blocks of one). An example lasts as long as your
+ * kind does: evolve, and it is forgotten - the havens can be taken again. An empty haven does not stay empty: bands on
+ * the move go to it.
  *
  * <p>Hold a haven and every band for miles wants it. See enough of them off and word gets round, and they come less
  * often - but in desperate times, and in the dry season, they come as often as ever.
@@ -523,11 +524,26 @@ public final class Havens extends SavedData {
 
     /** Whether a haven's ground is open to this player for good: they set an example there. */
     public static boolean openForGood(ServerPlayer player, Bands.Record band) {
-        if (band.haven == null) {
+        if (band.haven == null || !madeAnExample(player)) {
             return false;
         }
         State state = of(player.serverLevel()).states.get(band.haven);
         return state != null && state.examples.contains(player.getUUID());
+    }
+
+    /**
+     * A new species: the example was your old kind's, and it goes with them. The havens are yours to take again - and
+     * no longer open to you for free. (The mark itself, a counter, is cleared with the rest of the old stage's.)
+     */
+    public static void newSpecies(ServerPlayer player) {
+        Havens data = of(player.serverLevel());
+        boolean changed = false;
+        for (State state : data.states.values()) {
+            changed |= state.examples.remove(player.getUUID());
+        }
+        if (changed) {
+            data.setDirty();
+        }
     }
 
     /** A player who set an example: bands do not come for their ground, even in desperate times. */
@@ -666,7 +682,8 @@ public final class Havens extends SavedData {
         player.sendSystemMessage(Component.literal("You leave the haven as it is - with its dead. Every band for miles hears "
                 + "of it. Nobody will come for your ground now, not even in desperate times; and whoever lives at the "
                 + "haven after, it is open to you. But you may never make your ground on a haven, or within "
-                + EXAMPLE_KEEP_OFF + " blocks of one.").withStyle(ChatFormatting.DARK_RED));
+                + EXAMPLE_KEEP_OFF + " blocks of one - not while you are this kind. Evolve, and it is forgotten.")
+                .withStyle(ChatFormatting.DARK_RED));
         // Living by one already: the band moves on.
         keepOff(player);
         dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/haven_example");

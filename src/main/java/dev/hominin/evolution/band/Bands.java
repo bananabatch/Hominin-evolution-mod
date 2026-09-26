@@ -78,6 +78,10 @@ public final class Bands extends SavedData {
         public final Set<UUID> allies = new HashSet<>();
         /** Players whose Pile this band stole from: their bands hold it against them. */
         public final Set<UUID> pileThieves = new HashSet<>();
+        /** Players who cost this band so many dead that it leaves them be out of fear - until when, at the latest. */
+        public final Map<UUID, Long> cowedUntil = new HashMap<>();
+        /** And how many they were before: back to that, and they have the numbers to try again. */
+        public final Map<UUID, Integer> cowedSize = new HashMap<>();
         /** Ways taken up from a band they stood with. */
         public final Set<String> adopted = new HashSet<>();
         /** Players this band has let use its ground (they asked, and paid), until when. */
@@ -571,6 +575,11 @@ public final class Bands extends SavedData {
                 CompoundTag st = (CompoundTag) s;
                 record.accessUntil.put(st.getUUID("Player"), st.getLong("Until"));
             }
+            for (Tag s : b.getList("Cowed", Tag.TAG_COMPOUND)) {
+                CompoundTag st = (CompoundTag) s;
+                record.cowedUntil.put(st.getUUID("Player"), st.getLong("Until"));
+                record.cowedSize.put(st.getUUID("Player"), st.getInt("Size"));
+            }
             if (b.contains("Presence")) {
                 // Saves from when presence ran to 50 come down to 20.
                 record.presence = b.getBoolean("PresenceScale20") ? b.getInt("Presence")
@@ -663,6 +672,15 @@ public final class Bands extends SavedData {
                 access.add(st);
             }
             b.put("Access", access);
+            ListTag cowed = new ListTag();
+            for (var entry : record.cowedUntil.entrySet()) {
+                CompoundTag st = new CompoundTag();
+                st.putUUID("Player", entry.getKey());
+                st.putLong("Until", entry.getValue());
+                st.putInt("Size", record.cowedSize.getOrDefault(entry.getKey(), 0));
+                cowed.add(st);
+            }
+            b.put("Cowed", cowed);
             ListTag allies = new ListTag();
             for (UUID ally : record.allies) {
                 CompoundTag a = new CompoundTag();

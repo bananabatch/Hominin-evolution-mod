@@ -139,6 +139,8 @@ public final class EvolutionManager {
         StageDefinition previousStage = StageRegistry.get(previousStageId);
         data.setStage(nextStageId);
         data.getCriterionCounters().keySet().removeIf(key -> !key.startsWith(SKILL_PREFIX));
+        // An example set at a haven was the old kind's: the havens are open to be taken again.
+        dev.hominin.evolution.world.Havens.newSpecies(player);
         dev.hominin.evolution.survival.Afflictions.relieve(player, dev.hominin.evolution.survival.Afflictions.Affliction.LACERATED);
         dev.hominin.evolution.combat.Bleeding.forget(player.getUUID());
         data.getNotifiedReadyStages().clear();

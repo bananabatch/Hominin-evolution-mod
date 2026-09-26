@@ -297,7 +297,10 @@ public final class Claims {
                     chance = 0.0F;
                 }
             }
-            if (kind == Kind.RANSOM || kind == Kind.CLAIM) {
+            if ((kind == Kind.RANSOM || kind == Kind.CLAIM) && Relations.cowed(player, band)) {
+                // Too many of theirs died at your hands: they leave you be.
+                chance = 0.0F;
+            } else if (kind == Kind.RANSOM || kind == Kind.CLAIM) {
                 // The richer the ground, the likelier - and the fewer friends you have, the likelier still.
                 chance *= fearFactor(player) * (Bands.desperateTimes(level) ? 1.6F : 1.0F)
                         * (1.0F + Math.max(0, pressure - 5) * 0.3F) * allied * haven;
@@ -1363,21 +1366,41 @@ public final class Claims {
                     || player.getRandom().nextFloat() >= chance) {
                 continue;
             }
-            BlockPos at = near.offset(player.getRandom().nextInt(9) - 4, 0, player.getRandom().nextInt(9) - 4);
-            if (!level.hasChunk(at.getX() >> 4, at.getZ() >> 4)) {
+            if (!join(player, level, ally, near)) {
                 continue;
-            }
-            at = new BlockPos(at.getX(), level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()),
-                    at.getZ());
-            WildBands.placeBand(level, at, ally.species, 2, ally.id, player.getRandom());
-            gangs.computeIfAbsent(player.getUUID(), k -> new java.util.HashSet<>()).add(ally.id);
-            if (!ally.knownTo(player.getUUID())) {
-                Relations.meet(player, ally, "");
             }
             player.sendSystemMessage(Component.literal(BandNames.capital(ally.name) + " have come with them - their allies."
                     + (feared(player) >= 4 ? " Your name has them banding together against you." : ""))
                     .withStyle(ChatFormatting.RED));
         }
+    }
+
+    /** A band's people come to fight alongside the others: two of them, beside where the rest are. */
+    private static boolean join(ServerPlayer player, ServerLevel level, Bands.Record band, BlockPos near) {
+        BlockPos at = near.offset(player.getRandom().nextInt(9) - 4, 0, player.getRandom().nextInt(9) - 4);
+        if (!level.hasChunk(at.getX() >> 4, at.getZ() >> 4)) {
+            return false;
+        }
+        at = new BlockPos(at.getX(), level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()),
+                at.getZ());
+        WildBands.placeBand(level, at, band.species, 2, band.id, player.getRandom());
+        gangs.computeIfAbsent(player.getUUID(), k -> new java.util.HashSet<>()).add(band.id);
+        if (!band.knownTo(player.getUUID())) {
+            Relations.meet(player, band, "");
+        }
+        return true;
+    }
+
+    /** Bands that came together against you, walking in beside the one leading them. */
+    static void joinAgainst(ServerPlayer player, ServerLevel level, List<Bands.Record> bands, BlockPos near) {
+        for (Bands.Record band : bands) {
+            join(player, level, band, near);
+        }
+    }
+
+    /** Whether this band came with the ones fighting you now. */
+    static boolean inGang(ServerPlayer player, UUID band) {
+        return gangs.getOrDefault(player.getUUID(), java.util.Set.of()).contains(band);
     }
 
     /** It comes to blows: the allies who came fight too. */
@@ -1436,6 +1459,7 @@ public final class Claims {
         for (Bands.Record band : Bands.all(level)) {
             if (band.nomadic() || !band.knownTo(player.getUUID()) || band.desperation < (hard ? 3 : 4)
                     || Relations.standing(player, band) >= Relations.FRIENDLY || hasAccess(player, band)
+                    || Relations.cowed(player, band)
                     || Bands.horizontal(band.home, player.blockPosition()) > 320.0D * 320.0D) {
                 continue;
             }

@@ -130,6 +130,19 @@ public final class Relations {
         int rumours = band.rumours.getOrDefault(player.getUUID(), 0);
         band.rumours.remove(player.getUUID());
         int start = Math.max(UNFRIENDLY - 2, NEUTRAL - trespass * 3 - rumours * 3) + 2 * sharedWays(player, band);
+        int infamy = infamy(player);
+        boolean heardOfYou = infamy >= INFAMY_KNOWN && !band.nomadic();
+        boolean afraid = false;
+        if (heardOfYou) {
+            // They have heard what you do to other bands before they ever set eyes on you.
+            start = Math.max(HOSTILE + 1, start - Math.min(15, 2 * infamy));
+            long adults = Band.all(player).stream().filter(m -> !m.isBaby()).count() + 1;
+            if (band.haven == null && band.size <= adults && player.getRandom().nextFloat() < 0.4F) {
+                // Fewer than you, and they know what you are: they keep out of your way.
+                afraid = true;
+                cow(player, band, band.size + 1);
+            }
+        }
         band.standing.put(player.getUUID(), start);
         if (trespass > 0 && !band.nomadic()) {
             band.owed.merge(player.getUUID(), trespass, Integer::sum);
@@ -142,7 +155,11 @@ public final class Relations {
         MutableComponent line = Component.literal(how + " You know them now: " + band.name + " - "
                 + (band.nomadic() ? "a Paranthropus troop, always moving on" : speciesName(band.species) + ", " + band.size
                         + " of them") + ".").withStyle(ChatFormatting.GOLD);
-        if (rumours > 0 && !band.nomadic()) {
+        if (heardOfYou) {
+            line.append(Component.literal(" They have heard what you do to other bands" + (afraid
+                    ? " - and they are afraid of you. They will keep out of your way, for now." : ", and they do not trust "
+                    + "you.") + " (Standing " + start + ")").withStyle(ChatFormatting.RED));
+        } else if (rumours > 0 && !band.nomadic()) {
             line.append(Component.literal(" Someone who knew you got here first - they have heard things about you. "
                     + "(Standing " + start + ")").withStyle(ChatFormatting.RED));
         } else if (trespass > 0 && !band.nomadic()) {
@@ -461,17 +478,9 @@ public final class Relations {
                     + Postures.Posture.byId(band.posture()).label + ".").withStyle(ChatFormatting.GRAY));
         }
         Demand demand = demands.get(player.getUUID());
-        if (demand != null && demand.raid() && demand.band().equals(band.id)) {
-            // Raiders who meet a band that holds together break sooner.
-            float breaks = 0.35F + (Cohesion.get(player) - 25) / 100.0F + (Presence.get(player) - 8) / 40.0F;
-            if (member.getRandom().nextFloat() < Mth.clamp(breaks, 0.2F, 0.8F)) {
-                endRaid(player, level, band, true);
-                return;
-            }
-        }
+        // In a fight, blows alone never make them break: only their dead do (see wildMemberKilled).
         RaidOn ours = raidsOn.get(player.getUUID());
         if (ours != null && ours.band().equals(band.id)) {
-            raidBlow(player, level, band, member, event.getAmount() >= member.getHealth());
             return;
         }
         String key = player.getUUID() + "/struck/" + band.id;
@@ -509,6 +518,170 @@ public final class Relations {
                         + (hunting ? " join the hunt." : " come running.")).withStyle(ChatFormatting.AQUA), true);
             }
         }
+    }
+
+    // ------------------------------------------------------------ the dead: losses, fear, and a name for killing
+
+    /** Deaths a band has taken fighting a player, "player/band": how many, and when the last one fell. */
+    private record Losses(int count, long last) {
+    }
+
+    private static final Map<String, Losses> losses = new HashMap<>();
+    /** A fight's dead are counted together while they fall within this long of each other. */
+    private static final long LOSSES_WINDOW = 2 * 60 * 20L;
+    /** A band cowed by its dead keeps out of your way at most this long - five days to arm itself again. */
+    private static final long COWED_TICKS = 5 * 24000L;
+    /** The chance heavy losses leave a band afraid of you, rather than only beaten. */
+    private static final float COWED_CHANCE = 0.5F;
+    private static final String INFAMY = "band_infamy";
+    /** Killing enough that nobody forced on you: bands you meet have heard, and start out wary - some afraid. */
+    public static final int INFAMY_KNOWN = 3;
+    /** And enough that the bands round about come together to stop you. */
+    public static final int INFAMY_DREADED = 10;
+    private static final String COALITION_NEXT = "coalition_next_minute";
+    /** At most one coalition every three days. */
+    private static final int COALITION_GAP_MINUTES = 60;
+    /** Players a coalition is walking in on, and the band leading it. */
+    private static final Map<UUID, UUID> coalitions = new HashMap<>();
+
+    /**
+     * How many of their own a band must lose before it breaks off a fight: the australopiths break at the first death,
+     * habilis at three, erectus and every kind after at five. A band with fewer to lose runs when it is down to one.
+     */
+    static int lossesToBreak(Bands.Record band) {
+        String path = band.species.getPath();
+        if (path.contains("paranthropus") || !erectusOn(band.species) && !path.equals("homo_habilis")
+                && !path.equals("homo_rudolfensis")) {
+            return 1;
+        }
+        return erectusOn(band.species) ? 5 : 3;
+    }
+
+    /** Your name for killing other bands' people when nobody made you. */
+    public static int infamy(ServerPlayer player) {
+        return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().getOrDefault(INFAMY, 0);
+    }
+
+    private static void addInfamy(ServerPlayer player, int amount) {
+        var counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        int before = counters.getOrDefault(INFAMY, 0);
+        int after = Math.min(30, before + amount);
+        counters.put(INFAMY, after);
+        if (before < INFAMY_KNOWN && after >= INFAMY_KNOWN) {
+            player.sendSystemMessage(Component.literal("Word of what you do to other bands is getting about. Bands you "
+                    + "meet from now on will have heard it - they will not trust you, and some will be afraid of you.")
+                    .withStyle(ChatFormatting.DARK_RED));
+        }
+        if (before < INFAMY_DREADED && after >= INFAMY_DREADED) {
+            player.sendSystemMessage(Component.literal("You have killed too many. The bands round about are afraid of you "
+                    + "- and fear makes allies. They may come for you together, to put an end to it.")
+                    .withStyle(ChatFormatting.DARK_RED));
+        }
+    }
+
+    /**
+     * One of a wild band's people killed by you or yours. In a fight they brought to you - a raid, a stand-off they
+     * would not back down from - or one of yours on them, it is their dead, not their bruises, that make them break.
+     * A killing nobody forced on you is remembered, and word gets about.
+     */
+    public static void wildMemberKilled(ServerLevel level, BandMember member, @Nullable Bands.Record band,
+            @Nullable net.minecraft.world.entity.Entity killer) {
+        ServerPlayer player = killer instanceof ServerPlayer p ? p
+                : killer instanceof BandMember own && own.leaderPlayer() instanceof ServerPlayer lead ? lead : null;
+        UUID bandId = member.getBandId();
+        if (player == null || bandId == null) {
+            return;
+        }
+        Demand demand = demands.get(player.getUUID());
+        boolean theirFight = demand != null && demand.raid()
+                && (demand.band().equals(bandId) || Claims.inGang(player, bandId));
+        boolean cameAtYou = member.getTarget() == player
+                || member.getTarget() instanceof BandMember own && own.isLedBy(player);
+        if (!theirFight && !cameAtYou) {
+            // Not self-defence: a killing of your own choosing - and the last of them counts for more.
+            addInfamy(player, band == null || band.size <= 1 ? 4 : 1);
+        }
+        if (member.isBaby()) {
+            return;
+        }
+        RaidOn ours = raidsOn.get(player.getUUID());
+        Bands.Record fighting = theirFight ? Bands.get(level, demand.band())
+                : ours != null && ours.band().equals(bandId) ? band : null;
+        if (fighting == null || fighting.haven != null) {
+            // A haven's people fight to the last.
+            return;
+        }
+        long now = level.getGameTime();
+        String key = player.getUUID() + "/" + fighting.id;
+        Losses before = losses.get(key);
+        int count = (before == null || now - before.last() > LOSSES_WINDOW ? 0 : before.count()) + 1;
+        losses.put(key, new Losses(count, now));
+        // Still standing near you, not counting the one going down now.
+        int standing = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
+                m -> m != member && m.isAlive() && fighting.id.equals(m.getBandId()) && !m.isBaby()).size();
+        if (count < lossesToBreak(fighting) && standing > 1) {
+            return;
+        }
+        losses.remove(key);
+        if (theirFight) {
+            endRaid(player, level, fighting, true);
+        } else {
+            raidBroke(player, level, fighting);
+        }
+        if (standing > 0 && player.getRandom().nextFloat() < COWED_CHANCE) {
+            cow(player, fighting, fighting.size - 1 + count);
+            player.sendSystemMessage(Component.literal(BandNames.capital(fighting.name) + " lost " + count + " of their own "
+                    + "to you. They are afraid of you now - they will leave you be, until they are as many as they were, or "
+                    + "better armed.").withStyle(ChatFormatting.GOLD));
+        }
+    }
+
+    /** Afraid of you: they leave you be until they are this many again, or have had time to arm themselves. */
+    private static void cow(ServerPlayer player, Bands.Record band, int sizeBefore) {
+        band.cowedUntil.put(player.getUUID(), player.level().getGameTime() + COWED_TICKS);
+        band.cowedSize.put(player.getUUID(), Math.max(1, sizeBefore));
+        Bands.changed(player.serverLevel());
+    }
+
+    /**
+     * Whether a band is too afraid of you to come at you: no patrols, no demands, no raids. It lasts until they are as
+     * many as they were, until they hold a haven (and go armed as a haven's people do), or five days - time enough to
+     * arm themselves better.
+     */
+    public static boolean cowed(ServerPlayer player, Bands.Record band) {
+        Long until = band.cowedUntil.get(player.getUUID());
+        if (until == null) {
+            return false;
+        }
+        if (player.level().getGameTime() >= until || band.haven != null
+                || band.size >= band.cowedSize.getOrDefault(player.getUUID(), 0)) {
+            band.cowedUntil.remove(player.getUUID());
+            band.cowedSize.remove(player.getUUID());
+            Bands.changed(player.serverLevel());
+            return false;
+        }
+        return true;
+    }
+
+    /** Several bands at once, led by the nearest, walking in to put an end to you. */
+    private static void startCoalition(ServerPlayer player, ServerLevel level, Bands.Record lead, List<Bands.Record> others) {
+        double angle = Math.atan2(lead.home.getZ() - player.getZ(), lead.home.getX() - player.getX());
+        int x = (int) (player.getX() + Math.cos(angle) * 40.0D);
+        int z = (int) (player.getZ() + Math.sin(angle) * 40.0D);
+        if (!level.hasChunk(x >> 4, z >> 4)) {
+            return;
+        }
+        BlockPos at = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+        WildBands.placeBand(level, at, lead.species, 3 + player.getRandom().nextInt(2), lead.id, player.getRandom());
+        Claims.joinAgainst(player, level, others, at);
+        coalitions.put(player.getUUID(), lead.id);
+        demands.put(player.getUUID(), new Demand(lead.id, level.getGameTime() + DEMAND_TICKS * 4, true, false, false));
+        List<String> names = new ArrayList<>();
+        names.add(lead.name);
+        others.forEach(b -> names.add(b.name));
+        dev.hominin.evolution.guide.Alerts.urgent(player, dev.hominin.evolution.guide.Alerts.Kind.DANGER,
+                Component.literal("They have come together to stop you: " + String.join(", ", names) + " - coming for "
+                        + "you, all of them. " + WildBands.bearingFrom(player, lead.home) + ".").withStyle(ChatFormatting.DARK_RED));
     }
 
     // ------------------------------------------------------------ gifts
@@ -938,12 +1111,8 @@ public final class Relations {
         dev.hominin.evolution.guide.Tips.offer(player, dev.hominin.evolution.guide.Tips.Tip.RAIDING);
     }
 
-    /** One of theirs hurt in your raid: they may break. */
-    private static void raidBlow(ServerPlayer player, ServerLevel level, Bands.Record band, BandMember hurt, boolean killing) {
-        float breaks = 0.12F + (30 - band.cohesion) / 100.0F + (10 - band.presence) / 48.0F + (killing ? 0.3F : 0.0F);
-        if (hurt.getRandom().nextFloat() >= Mth.clamp(breaks, 0.05F, 0.7F)) {
-            return;
-        }
+    /** Your raid has cost them enough dead: they break and run. */
+    private static void raidBroke(ServerPlayer player, ServerLevel level, Bands.Record band) {
         raidsOn.remove(player.getUUID());
         int dropped = 0;
         for (BandMember member : level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
@@ -1077,6 +1246,10 @@ public final class Relations {
                     : "You are on " + band.name + "'s ground. Whatever you take here, they will notice.")
                     .withStyle(colour(standing)), true);
         }
+        if (cowed(player, band)) {
+            // They lost too many to you: they watch you cross their ground, and let you.
+            return;
+        }
         boolean hard = Bands.desperateTimes(level);
         boolean haven = band.haven != null && !welcomes(player, band);
         boolean patrolled = haven || standing <= UNFRIENDLY || (hard && standing < FRIENDLY && band.desperation >= 3);
@@ -1176,6 +1349,13 @@ public final class Relations {
         }
         if (!demand.spoken()) {
             raiders.forEach(m -> m.getNavigation().moveTo(player, 1.1D));
+            if (closest.distanceToSqr(player) < 12.0D * 12.0D && band.id.equals(coalitions.get(player.getUUID()))) {
+                // Not for food: they came to put an end to you.
+                coalitions.remove(player.getUUID());
+                say(player, closest, "You have killed enough of us. It ends here.");
+                fight(player, band);
+                return;
+            }
             if (closest.distanceToSqr(player) < 12.0D * 12.0D) {
                 closest.ensureName();
                 demands.put(player.getUUID(), new Demand(band.id, now + DEMAND_TICKS, true, true, false));
@@ -1183,7 +1363,7 @@ public final class Relations {
                 Claims.open(player, band, Claims.Kind.FOOD_RAID, closest, band.desperation >= 4
                         ? "We are starving. You have food. Give it to us - or we take it."
                         : "We are hungry, and you have plenty. Food - now. Or we take it.",
-                        "Give in: 4 food (or 2 good stone). Fight - a band that holds together breaks raiders fast. Or "
+                        "Give in: 4 food (or 2 good stone). Fight - kill enough of them and they break. Or "
                                 + "flee, dropping some of what you carry.",
                         List.of(new ItemStack(ModItems.MEAT_CHUNK.get(), 4)), null);
             }
@@ -1222,8 +1402,8 @@ public final class Relations {
 
     /**
      * You chose to fight. They come at you - every one of them, and they keep coming - and your band stands with
-     * you. It ends when they break (see onHurt), when they have beaten you down and take what they came for, or when
-     * both sides have had enough. Saying no is never the same as paying.
+     * you. It ends when they break (enough of them dead - see wildMemberKilled), when they have beaten you down and
+     * take what they came for, or when both sides have had enough. Saying no is never the same as paying.
      */
     private static void tickFight(ServerPlayer player, ServerLevel level, Bands.Record band, Demand demand, long now) {
         List<BandMember> theirs = level.getEntitiesOfClass(BandMember.class, player.getBoundingBox().inflate(48.0D),
@@ -1341,6 +1521,22 @@ public final class Relations {
         if (minute < counters.getOrDefault("raid_next_minute", 0)) {
             return;
         }
+        if (infamy(player) >= INFAMY_DREADED && minute >= counters.getOrDefault(COALITION_NEXT, 0)
+                && player.getRandom().nextFloat() < 0.04F) {
+            // Afraid of what you will do next, the bands round about come together to stop you.
+            List<Bands.Record> afraid = new ArrayList<>(bands.stream()
+                    .filter(b -> !b.nomadic() && b.knownTo(player.getUUID()) && standing(player, b) < FRIENDLY
+                            && !Claims.hasAccess(player, b) && !cowed(player, b)
+                            && Bands.horizontal(b.home, player.blockPosition()) < 400.0D * 400.0D)
+                    .sorted(Comparator.comparingDouble(b -> Bands.horizontal(b.home, player.blockPosition())))
+                    .limit(3).toList());
+            if (afraid.size() >= 2) {
+                counters.put(COALITION_NEXT, minute + COALITION_GAP_MINUTES);
+                counters.put("raid_next_minute", minute + (int) (RAID_GAP / 1200L));
+                startCoalition(player, level, afraid.get(0), afraid.subList(1, afraid.size()));
+                return;
+            }
+        }
         boolean hard = Seasons.strained(level);
         boolean bad = level.isNight() || hard || Band.ownNear(player, 32.0D).size() <= 3;
         // How soft a target you look: no presence to speak of, a band that does not hold together.
@@ -1358,6 +1554,9 @@ public final class Relations {
                     : (hard || weak) && standing <= NEUTRAL ? 0.05F * soft : 0.0F;
             if (weak) {
                 chance *= 1.5F;
+            }
+            if (cowed(player, band)) {
+                continue;
             }
             // A hungry band coming apart takes chances; a strong one is sure of itself; a desperate one, more so.
             chance *= (band.cohesion < 20 ? 1.5F : 1.0F) * (0.5F + band.presence / 20.0F) * (0.6F + band.desperation * 0.3F);
@@ -1738,6 +1937,7 @@ public final class Relations {
     }
 
     public static void forget(UUID player) {
+        coalitions.remove(player);
         Claims.forget(player);
         demands.remove(player);
         prompted.remove(player);

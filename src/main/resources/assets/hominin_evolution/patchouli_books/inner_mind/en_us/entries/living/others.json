@@ -98,7 +98,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Walk onto a held haven and they want paying: $(l)twelve food$(), or half as much good stone, for three days there. Stay without paying and they come at you.$(br2)Or kill them all. They fight to the last. Then choose: $(l)take the land$() and move your band there - or $(l)set an example$(): leave it, and nobody comes for your ground again, not even in desperate times, and the haven is open to you for good - but you can never make your ground on a haven, or within 200 blocks of one.$(br2)Hold a haven and see enough of them off, and fewer come for it - except in desperate times and the dry season."
+      "text": "Walk onto a held haven and they want paying: $(l)twelve food$(), or half as much good stone, for three days there. Stay without paying and they come at you.$(br2)Or kill them all. They fight to the last. Then choose: $(l)take the land$() and move your band there - or $(l)set an example$(): leave it, and nobody comes for your ground again, not even in desperate times, and the haven is open to you for good - but you can never make your ground on a haven, or within 200 blocks of one. It lasts as long as your kind: evolve, and it is forgotten.$(br2)Hold a haven and see enough of them off, and fewer come for it - except in desperate times and the dry season."
     },
     {
       "type": "patchouli:text",
