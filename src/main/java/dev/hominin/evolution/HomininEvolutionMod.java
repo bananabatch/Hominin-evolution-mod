@@ -135,6 +135,8 @@ public class HomininEvolutionMod {
         NeoForge.EVENT_BUS.addListener(GuideBook::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(Band::onPlayerHurt);
+        // Right-click another player: groom, trade, teach, mates - asked, and they can say no.
+        NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.band.PlayerMenu::onInteract);
         // Highest, so nothing lands on a player who cannot see or move during a cutscene.
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST,
                 dev.hominin.evolution.stage.CutsceneGuard::onIncomingDamage);

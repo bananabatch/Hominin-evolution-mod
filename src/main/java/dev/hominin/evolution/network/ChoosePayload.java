@@ -67,6 +67,12 @@ public record ChoosePayload(int entityId, int action, int value) implements Cust
             dev.hominin.evolution.band.PileAsk.choose(player, payload.entityId(), payload.value());
         } else if (payload.action() == dev.hominin.evolution.world.Havens.ACTION_CONQUERED) {
             dev.hominin.evolution.world.Havens.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.PlayerMenu.ACTION_MENU) {
+            dev.hominin.evolution.band.PlayerMenu.choose(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.PlayerMenu.ACTION_TEACH) {
+            dev.hominin.evolution.band.PlayerMenu.chooseSkill(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.PlayerMenu.ACTION_ANSWER) {
+            dev.hominin.evolution.band.PlayerMenu.answer(player, payload.entityId(), payload.value());
         } else if (payload.action() == ACTION_FIND) {
             dev.hominin.evolution.band.Social.find(player, payload.entityId());
         }

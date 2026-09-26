@@ -1023,6 +1023,7 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.guide.Alerts.forget(playerId);
             dev.hominin.evolution.mind.Insights.forget(playerId);
             dev.hominin.evolution.band.Grooming.forget(playerId);
+            dev.hominin.evolution.band.PlayerMenu.forget(playerId);
             dev.hominin.evolution.hunt.Quarry.forget(playerId);
             dev.hominin.evolution.survival.Drinking.forget(playerId);
             dev.hominin.evolution.hunt.Predation.forget(playerId);
@@ -1397,6 +1398,7 @@ public final class EvolutionEventHandler {
         dev.hominin.evolution.survival.Thirst.tick(player);
         dev.hominin.evolution.survival.FoodIllness.tick(player);
         dev.hominin.evolution.band.Grooming.tick(player);
+        dev.hominin.evolution.band.PlayerMenu.tick(player);
         dev.hominin.evolution.survival.Infestation.tick(player);
         dev.hominin.evolution.entity.TroopRelations.tick(player);
         dev.hominin.evolution.hunt.Carcasses.tickMortality(player);

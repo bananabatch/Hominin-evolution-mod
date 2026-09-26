@@ -53,6 +53,31 @@ public final class Newcomers extends SavedData {
     /** Players walking with somebody else's band: player, and whose band. */
     private final Map<UUID, UUID> hosts = new HashMap<>();
 
+    /**
+     * What a player who leads with somebody else's band may do in it. A co-leader, everything its leader may. An
+     * influential one, calls that reach past one member: a hunt, asking for things, dealing with other bands (a party
+     * sent only with the leader's leave, and gifts only to bands that are friendly). A member, only what passes between
+     * them and one member at a time.
+     */
+    public enum Role {
+        CO_LEADER("co-leader"),
+        INFLUENTIAL("influential"),
+        MEMBER("member");
+
+        private final String label;
+
+        Role(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+    }
+
+    /** Each co-leader's role, when it is not a full co-leader's. */
+    private final Map<UUID, Role> roles = new HashMap<>();
+
     /** Asked, and not yet answered: the players they were offered, and when to ask (again). */
     private record Asking(List<UUID> offered, long askAt) {
     }
@@ -74,6 +99,14 @@ public final class Newcomers extends SavedData {
                 // A bad key is dropped.
             }
         }
+        CompoundTag roles = tag.getCompound("Roles");
+        for (String key : roles.getAllKeys()) {
+            try {
+                data.roles.put(UUID.fromString(key), Role.valueOf(roles.getString(key)));
+            } catch (IllegalArgumentException ignored) {
+                // A bad key or role is dropped: a full co-leader, as before roles.
+            }
+        }
         return data;
     }
 
@@ -82,6 +115,9 @@ public final class Newcomers extends SavedData {
         CompoundTag list = new CompoundTag();
         hosts.forEach((player, host) -> list.putUUID(player.toString(), host));
         tag.put("Hosts", list);
+        CompoundTag roleList = new CompoundTag();
+        roles.forEach((player, role) -> roleList.putString(player.toString(), role.name()));
+        tag.put("Roles", roleList);
         return tag;
     }
 
@@ -101,6 +137,25 @@ public final class Newcomers extends SavedData {
         UUID host = hostOf(player);
         return host != null && player.server.getPlayerList().getPlayer(host) instanceof ServerPlayer leader
                 && leader.level() == player.level() ? leader : player;
+    }
+
+    /** What this player may do in the band they walk with; a band's own leader is always its leader. */
+    public static Role roleOf(ServerPlayer player) {
+        if (hostOf(player) == null) {
+            return Role.CO_LEADER;
+        }
+        return of(player.server).roles.getOrDefault(player.getUUID(), Role.CO_LEADER);
+    }
+
+    /** The leader sets what someone who leads with them may do. */
+    public static void setRole(ServerPlayer player, Role role) {
+        Newcomers data = of(player.server);
+        if (role == Role.CO_LEADER) {
+            data.roles.remove(player.getUUID());
+        } else {
+            data.roles.put(player.getUUID(), role);
+        }
+        data.setDirty();
     }
 
     /** Whether two players lead the same band: one is the other's co-leader, or both lead with the same leader. */
@@ -145,6 +200,7 @@ public final class Newcomers extends SavedData {
     /** No longer a co-leader: a band of their own, from here. */
     public static void split(ServerPlayer player) {
         Newcomers data = of(player.server);
+        data.roles.remove(player.getUUID());
         if (data.hosts.remove(player.getUUID()) != null) {
             data.setDirty();
         }

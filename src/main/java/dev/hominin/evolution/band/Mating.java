@@ -101,6 +101,11 @@ public final class Mating {
             player.displayClientMessage(Component.literal(name + " already has a mate."), true);
             return;
         }
+        UUID playerMate = PlayerTies.mateOf(player.server, player.getUUID());
+        if (bonds && playerMate != null) {
+            player.displayClientMessage(Component.literal("You already have a mate."), true);
+            return;
+        }
         BandMember current = mateOf(player);
         if (bonds && current != null) {
             current.ensureName();
@@ -215,6 +220,14 @@ public final class Mating {
 
     // ------------------------------------------------------------ the player's pregnancy
 
+    /** A player carrying a child by another player: due in about a day. */
+    public static void conceive(ServerPlayer mother, String father) {
+        counters(mother).put(DUE, (int) ((mother.level().getGameTime() + PREGNANCY_TICKS) / 1200L));
+        counters(mother).remove(LABOUR_ANNOUNCED);
+        mother.sendSystemMessage(Component.literal("You are pregnant. " + father + " is the father. You will be hungrier "
+                + "than usual, and in about a day the child comes.").withStyle(ChatFormatting.LIGHT_PURPLE));
+    }
+
     public static boolean isPregnant(ServerPlayer player) {
         return counters(player).getOrDefault(DUE, 0) > 0;
     }
@@ -278,7 +291,9 @@ public final class Mating {
         baby.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
         baby.finalizeSpawn(level, level.getCurrentDifficultyAt(player.blockPosition()), MobSpawnType.BREEDING, null);
         baby.setStage(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getStage());
-        baby.setLeader(player.getUUID());
+        // Born into the band the mother lives in: hers, or the one she leads with somebody else.
+        UUID host = Newcomers.hostOf(player);
+        baby.setLeader(host != null ? host : player.getUUID());
         baby.makeBaby();
         baby.ensureName();
         level.addFreshEntity(baby);
