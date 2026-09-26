@@ -139,7 +139,7 @@ public final class HeldAnimationHandler {
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "digging_stick_hold"),
             // Held high overhand, or drawn back behind the head: in first person the arm would only fill the sky.
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "stone_tipped_hold"),
-            // Eating: first person has its own bite-by-bite view (EatingAnimation).
+            // Eating: third person only - first person keeps vanilla's eating view.
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "eat_left"),
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "spear_draw"),

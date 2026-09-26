@@ -21,8 +21,6 @@ public class HomininEvolutionClient {
     public HomininEvolutionClient(IEventBus modEventBus, ModContainer modContainer) {
         // Each bleeding tier draws its own icon.
         modEventBus.addListener(BleedingIcons::register);
-        // Food with a 3D model is eaten from the hand bite by bite, not turned edge-on.
-        modEventBus.addListener(EatingAnimation::register);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onRightClickEmpty);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onLeftClickBlock);
