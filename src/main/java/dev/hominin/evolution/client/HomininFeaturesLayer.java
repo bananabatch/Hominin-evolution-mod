@@ -158,6 +158,31 @@ public class HomininFeaturesLayer<T extends LivingEntity, M extends HumanoidMode
         return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
+    /**
+     * Heidelbergensis: the heaviest brow of any of them - a thick bar with a second arch standing over each eye -
+     * a broad nose, a jaw that pushes forward a little further than erectus's, a bigger braincase rising over the
+     * head, and a ridge of bone across the back of the skull.
+     */
+    public static LayerDefinition heidelbergensis() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("brow", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -6.1F, -5.0F, 8, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("right_arch", CubeListBuilder.create().texOffs(18, 0)
+                .addBox(-4.0F, -6.7F, -5.2F, 3, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("left_arch", CubeListBuilder.create().texOffs(18, 0)
+                .addBox(1.0F, -6.7F, -5.2F, 3, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(0, 2)
+                .addBox(-1.5F, -4.6F, -5.0F, 3, 2, 1), PartPose.ZERO);
+        root.addOrReplaceChild("mouth", CubeListBuilder.create().texOffs(0, 5)
+                .addBox(-3.0F, -2.6F, -4.6F, 6, 2, 1), PartPose.ZERO);
+        root.addOrReplaceChild("vault", CubeListBuilder.create().texOffs(0, 8)
+                .addBox(-3.5F, -8.7F, -3.5F, 7, 1, 7), PartPose.ZERO);
+        root.addOrReplaceChild("occipital", CubeListBuilder.create().texOffs(8, 2)
+                .addBox(-3.0F, -5.0F, 3.8F, 6, 1, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    }
+
     @Override
     public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T player,
             float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw,

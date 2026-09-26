@@ -54,6 +54,7 @@ public final class HomininModels {
     public static final ModelLayerLocation ANAMENSIS_LAYER = layer("australopithecus_anamensis_features");
     public static final ModelLayerLocation RUDOLFENSIS_LAYER = layer("homo_rudolfensis_features");
     public static final ModelLayerLocation ERGASTER_LAYER = layer("homo_ergaster_features");
+    public static final ModelLayerLocation HEIDELBERGENSIS_LAYER = layer("homo_heidelbergensis_features");
 
     /**
      * Lucy stood about 1.1 m; habilis perhaps 1.3. Scaled well short of that - a
@@ -75,8 +76,10 @@ public final class HomininModels {
             Map.entry(stage("homo_erectus"), look("homo_erectus", ERECTUS_LAYER, 1.0F)),
             // Ergaster: tall and slight, dark-skinned and nearly hairless; a lighter brow and a longer nose.
             Map.entry(stage("homo_ergaster"), look("homo_ergaster", ERGASTER_LAYER, 1.02F)),
+            // Heidelbergensis: taller and heavier than erectus, a bigger braincase, a massive doubled brow ridge over a
+            // broad nose and a heavy jaw - bearded, and wearing hide.
+            Map.entry(stage("homo_heidelbergensis"), look("homo_heidelbergensis", HEIDELBERGENSIS_LAYER, 1.04F)),
             // Not stages yet, but drawn as erectus the moment they are.
-            Map.entry(stage("homo_heidelbergensis"), look("homo_erectus", ERECTUS_LAYER, 1.0F)),
             Map.entry(stage("homo_sapiens"), look("homo_erectus", ERECTUS_LAYER, 1.0F)),
             Map.entry(stage("homo_neanderthalensis"), look("homo_erectus", ERECTUS_LAYER, 1.0F)));
 
@@ -117,6 +120,7 @@ public final class HomininModels {
         event.registerLayerDefinition(ANAMENSIS_LAYER, HomininFeaturesLayer::anamensis);
         event.registerLayerDefinition(RUDOLFENSIS_LAYER, HomininFeaturesLayer::rudolfensis);
         event.registerLayerDefinition(ERGASTER_LAYER, HomininFeaturesLayer::ergaster);
+        event.registerLayerDefinition(HEIDELBERGENSIS_LAYER, HomininFeaturesLayer::heidelbergensis);
     }
 
     public static void addLayers(EntityRenderersEvent.AddLayers event) {
