@@ -261,7 +261,9 @@ public final class Band {
         if (event.getEntity() instanceof ServerPlayer player
                 && event.getSource().getEntity() instanceof LivingEntity attacker
                 && attacker != player
-                && !(attacker instanceof BandMember member && member.isCompanionOf(player))) {
+                && !(attacker instanceof BandMember member && member.isCompanionOf(player))
+                // Another player leading the band with you: a fight between the two of you is not the band's.
+                && !(attacker instanceof Player other && Newcomers.sameBand(player, other))) {
             // A real attack ends any play-fighting at once.
             wrestleWindow.remove(player.getUUID());
             for (BandMember member : companionsNear(player, DEFEND_RADIUS)) {

@@ -103,6 +103,18 @@ public final class Newcomers extends SavedData {
                 && leader.level() == player.level() ? leader : player;
     }
 
+    /** Whether two players lead the same band: one is the other's co-leader, or both lead with the same leader. */
+    public static boolean sameBand(ServerPlayer player, Player other) {
+        if (player == other) {
+            return true;
+        }
+        UUID mine = hostOf(player);
+        UUID theirs = hostOf(other);
+        UUID myLeader = mine != null ? mine : player.getUUID();
+        UUID theirLeader = theirs != null ? theirs : other.getUUID();
+        return myLeader.equals(theirLeader);
+    }
+
     /** The co-leaders of this player's band who are about. */
     public static List<ServerPlayer> coLeaders(ServerPlayer leader) {
         List<ServerPlayer> co = new ArrayList<>();

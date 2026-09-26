@@ -2816,6 +2816,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (isBaby() || attacker == this || !attacker.isAlive()) {
             return;
         }
+        if (attacker instanceof Player player && isCompanionOf(player)) {
+            // Never against its own leader, or anyone leading the band with them - whoever they hit.
+            return;
+        }
         if (attacker.getUUID().equals(gaveUpOn) && tickCount < gaveUpUntil && !isComingFor(attacker)) {
             return;
         }
