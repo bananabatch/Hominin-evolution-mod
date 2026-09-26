@@ -55,7 +55,7 @@ public final class Panic {
      */
     public static void begin(ServerPlayer player) {
         if (!CutsceneGuard.tryStart(player, PROTECTED_TICKS)) {
-            Band.formNewBand(player);
+            comeRound(player);
             player.sendSystemMessage(Component.literal(
                     "Your band is gone. Others find you before you have to face a night alone.")
                     .withStyle(ChatFormatting.GRAY));
@@ -105,6 +105,16 @@ public final class Panic {
     /** Somewhere else, with no memory of getting there, and strangers who are not strangers. */
     private static void walkBlindly(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
+        ServerPlayer host = hostHere(player);
+        if (host != null) {
+            if (pending.containsKey(host.getUUID())) {
+                // The leader has not come round yet: wait for them, and wake where they do.
+                pending.put(player.getUUID(), new Pending(level.getGameTime() + 5L));
+                return;
+            }
+            comeRound(player);
+            return;
+        }
         BlockPos destination = somewhereElse(level, player.blockPosition(), player.getRandom().nextFloat());
         if (destination != null) {
             player.teleportTo(level, destination.getX() + 0.5D, destination.getY(), destination.getZ() + 0.5D,
@@ -115,6 +125,32 @@ public final class Panic {
         player.sendSystemMessage(Component.literal(
                 "You come back to yourself a long way off, with people around you again. "
                         + "The one you were is still back there.").withStyle(ChatFormatting.GRAY));
+    }
+
+    /** The leader of the band this player leads with, if they are about - or null for a band of their own. */
+    @Nullable
+    private static ServerPlayer hostHere(ServerPlayer player) {
+        return Newcomers.leadOf(player) instanceof ServerPlayer lead && lead != player ? lead : null;
+    }
+
+    /**
+     * Coming back to yourself. A co-leader wakes beside the leader, among whatever band the leader woke with; anyone
+     * else wakes among a new band of their own.
+     */
+    private static void comeRound(ServerPlayer player) {
+        ServerPlayer host = hostHere(player);
+        if (host == null) {
+            Band.formNewBand(player);
+            return;
+        }
+        BlockPos spot = Band.standingSpotNear(host.serverLevel(), host.blockPosition(), 3,
+                player.getRandom().nextFloat() * Mth.TWO_PI);
+        player.teleportTo(host.serverLevel(), spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, player.getYRot(),
+                player.getXRot());
+        player.resetFallDistance();
+        player.sendSystemMessage(Component.literal("You come back to yourself beside "
+                + host.getGameProfile().getName() + ", with people around you again. The one you were is still back "
+                + "there.").withStyle(ChatFormatting.GRAY));
     }
 
     @Nullable

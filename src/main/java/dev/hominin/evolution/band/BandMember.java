@@ -300,6 +300,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         // Water is a road, not a wall: they wade and swim it instead of walking around.
         setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
         setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER_BORDER, 0.0F);
+        // Lava and anything burning are never a road. (Walking beside it stays vanilla's price - the hearth is fire
+        // too - and keepOutOfLava stops the step off the edge.)
+        setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.LAVA, -1.0F);
+        setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.DAMAGE_FIRE, -1.0F);
         female = random.nextBoolean();
     }
 
@@ -3533,6 +3537,92 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
     }
 
+    // ------------------------------------------------------------ lava
+
+    private static boolean lavaAt(Level level, BlockPos pos) {
+        return level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA);
+    }
+
+    /**
+     * Never a step into lava, whatever is leading them there - a path along the edge of a pool, a goal walking them
+     * straight at something, a scramble to get away. Just before movement is applied: if the next step is lava, or
+     * open ground with lava under it, they stop dead. And if they are in it anyway, they make for the nearest dry
+     * footing.
+     */
+    private void keepOutOfLava() {
+        Level level = level();
+        if (isInLava()) {
+            escapeLava(level);
+            return;
+        }
+        // Which way they mean to go: the next point of their path, else wherever they were sent, else how they move.
+        double tx;
+        double tz;
+        net.minecraft.world.level.pathfinder.Path path = getNavigation().getPath();
+        if (path != null && !path.isDone()) {
+            BlockPos next = path.getNextNodePos();
+            tx = next.getX() + 0.5D - getX();
+            tz = next.getZ() + 0.5D - getZ();
+        } else if (getMoveControl().hasWanted()) {
+            tx = getMoveControl().getWantedX() - getX();
+            tz = getMoveControl().getWantedZ() - getZ();
+        } else {
+            tx = getDeltaMovement().x;
+            tz = getDeltaMovement().z;
+        }
+        double length = Math.sqrt(tx * tx + tz * tz);
+        if (length < 1.0E-3D) {
+            return;
+        }
+        double reach = getBbWidth() / 2.0D + 0.45D;
+        BlockPos ahead = BlockPos.containing(getX() + tx / length * reach, getY() + 0.1D, getZ() + tz / length * reach);
+        boolean danger = lavaAt(level, ahead) || lavaAt(level, ahead.above());
+        // Nothing to stand on there: whatever it drops to, if it is lava.
+        for (int down = 1; !danger && down <= 3; down++) {
+            BlockPos below = ahead.below(down);
+            if (lavaAt(level, below)) {
+                danger = true;
+            } else if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
+                break;
+            }
+        }
+        if (!danger) {
+            return;
+        }
+        getNavigation().stop();
+        getMoveControl().setWantedPosition(getX(), getY(), getZ(), 0.0D);
+        setZza(0.0F);
+        setXxa(0.0F);
+        // A little back the way they came, off the edge.
+        setDeltaMovement(-tx / length * 0.08D, getDeltaMovement().y, -tz / length * 0.08D);
+    }
+
+    /** In lava: out, to the nearest dry block with ground under it, jumping for it. */
+    private void escapeLava(Level level) {
+        BlockPos here = blockPosition();
+        BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BlockPos pos : BlockPos.betweenClosed(here.offset(-4, -1, -4), here.offset(4, 2, 4))) {
+            BlockPos below = pos.below();
+            if (lavaAt(level, pos) || !level.getFluidState(pos).isEmpty()
+                    || !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                    || level.getBlockState(below).getCollisionShape(level, below).isEmpty() || lavaAt(level, below)) {
+                continue;
+            }
+            double distance = pos.distToCenterSqr(position());
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = pos.immutable();
+            }
+        }
+        if (best == null) {
+            return;
+        }
+        getNavigation().stop();
+        getMoveControl().setWantedPosition(best.getX() + 0.5D, best.getY(), best.getZ() + 0.5D, 1.5D);
+        getJumpControl().jump();
+    }
+
     // ------------------------------------------------------------ ticking
 
     @Override
@@ -3543,6 +3633,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         Postures.tick(this);
         checkSurvivor();
         super.customServerAiStep();
+        keepOutOfLava();
         dev.hominin.evolution.survival.Diseases.tick(this);
         if (tickCount == 1) {
             ensureName();

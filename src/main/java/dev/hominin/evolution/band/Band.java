@@ -1387,8 +1387,27 @@ public final class Band {
         if (!hadBand.remove(player.getUUID())) {
             return;
         }
+        // Whoever led it with you loses it with you - their members were always yours, so their own count of the
+        // band never sees it go.
+        List<ServerPlayer> coLeaders = Newcomers.coLeaders(player);
+        int lost = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().merge(BANDS_LOST, 1,
+                Integer::sum);
+        lose(player, lost);
+        for (ServerPlayer co : coLeaders) {
+            hadBand.remove(co.getUUID());
+            // One band, one count: the co-leader's goes where the leader's is.
+            co.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().put(BANDS_LOST, lost);
+            lose(co, lost);
+        }
+    }
+
+    /**
+     * One of the band's leaders has lost it: what it knew is forgotten and the panic comes - or, the last band their
+     * kind could lose, the fall to an older kind or the end of the line. A co-leader comes round beside the leader,
+     * and walks with whatever band the leader wakes among.
+     */
+    private static void lose(ServerPlayer player, int lost) {
         PlayerEvolutionData data = player.getData(Attachments.PLAYER_EVOLUTION_DATA);
-        int lost = data.getCriterionCounters().merge(BANDS_LOST, 1, Integer::sum);
         // What the band knew of the country dies with it; the bands that stood with it remember you.
         dev.hominin.evolution.world.Pois.bandLost(player);
         boolean onFallback = dev.hominin.evolution.stage.Fallbacks.isFallback(data.getStage());
@@ -1404,7 +1423,9 @@ public final class Band {
             return;
         }
         loseKnowledge(player, data);
-        dev.hominin.evolution.band.Panic.begin(player);
+        if (player.isAlive()) {
+            dev.hominin.evolution.band.Panic.begin(player);
+        }
         player.sendSystemMessage(Component.literal("Your whole band is gone. (" + lost + "/" + limit
                 + " bands lost - lose " + limit + (onFallback ? " and your line ends.)" : " and your kind dies out.)"))
                 .withStyle(ChatFormatting.RED));
@@ -1497,7 +1518,9 @@ public final class Band {
         player.sendSystemMessage(Component.literal("What is left of your kind is older, fewer and hardier. "
                 + "Lose " + dev.hominin.evolution.stage.Fallbacks.BANDS_ON_A_FALLBACK
                 + " bands now and the line ends for good.").withStyle(ChatFormatting.GOLD));
-        topUp(player, fallback);
+        if (Newcomers.hostOf(player) == null) {
+            topUp(player, fallback);
+        }
     }
 
     private static void goExtinct(ServerPlayer player, PlayerEvolutionData data) {
@@ -1519,7 +1542,9 @@ public final class Band {
                         + dev.hominin.evolution.stage.StageAge.ago(ardipithecus.yearsAgo())));
         player.server.getPlayerList().broadcastSystemMessage(Component.literal(player.getGameProfile().getName()
                 + "'s line has gone extinct.").withStyle(ChatFormatting.DARK_RED), false);
-        topUp(player, ARDIPITHECUS);
+        if (Newcomers.hostOf(player) == null) {
+            topUp(player, ARDIPITHECUS);
+        }
     }
 
     /** Nightfall: a band travelling with a player heads off on its own. */
