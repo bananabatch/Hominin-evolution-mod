@@ -425,6 +425,21 @@ public final class Predation {
      */
     public static void settle(ServerPlayer player, BlockPos at) {
         var counters = counters(player);
+        if (dev.hominin.evolution.world.Havens.keptOff(player, at) != null) {
+            // You set an example once: never a haven's ground, nor anywhere near one. The band stays on the move.
+            counters.put(RANGE_X, at.getX());
+            counters.put(RANGE_Z, at.getZ());
+            counters.put(RANGE_SINCE, (int) (player.level().getGameTime() / 1200L));
+            counters.put(RANGE_TOLD, 0);
+            counters.remove(RANGE_NEXT);
+            counters.remove(RANGE_FAR_TOLD);
+            counters.put(RANGE_PACKED, 1);
+            player.sendSystemMessage(Component.literal("This is too near a haven for a band that set an example to make "
+                    + "its ground - the band stays on the move. Go on more than "
+                    + dev.hominin.evolution.world.Havens.EXAMPLE_KEEP_OFF + " blocks from it, then set your territory "
+                    + "from the map (J).").withStyle(ChatFormatting.GOLD));
+            return;
+        }
         counters.put(RANGE_X, at.getX());
         counters.put(RANGE_Z, at.getZ());
         counters.put(RANGE_SINCE, (int) (player.level().getGameTime() / 1200L));
@@ -461,6 +476,13 @@ public final class Predation {
 
     /** From the map: here is our ground now. */
     public static void settleHere(ServerPlayer player) {
+        if (dev.hominin.evolution.world.Havens.keptOff(player, player.blockPosition()) != null) {
+            player.sendSystemMessage(Component.literal("Not here. You set an example at a haven - every band knows it, and "
+                    + "knows you left the havens alone. You cannot make your ground on a haven, or within "
+                    + dev.hominin.evolution.world.Havens.EXAMPLE_KEEP_OFF + " blocks of one.")
+                    .withStyle(ChatFormatting.RED));
+            return;
+        }
         BlockPos from = campOf(player);
         settle(player, player.blockPosition());
         dev.hominin.evolution.mind.Knacks.relocated(player, from, player.blockPosition());

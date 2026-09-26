@@ -57,7 +57,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <p>Kill them all - they fight to the last, nobody asks to join you - and the haven is yours to decide: <b>take the
  * land</b> (your band moves there) or <b>set an example</b> (you leave it, and every band for miles learns what
  * happened: your own ground is left alone, even in desperate times, and the haven is open to you whoever lives there
- * after). An empty haven does not stay empty: bands on the move go to it.
+ * after - but you may never make your ground on a haven, or within 200 blocks of one). An empty haven does not stay
+ * empty: bands on the move go to it.
+ *
+ * <p>Hold a haven and every band for miles wants it. See enough of them off and word gets round, and they come less
+ * often - but in desperate times, and in the dry season, they come as often as ever.
  */
 public final class Havens extends SavedData {
     private static final String NAME = "hominin_evolution_havens";
@@ -81,6 +85,12 @@ public final class Havens extends SavedData {
     public static final long TOLL_TICKS = 3 * 24000L;
     /** The counter that marks a player who set an example. */
     public static final String EXAMPLE_KEY = "haven_example";
+    /** A player who set an example may not make their ground this near any haven. */
+    public static final int EXAMPLE_KEEP_OFF = 200;
+    /** Raids seen off at a haven, per haven: the counter's name is this and the haven's id. */
+    private static final String FENDED_PREFIX = "haven_fended_";
+    /** Seen off this many at a haven, and word has got round. */
+    public static final int FENDED_ENOUGH = 5;
 
     public record Site(String id, BlockPos centre) {
     }
@@ -414,6 +424,7 @@ public final class Havens extends SavedData {
             settleEmpty(level, data);
             everyBandKnows(level);
         }
+        keepOff(player);
     }
 
     /** Everyone talks of the havens: your band hears of any within a long walk. */
@@ -525,6 +536,76 @@ public final class Havens extends SavedData {
     }
 
     /**
+     * For a player who set an example: the haven this spot is on, or too near to make ground at - the price of every
+     * band leaving you alone is that you leave the havens alone. Null when the spot is allowed.
+     */
+    @Nullable
+    public static Site keptOff(ServerPlayer player, BlockPos at) {
+        if (!madeAnExample(player) || !player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
+            return null;
+        }
+        List<Site> sites = near(player.serverLevel(), at, EXAMPLE_KEEP_OFF);
+        return sites.isEmpty() ? null : sites.get(0);
+    }
+
+    /** Ground on or by a haven, held by a player who set an example (made before the rule, or come by some other way). */
+    private static void keepOff(ServerPlayer player) {
+        if (!dev.hominin.evolution.hunt.Predation.settled(player)
+                || keptOff(player, dev.hominin.evolution.hunt.Predation.campOf(player)) == null) {
+            return;
+        }
+        player.sendSystemMessage(Component.literal("Every band knows what you did at the haven - and that you left the "
+                + "havens alone. Your band cannot make its ground within " + EXAMPLE_KEEP_OFF + " blocks of one.")
+                .withStyle(ChatFormatting.DARK_RED));
+        dev.hominin.evolution.hunt.Predation.packUp(player);
+    }
+
+    /** The haven your band's ground takes in, if it takes one in. */
+    @Nullable
+    public static Site heldBy(ServerPlayer player) {
+        if (!dev.hominin.evolution.hunt.Predation.settled(player)
+                || !player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
+            return null;
+        }
+        List<Site> sites = near(player.serverLevel(), dev.hominin.evolution.hunt.Predation.campOf(player),
+                dev.hominin.evolution.hunt.Predation.territoryRadius(player));
+        return sites.isEmpty() ? null : sites.get(0);
+    }
+
+    /** Raiders seen off: if it was your haven they came for, the next band to think of it hears how that went. */
+    public static void fendedOff(ServerPlayer player) {
+        Site site = heldBy(player);
+        if (site == null) {
+            return;
+        }
+        var counters = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();
+        int fended = counters.merge(FENDED_PREFIX + site.id(), 1, (a, b) -> Math.min(20, a + b));
+        if (fended == FENDED_ENOUGH) {
+            player.sendSystemMessage(Component.literal("Word has got round: every band that came for the haven went "
+                    + "home with nothing but its hurts. Fewer will try it now - though when times are desperate, or in "
+                    + "the dry season, they will come as they always have.").withStyle(ChatFormatting.GOLD));
+        }
+    }
+
+    /**
+     * How often bands still come for a haven you hold: less for every band you have seen off there, and far less once
+     * you have seen off enough. But in desperate times, and in the dry season, hunger outweighs fear: as often as ever.
+     */
+    public static float comingFactor(ServerPlayer player) {
+        Site site = heldBy(player);
+        if (site == null) {
+            return 1.0F;
+        }
+        ServerLevel level = player.serverLevel();
+        if (Bands.desperateTimes(level) || dev.hominin.evolution.survival.Seasons.isDry(level)) {
+            return 1.0F;
+        }
+        int fended = player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters()
+                .getOrDefault(FENDED_PREFIX + site.id(), 0);
+        return fended >= FENDED_ENOUGH ? 0.15F : 1.0F - 0.15F * fended;
+    }
+
+    /**
      * The last of a haven's people is dead. Whoever did it - you, or your band - decides what the haven is now.
      */
     public static void wipedOut(ServerLevel level, Bands.Record band, @Nullable Entity killer) {
@@ -543,6 +624,13 @@ public final class Havens extends SavedData {
         conquered.put(player.getUUID(), band.haven);
         player.sendSystemMessage(Component.literal("The last of " + band.name + " is dead. The haven is nobody's - "
                 + "and yours to decide.").withStyle(ChatFormatting.GOLD));
+        if (madeAnExample(player)) {
+            // You made an example once: the havens are not yours to take.
+            PacketDistributor.sendToPlayer(player, new ChoicesPayload(player.getId(), ACTION_CONQUERED,
+                    "The haven is empty. You set an example once - you cannot make your ground on a haven.",
+                    List.of("Set an example - leave it, and let every band hear of it"), List.of(EXAMPLE)));
+            return;
+        }
         PacketDistributor.sendToPlayer(player, new ChoicesPayload(player.getId(), ACTION_CONQUERED,
                 "The haven is empty. What now?",
                 List.of("Take the land - the band moves here", "Set an example - leave it, and let every band hear of it"),
@@ -556,7 +644,7 @@ public final class Havens extends SavedData {
         if (site == null) {
             return;
         }
-        if (choice == TAKE) {
+        if (choice == TAKE && !madeAnExample(player)) {
             dev.hominin.evolution.hunt.Predation.settle(player, site.centre());
             Presence.add(player, 3, "you took the haven");
             player.sendSystemMessage(Component.literal("The haven is your band's ground now. Everything a band could want "
@@ -577,7 +665,10 @@ public final class Havens extends SavedData {
         Bands.changed(level);
         player.sendSystemMessage(Component.literal("You leave the haven as it is - with its dead. Every band for miles hears "
                 + "of it. Nobody will come for your ground now, not even in desperate times; and whoever lives at the "
-                + "haven after, it is open to you.").withStyle(ChatFormatting.DARK_RED));
+                + "haven after, it is open to you. But you may never make your ground on a haven, or within "
+                + EXAMPLE_KEEP_OFF + " blocks of one.").withStyle(ChatFormatting.DARK_RED));
+        // Living by one already: the band moves on.
+        keepOff(player);
         dev.hominin.evolution.advancement.HomininAdvancements.award(player, "hominin/haven_example");
     }
 

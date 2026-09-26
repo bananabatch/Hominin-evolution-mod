@@ -222,6 +222,8 @@ public final class Claims {
             }
         }
         float allied = allies >= 2 ? 0.3F : allies == 1 ? 0.5F : 1.0F;
+        // A haven you hold, and have seen enough bands off: fewer try it - unless times are desperate or dry.
+        float haven = dev.hominin.evolution.world.Havens.comingFactor(player);
         for (Bands.Record band : bands) {
             if (band.nomadic() || band.size <= 0 || Bands.horizontal(band.home, camp) > 320.0D * 320.0D
                     || now < bandGap.getOrDefault(player.getUUID() + "/" + band.id, 0L)) {
@@ -233,7 +235,7 @@ public final class Claims {
                     continue;
                 }
                 float need = (band.desperation - 1) / 4.0F;
-                float strangers = 0.018F * (pressure - 3) * (1.0F + need) * allied
+                float strangers = 0.018F * (pressure - 3) * (1.0F + need) * allied * haven
                         * (presence >= Presence.STRONG ? 0.5F : 1.0F);
                 if (player.getRandom().nextFloat() >= strangers) {
                     continue;
@@ -298,7 +300,7 @@ public final class Claims {
             if (kind == Kind.RANSOM || kind == Kind.CLAIM) {
                 // The richer the ground, the likelier - and the fewer friends you have, the likelier still.
                 chance *= fearFactor(player) * (Bands.desperateTimes(level) ? 1.6F : 1.0F)
-                        * (1.0F + Math.max(0, pressure - 5) * 0.3F) * allied;
+                        * (1.0F + Math.max(0, pressure - 5) * 0.3F) * allied * haven;
                 if (Bands.desperateTimes(level) && dev.hominin.evolution.world.Havens.madeAnExample(player)) {
                     // They heard what you did at the haven.
                     chance = 0.0F;
@@ -1240,6 +1242,7 @@ public final class Claims {
     public static void foughtOff(ServerPlayer player, Bands.Record band) {
         failStance(player, band, player.serverLevel());
         addFeared(player, 1);
+        dev.hominin.evolution.world.Havens.fendedOff(player);
     }
 
     /** Nobody stopped them: on a claim, the ground is theirs. */
@@ -1436,7 +1439,8 @@ public final class Claims {
                     || Bands.horizontal(band.home, player.blockPosition()) > 320.0D * 320.0D) {
                 continue;
             }
-            float chance = 0.05F * (band.desperation - 2) * deter * fearFactor(player) * (hard ? 2.0F : 1.0F);
+            float chance = 0.05F * (band.desperation - 2) * deter * fearFactor(player) * (hard ? 2.0F : 1.0F)
+                    * dev.hominin.evolution.world.Havens.comingFactor(player);
             if (player.getRandom().nextFloat() >= chance) {
                 continue;
             }
