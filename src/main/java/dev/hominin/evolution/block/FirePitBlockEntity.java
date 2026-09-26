@@ -394,6 +394,32 @@ public class FirePitBlockEntity extends BlockEntity {
         return cooking;
     }
 
+    /**
+     * One piece laid on the fire by someone who is not a player - a band member cooking for itself. False when the
+     * fire is out, the pit is full, or it is not something fire cooks. Cooked, it rolls off as it does for anyone.
+     */
+    public boolean cookFor(ItemStack stack) {
+        if (!lit() || level == null || stack.isEmpty()) {
+            return false;
+        }
+        Optional<RecipeHolder<CampfireCookingRecipe>> recipe = level.getRecipeManager()
+                .getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack), level);
+        if (recipe.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < COOKING_SLOTS; i++) {
+            if (cooking.get(i).isEmpty()) {
+                cooking.set(i, stack.split(1));
+                cookingTime[i] = recipe.get().value().getCookingTime();
+                cookingProgress[i] = 0;
+                level.playSound(null, worldPosition, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 0.6F, 1.4F);
+                changed();
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ------------------------------------------------------------ kept by the band
 
     public boolean isLit() {

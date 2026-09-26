@@ -431,6 +431,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.BatheGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.SaltLickGoal(this));
         goalSelector.addGoal(5, new ForageGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CookGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.LogGrubGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
         // Just above building one: once the nest exists, getting into it is the priority.
         goalSelector.addGoal(4, new dev.hominin.evolution.band.goal.SleepInNestGoal(this));
@@ -443,6 +445,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CraftGoal(this));
         // Erectus on: what the player does at erectus - beds, hides, twine, build materials, and the builds.
         goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.HideHuntGoal(this));
+        goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.BigGameGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.GiantCarcassGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.ErectusCraftGoal(this));
         // The Feast: getting ready for it, and coming to the fire when it begins. And the fire itself, kept fed.
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.FeastGoal(this));

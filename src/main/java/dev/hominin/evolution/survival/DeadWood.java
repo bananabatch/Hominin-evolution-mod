@@ -144,6 +144,36 @@ public final class DeadWood extends SavedData {
         return true;
     }
 
+    /** Whether this is a decaying log in a tree that still has a log worth cracking. */
+    public static boolean worthCracking(ServerLevel level, BlockPos pos) {
+        return level.getBlockState(pos).is(ModBlocks.DECAYING_LOG.get()) && of(level).crackedNear(pos) < PER_TREE;
+    }
+
+    /**
+     * A band member pulls a decaying log open, exactly as a player does: the same two logs to a tree, the same odds
+     * of a hollow log and of nothing but sawdust. Returns the grubs found, or -1 if there was nothing to crack.
+     */
+    public static int crackFor(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (!worthCracking(level, pos)) {
+            return -1;
+        }
+        DeadWood data = of(level);
+        data.cracked.merge(pos.asLong(), 1, Integer::sum);
+        data.setDirty();
+        if (level.random.nextFloat() < HOLLOW_CHANCE) {
+            BlockState hollow = ModBlocks.DECAYED_LOG.get().defaultBlockState();
+            if (state.hasProperty(RotatedPillarBlock.AXIS)) {
+                hollow = hollow.setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
+            }
+            level.setBlock(pos, hollow, 3);
+        }
+        level.playSound(null, pos, SoundEvents.WOOD_BREAK, SoundSource.NEUTRAL, 1.0F, 0.8F);
+        level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D,
+                pos.getZ() + 0.5D, 16, 0.3D, 0.3D, 0.3D, 0.05D);
+        return level.random.nextFloat() < EMPTY_CHANCE ? 0 : 1 + level.random.nextInt(3);
+    }
+
     /** Pulls a decaying log open. Returns true if that is what the click did. */
     public static boolean crack(ServerPlayer player, BlockPos pos) {
         ServerLevel level = player.serverLevel();
