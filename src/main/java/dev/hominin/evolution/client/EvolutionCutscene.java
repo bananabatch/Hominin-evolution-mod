@@ -23,7 +23,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
  * <p>Given the two dates, the years themselves are counted down on screen - slowly at first, then faster and faster,
  * the stars streaming past into streaks, the ticks running together - until the count slams to a stop on the new age
  * with a flash. Then how long it was, and the new name, written out beneath it. Without dates (the band lost, a line
- * ended) it is the words alone, over the same dark.
+ * ended) it is the words alone, over the same dark. Black, stars and the game's own lettering: nothing else.
  *
  * <p>Drawn as the topmost HUD layer rather than a screen, so the game keeps running underneath - the server moves the
  * player during the dark stretch, and the world has loaded around them by the time the picture comes back. Timed in
@@ -56,13 +56,13 @@ public final class EvolutionCutscene {
     private static final long TIME_LINE_AT_MS = FADE_IN_MS + 300L;
     private static final long STAGE_LINE_AT_MS = FADE_IN_MS + 1_600L;
 
-    private static final int COUNT_COLOUR = 0xE9D8A6;
-    private static final int LANDED_COLOUR = 0xFFD66B;
-    private static final int TIME_COLOUR = 0xE9D8A6;
+    // The game's own text colours: white, gray, yellow.
+    private static final int COUNT_COLOUR = 0xFFFFFF;
+    private static final int LANDED_COLOUR = 0xFFFF55;
+    private static final int TIME_COLOUR = 0xFFFF55;
     private static final int STAGE_COLOUR = 0xFFFFFF;
-    private static final int DIM_COLOUR = 0x9A9A9A;
-    private static final int GLOW_COLOUR = 0x3A2810;
-    private static final int STAR_COLOUR = 0xFFF1D0;
+    private static final int DIM_COLOUR = 0xAAAAAA;
+    private static final int STAR_COLOUR = 0xFFFFFF;
 
     private static final int STARS = 110;
     private static final float[] starAngle = new float[STARS];
@@ -163,7 +163,6 @@ public final class EvolutionCutscene {
         int cy = height / 2;
         float progress = countProgress(elapsed);
         float speed = countSpeed(elapsed);
-        glow(graphics, width, cy - 20, 70, shown * (0.6F + 0.4F * speed));
         stars(graphics, width, height, cx, cy - 20, elapsed, progress, speed, shown);
 
         boolean done = elapsed >= LANDED_AT_MS;
@@ -173,7 +172,7 @@ public final class EvolutionCutscene {
         // The stop: a flash, and the number jumps a little and settles.
         float sinceLanding = done ? (elapsed - LANDED_AT_MS) / 450.0F : -1.0F;
         if (done && sinceLanding < 1.0F) {
-            graphics.fill(0, 0, width, height, (alpha(0.45F * (1.0F - sinceLanding) * shown) << 24) | 0xFFF4DC);
+            graphics.fill(0, 0, width, height, (alpha(0.4F * (1.0F - sinceLanding) * shown) << 24) | 0xFFFFFF);
         }
         float pulse = done && sinceLanding < 1.0F ? 1.0F + 0.18F * (1.0F - sinceLanding) * (1.0F - sinceLanding) : 1.0F;
         float countIn = fade(elapsed, FADE_IN_MS) * shown;
@@ -182,32 +181,12 @@ public final class EvolutionCutscene {
                 done ? LANDED_COLOUR : COUNT_COLOUR, countIn, -1);
         drawCentred(graphics, font, "years ago", cx, cy - 14, 1.1F, DIM_COLOUR, countIn, -1);
 
-        // The span of it, and how far across it you have come.
-        int barHalf = Math.min(140, width / 3);
-        int barY = cy + 2;
-        int barAlpha = alpha(countIn * 0.8F);
-        if (barAlpha >= 5) {
-            graphics.fill(cx - barHalf, barY, cx + barHalf, barY + 1, (barAlpha << 24) | 0x5A4A30);
-            int reached = cx - barHalf + Math.round(2 * barHalf * progress);
-            graphics.fill(cx - barHalf, barY, reached, barY + 1, (barAlpha << 24) | COUNT_COLOUR);
-            graphics.fill(cx - barHalf, barY - 3, cx - barHalf + 1, barY + 4, (barAlpha << 24) | 0x8A7A60);
-            graphics.fill(cx + barHalf - 1, barY - 3, cx + barHalf, barY + 4, (barAlpha << 24) | 0x8A7A60);
-            graphics.fill(reached - 1, barY - 3, reached + 2, barY + 4, (barAlpha << 24) | (done ? LANDED_COLOUR : 0xFFFFFF));
-        }
-
-        drawCentred(graphics, font, timePassed, cx, cy + 14, 1.5F, TIME_COLOUR, fade(elapsed, LATER_AT_MS) * shown, -1);
-        // The new name, written out a letter at a time, and a line drawn under it.
+        drawCentred(graphics, font, timePassed, cx, cy + 8, 1.5F, TIME_COLOUR, fade(elapsed, LATER_AT_MS) * shown, -1);
+        // The new name, written out a letter at a time.
         float written = Mth.clamp((elapsed - NAME_AT_MS) / (float) NAME_WRITE_MS, 0.0F, 1.0F);
         int letters = Math.round(stage.length() * written);
-        drawCentred(graphics, font, stage, cx, cy + 34, 2.0F, STAGE_COLOUR, elapsed >= NAME_AT_MS ? shown : 0.0F, letters);
-        if (written > 0.0F) {
-            int underline = Math.round(font.width(stage) * written);
-            int lineAlpha = alpha(shown * 0.7F);
-            if (lineAlpha >= 5) {
-                graphics.fill(cx - underline, cy + 54, cx + underline, cy + 55, (lineAlpha << 24) | LANDED_COLOUR);
-            }
-        }
-        distance(graphics, font, elapsed, cx, cy + 64, NAME_AT_MS + NAME_WRITE_MS, shown);
+        drawCentred(graphics, font, stage, cx, cy + 28, 2.0F, STAGE_COLOUR, elapsed >= NAME_AT_MS ? shown : 0.0F, letters);
+        distance(graphics, font, elapsed, cx, cy + 54, NAME_AT_MS + NAME_WRITE_MS, shown);
     }
 
     /** The count ticks as it goes, the ticks running together and rising; the stop lands with a deep note. */
@@ -270,23 +249,12 @@ public final class EvolutionCutscene {
         }
     }
 
-    /** A low warm glow behind the words, like the last light on a horizon. */
-    private static void glow(GuiGraphics graphics, int width, int y, int half, float strength) {
-        int a = alpha(strength * 0.55F);
-        if (a < 5) {
-            return;
-        }
-        graphics.fillGradient(0, y - half, width, y, GLOW_COLOUR & 0xFFFFFF, (a << 24) | GLOW_COLOUR);
-        graphics.fillGradient(0, y, width, y + half, (a << 24) | GLOW_COLOUR, GLOW_COLOUR & 0xFFFFFF);
-    }
-
-    // ------------------------------------------------------------ words alone
+    // ------------------------------------------------------------ words alone (the band lost, a line ended)
 
     private static void renderPlain(GuiGraphics graphics, long elapsed, int width, int height, float shown) {
         Font font = Minecraft.getInstance().font;
         int cx = width / 2;
         int cy = height / 2;
-        glow(graphics, width, cy - 10, 60, shown * 0.6F);
         stars(graphics, width, height, cx, cy - 10, elapsed, 0.0F, 0.0F, shown * 0.7F);
         drawCentred(graphics, font, timePassed, cx, cy - 30, 2.0F, TIME_COLOUR, fade(elapsed, TIME_LINE_AT_MS) * shown, -1);
         drawCentred(graphics, font, stage, cx, cy + 2, 1.5F, STAGE_COLOUR, fade(elapsed, STAGE_LINE_AT_MS) * shown, -1);
@@ -330,7 +298,8 @@ public final class EvolutionCutscene {
         pose.pushPose();
         pose.translate(x, y, 0.0F);
         pose.scale(scale, scale, 1.0F);
-        graphics.drawString(font, drawn, -font.width(text) / 2, 0, (a << 24) | rgb, false);
+        // With the game's drop shadow, as its own titles have.
+        graphics.drawString(font, drawn, -font.width(text) / 2, 0, (a << 24) | rgb, true);
         pose.popPose();
     }
 
