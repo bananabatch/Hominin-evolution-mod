@@ -52,11 +52,18 @@ public final class Seasons {
 
     public static final int DAYS = 5;
 
-    /** Set by {@code /hominin season}, for testing; forgotten on restart. */
+    /** Set by {@code /hominin season}, for testing; forgotten when the world closes. */
     @Nullable
     private static Season forced;
     @Nullable
     private static Boolean forcedExtreme;
+
+    static {
+        dev.hominin.evolution.ServerState.onReset(() -> {
+            forced = null;
+            forcedExtreme = null;
+        });
+    }
 
     public static void force(@Nullable Season season) {
         forced = season;
@@ -190,7 +197,7 @@ public final class Seasons {
 
     // ------------------------------------------------------------ telling people
 
-    private static final Map<UUID, Long> told = new HashMap<>();
+    private static final Map<UUID, Long> told = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Once a day at most: when a season turns, or on first seeing one, every player hears of it. */
     public static void tick(ServerPlayer player) {
@@ -235,7 +242,7 @@ public final class Seasons {
         }
     }
 
-    private static final Map<UUID, Long> dayTold = new HashMap<>();
+    private static final Map<UUID, Long> dayTold = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Once a day, when the day is anything but ordinary: a dry day, or a prosperous one. */
     private static void tellDay(ServerPlayer player) {

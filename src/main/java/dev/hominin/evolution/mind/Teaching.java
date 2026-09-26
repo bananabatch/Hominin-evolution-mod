@@ -42,7 +42,7 @@ public final class Teaching {
     private record Lesson(Skills.Skill skill, List<UUID> watchers, long until) {
     }
 
-    private static final Map<UUID, Lesson> lessons = new HashMap<>();
+    private static final Map<UUID, Lesson> lessons = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** The list of what you could teach them. */
     public static void open(ServerPlayer player, int entityId) {

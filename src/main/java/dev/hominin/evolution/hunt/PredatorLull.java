@@ -41,8 +41,8 @@ public final class PredatorLull {
     private static final double CLOSE = 7.0D;
     private static final double LOOKS_FOR_STRAGGLERS = 24.0D;
 
-    private static final Map<UUID, Long> lullUntil = new HashMap<>();
-    private static final Map<UUID, Long> arrivedAt = new HashMap<>();
+    private static final Map<UUID, Long> lullUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> arrivedAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(PredatorLull::onJoin);

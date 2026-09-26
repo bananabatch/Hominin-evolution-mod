@@ -47,7 +47,7 @@ public final class HuntParty {
     private record Party(List<UUID> attackers, List<UUID> chasers, UUID target, @Nullable UUID decoy, String name) {
     }
 
-    private static final Map<UUID, Party> parties = new HashMap<>();
+    private static final Map<UUID, Party> parties = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static List<BandMember> available(ServerPlayer player) {
         List<BandMember> list = new ArrayList<>();

@@ -65,7 +65,7 @@ public class Crocuta extends PathfinderMob {
     private static final int SCATTER_TICKS = 900;
 
     /** One warning message per clan, however many of them bark. */
-    private static final Map<UUID, Long> clanWarnedAt = new HashMap<>();
+    private static final Map<UUID, Long> clanWarnedAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     @Nullable
     private UUID clanId;

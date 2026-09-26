@@ -39,8 +39,8 @@ public final class Infestation {
     /** How long the infestation affliction is re-asserted for while it stands. */
     private static final int AFFLICTION_TICKS = 200;
 
-    private static final Map<UUID, Integer> burden = new HashMap<>();
-    private static final Map<UUID, Long> lastBite = new HashMap<>();
+    private static final Map<UUID, Integer> burden = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastBite = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static int of(ServerPlayer player) {
         return burden.getOrDefault(player.getUUID(), 0);

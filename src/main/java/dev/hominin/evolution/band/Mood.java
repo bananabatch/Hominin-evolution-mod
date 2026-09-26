@@ -221,7 +221,7 @@ public final class Mood {
     }
 
     /** Who asked to be given some later, and of whom. */
-    private static final Map<java.util.UUID, java.util.UUID> later = new java.util.HashMap<>();
+    private static final Map<java.util.UUID, java.util.UUID> later = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /** Somebody who asked to be fed later is hungry now: they come and ask. */
     private static void askLater(ServerPlayer player) {

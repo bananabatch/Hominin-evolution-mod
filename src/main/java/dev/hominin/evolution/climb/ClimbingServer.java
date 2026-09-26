@@ -66,8 +66,8 @@ public final class ClimbingServer {
 
     private static final double WALL_SLACK = 1.0D;
 
-    private static final Map<UUID, Long> noGripUntil = new HashMap<>();
-    private static final Map<UUID, Long> slippedAt = new HashMap<>();
+    private static final Map<UUID, Long> noGripUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> slippedAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** The client asks to start or stop. Stopping is always allowed. */
     public static void request(ServerPlayer player, boolean climbing) {

@@ -245,8 +245,8 @@ public final class Tips {
     private record Waiting(Tip tip, long until) {
     }
 
-    private static final Map<UUID, Long> lastShown = new HashMap<>();
-    private static final Map<UUID, List<Waiting>> waiting = new HashMap<>();
+    private static final Map<UUID, Long> lastShown = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, List<Waiting>> waiting = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static TipsData data(ServerPlayer player) {
         return player.getData(Attachments.TIPS);

@@ -35,7 +35,7 @@ public final class Territory {
     private record Claim(BlockPos home, int uses, boolean granted, long lastWord) {
     }
 
-    private static final Map<UUID, Claim> claims = new HashMap<>();
+    private static final Map<UUID, Claim> claims = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** A band has settled here: this is the ground they will speak up about. */
     public static void settle(UUID bandId, BlockPos home) {
@@ -63,7 +63,7 @@ public final class Territory {
 
     // ------------------------------------------------------------ neighbours, by season
 
-    private static final Map<UUID, Long> metThisSeason = new HashMap<>();
+    private static final Map<UUID, Long> metThisSeason = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final double NEIGHBOUR_RANGE = 10.0D;
 
     /**

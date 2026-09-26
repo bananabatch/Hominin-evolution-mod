@@ -73,7 +73,7 @@ public final class Quarry {
     private record Winded(UUID hunter, int phase, long until) {
     }
 
-    private static final Map<UUID, Winded> winded = new HashMap<>();
+    private static final Map<UUID, Winded> winded = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Megafauna that runs rather than fights once it is broken - the big grazers, not the big cats. */
     public static boolean isMegaGame(LivingEntity animal) {
@@ -178,7 +178,7 @@ public final class Quarry {
     }
 
     /** Hunters who have lost sight of their quarry, and whose band is waiting for them to find it. */
-    private static final java.util.Set<UUID> lost = new java.util.HashSet<>();
+    private static final java.util.Set<UUID> lost = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
     /** How often someone in the band may find the tracks when you cannot. */
     private static final int TRACK_CHECK_TICKS = 5 * 20;
     private static final float MEMBER_TRACK_SHARE = 0.35F;
@@ -237,9 +237,9 @@ public final class Quarry {
         }
     }
 
-    private static final Map<UUID, Hunt> hunts = new HashMap<>();
+    private static final Map<UUID, Hunt> hunts = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Animals in the second half of their run, and when to hand them the slower legs. */
-    private static final Map<UUID, Long> secondWind = new HashMap<>();
+    private static final Map<UUID, Long> secondWind = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Wounds that will not close, and when they finally do. */
 
     /** Anything that will stand and fight does not bolt: predators, the fearless, a mobbing troop. */
@@ -338,7 +338,7 @@ public final class Quarry {
     }
 
     /** Who first drew blood from big game, and when: a persistence hunt is measured from there. */
-    private static final java.util.Map<java.util.UUID, FirstBlood> firstBlood = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, FirstBlood> firstBlood = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
     /** Long enough that it was a chase, not a lucky blow. */
     private static final long PERSISTENCE_TICKS = 20 * 30;
 
@@ -364,7 +364,7 @@ public final class Quarry {
     }
 
     /** Animals just run to death, whose drops are still to come. */
-    private static final java.util.Set<UUID> ranDown = new java.util.HashSet<>();
+    private static final java.util.Set<UUID> ranDown = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
 
     /**
      * Run down, not struck down: it died all at once, exhausted, nothing wasted on a panicked fight - and the hunter

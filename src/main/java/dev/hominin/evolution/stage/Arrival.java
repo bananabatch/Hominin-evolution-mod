@@ -76,7 +76,7 @@ public final class Arrival {
     private record Pending(long arriveAt, StageDefinition to) {
     }
 
-    private static final Map<UUID, Pending> pending = new HashMap<>();
+    private static final Map<UUID, Pending> pending = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Starts the cutscene. The move itself happens on a later tick, once the screen is black. */
     public static void begin(ServerPlayer player, StageDefinition from, StageDefinition to) {

@@ -34,7 +34,7 @@ public final class PilePlayers extends SavedData {
     /** Who each player lets take what they marked for players only. Empty or missing: any player. */
     private final Map<UUID, Set<UUID>> allowed = new HashMap<>();
     /** The players offered in each player's open list, in order: a pick is an index into it. */
-    private static final Map<UUID, List<UUID>> offered = new HashMap<>();
+    private static final Map<UUID, List<UUID>> offered = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static PilePlayers of(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(

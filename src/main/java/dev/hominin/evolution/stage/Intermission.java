@@ -86,8 +86,15 @@ public final class Intermission {
     @Nullable
     private static Session session;
     /** Somebody else evolving while an intermission runs: they wait their turn. */
-    private static final List<Map.Entry<UUID, ResourceLocation>> queued = new ArrayList<>();
+    private static final List<Map.Entry<UUID, ResourceLocation>> queued = dev.hominin.evolution.ServerState.track(new ArrayList<>());
     private static long lastTick = -1L;
+
+    static {
+        dev.hominin.evolution.ServerState.onReset(() -> {
+            session = null;
+            lastTick = -1L;
+        });
+    }
 
     // ------------------------------------------------------------ starting one
 

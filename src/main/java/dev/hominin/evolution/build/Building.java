@@ -259,7 +259,7 @@ public final class Building {
 
     // ------------------------------------------------------------ the band suggests
 
-    private static final java.util.Map<java.util.UUID, Long> nextSuggestion = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> nextSuggestion = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
     /** How long a suggestion waits for an answer: a day. */
     private static final long SUGGESTION_LASTS = 24000L;
 

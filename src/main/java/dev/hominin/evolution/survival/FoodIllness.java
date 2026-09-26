@@ -43,8 +43,8 @@ public final class FoodIllness {
     /** The gut takes only so much at once: water counts once in fifteen seconds, a small meal once in twenty. */
     private static final long DRINK_GAP = 15 * 20L;
     private static final long MEAL_GAP = 20 * 20L;
-    private static final Map<UUID, Long> lastDrink = new HashMap<>();
-    private static final Map<UUID, Long> lastMeal = new HashMap<>();
+    private static final Map<UUID, Long> lastDrink = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastMeal = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Map<String, Integer> counters(ServerPlayer player) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();

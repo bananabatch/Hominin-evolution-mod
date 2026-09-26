@@ -51,7 +51,7 @@ public final class TreeFelling {
     }
 
     /** Cuts waiting for the break to go through - the next tick, after anything else has had its say. */
-    private static final List<Cut> pending = new ArrayList<>();
+    private static final List<Cut> pending = dev.hominin.evolution.ServerState.track(new ArrayList<>());
 
     /** A log broken by a player. If there is tree above it, it will come down. */
     public static void broke(ServerPlayer player, BlockPos pos, BlockState state) {

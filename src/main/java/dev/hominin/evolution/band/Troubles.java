@@ -36,7 +36,7 @@ public final class Troubles {
     public static final int MOST_AT_ONCE = 2;
     /** Between one member's remembering out loud and the next, per leader. */
     private static final long SAY_GAP = 3 * 60 * 20L;
-    private static final Map<UUID, Long> lastSaid = new HashMap<>();
+    private static final Map<UUID, Long> lastSaid = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** A member has died: whoever was close to them may take it hard. */
     public static void memberDied(BandMember dead) {

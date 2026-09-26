@@ -80,8 +80,8 @@ public final class Claims {
     /** To an offer for your ground: ask for more. */
     public static final int BETTER = 6;
     /** Bands told to bring something better: they come back the next day with more. */
-    private static final Map<UUID, UUID> comeBack = new HashMap<>();
-    private static final Map<UUID, Long> comeBackDay = new HashMap<>();
+    private static final Map<UUID, UUID> comeBack = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> comeBackDay = dev.hominin.evolution.ServerState.track(new HashMap<>());
     public static final int SHARE = 5;
 
     /** What a band sticks to with you once it has tried it. */
@@ -112,13 +112,13 @@ public final class Claims {
     private record Chase(UUID band, long until) {
     }
 
-    private static final Map<UUID, Approach> approaches = new HashMap<>();
-    private static final Map<UUID, Pending> pending = new HashMap<>();
-    private static final Map<UUID, Joint> joints = new HashMap<>();
-    private static final Map<UUID, Chase> chases = new HashMap<>();
+    private static final Map<UUID, Approach> approaches = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Pending> pending = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Joint> joints = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Chase> chases = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Bands you broke in a raid, and when: their ground is yours to take for a day. */
-    private static final Map<String, Long> broken = new HashMap<>();
-    private static final Map<String, Long> bandGap = new HashMap<>();
+    private static final Map<String, Long> broken = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<String, Long> bandGap = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ desperation
 
@@ -1007,7 +1007,7 @@ public final class Claims {
     }
 
     /** Bands coming back with a better offer than before. */
-    private static final java.util.Set<UUID> richer = new java.util.HashSet<>();
+    private static final java.util.Set<UUID> richer = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
 
     private static void answerOffer(ServerPlayer player, ServerLevel level, Bands.Record band, Pending answer, int choice) {
         if (choice == ACCEPT) {
@@ -1351,7 +1351,7 @@ public final class Claims {
 
     // ------------------------------------------------------------ allies ganging up
 
-    private static final Map<UUID, java.util.Set<UUID>> gangs = new HashMap<>();
+    private static final Map<UUID, java.util.Set<UUID>> gangs = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * A band coming for you brings its allies - more likely the bigger your name for breaking bands has

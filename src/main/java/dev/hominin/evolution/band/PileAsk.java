@@ -33,7 +33,7 @@ public final class PileAsk {
     private static final int NOT_NOW = 2;
     private static final String NEXT = "pile_ask_next_minute";
 
-    private static final Map<UUID, BlockPos> fires = new HashMap<>();
+    private static final Map<UUID, BlockPos> fires = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every two minutes: does anyone have spares with nowhere to put them? */
     public static void tick(ServerPlayer player) {

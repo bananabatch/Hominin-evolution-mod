@@ -62,7 +62,7 @@ public final class Predation {
     private record Camp(BlockPos anchor, float pressure, boolean warned) {
     }
 
-    private static final Map<UUID, Camp> camps = new HashMap<>();
+    private static final Map<UUID, Camp> camps = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ what a hominin looks like
 
@@ -230,7 +230,7 @@ public final class Predation {
                         && dev.hominin.evolution.entity.TroopRelations.isTrusted(player, b.getTroop())).isEmpty();
     }
 
-    private static final Map<UUID, String> threatSent = new HashMap<>();
+    private static final Map<UUID, String> threatSent = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every ten seconds: the threat of the ground underfoot - yours, another band's, or nobody's - to the bar. */
     private static void sendThreat(ServerPlayer player, ServerLevel level) {

@@ -50,7 +50,7 @@ public final class Intruders {
     private record Intrusion(UUID band, long until, boolean asked) {
     }
 
-    private static final Map<UUID, Intrusion> intrusions = new HashMap<>();
+    private static final Map<UUID, Intrusion> intrusions = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static void tick(ServerPlayer player) {
         if (player.tickCount % 20 != 13 || player.isSpectator()) {

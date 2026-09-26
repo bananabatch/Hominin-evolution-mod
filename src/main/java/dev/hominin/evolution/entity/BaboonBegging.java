@@ -34,12 +34,12 @@ public final class BaboonBegging {
     /** Ignored: six to eleven minutes before one tries again. */
     private static final long REST_AFTER_IGNORED = 7200L;
     private static final int REST_SPREAD = 6000;
-    private static final Map<UUID, Long> nextAsk = new HashMap<>();
+    private static final Map<UUID, Long> nextAsk = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private record Nag(UUID troop, UUID baboon, long until, boolean reminded) {
     }
 
-    private static final Map<UUID, Nag> nags = new HashMap<>();
+    private static final Map<UUID, Nag> nags = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every second. */
     public static void tick(ServerPlayer player) {

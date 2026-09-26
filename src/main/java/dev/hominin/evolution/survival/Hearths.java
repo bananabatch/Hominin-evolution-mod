@@ -229,7 +229,7 @@ public final class Hearths extends SavedData {
 
     // ------------------------------------------------------------ the night
 
-    private static final Map<UUID, int[]> nights = new HashMap<>();
+    private static final Map<UUID, int[]> nights = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final int NIGHT_SECONDS_NEEDED = 300;
 
     /**

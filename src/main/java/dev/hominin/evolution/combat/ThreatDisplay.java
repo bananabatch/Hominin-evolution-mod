@@ -77,12 +77,12 @@ public final class ThreatDisplay {
     private static final int POINTLESS_DISPLAYS = 3;
     private static final long POINTLESS_WINDOW_TICKS = 60 * 20;
 
-    private static final Map<UUID, Long> lastCall = new HashMap<>();
+    private static final Map<UUID, Long> lastCall = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Displays in a row with nothing to display at, and when the last one was. */
-    private static final Map<UUID, int[]> pointless = new HashMap<>();
+    private static final Map<UUID, int[]> pointless = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Hops still to come, and the game time each is due. */
-    private static final Map<UUID, int[]> hopsLeft = new HashMap<>();
-    private static final Map<UUID, Long> nextHop = new HashMap<>();
+    private static final Map<UUID, int[]> hopsLeft = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> nextHop = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static boolean isThrowable(ItemStack stack) {
         // A branch is waved, not thrown: it is what you hold a display with.

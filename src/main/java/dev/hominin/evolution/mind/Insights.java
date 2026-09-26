@@ -24,7 +24,7 @@ import net.minecraft.sounds.SoundSource;
  */
 public final class Insights {
     private static final long HINT_GAP_TICKS = 12000L;
-    private static final Map<String, Long> hinted = new HashMap<>();
+    private static final Map<String, Long> hinted = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Every ten seconds: nothing of its own now. Hidden ground - a breeding ground, fertile soil - is a place

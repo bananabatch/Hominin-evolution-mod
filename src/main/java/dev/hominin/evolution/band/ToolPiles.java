@@ -251,7 +251,7 @@ public final class ToolPiles extends SavedData {
 
     // ------------------------------------------------------------ artifacts
 
-    private static final java.util.Map<BlockPos, Long> toldOld = new java.util.HashMap<>();
+    private static final java.util.Map<BlockPos, Long> toldOld = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /**
      * Every five seconds: piles of yours from a kind of you long gone are still lying where they were left - worn,

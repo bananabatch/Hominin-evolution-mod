@@ -57,7 +57,7 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
     /** Their ground: a hominin band's is twice as wide, and held far less fiercely. */
     private static final double TERRITORY = ChimpRanges.RADIUS;
     /** Strangers on the ground, and when they were first warned. */
-    private static final java.util.Map<String, Long> intruders = new java.util.HashMap<>();
+    private static final java.util.Map<String, Long> intruders = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
     private static final int ANGER_TICKS = 300;
     /** How often the alpha feels the need to make a point. */
     private static final int CHECK_MIN = 1800;
@@ -236,7 +236,7 @@ public class Chimpanzee extends PathfinderMob implements TroopAnimal, TreeClimbe
 
     /** How far outside the range a trusted friend is met. */
     private static final double MEET_OUT = 30.0D;
-    private static final java.util.Map<String, Long> met = new java.util.HashMap<>();
+    private static final java.util.Map<String, Long> met = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /**
      * A friend the community trusts, coming near: the two of them nearest go out to meet them - up to thirty blocks

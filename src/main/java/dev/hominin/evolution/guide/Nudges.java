@@ -130,8 +130,8 @@ public final class Nudges {
     private record Seen(int count, long since) {
     }
 
-    private static final Map<UUID, Map<String, Seen>> seen = new HashMap<>();
-    private static final Map<UUID, Long> lastNudge = new HashMap<>();
+    private static final Map<UUID, Map<String, Seen>> seen = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastNudge = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every ten seconds. */
     public static void tick(ServerPlayer player) {

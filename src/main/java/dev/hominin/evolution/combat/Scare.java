@@ -27,9 +27,9 @@ public final class Scare {
     private static final double WALK_SPEED = 1.0D;
 
     /** Game time each scared mob stays scared until. Weak, so unloaded mobs are not held. */
-    private static final Map<Mob, Long> SCARED_UNTIL = new WeakHashMap<>();
-    private static final Map<Mob, Vec3> SCARED_OF = new WeakHashMap<>();
-    private static final Map<Mob, Double> LEAVING_AT = new WeakHashMap<>();
+    private static final Map<Mob, Long> SCARED_UNTIL = dev.hominin.evolution.ServerState.track(new WeakHashMap<>());
+    private static final Map<Mob, Vec3> SCARED_OF = dev.hominin.evolution.ServerState.track(new WeakHashMap<>());
+    private static final Map<Mob, Double> LEAVING_AT = dev.hominin.evolution.ServerState.track(new WeakHashMap<>());
 
     /** Whether a threat display can frighten this at all. */
     public static boolean canBeScared(PathfinderMob mob) {

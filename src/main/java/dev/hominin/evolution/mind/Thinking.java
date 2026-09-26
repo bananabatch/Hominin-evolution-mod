@@ -48,7 +48,7 @@ public final class Thinking {
     /** Hunger the effort costs - most of a meal, taken off a full bar. */
     private static final int FOOD_COST = 6;
 
-    private static final Map<UUID, Long> lastThought = new HashMap<>();
+    private static final Map<UUID, Long> lastThought = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Resolves one completed hold of the think key. Every failure path reports

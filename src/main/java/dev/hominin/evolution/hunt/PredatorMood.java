@@ -35,7 +35,7 @@ public final class PredatorMood {
     private record Verdict(boolean ignores, long until) {
     }
 
-    private static final Map<String, Verdict> verdicts = new HashMap<>();
+    private static final Map<String, Verdict> verdicts = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** How likely a predator is to leave you alone. */
     public static float ignoreChance(ServerPlayer player) {

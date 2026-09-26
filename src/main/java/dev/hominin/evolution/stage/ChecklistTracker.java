@@ -27,10 +27,10 @@ public final class ChecklistTracker {
     private static final String TODO = "-";
     private static final String READY = "!";
 
-    private static final Map<UUID, List<String>> lastSent = new HashMap<>();
+    private static final Map<UUID, List<String>> lastSent = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Players who have turned the overlay off with {@code /hominin checklist}. */
-    private static final Set<UUID> hidden = new HashSet<>();
+    private static final Set<UUID> hidden = dev.hominin.evolution.ServerState.track(new HashSet<>());
 
     /** A fresh join has the list resent, whatever the last world left on screen. */
     public static void onPlayerLoggedIn(

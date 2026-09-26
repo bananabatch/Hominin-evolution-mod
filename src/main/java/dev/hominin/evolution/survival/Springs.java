@@ -32,8 +32,8 @@ public final class Springs {
     private static final float MEND = 2.0F;
     private static final float SETTLES_GUT = 0.25F;
 
-    private static final Map<UUID, Integer> soaking = new HashMap<>();
-    private static final Map<UUID, Long> mended = new HashMap<>();
+    private static final Map<UUID, Integer> soaking = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> mended = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** A drink straight from a spring. */
     public static void drank(ServerPlayer player) {

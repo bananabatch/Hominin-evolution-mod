@@ -26,7 +26,7 @@ public final class Drinking {
     private static final double REACH = 4.5D;
     private static final int COOLDOWN_TICKS = 20;
 
-    private static final Map<UUID, Long> lastDrink = new HashMap<>();
+    private static final Map<UUID, Long> lastDrink = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Right-clicked with an empty hand: drink, if there is water in front of them. */
     public static void tryDrink(ServerPlayer player) {

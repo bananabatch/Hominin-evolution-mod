@@ -55,11 +55,11 @@ public final class Fates {
     private record Rescue(List<UUID> bands, long arriveAt, long leaveAt, boolean arrived) {
     }
 
-    private static final Map<UUID, Plight> plights = new HashMap<>();
-    private static final Map<UUID, Rescue> rescues = new HashMap<>();
+    private static final Map<UUID, Plight> plights = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Rescue> rescues = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Per player: the most grown members the band has had today, and the day. */
-    private static final Map<UUID, int[]> peak = new HashMap<>();
-    private static final Map<UUID, Long> lastRescue = new HashMap<>();
+    private static final Map<UUID, int[]> peak = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastRescue = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ once a day, for each band
 

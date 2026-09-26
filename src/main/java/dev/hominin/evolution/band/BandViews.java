@@ -60,9 +60,9 @@ public final class BandViews extends SavedData {
     /** By a band's leader: how it sees each other band, by that band's leader. Missing: neutral. */
     private final Map<UUID, Map<UUID, View>> views = new HashMap<>();
     /** The bands listed in each player's open menu: a pick is an index into it. */
-    private static final Map<UUID, List<UUID>> listed = new HashMap<>();
+    private static final Map<UUID, List<UUID>> listed = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** When each band was last told its people are going for someone's: "leader/other". */
-    private static final Map<String, Long> told = new HashMap<>();
+    private static final Map<String, Long> told = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static BandViews of(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(

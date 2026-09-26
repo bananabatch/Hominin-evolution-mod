@@ -68,7 +68,7 @@ public final class Haul {
         }
     }
 
-    private static final Map<UUID, Job> jobs = new HashMap<>();
+    private static final Map<UUID, Job> jobs = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static boolean away(BandMember member) {
         return tripOf(member) != null;

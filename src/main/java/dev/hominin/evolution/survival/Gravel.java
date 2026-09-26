@@ -35,7 +35,7 @@ public final class Gravel extends SavedData {
 
     /** Searches made, by block. */
     private final Map<Long, Integer> searched = new HashMap<>();
-    private static final Map<UUID, Long> last = new HashMap<>();
+    private static final Map<UUID, Long> last = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Gravel of(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(Gravel::new, Gravel::load), NAME);

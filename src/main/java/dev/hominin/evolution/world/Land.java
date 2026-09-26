@@ -150,7 +150,7 @@ public final class Land {
     private record Cached(Value value, long at) {
     }
 
-    private static final Map<Long, Cached> cache = new HashMap<>();
+    private static final Map<Long, Cached> cache = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** The pressure of the ground this far round this point - worked out at most every five minutes. */
     public static Value of(ServerLevel level, BlockPos centre, int radius) {

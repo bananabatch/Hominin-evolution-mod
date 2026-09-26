@@ -43,12 +43,12 @@ public class ObsidianChunkItem extends Item {
     public static final int PIECES = 8;
     /** A second use this soon after the first breaks it down: a double use, never an accident. */
     private static final long DOUBLE_USE_TICKS = 12L;
-    private static final Map<UUID, Long> firstUse = new HashMap<>();
+    private static final Map<UUID, Long> firstUse = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final Map<UUID, Long> CLIENT_USES = new HashMap<>();
     /** Ten seconds in hand before it can be thrown: nobody throws the rarest stone there is by accident. */
     private static final long HOLD_BEFORE_THROW = 200L;
     /** Since when, and in which slot, each player has had one in hand. */
-    private static final Map<UUID, long[]> heldSince = new HashMap<>();
+    private static final Map<UUID, long[]> heldSince = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public ObsidianChunkItem(Properties properties) {
         super(properties);

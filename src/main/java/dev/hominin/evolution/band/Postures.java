@@ -69,11 +69,11 @@ public final class Postures {
     private static final double FIGHT_REACH = 24.0D;
 
     /** Ambushes under way: the thing ambushed, and when the band first saw it. */
-    private static final Map<UUID, Long> ambushes = new HashMap<>();
+    private static final Map<UUID, Long> ambushes = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Things the ambush has already been sprung on. */
-    private static final Map<UUID, Long> sprung = new HashMap<>();
+    private static final Map<UUID, Long> sprung = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Things a band has already been rallied against, overwhelming it. */
-    private static final Map<UUID, Long> rallied = new HashMap<>();
+    private static final Map<UUID, Long> rallied = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static Posture of(Player player) {
         return Posture.byId(player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters().getOrDefault(KEY, 0));

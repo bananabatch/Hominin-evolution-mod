@@ -62,7 +62,7 @@ public final class BlockBreakHandler {
     /** The rare fallen limb that is already heavy at one end. */
     private static final float WOODEN_CLUB_LEAF_DROP_CHANCE = 0.005F;
 
-    private static final Map<UUID, Long> lastBlockedMessageTick = new HashMap<>();
+    private static final Map<UUID, Long> lastBlockedMessageTick = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private BlockBreakHandler() {
     }

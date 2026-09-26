@@ -136,7 +136,7 @@ public enum StoneMaterial {
     // ------------------------------------------------------------ the stone a player is working
 
     /** What the player last struck: handed to whatever comes out of it by another route. */
-    private static final Map<UUID, StoneMaterial> struck = new HashMap<>();
+    private static final Map<UUID, StoneMaterial> struck = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static void struckBy(UUID player, @Nullable StoneMaterial material) {
         if (material == null) {
@@ -156,7 +156,7 @@ public enum StoneMaterial {
     private record Deepen(LivingEntity target, long at) {
     }
 
-    private static final List<Deepen> deepening = new ArrayList<>();
+    private static final List<Deepen> deepening = dev.hominin.evolution.ServerState.track(new ArrayList<>());
 
     /** A keener edge lands harder; obsidian may open the wound further once the blow is done. */
     public static void onHurt(LivingIncomingDamageEvent event) {

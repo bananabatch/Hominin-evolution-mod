@@ -72,11 +72,11 @@ public final class Parties {
         }
     }
 
-    private static final List<Mission> missions = new ArrayList<>();
+    private static final List<Mission> missions = dev.hominin.evolution.ServerState.track(new ArrayList<>());
     /** "player|band" -> the band they promised to help fight. */
-    private static final Map<String, UUID> fightPledges = new HashMap<>();
+    private static final Map<String, UUID> fightPledges = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** "player|band" -> until when they will join your hunt. */
-    private static final Map<String, Long> huntPledges = new HashMap<>();
+    private static final Map<String, Long> huntPledges = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ who is away
 

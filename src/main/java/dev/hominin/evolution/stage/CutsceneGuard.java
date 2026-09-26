@@ -14,7 +14,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * could not see, while you could not move, is not a lesson about anything.
  */
 public final class CutsceneGuard {
-    private static final Map<UUID, Long> protectedUntil = new HashMap<>();
+    private static final Map<UUID, Long> protectedUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static void protect(ServerPlayer player, int ticks) {
         protectedUntil.put(player.getUUID(), player.level().getGameTime() + ticks);

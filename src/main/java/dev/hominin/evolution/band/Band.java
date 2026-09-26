@@ -78,11 +78,11 @@ public final class Band {
     private record Absorb(UUID member, long until) {
     }
 
-    private static final Map<UUID, Absorb> absorbing = new HashMap<>();
+    private static final Map<UUID, Absorb> absorbing = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
-    private static final Map<UUID, Heir> heirs = new HashMap<>();
+    private static final Map<UUID, Heir> heirs = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Until when a player's blows on their band count as wrestling. */
-    private static final Map<UUID, Long> wrestleWindow = new HashMap<>();
+    private static final Map<UUID, Long> wrestleWindow = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Losing this many bands ends the line. */
     private static final int BANDS_TO_EXTINCTION = 3;
@@ -290,7 +290,7 @@ public final class Band {
 
     /** Once in five minutes, like the band's own. */
     private static final long PLAYER_ADRENALINE_COOLDOWN = 6000L;
-    private static final Map<UUID, Long> playerAdrenalineReady = new HashMap<>();
+    private static final Map<UUID, Long> playerAdrenalineReady = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * What all that play was for. With nothing practised the body gives you nothing
@@ -367,8 +367,8 @@ public final class Band {
     private static final float EXCURSION_CHANCE = 0.3F;
     private static final int ANNOUNCE_MEMBER_COOLDOWN = 1200;
     private static final int ANNOUNCE_LEADER_COOLDOWN = 300;
-    private static final Map<UUID, Long> lastMemberAnnouncement = new HashMap<>();
-    private static final Map<UUID, Long> lastLeaderAnnouncement = new HashMap<>();
+    private static final Map<UUID, Long> lastMemberAnnouncement = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastLeaderAnnouncement = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Tells the leader what a member is up to, so the band feels like it has a life of
@@ -434,7 +434,7 @@ public final class Band {
 
     // ------------------------------------------------------------ rare discoveries
 
-    private static final Map<UUID, Long> lastLomekwianDay = new HashMap<>();
+    private static final Map<UUID, Long> lastLomekwianDay = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** A Lomekwian core only after the first day, and one a day at most per band. */
     public static boolean mayMakeLomekwian(BandMember member) {
@@ -645,7 +645,7 @@ public final class Band {
     /** Close enough that anyone in the band comes, whatever party they are in. */
     private static final double CLOSE_BY = 10.0D;
     private static final int PARTY_CHECK_TICKS = 400;
-    private static final Map<UUID, Long> lastSplitDay = new HashMap<>();
+    private static final Map<UUID, Long> lastSplitDay = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Australopithecus bands are small enough to move as one. From habilis on, a band
@@ -1138,7 +1138,7 @@ public final class Band {
 
     /** The bond a member needs with you before you can live as them for a while. */
     public static final int SWAP_BOND = 3;
-    private static final Map<UUID, Long> lastSwap = new HashMap<>();
+    private static final Map<UUID, Long> lastSwap = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final long SWAP_GAP_TICKS = 2400L;
 
     /**
@@ -1310,7 +1310,7 @@ public final class Band {
     }
 
     /** Players known to have had a living band, so an empty band reads as a loss. */
-    private static final java.util.Set<UUID> hadBand = new java.util.HashSet<>();
+    private static final java.util.Set<UUID> hadBand = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
 
     /** Their band went into someone else's, not under: an empty band is not a loss. */
     public static void forgetBand(ServerPlayer player) {

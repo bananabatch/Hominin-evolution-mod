@@ -136,8 +136,8 @@ public final class Pois extends SavedData {
     /** "band|player": bands that stood with a band of yours that is gone. They know you. */
     private final Set<String> familiar = new HashSet<>();
 
-    private static final Map<String, Long> hinted = new HashMap<>();
-    private static final Map<String, Integer> toldToday = new HashMap<>();
+    private static final Map<String, Long> hinted = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<String, Integer> toldToday = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static Pois of(ServerLevel level) {
         ServerLevel home = level.getServer().overworld();
@@ -163,7 +163,7 @@ public final class Pois extends SavedData {
     // ------------------------------------------------------------ where places are
 
     /** Found once per region and kind: sampling biomes is not free. */
-    private static final Map<String, java.util.Optional<BlockPos>> waterSites = new HashMap<>();
+    private static final Map<String, java.util.Optional<BlockPos>> waterSites = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Places that belong to a kind of country: gravel on a river, tide pools on a shore, an oasis in dry country.
@@ -1538,7 +1538,7 @@ public final class Pois extends SavedData {
         return true;
     }
 
-    private static final Map<String, Integer> gathered = new HashMap<>();
+    private static final Map<String, Integer> gathered = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * The animals keep their own hours at these places: at a spring the grazers come to drink at dusk, at a

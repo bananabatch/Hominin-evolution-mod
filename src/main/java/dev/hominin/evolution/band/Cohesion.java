@@ -79,9 +79,9 @@ public final class Cohesion {
     private static final int PROMISE_BROKEN_COST = 6;
 
     /** What you last got wrong, for them to throw back at you. */
-    private static final Map<UUID, String> lastFault = new HashMap<>();
+    private static final Map<UUID, String> lastFault = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Per-player cooldowns on the small, repeatable things that build cohesion. */
-    private static final Map<String, Long> cooldowns = new HashMap<>();
+    private static final Map<String, Long> cooldowns = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Map<String, Integer> counters(Player player) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();

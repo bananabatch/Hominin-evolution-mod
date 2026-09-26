@@ -78,10 +78,10 @@ public final class Feast {
             && !stack.is(ModItems.HOMININ_MEAT.get()) && !stack.is(ModItems.COOKED_HOMININ_MEAT.get())
             && !stack.is(ModItems.HOMININ_BRAIN.get()) && !stack.is(ModItems.WATER_EGGSHELL.get());
 
-    private static final Map<UUID, String> reasons = new HashMap<>();
-    private static final Map<UUID, Float> exhaustion = new HashMap<>();
+    private static final Map<UUID, String> reasons = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Float> exhaustion = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Who of each band has taken on putting up a rack, so two do not try at once. */
-    private static final Map<UUID, UUID> builders = new HashMap<>();
+    private static final Map<UUID, UUID> builders = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Map<String, Integer> counters(ServerPlayer player) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();

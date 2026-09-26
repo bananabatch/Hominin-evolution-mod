@@ -33,7 +33,7 @@ public final class Voices {
     private static final long BAND_GAP = 45 * 20L;
     private static final long OWN_GAP = 150 * 20L;
 
-    private static final Map<String, Long> lastHeard = new HashMap<>();
+    private static final Map<String, Long> lastHeard = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static final String[] ALLIED = {"There they are! Come and sit with us.", "You are always welcome with us.",
             "We saw a big herd down by the water - we'll show you.", "Our young ones keep asking about you.",

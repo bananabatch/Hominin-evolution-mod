@@ -51,8 +51,8 @@ public final class Wants {
     public static final int HUNTS_FOR_YOU_BOND = 6;
     private static final double TALK_RANGE = 24.0D;
 
-    private static final Map<UUID, Long> lastLeaderThought = new HashMap<>();
-    private static final Map<UUID, Long> lastComplaint = new HashMap<>();
+    private static final Map<UUID, Long> lastLeaderThought = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastComplaint = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Whether this member has wants and thoughts of its own: habilis and later, in the player's band. */
     public static boolean hasWants(BandMember member) {

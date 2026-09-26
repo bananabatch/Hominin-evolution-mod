@@ -30,7 +30,7 @@ public final class Throwing {
     private static final float SPEAR_SPEED = 1.9F;
     private static final float ROCK_SPEED = 1.5F;
 
-    private static final Map<UUID, Long> nextThrow = new HashMap<>();
+    private static final Map<UUID, Long> nextThrow = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every tick, from the member's own AI step: most of the time, nothing. */
     public static void tick(BandMember member) {

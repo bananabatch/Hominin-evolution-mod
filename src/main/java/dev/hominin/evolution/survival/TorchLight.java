@@ -30,7 +30,7 @@ public final class TorchLight {
     private record Lit(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> world, BlockPos pos) {
     }
 
-    private static final Map<UUID, Lit> lit = new HashMap<>();
+    private static final Map<UUID, Lit> lit = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static boolean holding(ServerPlayer player) {
         return player.getMainHandItem().is(ModItems.LIT_TORCH.get()) || player.getOffhandItem().is(ModItems.LIT_TORCH.get());

@@ -35,7 +35,7 @@ public final class FireHardening {
     private record Turning(BlockPos fire, int slot, int turns, long lastAt) {
     }
 
-    private static final Map<UUID, Turning> turning = new HashMap<>();
+    private static final Map<UUID, Turning> turning = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Something burning to hold wood in. */
     public static boolean isFire(BlockState state) {

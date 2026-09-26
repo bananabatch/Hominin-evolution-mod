@@ -41,9 +41,9 @@ public final class Lineage {
     private record Waiting(@Nullable ResourceLocation into, long askedAt) {
     }
 
-    private static final Map<UUID, Waiting> waiting = new HashMap<>();
+    private static final Map<UUID, Waiting> waiting = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Chosen just now: the next evolve goes through without asking. */
-    private static final Map<UUID, Boolean> justChose = new HashMap<>();
+    private static final Map<UUID, Boolean> justChose = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Whether evolving into this stage means choosing a path. */
     public static boolean branches(ResourceLocation stage) {

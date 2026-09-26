@@ -78,7 +78,7 @@ public final class Mating {
     public static final int MATE_BOND = 2;
     /** How often being hurt fires a mate up: a real pair notices every blow, but not every tick. */
     private static final long PROTECT_COOLDOWN = 60L;
-    private static final java.util.Map<UUID, Long> lastProtect = new java.util.HashMap<>();
+    private static final java.util.Map<UUID, Long> lastProtect = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /** "Be my mate", asked of one member: yes, if they like you enough and are free. */
     public static void makeMate(ServerPlayer player, BandMember member) {

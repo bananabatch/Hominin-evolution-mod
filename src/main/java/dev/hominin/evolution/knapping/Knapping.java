@@ -332,7 +332,7 @@ public final class Knapping {
 
     /** One Lomekwian core per two minutes. */
     private static final long LOMEKWIAN_COOLDOWN = 2 * 60 * 20L;
-    private static final java.util.Map<java.util.UUID, Long> lomekwianReady = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> lomekwianReady = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     private static void give(ServerPlayer player, ItemStack stack) {
         dev.hominin.evolution.item.StoneMaterial.stamp(stack,

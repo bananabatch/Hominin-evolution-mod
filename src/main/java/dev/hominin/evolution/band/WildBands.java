@@ -200,7 +200,7 @@ public final class WildBands {
     private record Arrival(UUID band, BlockPos site, long expiresAt) {
     }
 
-    private static final java.util.Map<UUID, Arrival> arrivals = new java.util.HashMap<>();
+    private static final java.util.Map<UUID, Arrival> arrivals = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /** Walking towards a call: once they are in reach, they light up so you can actually find them. */
     private static void checkArrivals(ServerPlayer player) {

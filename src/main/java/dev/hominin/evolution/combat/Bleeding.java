@@ -72,9 +72,9 @@ public final class Bleeding {
     private record Catastrophic(long endsAt, int drunk) {
     }
 
-    private static final Map<UUID, Catastrophic> dying = new HashMap<>();
+    private static final Map<UUID, Catastrophic> dying = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** When each player last drank: drinking hard holds a catastrophic bleed off, for as long as it goes on. */
-    private static final Map<UUID, Long> lastDrank = new HashMap<>();
+    private static final Map<UUID, Long> lastDrank = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final long STEMMED_TICKS = 60L;
     private static final String CARRY_TICKS = "carry_catastrophic_ticks";
     private static final String CARRY_DRUNK = "carry_catastrophic_drunk";

@@ -50,7 +50,7 @@ public final class Alerts {
     private static final int KEPT = 30;
     private static final long REPEAT_GAP = 60 * 20L;
 
-    private static final Map<String, Long> lastSaid = new HashMap<>();
+    private static final Map<String, Long> lastSaid = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Urgent: in chat, across the top of the screen, and kept in the journal. */
     public static void urgent(Player player, Kind kind, Component message) {

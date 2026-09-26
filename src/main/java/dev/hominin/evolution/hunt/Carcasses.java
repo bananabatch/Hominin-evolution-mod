@@ -62,7 +62,7 @@ public final class Carcasses {
      * damage with no attacker on it at all, and that is exactly the persistence hunt -
      * your kill, arriving late. Five minutes covers any wound this mod can open.
      */
-    private static final Map<UUID, Long> handled = new HashMap<>();
+    private static final Map<UUID, Long> handled = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final long HANDLED_MEMORY = 6000L;
 
     public static void onHurt(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {

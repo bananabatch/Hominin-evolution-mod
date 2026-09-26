@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 public final class TidePools {
     private static final int PER_POCKET = 3;
     /** Pocket, day: how much it has given up. */
-    private static final Map<Long, Integer> worked = new HashMap<>();
+    private static final Map<Long, Integer> worked = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** A stick worked through water: returns true if it was a tide pool, and it has been searched. */
     public static boolean search(ServerPlayer player) {

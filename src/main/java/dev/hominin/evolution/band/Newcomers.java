@@ -82,9 +82,9 @@ public final class Newcomers extends SavedData {
     private record Asking(List<UUID> offered, long askAt) {
     }
 
-    private static final Map<UUID, Asking> asking = new HashMap<>();
+    private static final Map<UUID, Asking> asking = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Who asked to lead whose band with them: leader, and who asked. */
-    private static final Map<UUID, UUID> requests = new HashMap<>();
+    private static final Map<UUID, UUID> requests = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public Newcomers() {
     }

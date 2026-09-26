@@ -29,11 +29,11 @@ public final class PredatorAppetite {
     /** How many of the band a predator takes before it is satisfied. */
     private static final int APPETITE = 2;
     /** How many each predator has taken so far. Held until the animal itself dies. */
-    private static final Map<UUID, Integer> taken = new HashMap<>();
+    private static final Map<UUID, Integer> taken = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Long enough that it is gone for good, as far as this fight is concerned. */
     private static final int LEAVE_TICKS = 1800;
     /** Predators already on their way out, so one departure is not announced twice. */
-    private static final Map<UUID, Long> leaving = new HashMap<>();
+    private static final Map<UUID, Long> leaving = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static boolean isPredator(LivingEntity entity) {
         return entity.getType().is(ModTags.EntityTypes.PREDATORS);

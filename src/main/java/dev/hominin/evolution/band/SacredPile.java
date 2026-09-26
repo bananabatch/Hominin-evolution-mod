@@ -37,7 +37,7 @@ public final class SacredPile {
     /** Up to this many things for one event - it is a mark, not a dump. */
     private static final int MOST_PER_EVENT = 3;
 
-    private static final Map<UUID, String> reasons = new java.util.HashMap<>();
+    private static final Map<UUID, String> reasons = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     // ------------------------------------------------------------ where it stands
 
@@ -49,7 +49,7 @@ public final class SacredPile {
     /** Where the Pile stands decides what it does for the band: 0 anywhere, 1 on stone, 2 on high ground. */
     private static final String SITE = "pile_site";
     /** The places offered, waiting on your choice. */
-    private static final Map<UUID, BlockPos[]> offered = new java.util.HashMap<>();
+    private static final Map<UUID, BlockPos[]> offered = dev.hominin.evolution.ServerState.track(new java.util.HashMap<>());
 
     /**
      * The band has taken up the Pile: where will it be? Here; on the stone outcrop nearby, if there is one - the stone

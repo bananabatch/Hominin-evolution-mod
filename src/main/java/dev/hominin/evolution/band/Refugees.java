@@ -68,8 +68,8 @@ public final class Refugees {
     private record Arrival(List<UUID> people, Cause cause, @Nullable UUID culprit, long until) {
     }
 
-    private static final Map<UUID, Arrival> arrivals = new HashMap<>();
-    private static final Map<UUID, UUID> merging = new HashMap<>();
+    private static final Map<UUID, Arrival> arrivals = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, UUID> merging = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Map<String, Integer> counters(ServerPlayer player) {
         return player.getData(Attachments.PLAYER_EVOLUTION_DATA).getCriterionCounters();

@@ -229,7 +229,7 @@ public final class ErectusWork {
     private record Found(BlockPos pos, long at) {
     }
 
-    private static final Map<UUID, Found> beds = new HashMap<>();
+    private static final Map<UUID, Found> beds = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** This member's own thatch bedding near camp, if they have one - looked for at most every ten seconds. */
     @Nullable
@@ -343,7 +343,7 @@ public final class ErectusWork {
     private record Short(boolean hide, boolean thatch, long at) {
     }
 
-    private static final Map<UUID, Short> shortOf = new HashMap<>();
+    private static final Map<UUID, Short> shortOf = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static Short shortages(ServerPlayer leader) {
         long now = leader.level().getGameTime();

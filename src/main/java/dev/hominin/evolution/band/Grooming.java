@@ -31,9 +31,9 @@ public final class Grooming {
     private record Session(UUID member, int ticks) {
     }
 
-    private static final Map<UUID, Session> sessions = new HashMap<>();
+    private static final Map<UUID, Session> sessions = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** When each member was last groomed, by anybody. */
-    private static final Map<UUID, Long> lastGroomed = new HashMap<>();
+    private static final Map<UUID, Long> lastGroomed = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** How this stage grooms: by erectus there is not enough hair left to pick through. */
     public static boolean picksHair(BandMember member) {

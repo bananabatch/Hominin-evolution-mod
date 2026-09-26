@@ -44,13 +44,13 @@ public final class Oases {
     private static final int DAYS_AWAY = 2;
 
     /** Which place each visitor came to, for counting kills. */
-    private static final Map<UUID, String> visitorOf = new HashMap<>();
+    private static final Map<UUID, String> visitorOf = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Place, day: kills among its dawn visitors. */
-    private static final Map<String, Integer> killed = new HashMap<>();
+    private static final Map<String, Integer> killed = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Place: the first day the animals come back. */
-    private static final Map<String, Integer> awayUntil = new HashMap<>();
+    private static final Map<String, Integer> awayUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Hunters keeping the truce, and when the morning is over for them. */
-    private static final Map<UUID, Long> truceUntil = new HashMap<>();
+    private static final Map<UUID, Long> truceUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static int day(ServerLevel level) {
         return (int) ((level.getDayTime() + 1000L) / 24000L);

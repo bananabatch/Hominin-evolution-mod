@@ -72,7 +72,7 @@ public final class Afflictions {
     private record Held(Affliction affliction, long until) {
     }
 
-    private static final Map<UUID, Held> held = new HashMap<>();
+    private static final Map<UUID, Held> held = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Afflicts the body, if this is worse than whatever it already has.

@@ -90,10 +90,10 @@ public final class Needs {
     private record Need(UUID member, Kind kind, long until, boolean reminded, int step) {
     }
 
-    private static final Map<UUID, Need> needs = new HashMap<>();
-    private static final Map<UUID, Long> nextNeed = new HashMap<>();
+    private static final Map<UUID, Need> needs = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> nextNeed = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Seconds spent close to whoever is grieving, while the need to look after them stands. */
-    private static final Map<UUID, Integer> company = new HashMap<>();
+    private static final Map<UUID, Integer> company = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Every thirty seconds per player: a need arises, is reminded of, or runs out. */
     public static void tick(ServerPlayer player) {

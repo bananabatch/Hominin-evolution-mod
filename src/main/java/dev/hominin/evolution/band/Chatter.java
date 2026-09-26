@@ -54,9 +54,9 @@ public final class Chatter {
     private static final Map<String, List<String>> ECHO = new HashMap<>();
     private static final Map<String, String> GOALS = new HashMap<>();
 
-    private static final List<Pending> pending = new ArrayList<>();
-    private static final Map<UUID, Long> nextAt = new HashMap<>();
-    private static final Map<UUID, List<News>> news = new HashMap<>();
+    private static final List<Pending> pending = dev.hominin.evolution.ServerState.track(new ArrayList<>());
+    private static final Map<UUID, Long> nextAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, List<News>> news = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static List<String> l(String... lines) {
         return List.of(lines);

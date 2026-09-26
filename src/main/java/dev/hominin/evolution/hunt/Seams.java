@@ -28,7 +28,7 @@ public final class Seams {
     private record Seam(ResourceKey<Level> level, BlockPos pos) {
     }
 
-    private static final Map<Seam, Integer> taken = new HashMap<>();
+    private static final Map<Seam, Integer> taken = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Whether this outcrop still has a cobble in it, and takes one if so.

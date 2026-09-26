@@ -36,9 +36,9 @@ public final class PileEthics {
     private static final int HOARD_EVERY = 60 * 20;
 
     /** Per player: how many of each thing they have taken off the pile that someone else laid down. */
-    private static final Map<UUID, Map<Item, Integer>> borrowed = new HashMap<>();
-    private static final Map<UUID, Integer> bundleTicks = new HashMap<>();
-    private static final Map<UUID, Integer> hoardTicks = new HashMap<>();
+    private static final Map<UUID, Map<Item, Integer>> borrowed = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Integer> bundleTicks = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Integer> hoardTicks = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Something someone else laid down, taken off your band's pile. */
     public static void borrowed(ServerPlayer player, ItemStack stack) {

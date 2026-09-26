@@ -63,6 +63,8 @@ public class HomininEvolutionMod {
                 event.setCanceled(true);
             }
         });
+        // A closed world takes everything held in memory about it along with it.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> ServerState.clear());
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onWakeUp);
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onDatapackSync);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) -> {

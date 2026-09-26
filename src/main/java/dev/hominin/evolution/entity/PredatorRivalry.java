@@ -23,7 +23,7 @@ public final class PredatorRivalry {
     private static final double MEET = 14.0D;
     private static final long COOLDOWN = 1200L;
 
-    private static final Map<String, Long> quarrels = new HashMap<>();
+    private static final Map<String, Long> quarrels = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static boolean rival(Mob mob) {
         return mob instanceof Crocuta || mob instanceof Pachycrocuta || mob instanceof Sabertooth

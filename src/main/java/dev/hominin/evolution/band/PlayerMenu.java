@@ -56,13 +56,13 @@ public final class PlayerMenu {
     private record Request(UUID from, int kind, int skill, ItemStack offered, ItemStack wanted, long until) {
     }
 
-    private static final Map<UUID, Request> requests = new HashMap<>();
+    private static final Map<UUID, Request> requests = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Grooming under way, by the groomer: who, and how long so far. */
     private record Session(UUID groomed, int ticks) {
     }
 
-    private static final Map<UUID, Session> sessions = new HashMap<>();
+    private static final Map<UUID, Session> sessions = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ the click
 

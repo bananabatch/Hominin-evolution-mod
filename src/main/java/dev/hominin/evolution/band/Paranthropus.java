@@ -54,9 +54,9 @@ public final class Paranthropus {
     /** How often a lowball offer gets past them. */
     private static final float LOWBALL_CHANCE = 0.4F;
 
-    private static final Map<UUID, Long> lastGuided = new HashMap<>();
+    private static final Map<UUID, Long> lastGuided = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** One alarm per player per minute: a pair of cats is one alarm, not two. */
-    private static final Map<UUID, Long> lastWarned = new HashMap<>();
+    private static final Map<UUID, Long> lastWarned = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final long WARN_GAP = 1200L;
 
     public static boolean is(BandMember member) {
@@ -203,7 +203,7 @@ public final class Paranthropus {
     private record Coming(BlockPos from, long startAt, long until, java.util.Set<UUID> hunters) {
     }
 
-    private static final Map<UUID, Coming> coming = new HashMap<>();
+    private static final Map<UUID, Coming> coming = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** How long after the alarm it sets off towards you, and how long it keeps coming. */
     private static final long COMING_DELAY = 100L;
     private static final long COMING_FOR = 900L;

@@ -114,9 +114,9 @@ public final class EvolutionEventHandler {
     /** Only animals with real limb bones in them; chickens and rabbits have nothing worth cracking. */
     private static final float LONG_BONE_MIN_HEIGHT = 1.0F;
 
-    private static final Map<UUID, Progress> knapProgress = new HashMap<>();
-    private static final Map<UUID, Progress> forageProgress = new HashMap<>();
-    private static final Map<UUID, Progress> knockProgress = new HashMap<>();
+    private static final Map<UUID, Progress> knapProgress = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Progress> forageProgress = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Progress> knockProgress = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * A repeated-click action in flight. {@code pos} is null when the action is not
@@ -399,7 +399,7 @@ public final class EvolutionEventHandler {
     }
 
     /** The last day each player was told about the state of the land. */
-    private static final Map<UUID, Long> droughtTold = new HashMap<>();
+    private static final Map<UUID, Long> droughtTold = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Every second day the land may be strained. Foraging pays less, and other bands have
@@ -1387,9 +1387,9 @@ public final class EvolutionEventHandler {
     private static final String[] DISTANCE_BACKED_CRITERIA = {
             "forage_biomes", "water_sources", "cold_biome_edge"};
 
-    private static final Map<UUID, Boolean> touchedColdBiome = new HashMap<>();
-    private static final Map<UUID, Boolean> wasNight = new HashMap<>();
-    private static final Map<UUID, Boolean> nightTreeCoverSeen = new HashMap<>();
+    private static final Map<UUID, Boolean> touchedColdBiome = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Boolean> wasNight = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Boolean> nightTreeCoverSeen = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         ServerPlayer player = event.getEntity() instanceof ServerPlayer sp ? sp : null;
@@ -1493,7 +1493,8 @@ public final class EvolutionEventHandler {
                 && dev.hominin.evolution.knapping.Acheulean.level(player) <= 2) {
             EvolutionManager.forceSatisfyCriterion(player, "knapping_level_2");
         }
-        if (data.getLastCountedDay() < 0) {
+        if (data.getLastCountedDay() < 0 || currentDay < data.getLastCountedDay()) {
+            // First day counted - or the clock was set back (/time set): count on from here, not from the old day.
             data.setLastCountedDay(currentDay);
         } else if (currentDay > data.getLastCountedDay()) {
             data.setLastCountedDay(currentDay);
@@ -1548,7 +1549,7 @@ public final class EvolutionEventHandler {
      * over for credit in a single session, and re-earning it after a restart is a
      * fair trade for not spending one of the save's remaining codec fields.
      */
-    private static final Map<UUID, Set<Long>> climbedTrees = new HashMap<>();
+    private static final Map<UUID, Set<Long>> climbedTrees = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Credits a climb when the player is stood on a tree, high enough above what

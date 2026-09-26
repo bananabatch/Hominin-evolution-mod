@@ -114,7 +114,7 @@ public final class Havens extends SavedData {
     private final Map<String, State> states = new HashMap<>();
     private long settledDay = -1L;
     /** Players who have just wiped out a haven's band, and which haven: waiting on their choice. */
-    private static final Map<UUID, String> conquered = new HashMap<>();
+    private static final Map<UUID, String> conquered = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static Havens of(ServerLevel level) {
         ServerLevel home = level.getServer().overworld();
@@ -177,8 +177,8 @@ public final class Havens extends SavedData {
         return found;
     }
 
-    private static final Map<String, java.util.Optional<Site>> sites = new HashMap<>();
-    private static final Map<String, Boolean> coastal = new HashMap<>();
+    private static final Map<String, java.util.Optional<Site>> sites = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<String, Boolean> coastal = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Whether a haven lies by the sea: then what feeds it is the tide pools; inland, a termite super colony. */
     private static boolean byTheSea(ServerLevel level, Site site) {

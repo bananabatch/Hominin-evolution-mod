@@ -31,12 +31,12 @@ public final class Lines {
     private static final int MEMORY = 4;
 
     private static final Map<String, List<String>> POOLS = new HashMap<>();
-    private static final Map<String, Deque<String>> recent = new HashMap<>();
+    private static final Map<String, Deque<String>> recent = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Per leader and kind: when it was last heard. */
-    private static final Map<String, Long> heardAt = new HashMap<>();
+    private static final Map<String, Long> heardAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Per leader: the last kind of moment narrated, and when. */
-    private static final Map<UUID, String> lastTold = new HashMap<>();
-    private static final Map<UUID, Long> lastToldAt = new HashMap<>();
+    private static final Map<UUID, String> lastTold = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastToldAt = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     private static void pool(String kind, String... lines) {
         POOLS.put(kind, List.of(lines));

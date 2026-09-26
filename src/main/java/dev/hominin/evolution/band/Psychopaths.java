@@ -50,8 +50,8 @@ public final class Psychopaths {
     public static final int KILL = 2;
     public static final int LET_BE = 3;
 
-    private static final Map<UUID, Long> lastSign = new HashMap<>();
-    private static final Map<UUID, Long> leftOnDay = new HashMap<>();
+    private static final Map<UUID, Long> lastSign = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> leftOnDay = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Rolled once for each grown member, from erectus on - and a band only ever has the one. */
     public static void roll(BandMember member, List<BandMember> band) {

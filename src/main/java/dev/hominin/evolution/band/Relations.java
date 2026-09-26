@@ -78,8 +78,8 @@ public final class Relations {
     /** How long a raid of yours on another band lasts before your people give it up. */
     private static final long RAID_TICKS = 60 * 20L;
 
-    private static final Map<String, Long> cooldowns = new HashMap<>();
-    private static final Map<String, Integer> gainedToday = new HashMap<>();
+    private static final Map<String, Long> cooldowns = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<String, Integer> gainedToday = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ reading it
 
@@ -526,7 +526,7 @@ public final class Relations {
     private record Losses(int count, long last) {
     }
 
-    private static final Map<String, Losses> losses = new HashMap<>();
+    private static final Map<String, Losses> losses = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** A fight's dead are counted together while they fall within this long of each other. */
     private static final long LOSSES_WINDOW = 2 * 60 * 20L;
     /** A band cowed by its dead keeps out of your way at most this long - five days to arm itself again. */
@@ -542,7 +542,7 @@ public final class Relations {
     /** At most one coalition every three days. */
     private static final int COALITION_GAP_MINUTES = 60;
     /** Players a coalition is walking in on, and the band leading it. */
-    private static final Map<UUID, UUID> coalitions = new HashMap<>();
+    private static final Map<UUID, UUID> coalitions = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * How many of their own a band must lose before it breaks off a fight: the australopiths break at the first death,
@@ -803,7 +803,7 @@ public final class Relations {
         cooldowns.put(player.getUUID() + "/patrol/" + band.id, player.level().getGameTime() + PATROL_REST_TICKS);
     }
 
-    private static final Map<UUID, Demand> demands = new HashMap<>();
+    private static final Map<UUID, Demand> demands = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** What a band wants from the player right now, for the journal - or null. */
     @Nullable
@@ -966,7 +966,7 @@ public final class Relations {
     private record RaidOn(UUID band, long until) {
     }
 
-    private static final Map<UUID, RaidOn> raidsOn = new HashMap<>();
+    private static final Map<UUID, RaidOn> raidsOn = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Your odds of making them pay: their weakness against your strength. */
     private static float tributeOdds(ServerPlayer player, Bands.Record band) {
@@ -1866,7 +1866,7 @@ public final class Relations {
     // ------------------------------------------------------------ your own band's name
 
     /** Players asked for their band's name this session - asked once, when nothing else is going on. */
-    private static final java.util.Set<UUID> prompted = new java.util.HashSet<>();
+    private static final java.util.Set<UUID> prompted = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
 
     /** A new band has formed round the player: they get to name it, once the dust settles. */
     public static void ownBandFormed(ServerPlayer player) {

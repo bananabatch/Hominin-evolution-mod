@@ -43,7 +43,7 @@ public final class TroopRelations {
     private record Mistake(UUID troop, long deadline, boolean statusCheck, @Nullable UUID checker) {
     }
 
-    private static final Map<UUID, Mistake> pending = new HashMap<>();
+    private static final Map<UUID, Mistake> pending = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * Kept in the player's evolution counters, so it survives a save - and is forgotten

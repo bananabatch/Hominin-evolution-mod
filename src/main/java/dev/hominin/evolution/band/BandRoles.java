@@ -52,14 +52,14 @@ public final class BandRoles {
     private static final long LEAVE_TICKS = 2 * 60 * 20L;
 
     /** The players listed in each player's open menu: a pick is an index into it. */
-    private static final Map<UUID, List<UUID>> listed = new HashMap<>();
+    private static final Map<UUID, List<UUID>> listed = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Parties asked for, waiting on a co-leader's leave: by who asked - which band, which kind. */
     private record Asked(UUID band, int intent) {
     }
 
-    private static final Map<UUID, Asked> asked = new HashMap<>();
+    private static final Map<UUID, Asked> asked = dev.hominin.evolution.ServerState.track(new HashMap<>());
     /** Parties allowed: "player/band/intent" until when. */
-    private static final Map<String, Long> leave = new HashMap<>();
+    private static final Map<String, Long> leave = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     // ------------------------------------------------------------ who may
 

@@ -33,8 +33,8 @@ public final class Roots {
     private record Digging(BlockPos pos, int strokes, long lastAt) {
     }
 
-    private static final Map<UUID, Digging> digging = new HashMap<>();
-    private static final Map<BlockPos, Long> dugOut = new HashMap<>();
+    private static final Map<UUID, Digging> digging = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<BlockPos, Long> dugOut = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     public static boolean digsRoots(ItemStack stack) {
         return stack.is(ModTags.Items.HAND_AXE_TOOLS) || stack.is(ModItems.DIGGING_STICK.get());

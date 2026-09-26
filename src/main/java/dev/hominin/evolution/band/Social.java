@@ -250,14 +250,14 @@ public final class Social {
     /** Up the tree until called down - with a long ceiling, in case the player forgets. */
     private static final int CLIMB_ORDER_TICKS = 10 * 60 * 20;
 
-    private static final Map<UUID, Long> lastHurtCall = new HashMap<>();
+    private static final Map<UUID, Long> lastHurtCall = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Only the tree-climbing stages will go up a tree when asked. */
     public static boolean canClimbOrder(ServerPlayer player) {
         String stage = dev.hominin.evolution.stage.Kinds.line(player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage());
         return stage.equals("ardipithecus") || stage.equals("australopithecus") || stage.equals("homo_habilis");
     }
-    private static final Map<UUID, Long> guardUntil = new HashMap<>();
+    private static final Map<UUID, Long> guardUntil = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /** Runs a command, said to one member (by entity id) or, with -1, to whoever is nearby. */
     public static void perform(ServerPlayer player, int entityId, Command command) {
@@ -707,8 +707,8 @@ public final class Social {
     /** Somebody hurt this recently means it is not a time for games. */
     private static final int PLAY_SAFE_AFTER = 1200;
     private static final int SHARE_COOLDOWN = 8 * 60 * 20;
-    private static final Map<UUID, Long> lastPlay = new HashMap<>();
-    private static final Map<UUID, Long> lastShare = new HashMap<>();
+    private static final Map<UUID, Long> lastPlay = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final Map<UUID, Long> lastShare = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * A game, and only when it is safe. Play is what animals do with the hours nothing is

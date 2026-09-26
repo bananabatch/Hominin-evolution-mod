@@ -44,7 +44,7 @@ public final class Panic {
     private record Pending(long moveAt) {
     }
 
-    private static final Map<UUID, Pending> pending = new HashMap<>();
+    private static final Map<UUID, Pending> pending = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     /**
      * The band is gone. Start the attack; the move happens once the screen is dark.

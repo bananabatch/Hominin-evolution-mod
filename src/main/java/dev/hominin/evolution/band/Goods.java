@@ -40,7 +40,7 @@ public final class Goods {
     public record Session(int mode, UUID band, int intent, List<Entry> left, List<Entry> right) {
     }
 
-    private static final Map<UUID, Session> sessions = new HashMap<>();
+    private static final Map<UUID, Session> sessions = dev.hominin.evolution.ServerState.track(new HashMap<>());
 
     @Nullable
     public static Session session(ServerPlayer player) {

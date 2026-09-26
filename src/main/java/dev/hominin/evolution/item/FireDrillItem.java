@@ -38,7 +38,7 @@ public class FireDrillItem extends Item {
      * What each player is drilling, from the click that started it - one table a side, since in a single-player
      * world the client and the server share this class, and must not take each other's entries.
      */
-    private static final Map<UUID, BlockHitResult> serverTargets = new HashMap<>();
+    private static final Map<UUID, BlockHitResult> serverTargets = dev.hominin.evolution.ServerState.track(new HashMap<>());
     private static final Map<UUID, BlockHitResult> clientTargets = new HashMap<>();
 
     private static Map<UUID, BlockHitResult> targets(Level level) {
