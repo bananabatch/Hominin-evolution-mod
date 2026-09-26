@@ -1685,8 +1685,16 @@ public final class Relations {
         if (band == null || !band.knownTo(player.getUUID())) {
             return;
         }
+        if (!BandRoles.check(player, BandRoles.needed(action), "deal with other bands that way")) {
+            return;
+        }
         if (action >= OthersActionPayload.PARTY && action < OthersActionPayload.PARTY + Parties.INTENTS.length) {
-            Parties.open(player, band, action - OthersActionPayload.PARTY);
+            if (BandRoles.mayParty(player, band, action - OthersActionPayload.PARTY)) {
+                Parties.open(player, band, action - OthersActionPayload.PARTY);
+            }
+            return;
+        }
+        if (action == OthersActionPayload.GIFT && !BandRoles.mayGift(player, band)) {
             return;
         }
         switch (action) {

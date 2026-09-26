@@ -216,7 +216,7 @@ public final class Commissions {
         if (member.getWant() == pay) {
             member.clearWant();
         }
-        member.addBond(1);
+        member.addBondFrom(player, 1);
         player.displayClientMessage(Component.literal(name + " takes it. A deal: they'll make it now.")
                 .withStyle(ChatFormatting.AQUA), true);
         return true;

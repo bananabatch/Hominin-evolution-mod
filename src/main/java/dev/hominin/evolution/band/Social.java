@@ -97,6 +97,7 @@ public final class Social {
         HAVE_CHILD("Let's have a child", Topic.TOGETHER),
         CULTURE("Our ways: morals and norms", Topic.CULTURE),
         PLAYER_BANDS("Other players' bands...", Topic.TOGETHER),
+        ROLES("Roles and leadership...", Topic.TOGETHER),
         POSTURE("Defensive posture...", Topic.DANGER),
         // ------------------------------------------------ developer: your band
         DEV_BOND_UP("Bond +5", DevSection.BAND),
@@ -274,6 +275,15 @@ public final class Social {
         }
         if (command == Command.PLAYER_BANDS) {
             Newcomers.openMenu(player);
+            return;
+        }
+        if (command == Command.ROLES) {
+            BandRoles.open(player);
+            return;
+        }
+        // Leading with somebody else: what your role lets you say to the band.
+        if (Newcomers.hostOf(player) != null
+                && !BandRoles.check(player, BandRoles.needed(command, entityId), "call on the band for that")) {
             return;
         }
         if (command == Command.POSTURE) {
@@ -802,13 +812,13 @@ public final class Social {
             }
             if (best.eatShared(food)) {
                 favourites++;
-                best.addBond(1);
+                best.addBondFrom(player, 1);
                 Lines.say(best, "share_thanks");
             }
         }
         for (BandMember member : diners) {
             // Where sharing is the rule, a shared meal means more.
-            member.addBond(sharing ? 2 : 1);
+            member.addBondFrom(player, sharing ? 2 : 1);
         }
         Cohesion.addLimited(player, "share", Math.min(3, Math.max(1, diners.size() / 2)), 10 * 60 * 20L);
         Mood.gave(player, 2);
@@ -877,7 +887,8 @@ public final class Social {
                 lines.add("Of other bands: " + Opinions.describe(member, felt) + ".");
             }
         }
-        lines.add("Bond with you: " + member.getBond() + (member.getBond() >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
+        int bond = member.bondWith(player);
+        lines.add("Bond with you: " + bond + (bond >= Wants.GIFT_BOND ? " (looks out for you)" : ""));
         if (member.isAntisocial()) {
             lines.add("Antisocial: steals, hoards, begs, will not teach, picks fights (erectus: Shun them)");
         }

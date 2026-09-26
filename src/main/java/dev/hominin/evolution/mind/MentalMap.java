@@ -361,6 +361,11 @@ public final class MentalMap {
     // ------------------------------------------------------------ the map screen
 
     public static void act(ServerPlayer player, int action, int index, String text) {
+        if ((action == MapActionPayload.PACK_UP || action == MapActionPayload.SETTLE)
+                && !dev.hominin.evolution.band.BandRoles.check(player, dev.hominin.evolution.band.Newcomers.Role.CO_LEADER,
+                        "move the band's ground")) {
+            return;
+        }
         switch (action) {
             case MapActionPayload.OPEN -> send(player);
             case MapActionPayload.REMEMBER -> {

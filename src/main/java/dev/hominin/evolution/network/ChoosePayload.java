@@ -75,6 +75,14 @@ public record ChoosePayload(int entityId, int action, int value) implements Cust
             dev.hominin.evolution.band.PlayerMenu.answer(player, payload.entityId(), payload.value());
         } else if (payload.action() == dev.hominin.evolution.band.PilePlayers.ACTION) {
             dev.hominin.evolution.band.PilePlayers.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandRoles.ACTION_MENU) {
+            dev.hominin.evolution.band.BandRoles.choose(player, payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandRoles.ACTION_PARTY) {
+            dev.hominin.evolution.band.BandRoles.answerParty(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandRoles.ACTION_ROLE) {
+            dev.hominin.evolution.band.BandRoles.setRole(player, payload.entityId(), payload.value());
+        } else if (payload.action() == dev.hominin.evolution.band.BandRoles.ACTION_CONFIRM) {
+            dev.hominin.evolution.band.BandRoles.confirm(player, payload.value());
         } else if (payload.action() == ACTION_FIND) {
             dev.hominin.evolution.band.Social.find(player, payload.entityId());
         }

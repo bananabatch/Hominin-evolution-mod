@@ -84,6 +84,12 @@ public final class Building {
                     + "erectus and the work station."), true);
             return;
         }
+        if ((payload.action() == BuildActionPayload.PLAN || payload.action() == BuildActionPayload.CONFIRM
+                || payload.action() == BuildActionPayload.ABANDON || payload.action() == BuildActionPayload.DECIDE)
+                && !dev.hominin.evolution.band.BandRoles.check(player, dev.hominin.evolution.band.Newcomers.Role.CO_LEADER,
+                        "plan what the band builds")) {
+            return;
+        }
         switch (payload.action()) {
             case BuildActionPayload.OPEN -> openMenu(player);
             case BuildActionPayload.PLAN -> {

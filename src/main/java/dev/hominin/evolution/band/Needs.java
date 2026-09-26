@@ -288,7 +288,7 @@ public final class Needs {
     }
 
     private static void met(ServerPlayer player, BandMember member) {
-        member.addBond(MET_BOND);
+        member.addBondFrom(player, MET_BOND);
         Cohesion.add(player, MET_COHESION);
     }
 

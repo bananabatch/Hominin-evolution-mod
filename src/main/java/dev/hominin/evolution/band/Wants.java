@@ -279,7 +279,7 @@ public final class Wants {
         ItemStack given = offer == null ? ItemStack.EMPTY : member.takeOneOf(offer);
         member.addToInventory(taken);
         member.clearWant();
-        member.addBond(2);
+        member.addBondFrom(player, 2);
         if (isGoodStone(taken)) {
             // Somebody grieving gets something to do with their hands.
             Troubles.gotStone(member);

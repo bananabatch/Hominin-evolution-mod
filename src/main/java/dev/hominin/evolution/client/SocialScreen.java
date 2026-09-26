@@ -208,7 +208,7 @@ public class SocialScreen extends Screen {
         if (command == Social.Command.POSTURE) {
             return targetId < 0 && !otherBand;
         }
-        if (command == Social.Command.PLAYER_BANDS) {
+        if (command == Social.Command.PLAYER_BANDS || command == Social.Command.ROLES) {
             // Only with somebody else in the world to lead a band with.
             return targetId < 0 && !otherBand && Minecraft.getInstance().getConnection() != null
                     && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1;

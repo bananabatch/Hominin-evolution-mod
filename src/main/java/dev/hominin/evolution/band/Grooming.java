@@ -99,7 +99,7 @@ public final class Grooming {
         // Bond only counts once per cooldown, so grooming the same member twice to clear
         // their ticks does not also farm their affection.
         if (now - lastGroomed.getOrDefault(member.getUUID(), -99999L) >= COOLDOWN_TICKS) {
-            member.addBond(1);
+            member.addBondFrom(player, 1);
         }
         lastGroomed.put(member.getUUID(), now);
         member.heal(1.0F);

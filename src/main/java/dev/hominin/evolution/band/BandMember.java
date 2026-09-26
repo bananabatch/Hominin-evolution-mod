@@ -225,6 +225,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     private final java.util.List<ResourceLocation> favouriteFoods = new java.util.ArrayList<>();
     /** How attached this member is to the player. Unused until erectus. */
     private int bond;
+    /** Bond with the other players who lead the band with its leader - the one above is with the leader. */
+    private final java.util.Map<UUID, Integer> playerBonds = new java.util.HashMap<>();
     /** Whether this member has made a chopper, which it must before trying a multi tool. */
     private boolean madeChopper;
 
@@ -1152,6 +1154,33 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     public int getBond() {
         // A band at perfect cohesion treats its leader as a friend at the very least.
         return leader != null && bond < 2 && Cohesion.perfect(leaderPlayer()) ? 2 : bond;
+    }
+
+    /** How close this member is to a particular player: its leader's bond, or that player's own. */
+    public int bondWith(Player player) {
+        return isLedBy(player) ? getBond() : playerBonds.getOrDefault(player.getUUID(), 0);
+    }
+
+    /** Something a player did for this member: it counts toward their bond - the leader's, or their own. */
+    public void addBondFrom(@Nullable Player player, int amount) {
+        if (player == null || isLedBy(player)) {
+            addBond(amount);
+            return;
+        }
+        playerBonds.merge(player.getUUID(), amount, Integer::sum);
+    }
+
+    /**
+     * Following somebody else now: what it felt for its old leader is kept as a bond with that player, and what it
+     * felt for the new one becomes its bond with its leader.
+     */
+    public void changeLeader(UUID newLeader) {
+        if (leader != null && !leader.equals(newLeader)) {
+            playerBonds.put(leader, bond);
+            bond = playerBonds.getOrDefault(newLeader, 0);
+            playerBonds.remove(newLeader);
+        }
+        setLeader(newLeader);
     }
 
     public void addBond(int amount) {
@@ -2348,7 +2377,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             if ((better || worth >= 2) && now - lastThanked > 3000L) {
                 // Something they will use, or something worth having: it is appreciated.
                 lastThanked = now;
-                addBond(1);
+                addBondFrom(player, 1);
                 player.displayClientMessage(Component.literal(getName().getString() + " turns the ")
                         .append(held.getHoverName()).append(Component.literal(" over in their hands - "
                                 + (better ? "better than what they had. " : "a good thing to be given. ") + "(Bond +1)"))
@@ -3889,6 +3918,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         tag.putInt("FightSkill", fightSkill);
         tag.putBoolean("HuntWithLeader", huntWithLeader);
         tag.putInt("Bond", bond);
+        CompoundTag others = new CompoundTag();
+        playerBonds.forEach((id, value) -> others.putInt(id.toString(), value));
+        tag.put("PlayerBonds", others);
         tag.putLong("SurvivorSince", survivorSince);
         tag.putBoolean("MadeChopper", madeChopper);
         tag.putInt("Party", party);
@@ -4008,6 +4040,15 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         fightSkill = tag.getInt("FightSkill");
         huntWithLeader = !tag.contains("HuntWithLeader") || tag.getBoolean("HuntWithLeader");
         bond = tag.getInt("Bond");
+        playerBonds.clear();
+        CompoundTag others = tag.getCompound("PlayerBonds");
+        for (String key : others.getAllKeys()) {
+            try {
+                playerBonds.put(UUID.fromString(key), others.getInt(key));
+            } catch (IllegalArgumentException ignored) {
+                // Not a player's id: dropped.
+            }
+        }
         survivorSince = tag.getLong("SurvivorSince");
         madeChopper = tag.getBoolean("MadeChopper");
         party = tag.getInt("Party");
