@@ -452,6 +452,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.FeastGoal(this));
         goalSelector.addGoal(3, new dev.hominin.evolution.band.goal.PractiseGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.FireTendGoal(this));
+        goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.CampSetupGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.BuildHelpGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.GatherThatchGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.ExcursionGoal(this));
@@ -2250,9 +2251,19 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                     break;
                 }
             }
-        } else if (!off.isEmpty() && (!isHungry() || !off.has(DataComponents.FOOD)) && inventory.canAddItem(off)) {
+        } else if (!off.isEmpty() && (!isHungry() || !off.has(DataComponents.FOOD))
+                && !(off.is(ModItems.LIT_TORCH.get()) && MemberSurvival.wantsTorchLight(this)) && inventory.canAddItem(off)) {
             setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
             inventory.addItem(off);
+        }
+        // After dark, a burning torch is carried where it gives light, as a player carries one.
+        if (getOffhandItem().isEmpty() && MemberSurvival.wantsTorchLight(this)) {
+            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                if (inventory.getItem(slot).is(ModItems.LIT_TORCH.get())) {
+                    setItemSlot(EquipmentSlot.OFFHAND, inventory.removeItem(slot, 1));
+                    break;
+                }
+            }
         }
     }
 
@@ -4237,7 +4248,17 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     }
 
     @Override
+    public void remove(RemovalReason reason) {
+        // Gone for good - sent off, or taken: the light that followed their torch goes out with them.
+        if (reason.shouldDestroy() && !level().isClientSide()) {
+            MemberSurvival.douse(this);
+        }
+        super.remove(reason);
+    }
+
+    @Override
     public void die(DamageSource source) {
+        MemberSurvival.douse(this);
         // Named in chat like a tamed animal would be, and the band feels it.
         if (!level().isClientSide() && leader != null && !isRemoved()
                 && level().getServer().getPlayerList().getPlayer(leader) instanceof net.minecraft.server.level.ServerPlayer mourner) {

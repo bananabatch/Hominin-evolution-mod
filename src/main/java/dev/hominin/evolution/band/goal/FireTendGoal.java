@@ -162,14 +162,39 @@ public class FireTendGoal extends Goal {
         if (level.getBlockEntity(target) instanceof FirePitBlockEntity pit) {
             member.swing(InteractionHand.MAIN_HAND);
             if (errand == Errand.LIGHT) {
-                if (pit.kindle()) {
+                // Lit the way a player lights one: with a drill - made on the spot from two sticks if need be -
+                // or off a burning torch.
+                boolean torch = member.countOf(s -> s.is(dev.hominin.evolution.ModItems.LIT_TORCH.get())) > 0;
+                ItemStack drill = torch ? null : drill();
+                if ((torch || drill != null) && pit.kindle()) {
                     Lines.tell(member, "fire_light");
+                    if (drill != null && !(member.knowsSkill(dev.hominin.evolution.mind.Skills.Skill.FIRE)
+                            && member.getRandom().nextBoolean())) {
+                        // Spent in the lighting, unless the hands are practised - then half the time it lasts.
+                        drill.shrink(1);
+                    }
                 }
             } else {
                 feed(level, pit);
             }
         }
         target = null;
+    }
+
+    /** The fire drill carried - or one twisted up from two sticks, there and then. */
+    @Nullable
+    private ItemStack drill() {
+        ItemStack drill = member.findCarried(s -> s.is(dev.hominin.evolution.ModItems.FIRE_DRILL.get()));
+        if (drill != null) {
+            return drill;
+        }
+        if (member.count(net.minecraft.world.item.Items.STICK) < 2) {
+            return null;
+        }
+        member.takeOneOf(net.minecraft.world.item.Items.STICK);
+        member.takeOneOf(net.minecraft.world.item.Items.STICK);
+        member.addToInventory(new ItemStack(dev.hominin.evolution.ModItems.FIRE_DRILL.get()));
+        return member.findCarried(s -> s.is(dev.hominin.evolution.ModItems.FIRE_DRILL.get()));
     }
 
     private void feed(ServerLevel level, FirePitBlockEntity pit) {

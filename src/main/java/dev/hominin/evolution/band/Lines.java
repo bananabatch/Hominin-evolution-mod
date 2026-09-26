@@ -155,6 +155,8 @@ public final class Lines {
                 " keeps running a thumb along the obsidian's edge.");
         pool("craft_flake", " strikes a sharp flake off a stone.", " knocks a clean flake off a cobble.",
                 " sends a flake spinning off the stone, and grins.");
+        pool("craft_digging_stick", " hacks a branch down to a blunt, strong point: a digging stick.",
+                " chops the end of a branch into a digging stick.");
         pool("craft_chopper", " batters a stone down into a chopper.", " works one edge of a cobble into a chopper.",
                 " hammers a cobble until it has a biting edge.");
         pool("craft_grinding", " shapes a flat, rough stone for grinding edges.",

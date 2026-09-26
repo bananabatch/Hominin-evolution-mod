@@ -29,7 +29,7 @@ import net.minecraft.world.level.Level;
 public class LitTorchItem extends Item {
     /** Burns one point every two seconds. */
     public static final int BURN_POINTS = 300;
-    private static final int BURN_EVERY = 40;
+    public static final int BURN_EVERY = 40;
 
     public LitTorchItem(Properties properties) {
         super(properties);

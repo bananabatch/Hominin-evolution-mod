@@ -197,6 +197,37 @@ public class CookingRackBlock extends Block {
                 : "Set a second rack in line with this one, one or two blocks away, then lay the branch across.";
     }
 
+    /**
+     * Stood either side of a fire, the spit laid across over it - what a band member does with two racks and a
+     * branch, just as a player would. False when there is no room for it round this fire.
+     */
+    public static boolean raiseOver(Level level, BlockPos fire) {
+        if (!level.getBlockState(fire.above()).canBeReplaced()) {
+            return false;
+        }
+        for (Direction dir : new Direction[] {Direction.EAST, Direction.SOUTH}) {
+            BlockPos a = fire.relative(dir.getOpposite());
+            BlockPos b = fire.relative(dir);
+            if (!standable(level, a) || !standable(level, b)) {
+                continue;
+            }
+            BlockState rack = ModBlocks.COOKING_RACK.get().defaultBlockState();
+            level.setBlock(a, rack.setValue(FACING, dir).setValue(HALF, DoubleBlockHalf.LOWER), 3);
+            level.setBlock(a.above(), rack.setValue(FACING, dir).setValue(HALF, DoubleBlockHalf.UPPER), 3);
+            level.setBlock(b, rack.setValue(FACING, dir.getOpposite()).setValue(HALF, DoubleBlockHalf.LOWER), 3);
+            level.setBlock(b.above(), rack.setValue(FACING, dir.getOpposite()).setValue(HALF, DoubleBlockHalf.UPPER), 3);
+            level.setBlock(fire.above(), CookingSpitBlock.across(dir.getAxis(), true, true, dir), 3);
+            level.playSound(null, fire, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 0.9F);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean standable(Level level, BlockPos pos) {
+        return level.getBlockState(pos).canBeReplaced() && level.getBlockState(pos.above()).canBeReplaced()
+                && level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+    }
+
     /** What lies across two of these: the cooking rack's spit. */
     protected boolean isBar(BlockState state) {
         return state.is(ModBlocks.COOKING_SPIT.get());

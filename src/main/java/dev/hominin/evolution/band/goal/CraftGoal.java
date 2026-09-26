@@ -51,7 +51,7 @@ public class CraftGoal extends Goal {
     }
 
     private enum Plan {
-        GRIND, GRINDING_STONE, SPEAR, POINTY_STICK, FLAKE, CHOPPER, MULTITOOL, HAND_AXE
+        GRIND, GRINDING_STONE, SPEAR, POINTY_STICK, FLAKE, CHOPPER, MULTITOOL, HAND_AXE, DIGGING_STICK
     }
 
     private final BandMember member;
@@ -118,7 +118,8 @@ public class CraftGoal extends Goal {
         member.getNavigation().stop();
         if (++working % 12 == 0) {
             member.swing(working % 24 == 0 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
-            SoundEvent sound = plan == Plan.POINTY_STICK || plan == Plan.SPEAR ? SoundEvents.WOOD_HIT
+            SoundEvent sound = plan == Plan.POINTY_STICK || plan == Plan.SPEAR || plan == Plan.DIGGING_STICK
+                    ? SoundEvents.WOOD_HIT
                     : plan == Plan.GRIND ? SoundEvents.GRINDSTONE_USE : SoundEvents.STONE_HIT;
             member.level().playSound(null, member.blockPosition(), sound, SoundSource.NEUTRAL, 0.6F,
                     0.8F + member.getRandom().nextFloat() * 0.3F);
@@ -150,6 +151,12 @@ public class CraftGoal extends Goal {
             if (flake && has(s -> s.is(Items.STICK) || s.is(ModItems.SHARPENED_STICK.get()))) {
                 return Plan.POINTY_STICK;
             }
+        }
+        // A digging stick, hacked from a branch with a chopper - the habilis way, the same as a player's hands.
+        if (!has(s -> s.is(ModItems.DIGGING_STICK.get())) && has(s -> s.is(ModItems.CHOPPER.get()))
+                && has(s -> s.is(ModItems.LONG_BRANCH.get())) && member.carriesWeapon()
+                && member.getRandom().nextInt(3) == 0) {
+            return Plan.DIGGING_STICK;
         }
         // Erectus with a knapping station nearby: a hand axe of their own, if they have none.
         if (makesAcheulean() && goodStones() >= 2 && !has(s -> s.is(ModItems.HAND_AXE.get()))
@@ -221,6 +228,12 @@ public class CraftGoal extends Goal {
                 if (take(s -> s.is(ModItems.LONG_BRANCH.get()) || member.getMainHandItem().is(ModItems.LONG_BRANCH.get()))) {
                     wear(find(s -> s.is(ModTags.Items.FLAKES)));
                     make(ModItems.SHARPENED_SPEAR.get(), "craft_spear");
+                }
+            }
+            case DIGGING_STICK -> {
+                if (take(s -> s.is(ModItems.LONG_BRANCH.get()))) {
+                    wear(find(s -> s.is(ModItems.CHOPPER.get())));
+                    make(ModItems.DIGGING_STICK.get(), "craft_digging_stick");
                 }
             }
             case POINTY_STICK -> {

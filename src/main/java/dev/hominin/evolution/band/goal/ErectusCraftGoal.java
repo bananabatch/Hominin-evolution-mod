@@ -36,8 +36,12 @@ public class ErectusCraftGoal extends Goal {
     private static final int BED_TWINE = 10;
 
     private enum Job {
-        BEDDING, THATCH_BLOCK, BUILDING_BRANCH, WORKABLE_BRANCH, CLUB, TWINE, CLEAVER, HARDEN, SCHONINGEN, STONE_TIPPED
+        BEDDING, THATCH_BLOCK, BUILDING_BRANCH, WORKABLE_BRANCH, CLUB, TWINE, CLEAVER, HARDEN, SCHONINGEN, STONE_TIPPED,
+        WORK_STATION, KNAPPING_STATION, FIRE_PIT, COOKING_RACK, TORCH, DIGGING_STICK
     }
+
+    private static final java.util.function.Predicate<ItemStack> STICK = s -> s.is(net.minecraft.world.item.Items.STICK);
+    private static final java.util.function.Predicate<ItemStack> LOG = s -> s.is(net.minecraft.tags.ItemTags.LOGS);
 
     private final BandMember member;
     @Nullable
@@ -90,6 +94,44 @@ public class ErectusCraftGoal extends Goal {
         }
         pool = station;
         UUID owner = leader.getUUID();
+        // The camp's own things, made where they are wanted: a work station, a knapping station, a fire pit and a
+        // rack over it - the same makings a player uses. CampSetupGoal puts them down.
+        if (station == null && ErectusWork.nearest(level, camp, ModBlocks.WORK_STATION.get(), 24) == null
+                && member.countOf(ErectusWork.HIDE) >= 1 && member.countOf(LOG) >= 1
+                && member.countOf(s -> s.is(ModItems.WORK_STATION.get())) == 0) {
+            set(Job.WORK_STATION, null);
+            return;
+        }
+        if (ErectusWork.nearest(level, camp, ModBlocks.KNAPPING_STATION.get(), 24) == null
+                && member.countOf(ErectusWork.HIDE) >= 1 && member.countOf(STICK) >= 4
+                && member.countOf(s -> s.is(ModItems.KNAPPING_STATION.get())) == 0) {
+            set(Job.KNAPPING_STATION, null);
+            return;
+        }
+        if (station != null) {
+            boolean pitAtCamp = ErectusWork.nearest(level, camp, ModBlocks.FIRE_PIT.get(), 12) != null;
+            if (!pitAtCamp && member.countOf(s -> s.is(ModItems.FIRE_PIT.get())) == 0 && has(LOG, 1) && has(STICK, 3)) {
+                set(Job.FIRE_PIT, station);
+                return;
+            }
+            if (pitAtCamp && !CampSetupGoal.rackOverPit(level, camp) && member.countOf(s -> s.is(ModItems.COOKING_RACK.get())) < 2
+                    && has(ErectusWork.WORKABLE_BRANCH, 2) && has(STICK, 3)) {
+                set(Job.COOKING_RACK, station);
+                return;
+            }
+            if (member.countOf(s -> s.is(ModItems.TORCH.get()) || s.is(ModItems.LIT_TORCH.get())) == 0
+                    && member.getRandom().nextInt(3) == 0 && has(ErectusWork.THATCH, 1) && has(STICK, 1)
+                    && has(ErectusWork.TWINE, 3)) {
+                set(Job.TORCH, station);
+                return;
+            }
+            if (member.countOf(s -> s.is(ModItems.DIGGING_STICK.get())) == 0 && has(ErectusWork.WORKABLE_BRANCH, 1)
+                    && has(s -> s.is(ModTags.Items.HAMMERSTONES), 1) && has(ErectusWork.TWINE, 10)
+                    && member.countOf(s -> s.is(ModTags.Items.HAMMERSTONES)) >= 2) {
+                set(Job.DIGGING_STICK, station);
+                return;
+            }
+        }
         boolean needsBed = !ErectusWork.sleepsInBed(member) && member.countOf(ErectusWork.BEDDING) < 2;
         int blocksWanted = ErectusWork.wanted(level, owner, ModBlocks.THATCH_BLOCK.get());
         int branchesWanted = ErectusWork.wanted(level, owner, ModBlocks.BUILDING_BRANCH.get());
@@ -242,7 +284,7 @@ public class ErectusCraftGoal extends Goal {
         if (++working % 12 == 0) {
             member.swing(working % 24 == 0 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
             SoundEvent sound = switch (job) {
-                case BEDDING, TWINE, THATCH_BLOCK -> SoundEvents.GRASS_HIT;
+                case BEDDING, TWINE, THATCH_BLOCK, TORCH, KNAPPING_STATION -> SoundEvents.GRASS_HIT;
                 case CLEAVER -> SoundEvents.STONE_HIT;
                 case HARDEN, SCHONINGEN -> SoundEvents.FIRE_AMBIENT;
                 default -> SoundEvents.WOOD_HIT;
@@ -326,6 +368,56 @@ public class ErectusCraftGoal extends Goal {
                 member.practiseKnapping();
                 Lines.announce(member, "craft_cleaver",
                         dev.hominin.evolution.item.AcheuleanToolItem.TIER_NAMES[quality].toLowerCase(), quality);
+            }
+            case WORK_STATION -> {
+                if (!member.takeFirst(LOG).isEmpty() && !member.takeFirst(ErectusWork.HIDE).isEmpty()) {
+                    member.addToInventory(new ItemStack(ModItems.WORK_STATION.get()));
+                    Lines.say(member, "made_thing");
+                }
+            }
+            case KNAPPING_STATION -> {
+                if (member.countOf(STICK) >= 4 && member.countOf(ErectusWork.HIDE) >= 1) {
+                    for (int i = 0; i < 4; i++) {
+                        member.takeFirst(STICK);
+                    }
+                    member.takeFirst(ErectusWork.HIDE);
+                    member.addToInventory(new ItemStack(ModItems.KNAPPING_STATION.get()));
+                    Lines.say(member, "made_thing");
+                }
+            }
+            case FIRE_PIT -> {
+                if (has(LOG, 1) && has(STICK, 3) && use(LOG, 1) && use(STICK, 3)) {
+                    member.addToInventory(new ItemStack(ModItems.FIRE_PIT.get()));
+                    Lines.say(member, "made_thing");
+                }
+            }
+            case COOKING_RACK -> {
+                // Two racks, and a branch kept back to lay across them.
+                int made = 0;
+                while (made < 2 && member.countOf(s -> s.is(ModItems.COOKING_RACK.get())) < 2
+                        && has(ErectusWork.WORKABLE_BRANCH, 2) && has(STICK, 3)
+                        && use(ErectusWork.WORKABLE_BRANCH, 1) && use(STICK, 3)) {
+                    member.addToInventory(new ItemStack(ModItems.COOKING_RACK.get()));
+                    made++;
+                }
+                if (made > 0) {
+                    Lines.say(member, "made_thing");
+                }
+            }
+            case TORCH -> {
+                if (has(ErectusWork.THATCH, 1) && has(STICK, 1) && has(ErectusWork.TWINE, 3)
+                        && use(ErectusWork.THATCH, 1) && use(STICK, 1) && use(ErectusWork.TWINE, 3)) {
+                    member.addToInventory(new ItemStack(ModItems.TORCH.get()));
+                    Lines.say(member, "made_thing");
+                }
+            }
+            case DIGGING_STICK -> {
+                if (has(ErectusWork.WORKABLE_BRANCH, 1) && has(ErectusWork.TWINE, 10)
+                        && use(ErectusWork.WORKABLE_BRANCH, 1) && use(s -> s.is(ModTags.Items.HAMMERSTONES), 1)
+                        && use(ErectusWork.TWINE, 10)) {
+                    member.addToInventory(new ItemStack(ModItems.DIGGING_STICK.get()));
+                    Lines.say(member, "made_thing");
+                }
             }
             case HARDEN -> {
                 if (!member.takeFirst(s -> s.is(ModItems.SHARPENED_SPEAR.get())).isEmpty()) {
