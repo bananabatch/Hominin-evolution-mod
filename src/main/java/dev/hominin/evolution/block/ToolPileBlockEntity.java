@@ -39,6 +39,8 @@ public class ToolPileBlockEntity extends BlockEntity {
     public static final int FOR_EVERYONE = 0;
     public static final int FOR_ME = 1;
     public static final int FOR_CLOSE = 2;
+    /** Players only - any player, or those its layer named (see PilePlayers); never a band member. Piles alone. */
+    public static final int FOR_PLAYERS = 3;
 
     /** Who is taking: may they have something laid down by this one, marked this way? */
     @FunctionalInterface
@@ -334,7 +336,7 @@ public class ToolPileBlockEntity extends BlockEntity {
 
     public void setMark(int slot, int mark) {
         if (slot >= 0 && slot < MAX && !tools.get(slot).isEmpty()) {
-            marks[slot] = Math.floorMod(mark, 3);
+            marks[slot] = Math.floorMod(mark, 4);
             changed();
         }
     }
@@ -712,7 +714,7 @@ public class ToolPileBlockEntity extends BlockEntity {
             if (slot >= 0 && slot < MAX) {
                 layers[slot] = m.hasUUID("By") ? m.getUUID("By") : null;
                 layerNames[slot] = m.getString("Name");
-                marks[slot] = Math.floorMod(m.getInt("Mark"), 3);
+                marks[slot] = Math.floorMod(m.getInt("Mark"), 4);
             }
         }
     }

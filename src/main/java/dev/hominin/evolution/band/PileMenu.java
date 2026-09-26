@@ -24,8 +24,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /**
  * A pile, looked over: left-click it (or look at it and press the work key) and see everything in it - what each
  * thing is, what stone, how good and how worn, who laid it down, and who laid the pile down first. Take what you
- * may. Anything you laid down yourself you can mark: for everyone, for you alone, or for those close to you (bond
- * 4 and up) - your band leaves alone what is not for them.
+ * may. Anything you laid down yourself you can mark: for everyone, for you alone, for those close to you (bond
+ * 4 and up), or - with other players about - for players only, and which ones - your band leaves alone what is not
+ * for them.
  */
 public final class PileMenu {
     public static final int OPEN = 0;
@@ -95,10 +96,18 @@ public final class PileMenu {
             }
             case MARK -> {
                 if (player.getUUID().equals(pile.layerOf(slot))) {
-                    int mark = (pile.markOf(slot) + 1) % 3;
+                    // "For players only" is there to cycle through once there is another player to mean it for.
+                    boolean players = player.server.getPlayerList().getPlayerCount() > 1
+                            || pile.markOf(slot) == ToolPileBlockEntity.FOR_PLAYERS;
+                    int mark = (pile.markOf(slot) + 1) % (players ? 4 : 3);
                     pile.setMark(slot, mark);
                     player.displayClientMessage(Component.literal(pile.at(slot).getHoverName().getString() + ": "
                             + markText(mark) + ".").withStyle(ChatFormatting.GRAY), true);
+                    if (mark == ToolPileBlockEntity.FOR_PLAYERS) {
+                        // Which players: the list opens straight away.
+                        PilePlayers.open(player);
+                        return;
+                    }
                 }
             }
             default -> {
@@ -116,6 +125,7 @@ public final class PileMenu {
         return switch (mark) {
             case ToolPileBlockEntity.FOR_ME -> "for you alone";
             case ToolPileBlockEntity.FOR_CLOSE -> "for those close to you (bond 4+)";
+            case ToolPileBlockEntity.FOR_PLAYERS -> "for players only";
             default -> "for everyone";
         };
     }

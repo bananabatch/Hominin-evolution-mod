@@ -103,6 +103,7 @@ public class PileScreen extends Screen {
         return switch (mark) {
             case ToolPileBlockEntity.FOR_ME -> "For: only me";
             case ToolPileBlockEntity.FOR_CLOSE -> "For: bond 4+";
+            case ToolPileBlockEntity.FOR_PLAYERS -> "For: players";
             default -> "For: everyone";
         };
     }

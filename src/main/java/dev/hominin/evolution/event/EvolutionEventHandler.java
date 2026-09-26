@@ -1024,6 +1024,7 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.mind.Insights.forget(playerId);
             dev.hominin.evolution.band.Grooming.forget(playerId);
             dev.hominin.evolution.band.PlayerMenu.forget(playerId);
+            dev.hominin.evolution.band.PilePlayers.forget(playerId);
             dev.hominin.evolution.hunt.Quarry.forget(playerId);
             dev.hominin.evolution.survival.Drinking.forget(playerId);
             dev.hominin.evolution.hunt.Predation.forget(playerId);

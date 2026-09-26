@@ -134,6 +134,9 @@ public final class ToolPiles extends SavedData {
     public static ToolPileBlockEntity.Access access(net.minecraft.world.entity.player.Player player) {
         UUID id = player.getUUID();
         return (layer, mark) -> mark == ToolPileBlockEntity.FOR_EVERYONE || id.equals(layer)
+                // Marked for players only: you are one - if they named players, one of those.
+                || mark == ToolPileBlockEntity.FOR_PLAYERS && player.getServer() != null
+                        && PilePlayers.allows(player.getServer(), layer, id)
                 // Laid down by one of your band for those close to them: you, if you are.
                 || mark == ToolPileBlockEntity.FOR_CLOSE && layer != null && player.level() instanceof ServerLevel level
                         && level.getEntity(layer) instanceof BandMember laid && laid.isLedBy(player)
