@@ -1462,6 +1462,23 @@ public final class Pois extends SavedData {
 
     // ------------------------------------------------------------ what places give
 
+    /** The nearest place of this kind laid out in the world within this far, or null. */
+    @Nullable
+    public static BlockPos placedNear(ServerLevel level, BlockPos centre, int radius, Kind kind) {
+        BlockPos best = null;
+        double bestDistance = (double) radius * radius;
+        for (Poi poi : of(level).pois.values()) {
+            if (poi.kind() == kind && poi.placed()) {
+                double distance = poi.pos().distSqr(centre);
+                if (distance <= bestDistance) {
+                    bestDistance = distance;
+                    best = poi.pos();
+                }
+            }
+        }
+        return best;
+    }
+
     /** Whether this water is a spring's: it never runs dry, and it is clean. */
     public static boolean isSpring(ServerLevel level, BlockPos water) {
         for (Poi poi : of(level).pois.values()) {

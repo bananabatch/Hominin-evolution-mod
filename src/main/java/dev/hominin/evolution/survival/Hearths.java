@@ -213,18 +213,41 @@ public final class Hearths extends SavedData {
     /** The nearest lit hearth this player is sitting by, if any. */
     @Nullable
     public static BlockPos litNear(ServerPlayer player, double radius) {
-        ServerLevel level = player.serverLevel();
+        return litNear(player.serverLevel(), player.position(), radius);
+    }
+
+    /** The nearest lit hearth within this far of a place, if any. */
+    @Nullable
+    public static BlockPos litNear(ServerLevel level, net.minecraft.world.phys.Vec3 at, double radius) {
         Hearths hearths = of(level);
         BlockPos best = null;
         for (BlockPos pos : hearths.burnsOutAt.keySet()) {
-            if (pos.closerToCenterThan(player.position(), radius) && level.isLoaded(pos)
+            if (pos.closerToCenterThan(at, radius) && level.isLoaded(pos)
                     && isLitHearth(level.getBlockState(pos))) {
-                if (best == null || pos.distToCenterSqr(player.position()) < best.distToCenterSqr(player.position())) {
+                if (best == null || pos.distToCenterSqr(at) < best.distToCenterSqr(at)) {
                     best = pos;
                 }
             }
         }
         return best;
+    }
+
+    /**
+     * Once a second per band member, the same as for a player: at night, a hominin by a lit hearth - yours, or a
+     * wild band at its own camp fire - keeps what hunts out of its light, whether or not anyone else is about.
+     */
+    public static void tickMember(dev.hominin.evolution.band.BandMember member) {
+        if ((member.tickCount + member.getId()) % 20 != 0 || !(member.level() instanceof ServerLevel level)) {
+            return;
+        }
+        long time = level.getDayTime() % 24000L;
+        if (time < 13000L || time >= 23000L) {
+            return;
+        }
+        BlockPos hearth = litNear(level, member.position(), LIGHT_RADIUS);
+        if (hearth != null) {
+            ward(member, hearth);
+        }
     }
 
     // ------------------------------------------------------------ the night
@@ -268,9 +291,9 @@ public final class Hearths extends SavedData {
     }
 
     /** Anything that hunts, near the fire at night: it will not come into the light. */
-    private static void ward(ServerPlayer player, BlockPos hearth) {
-        for (PathfinderMob mob : player.level().getEntitiesOfClass(PathfinderMob.class,
-                player.getBoundingBox().inflate(WARD_RADIUS),
+    private static void ward(net.minecraft.world.entity.LivingEntity by, BlockPos hearth) {
+        for (PathfinderMob mob : by.level().getEntitiesOfClass(PathfinderMob.class,
+                by.getBoundingBox().inflate(WARD_RADIUS),
                 m -> m.isAlive() && m.getType().is(ModTags.EntityTypes.PREDATORS)
                         && !dev.hominin.evolution.combat.Scare.isScared(m))) {
             if (mob.blockPosition().closerThan(hearth, WARD_RADIUS)) {

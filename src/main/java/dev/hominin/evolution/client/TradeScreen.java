@@ -29,6 +29,8 @@ public class TradeScreen extends Screen {
 
     private final TradeOpenPayload trade;
     private final ResourceLocation era;
+    /** The first of their things shown: the bigger kinds carry more than fits down the screen. */
+    private int scroll;
 
     private TradeScreen(TradeOpenPayload trade) {
         super(Component.literal("Trade with " + trade.name()));
@@ -64,15 +66,17 @@ public class TradeScreen extends Screen {
     protected void init() {
         int left = (width - ITEM_WIDTH) / 2;
         List<ItemStack> stacks = trade.stacks();
-        int maxRows = Math.max(1, (hotbarY() - 24 - listTop()) / ROW);
-        for (int i = 0; i < Math.min(stacks.size(), maxRows); i++) {
+        int maxRows = maxRows();
+        scroll = Math.max(0, Math.min(scroll, stacks.size() - maxRows));
+        for (int row = 0; row < Math.min(stacks.size() - scroll, maxRows); row++) {
+            int i = scroll + row;
             ItemStack stack = stacks.get(i);
             int wanted = trade.slots().get(i);
             Component label = Component.literal(stack.getHoverName().getString()
                     + (stack.getCount() > 1 ? " x" + stack.getCount() : "") + "  - " + tierName(tier(stack)));
             addRenderableWidget(Button.builder(label, b -> PacketDistributor.sendToServer(
                     new TradeRequestPayload(trade.entityId(), offerSlot, wanted)))
-                    .bounds(left + 20, listTop() + i * ROW, ITEM_WIDTH - 20, 20).build());
+                    .bounds(left + 20, listTop() + row * ROW, ITEM_WIDTH - 20, 20).build());
         }
         // Your hotbar: what you are putting forward.
         int barLeft = width / 2 - 9 * 22 / 2;
@@ -101,9 +105,14 @@ public class TradeScreen extends Screen {
             graphics.drawCenteredString(font, trade.name() + " isn't carrying anything.", width / 2, listTop() + 8,
                     0xBBBBBB);
         }
-        int maxRows = Math.max(1, (hotbarY() - 24 - listTop()) / ROW);
-        for (int i = 0; i < Math.min(stacks.size(), maxRows); i++) {
-            graphics.renderItem(stacks.get(i), left, listTop() + i * ROW + 2);
+        int maxRows = maxRows();
+        for (int row = 0; row < Math.min(stacks.size() - scroll, maxRows); row++) {
+            graphics.renderItem(stacks.get(scroll + row), left, listTop() + row * ROW + 2);
+        }
+        if (stacks.size() > maxRows) {
+            graphics.drawString(font, (scroll + 1) + "-" + Math.min(stacks.size(), scroll + maxRows) + " of "
+                    + stacks.size(), left + ITEM_WIDTH + 6, listTop() + 6, 0x888888);
+            graphics.drawString(font, "(scroll)", left + ITEM_WIDTH + 6, listTop() + 16, 0x888888);
         }
         Player player = Minecraft.getInstance().player;
         if (player == null) {
@@ -119,6 +128,21 @@ public class TradeScreen extends Screen {
         String offerLine = offer.isEmpty() ? "You offer: nothing - pick a slot"
                 : "You offer: " + offer.getHoverName().getString() + " - " + tierName(tier(offer));
         graphics.drawCenteredString(font, offerLine, width / 2, hotbarY() - 12, 0xFFFFFF);
+    }
+
+    private int maxRows() {
+        return Math.max(1, (hotbarY() - 24 - listTop()) / ROW);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        int most = Math.max(0, trade.stacks().size() - maxRows());
+        int next = Math.max(0, Math.min(most, scroll - (int) Math.signum(scrollY)));
+        if (next != scroll) {
+            scroll = next;
+            rebuildWidgets();
+        }
+        return true;
     }
 
     @Override

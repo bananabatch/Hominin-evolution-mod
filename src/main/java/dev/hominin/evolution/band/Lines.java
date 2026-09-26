@@ -43,6 +43,21 @@ public final class Lines {
     }
 
     static {
+        // ---------------------------------------------------------------- the body, as a player's
+        pool("bleeding_out", "It won't stop. Water - I need water!", "I'm opened up. Get me to the river!",
+                "It's pouring out of me. Water, now!");
+        pool("bleed_closed", "It's closing. Badly - but it's closing.", "I think I'll live. Don't touch it.",
+                "It stopped. Just.");
+        pool("food_ill", "That meat was bad. My gut...", "Oh no. That had turned.", "I shouldn't have eaten that.");
+        pool("wound_bad", "The wound's gone hot. That's not good.", "It's gone bad under the skin.",
+                "Raw meat, and now the cut is angry.");
+        pool("carcass_cracked", "Stand back - I'm opening it up!", "There's a whole feast in there.",
+                "Give me the stone. This one's big.");
+        pool("cooked", "It's better off the fire.", "Cooked. Smell that.", "Meat over the fire - who wants some?");
+        pool("log_grubs", "Grubs in the rot!", "This old log is full of them.", "Soft wood, fat grubs.");
+        pool("torch_thrown", "Get back! Burn!", "Take the fire and go!", "Fire - run from it!");
+        pool("made_thing", "I made something useful.", "That'll do the job.", "Here's one more for the band.");
+        pool("hunting_alone", "I'm going after it.", "That one's slow. Mine.", "I can run that down.");
         // ---------------------------------------------------------------- said aloud
         pool("built", "Look at it. Out of the rain at last.", "We made that. All of us.",
                 "A roof! I've never slept under one.", "Now that is a place to come back to.");

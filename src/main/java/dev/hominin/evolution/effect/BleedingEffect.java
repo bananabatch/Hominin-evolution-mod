@@ -32,7 +32,8 @@ public class BleedingEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity instanceof net.minecraft.world.entity.player.Player player
-                && dev.hominin.evolution.combat.Bleeding.stemmed(player)) {
+                && dev.hominin.evolution.combat.Bleeding.stemmed(player)
+                || dev.hominin.evolution.band.MemberSurvival.stemmed(entity)) {
             // Drinking hard, and it holds.
             return true;
         }

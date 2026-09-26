@@ -130,8 +130,83 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             "ma", "gu", "ri", "ya", "zo", "en", "ok", "wa", "hu", "ji"};
 
     /** Nine things in all, like a hotbar: two hands and seven carried. */
+    /** Two hands and seven more, through habilis: the same nine a player of those kinds carries. */
     public static final int PACK_SLOTS = 7;
-    private final SimpleContainer inventory = new SimpleContainer(PACK_SLOTS);
+    /** Everything a Neanderthal carries, less the two hands. */
+    public static final int MAX_PACK_SLOTS = 4 * 9 - 2;
+    private final SimpleContainer inventory = new Pack();
+
+    /**
+     * What a member can carry grows with its kind exactly as a player's does - a row more at erectus, three rows for
+     * heidelbergensis and sapiens, all four for Neanderthals - less the two hands, which are carried in anyway.
+     */
+    public int packSlots() {
+        return Math.max(PACK_SLOTS, Math.min(MAX_PACK_SLOTS,
+                dev.hominin.evolution.inventory.InventoryLimits.rowsFor(getStage()) * 9 - 2));
+    }
+
+    /** The pack: room for a Neanderthal's load, of which only as much as this member's kind can carry is open. */
+    private final class Pack extends SimpleContainer {
+        Pack() {
+            super(MAX_PACK_SLOTS);
+        }
+
+        @Override
+        public int getContainerSize() {
+            return packSlots();
+        }
+
+        @Override
+        public ItemStack addItem(ItemStack stack) {
+            if (stack.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack left = stack.copy();
+            int open = packSlots();
+            for (int i = 0; i < open && !left.isEmpty(); i++) {
+                ItemStack in = getItem(i);
+                if (!in.isEmpty() && ItemStack.isSameItemSameComponents(in, left)) {
+                    int room = Math.min(getMaxStackSize(in), in.getMaxStackSize()) - in.getCount();
+                    if (room > 0) {
+                        int moved = Math.min(room, left.getCount());
+                        in.grow(moved);
+                        left.shrink(moved);
+                    }
+                }
+            }
+            for (int i = 0; i < open && !left.isEmpty(); i++) {
+                if (getItem(i).isEmpty()) {
+                    setItem(i, left.copyAndClear());
+                }
+            }
+            if (left.getCount() != stack.getCount()) {
+                setChanged();
+            }
+            return left;
+        }
+
+        @Override
+        public boolean canAddItem(ItemStack stack) {
+            for (int i = 0; i < packSlots(); i++) {
+                ItemStack in = getItem(i);
+                if (in.isEmpty() || ItemStack.isSameItemSameComponents(in, stack) && in.getCount() < in.getMaxStackSize()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /** Anything left in a part of the pack this kind cannot carry any more is put down. */
+        void dropOverflow() {
+            for (int i = packSlots(); i < MAX_PACK_SLOTS; i++) {
+                ItemStack in = getItem(i);
+                if (!in.isEmpty()) {
+                    spawnAtLocation(in.copy());
+                    super.setItem(i, ItemStack.EMPTY);
+                }
+            }
+        }
+    }
 
     /** Tools that help dig for insects, best last. */
     private static final List<Supplier<Item>> FORAGING_TOOLS = List.of(
@@ -340,6 +415,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                 dev.hominin.evolution.entity.Dinopithecus.class, 10.0F, 1.1D, 1.4D,
                 giant -> getTarget() != giant && !isHunting()));
         goalSelector.addGoal(1, new FleeToTreeGoal(this));
+        goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.DrinkGoal(this));
         goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.GuideGoal(this));
         goalSelector.addGoal(1, new dev.hominin.evolution.band.goal.LabourGoal(this));
@@ -353,6 +429,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.ScavengeGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.GroomGoal(this));
         goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.BatheGoal(this));
+        goalSelector.addGoal(6, new dev.hominin.evolution.band.goal.SaltLickGoal(this));
         goalSelector.addGoal(5, new ForageGoal(this));
         goalSelector.addGoal(5, new dev.hominin.evolution.band.goal.NestBuildGoal(this));
         // Just above building one: once the nest exists, getting into it is the priority.
@@ -1516,7 +1593,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     /** Food, and not food that has turned: nobody of the band will touch that. A brain is its own thing (see brains). */
     public static boolean edible(ItemStack stack) {
         return stack.has(DataComponents.FOOD) && !dev.hominin.evolution.food.Spoilage.isSpoiled(stack)
-                && !stack.is(ModItems.HOMININ_BRAIN.get());
+                && !stack.is(ModItems.HOMININ_BRAIN.get()) && !stack.is(ModItems.WATER_EGGSHELL.get());
     }
 
     /** Picks three favourite foods, the first time they are needed. */
@@ -1656,6 +1733,13 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                     break;
                 }
             }
+            // Starving, with nothing else: meat that has turned goes down too, as it would for anyone.
+            for (int slot = 0; foodSlot < 0 && hunger <= 3 && slot < inventory.getContainerSize(); slot++) {
+                ItemStack turned = inventory.getItem(slot);
+                if (turned.has(DataComponents.FOOD) && dev.hominin.evolution.food.Spoilage.isSpoiled(turned)) {
+                    foodSlot = slot;
+                }
+            }
             if (foodSlot < 0) {
                 return;
             }
@@ -1693,6 +1777,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (--eatingTicks == 0) {
             maybeAcquireTaste(food);
             noteEaten(food);
+            MemberSurvival.ate(this, food);
             consume(properties);
             food.shrink(1);
             if (!isBaby() && random.nextFloat() < 0.12F && leaderPlayer() instanceof net.minecraft.server.level.ServerPlayer lead
@@ -1731,6 +1816,7 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         }
         boolean favourite = isFavourite(food);
         maybeAcquireTaste(food);
+        MemberSurvival.ate(this, food);
         consume(properties);
         if (level() instanceof ServerLevel server) {
             server.sendParticles(favourite ? ParticleTypes.HEART : ParticleTypes.HAPPY_VILLAGER,
@@ -1802,7 +1888,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                 || (stack.is(ModItems.OBSIDIAN_ROCK.get()) && isObsessedWithObsidian())
                 || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this)
                         && (stack.is(ModItems.LONG_BONE.get()) || stack.is(ModItems.RIB.get())))
-                || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this) && wantsMaterial(stack));
+                || (dev.hominin.evolution.band.goal.CraftGoal.canCraft(this) && wantsMaterial(stack))
+                || MemberSurvival.wantsToCarry(this, stack);
         return useful && hasRoomFor(stack);
     }
 
@@ -3700,6 +3787,10 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         super.customServerAiStep();
         keepOutOfLava();
         dev.hominin.evolution.survival.Diseases.tick(this);
+        MemberSurvival.tick(this);
+        if ((tickCount + getId()) % 100 == 0) {
+            ((Pack) inventory).dropOverflow();
+        }
         if (tickCount == 1) {
             ensureName();
             applyFightSkill();
@@ -4059,13 +4150,14 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
             }
         }
         kuruSince = tag.contains("KuruSince") ? tag.getLong("KuruSince") : -1L;
-        readInventoryFromTag(tag, registryAccess());
         if (tag.contains("Hunger")) {
             hunger = tag.getInt("Hunger");
         }
         if (tag.contains("Stage")) {
             entityData.set(STAGE, tag.getString("Stage"));
         }
+        // After the kind: how much of the pack is open depends on it.
+        readInventoryFromTag(tag, registryAccess());
         if (tag.contains("Female")) {
             female = tag.getBoolean("Female");
         }
