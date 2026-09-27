@@ -64,8 +64,11 @@ public final class HomininCommand {
                                         .suggestResource(StageRegistry.all().keySet().stream()
                                                 // A path's own goals are not a stage to become.
                                                 .filter(id -> !id.getPath().contains("/")), builder))
-                                .executes(ctx -> setStage(ctx, ctx.getSource().getPlayerOrException(),
-                                        ResourceLocationArgument.getId(ctx, "stage")))))
+                                // With other players on, it goes through the intermission as evolving does.
+                                .executes(ctx -> become(ctx, ResourceLocationArgument.getId(ctx, "stage"), true))
+                                // "alone": at once, for you only - nobody else is asked or moved.
+                                .then(Commands.literal("alone")
+                                        .executes(ctx -> become(ctx, ResourceLocationArgument.getId(ctx, "stage"), false)))))
                 .then(Commands.literal("season")
                         .executes(ctx -> season(ctx, null, false))
                         .then(Commands.literal("dry").requires(src -> src.hasPermission(2))
@@ -403,6 +406,27 @@ public final class HomininCommand {
 
     private static int start(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         return setStage(ctx, EntityArgument.getPlayer(ctx, "player"), ResourceLocationArgument.getId(ctx, "stage"));
+    }
+
+    /**
+     * {@code /hominin become}: with other players in the world it is an evolution like any other - the intermission,
+     * everyone's choice, nobody left behind. {@code alone} changes only you, at once.
+     */
+    private static int become(CommandContext<CommandSourceStack> ctx, ResourceLocation stageId, boolean withOthers)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        StageDefinition stage = StageRegistry.get(stageId);
+        if (stage == null) {
+            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageId));
+            return 0;
+        }
+        if (withOthers && dev.hominin.evolution.stage.Intermission.start(player, stageId)) {
+            ctx.getSource().sendSuccess(() -> Component.literal("Evolving into " + stage.displayName()
+                    + " - the others have fifteen seconds to choose. (Add 'alone' to change only yourself, at once.)"),
+                    true);
+            return 1;
+        }
+        return setStage(ctx, player, stageId);
     }
 
     private static int setStage(CommandContext<CommandSourceStack> ctx, ServerPlayer player, ResourceLocation stageId) {
