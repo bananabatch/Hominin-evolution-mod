@@ -1,0 +1,9 @@
+-proc:none
+-d
+/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/out
+-sourcepath
+src/main/java
+src/main/java/dev/hominin/evolution/band/ToolPiles.java
+src/main/java/dev/hominin/evolution/event/EvolutionEventHandler.java
+src/main/java/dev/hominin/evolution/stage/Arrival.java
+src/main/java/dev/hominin/evolution/survival/Gravel.java

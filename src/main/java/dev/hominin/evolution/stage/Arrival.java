@@ -285,7 +285,9 @@ public final class Arrival {
         // Habilis sometimes arrives with stone instead: a hammerstone, and three chert or six quartzite.
         if (player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA).getStage().getPath().equals("homo_habilis") && player.getRandom().nextFloat() < 0.5F) {
             boolean chert = player.getRandom().nextBoolean();
-            items = java.util.List.of(new ItemStack(dev.hominin.evolution.ModItems.HAMMERSTONE.get()),
+            items = java.util.List.of(dev.hominin.evolution.item.StoneMaterial.stamp(
+                    new ItemStack(dev.hominin.evolution.ModItems.HAMMERSTONE.get()),
+                    chert ? dev.hominin.evolution.item.StoneMaterial.CHERT : dev.hominin.evolution.item.StoneMaterial.QUARTZITE),
                     chert ? new ItemStack(dev.hominin.evolution.ModItems.CHERT_ROCK.get(), 3)
                             : new ItemStack(dev.hominin.evolution.ModItems.GRANITE_ROCK.get(), 6));
         }

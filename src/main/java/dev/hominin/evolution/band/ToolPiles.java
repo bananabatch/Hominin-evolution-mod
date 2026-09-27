@@ -1066,7 +1066,13 @@ public final class ToolPiles extends SavedData {
                 : new ItemStack(item);
         StoneMaterial[] stones = {StoneMaterial.QUARTZITE, StoneMaterial.QUARTZITE, StoneMaterial.BASALT, StoneMaterial.CHERT,
                 StoneMaterial.LIMESTONE, StoneMaterial.OBSIDIAN};
-        StoneMaterial.stamp(stack, stones[random.nextInt(stones.length)]);
+        // A hammerstone is any stone that holds together under a blow - never limestone - fine chert included.
+        StoneMaterial[] hammers = {StoneMaterial.QUARTZITE, StoneMaterial.QUARTZITE, StoneMaterial.BASALT,
+                StoneMaterial.BASALT, StoneMaterial.CHERT, StoneMaterial.FINE_CHERT, StoneMaterial.OBSIDIAN};
+        boolean hammer = stack.is(ModItems.HAMMERSTONE.get());
+        StoneMaterial[] from = hammer ? hammers : stones;
+        // Stamped chert, a hammerstone becomes the chert hammerstone - a new stack, kept.
+        stack = StoneMaterial.stamp(stack, from[random.nextInt(from.length)]);
         if (worn > 0.0F && stack.isDamageableItem()) {
             stack.setDamageValue(Math.min(stack.getMaxDamage() - 1, (int) (stack.getMaxDamage() * worn)));
         }

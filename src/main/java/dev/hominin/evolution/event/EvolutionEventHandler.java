@@ -506,6 +506,20 @@ public final class EvolutionEventHandler {
      * what makes finding a chert seam worth the walk; plain country rock is a
      * mixed quarry and rolls for it.
      */
+    /** How often a face of this stone gives up a hammerstone of it: never limestone, which will not hold together. */
+    private static float hammerstoneChance(ItemStack won) {
+        if (won.is(ModItems.GRANITE_ROCK.get()) || won.is(ModItems.BASALT_ROCK.get())) {
+            return HAMMERSTONE_FIND_CHANCE;
+        }
+        if (won.is(ModItems.CHERT_ROCK.get())) {
+            return CHERT_HAMMERSTONE_FIND_CHANCE;
+        }
+        if (won.is(ModItems.FINE_CHERT_ROCK.get())) {
+            return 0.12F;
+        }
+        return won.is(ModItems.OBSIDIAN_ROCK.get()) ? 0.10F : 0.0F;
+    }
+
     private static ItemStack yieldOf(BlockState state, Level level) {
         if (state.is(ModBlocks.OBSIDIAN_DEPOSIT.get())) {
             // Now and then the face comes away whole: a chunk.
@@ -595,8 +609,10 @@ public final class EvolutionEventHandler {
                     "a whole nodule of chert drops free - round, dense, and just the size of a fist");
             return;
         }
-        float hammerChance = chert ? CHERT_HAMMERSTONE_FIND_CHANCE : HAMMERSTONE_FIND_CHANCE;
-        if ((quartzite || chert) && level.getRandom().nextFloat() < hammerChance
+        // Any stone that is not limestone can give up a round cobble: quartzite and basalt most, chert a little
+        // less, glassy fine chert and obsidian now and then.
+        float hammerChance = hammerstoneChance(won);
+        if (hammerChance > 0.0F && level.getRandom().nextFloat() < hammerChance
                 && dev.hominin.evolution.hunt.Seams.takeCobble(level, pos)) {
             giveOrDrop(player, dev.hominin.evolution.item.StoneMaterial.stampFrom(new ItemStack(ModItems.HAMMERSTONE.get()), won));
             // Picking the one usable cobble out of a face of rubble is the whole skill.
@@ -1348,6 +1364,18 @@ public final class EvolutionEventHandler {
     public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ToolUse.creditOldowanTool(player, event.getCrafting().getItem());
+            // Two cobbles knocked into one: a hammerstone of the stone they were - the first of them, if they differ.
+            if (event.getCrafting().is(ModItems.HAMMERSTONE.get())) {
+                var grid = event.getInventory();
+                for (int slot = 0; slot < grid.getContainerSize(); slot++) {
+                    dev.hominin.evolution.item.StoneMaterial stone =
+                            dev.hominin.evolution.item.StoneMaterial.ofStone(grid.getItem(slot));
+                    if (stone != null) {
+                        event.getCrafting().set(dev.hominin.evolution.ModDataComponents.MATERIAL.get(), stone.ordinal());
+                        break;
+                    }
+                }
+            }
         }
     }
 

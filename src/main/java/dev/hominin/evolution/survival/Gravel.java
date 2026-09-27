@@ -78,7 +78,19 @@ public final class Gravel extends SavedData {
      * One go at a block of gravel: what comes out of it, or empty. Chert 40%, fine chert 12%, obsidian 5%, a chunk of
      * obsidian one time in a hundred and twenty; the rest is just gravel.
      */
+    /** Now and then a river-rounded cobble of what the gravel holds: a hammerstone ready made. */
+    private static final float ROUNDED_CHANCE = 0.12F;
+
     public static ItemStack sift(ServerLevel level, BlockPos pos, RandomSource random) {
+        ItemStack found = siftStone(level, pos, random);
+        if ((found.is(ModItems.FINE_CHERT_ROCK.get()) || found.is(ModItems.OBSIDIAN_ROCK.get())
+                || found.is(ModItems.CHERT_ROCK.get())) && random.nextFloat() < ROUNDED_CHANCE) {
+            return dev.hominin.evolution.item.StoneMaterial.stampFrom(new ItemStack(ModItems.HAMMERSTONE.get()), found);
+        }
+        return found;
+    }
+
+    private static ItemStack siftStone(ServerLevel level, BlockPos pos, RandomSource random) {
         Gravel data = of(level);
         data.searched.merge(pos.asLong(), 1, Integer::sum);
         data.setDirty();
@@ -124,7 +136,10 @@ public final class Gravel extends SavedData {
                     + (left > 0 ? "" : " That is all this patch has.")), true);
             return true;
         }
-        String what = found.is(ModItems.OBSIDIAN_CHUNK.get()) ? "a whole chunk of obsidian!"
+        String what = dev.hominin.evolution.item.StoneMaterial.isStoneTool(found) || found.is(ModItems.CHERT_HAMMERSTONE.get())
+                ? "a river cobble, rolled round - a hammerstone of "
+                        + dev.hominin.evolution.item.StoneMaterial.of(found).title().toLowerCase() + "."
+                : found.is(ModItems.OBSIDIAN_CHUNK.get()) ? "a whole chunk of obsidian!"
                 : found.is(ModItems.OBSIDIAN_ROCK.get()) ? "a piece of obsidian, washed a long way."
                 : found.is(ModItems.FINE_CHERT_ROCK.get()) ? "fine chert - glassier than any seam gives."
                 : "a piece of chert.";
