@@ -77,6 +77,38 @@ public final class Arrival {
     }
 
     private static final Map<UUID, Pending> pending = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    /**
+     * Players the world carries along with a band that evolved: they wake near it, not somewhere of their own - and
+     * those who did not evolve themselves keep what they carried.
+     */
+    private static final Map<UUID, UUID> alongside = dev.hominin.evolution.ServerState.track(new HashMap<>());
+    private static final java.util.Set<UUID> keepsThings = dev.hominin.evolution.ServerState.track(new java.util.HashSet<>());
+    /** How far from the evolved band a band carried along with it wakes: near, but its own ground. */
+    private static final int ALONGSIDE_MIN = 24;
+    private static final int ALONGSIDE_MAX = 48;
+
+    /** When this player evolves - or is carried along - they wake near this band's leader. */
+    public static void alongside(ServerPlayer player, UUID leader) {
+        alongside.put(player.getUUID(), leader);
+    }
+
+    /**
+     * The world moves on and this player's band with it, though it has not evolved: the same dark, the same deep time
+     * passing, and waking near the band that did - with their own kind, their own things, their own band.
+     */
+    public static void carryAlong(ServerPlayer player, UUID leader, StageDefinition now, StageDefinition worldInto,
+            int fromYearsAgo) {
+        alongside.put(player.getUUID(), leader);
+        keepsThings.add(player.getUUID());
+        dev.hominin.evolution.stage.CutsceneGuard.tryStart(player, PROTECTED_TICKS);
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, PROTECTED_TICKS, 4, false, false, false));
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PROTECTED_TICKS, 6, false, false, false));
+        int from = Math.max(fromYearsAgo, worldInto.yearsAgo());
+        String age = StageAge.ago(worldInto.yearsAgo());
+        PacketDistributor.sendToPlayer(player, new CutsceneStartPayload(StageAge.later(from, worldInto.yearsAgo()),
+                age.isEmpty() ? now.displayName() : now.displayName() + " - " + age, from, worldInto.yearsAgo()));
+        pending.put(player.getUUID(), new Pending(player.level().getGameTime() + FADE_TICKS, now));
+    }
 
     /** Starts the cutscene. The move itself happens on a later tick, once the screen is black. */
     public static void begin(ServerPlayer player, StageDefinition from, StageDefinition to) {
@@ -103,6 +135,8 @@ public final class Arrival {
     public static void forget(ServerPlayer player) {
         // Logging out mid-cutscene skips the move rather than stranding it half-done.
         pending.remove(player.getUUID());
+        alongside.remove(player.getUUID());
+        keepsThings.remove(player.getUUID());
     }
 
     private static void arrive(ServerPlayer player, StageDefinition to) {
@@ -115,13 +149,30 @@ public final class Arrival {
                 pending.put(player.getUUID(), new Pending(level.getGameTime() + 5L, to));
                 return;
             }
-            besideLeader(player, host, to);
+            alongside.remove(player.getUUID());
+            besideLeader(player, host, to, keepsThings.remove(player.getUUID()));
             return;
         }
         BlockPos from = player.blockPosition();
         var data = player.getData(dev.hominin.evolution.Attachments.PLAYER_EVOLUTION_DATA);
+        // Carried along with a band that evolved: wait for it to wake, then wake near it.
+        UUID with = alongside.get(player.getUUID());
+        ServerPlayer leader = with == null ? null : level.getServer().getPlayerList().getPlayer(with);
+        if (leader != null && leader != player && leader.level() == level && pending.containsKey(with)) {
+            pending.put(player.getUUID(), new Pending(level.getGameTime() + 5L, to));
+            return;
+        }
+        alongside.remove(player.getUUID());
+        boolean keep = keepsThings.remove(player.getUUID());
         // Where the line splits, the people go their own way: east, or north - and a long way.
         int lineage = Lineage.branches(data.getStage()) ? Lineage.of(data) : Lineage.NONE;
+        if (leader != null && leader != player && leader.level() == level) {
+            BlockPos near = nearBand(level, leader.blockPosition(), player.getRandom());
+            if (near != null) {
+                wakeNear(player, leader, near, from, to, keep);
+                return;
+            }
+        }
         // Whether the ancestors ever put a roof up: if they did, their descendants more often wake somewhere camped.
         boolean built = dev.hominin.evolution.build.Sites.ownedBy(level, player.getUUID()).stream()
                 .anyMatch(site -> site.built() && dev.hominin.evolution.build.Building.shelter(site));
@@ -158,11 +209,55 @@ public final class Arrival {
         }
     }
 
+    /** Somewhere safe a little way off from where the evolved band woke: ground of their own, within sight of it. */
+    @Nullable
+    private static BlockPos nearBand(ServerLevel level, BlockPos centre, RandomSource random) {
+        for (int attempt = 0; attempt < RING_ATTEMPTS; attempt++) {
+            BlockPos point = ringPoint(centre, random, Double.NaN, ALONGSIDE_MIN, ALONGSIDE_MAX);
+            if (isOpenWater(level, point)) {
+                continue;
+            }
+            BlockPos safe = safeSpotNear(level, point);
+            if (safe != null) {
+                return safe;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Waking near the band the world moved on with. Their own band comes with them; a player who evolved starts afresh
+     * as anyone evolving does, and one who did not keeps what they had.
+     */
+    private static void wakeNear(ServerPlayer player, ServerPlayer leader, BlockPos at, BlockPos from, StageDefinition to,
+            boolean keep) {
+        ServerLevel level = player.serverLevel();
+        if (!keep) {
+            replaceInventory(player, to);
+        }
+        player.teleportTo(level, at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        player.resetFallDistance();
+        Band.bringAlong(player, from);
+        if (!keep) {
+            Band.formNewBand(player);
+        } else {
+            dev.hominin.evolution.hunt.Predation.settle(player, at);
+        }
+        player.setRespawnPosition(level.dimension(), at, player.getYRot(), true, false);
+        int blocks = (int) Math.round(Math.sqrt(from.distSqr(at)));
+        PacketDistributor.sendToPlayer(player, new CutsceneArrivalPayload(blocks));
+        player.sendSystemMessage(Component.literal((keep ? "The world has moved on, and your band with it. " : "")
+                + "You wake not far from " + leader.getGameProfile().getName() + "'s band - " + blocks
+                + " blocks from where your ancestors walked.").withStyle(ChatFormatting.GOLD));
+    }
+
     /** The co-leader's waking: their own things replaced, beside the leader, at the band's camp. */
-    private static void besideLeader(ServerPlayer player, ServerPlayer host, StageDefinition to) {
+    private static void besideLeader(ServerPlayer player, ServerPlayer host, StageDefinition to, boolean keep) {
         ServerLevel level = host.serverLevel();
         BlockPos from = player.blockPosition();
-        replaceInventory(player, to);
+        if (!keep) {
+            replaceInventory(player, to);
+        }
         BlockPos spot = Band.standingSpotNear(level, host.blockPosition(), 3, player.getRandom().nextFloat() * 6.2831855F);
         player.teleportTo(level, spot.getX() + 0.5D, spot.getY(), spot.getZ() + 0.5D, host.getYRot(), 0.0F);
         player.resetFallDistance();

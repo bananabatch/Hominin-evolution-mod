@@ -74,6 +74,8 @@ public final class Intermission {
         final Map<UUID, Integer> route = new HashMap<>();
         final Set<UUID> askedSplit = new HashSet<>();
         final Map<UUID, Boolean> splits = new HashMap<>();
+        /** Whether those who have not chosen have been asked a second time. */
+        boolean reasked;
 
         Session(UUID evolver, ResourceLocation into, boolean branch, long endsAt) {
             this.evolver = evolver;
@@ -316,6 +318,18 @@ public final class Intermission {
         long left = s.endsAt - evolver.level().getGameTime();
         if (left % 20 == 0) {
             board(any.server, s, Math.max(0, left / 20));
+            titles(any.server, s, evolver, Math.max(0, left / 20));
+        }
+        if (!s.reasked && left <= 7 * 20) {
+            // A screen closed, or never seen behind another one: asked once more before the end.
+            s.reasked = true;
+            for (UUID id : s.roles.keySet()) {
+                if (!s.picked.containsKey(id) && s.roles.get(id) != Role.FOLLOWER
+                        && any.server.getPlayerList().getPlayer(id) instanceof ServerPlayer one
+                        && (s.roles.get(id) != Role.EVOLVER || s.branch)) {
+                    ask(one, s);
+                }
+            }
         }
         if (left > 0) {
             return;
@@ -329,6 +343,12 @@ public final class Intermission {
             return;
         }
         session = null;
+        // The titles off the screen before the dark comes down.
+        for (UUID id : s.roles.keySet()) {
+            if (any.server.getPlayerList().getPlayer(id) instanceof ServerPlayer one) {
+                one.connection.send(new net.minecraft.network.protocol.game.ClientboundClearTitlesPacket(true));
+            }
+        }
         resolve(evolver, s);
     }
 
@@ -354,6 +374,29 @@ public final class Intermission {
         }
     }
 
+    /**
+     * The intermission on everyone's screen, big enough not to miss: whose band is evolving, into what, and the
+     * seconds left - over the choosing.
+     */
+    private static void titles(MinecraftServer server, Session s, ServerPlayer evolver, long seconds) {
+        Component title = Component.literal(evolver.getGameProfile().getName() + "'s band is evolving")
+                .withStyle(ChatFormatting.LIGHT_PURPLE);
+        for (Map.Entry<UUID, Role> entry : s.roles.entrySet()) {
+            if (!(server.getPlayerList().getPlayer(entry.getKey()) instanceof ServerPlayer one)) {
+                continue;
+            }
+            String what = entry.getValue() == Role.EVOLVER
+                    ? (s.branch && !s.picked.containsKey(one.getUUID()) ? "Choose your people's way" : "The others are choosing")
+                    : entry.getValue() == Role.FOLLOWER ? "Your band's leader chooses for you"
+                    : s.picked.containsKey(one.getUUID()) ? "You have chosen" : "Choose now";
+            Component subtitle = Component.literal("into " + speciesName(s.into) + " - " + what + " - " + seconds + "s")
+                    .withStyle(ChatFormatting.GRAY);
+            one.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(0, 30, 10));
+            one.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(title));
+            one.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(subtitle));
+        }
+    }
+
     private static void tellAll(MinecraftServer server, Session s, String text) {
         for (UUID id : s.roles.keySet()) {
             if (server.getPlayerList().getPlayer(id) instanceof ServerPlayer one) {
@@ -368,6 +411,9 @@ public final class Intermission {
         if (s.branch) {
             Lineage.chosen(evolver, leaderRoute);
         }
+        StageDefinition before = StageRegistry.get(stageOf(evolver));
+        int fromYears = before != null ? before.yearsAgo() : 0;
+        StageDefinition worldInto = StageRegistry.get(s.into);
         EvolutionManager.become(evolver, s.into);
         for (Map.Entry<UUID, Role> entry : s.roles.entrySet()) {
             ServerPlayer one = server.getPlayerList().getPlayer(entry.getKey());
@@ -381,10 +427,13 @@ public final class Intermission {
                         && Boolean.TRUE.equals(s.splits.get(one.getUUID()))
                         : picked != null && picked == SPLIT;
                 if (splits) {
-                    // A band of their own, of the new kind: the band that evolved stays the band it was.
+                    // A band of their own, of the new kind: the band that evolved stays the band it was. Going the
+                    // same way, it wakes near the old one; going another way, it goes its own road.
                     Newcomers.split(one);
                     if (s.branch) {
                         Lineage.chosen(one, theirs);
+                    } else {
+                        Arrival.alongside(one, evolver.getUUID());
                     }
                     EvolutionManager.become(one, s.into);
                 } else {
@@ -405,12 +454,26 @@ public final class Intermission {
             }
             ResourceLocation bump = bumpTarget(one, s.into);
             if (bump == null) {
+                // Not behind: they stay what they are - but nobody is left behind in an age that has passed. The
+                // same deep time goes by for them, and they wake near the band that evolved, with their own.
+                StageDefinition theirs = StageRegistry.get(stageOf(one));
+                if (theirs != null && worldInto != null) {
+                    Arrival.carryAlong(one, evolver.getUUID(), theirs, worldInto, fromYears);
+                }
                 continue;
             }
+            Integer route = null;
             if (Lineage.branches(bump)) {
-                Integer route = s.route.get(one.getUUID());
-                Lineage.chosen(one, route != null ? route
-                        : one.getRandom().nextBoolean() ? Lineage.SAPIENS : Lineage.NEANDERTHAL);
+                route = s.route.get(one.getUUID());
+                if (route == null) {
+                    // Nobody chose for them: they go the way the band that evolved went.
+                    route = leaderRoute != Lineage.NONE ? leaderRoute
+                            : one.getRandom().nextBoolean() ? Lineage.SAPIENS : Lineage.NEANDERTHAL;
+                }
+                Lineage.chosen(one, route);
+            }
+            if (route == null || route == leaderRoute) {
+                Arrival.alongside(one, evolver.getUUID());
             }
             one.sendSystemMessage(Component.literal("The world has moved on, and your band with it: "
                     + speciesName(bump) + ".").withStyle(ChatFormatting.GOLD));
@@ -426,6 +489,11 @@ public final class Intermission {
             }
             ResourceLocation theirs = stageOf(host);
             if (theirs.equals(stageOf(one))) {
+                // Their band's leader was carried along without evolving: so are they, beside them.
+                StageDefinition same = StageRegistry.get(theirs);
+                if (same != null && worldInto != null && !host.getUUID().equals(s.evolver)) {
+                    Arrival.carryAlong(one, host.getUUID(), same, worldInto, fromYears);
+                }
                 continue;
             }
             Lineage.chosen(one, Lineage.of(host));
