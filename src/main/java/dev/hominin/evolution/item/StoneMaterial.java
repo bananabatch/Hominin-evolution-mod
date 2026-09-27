@@ -23,8 +23,9 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * What a stone tool was knapped from. Every stone tool carries it, and it shows: each has a look
  * of its own. And it matters in the hand - basalt holds a better edge than rough stone, chert a
  * keener one, and obsidian keener still: sharp enough that a cut from it will sometimes open a
- * wound a tier deeper than the blow alone would have. Plain country rock is nothing in particular,
- * and a tool knapped from it keeps the plain look.
+ * wound a tier deeper than the blow alone would have. Plain country rock is quartzite - coarse, tough,
+ * nothing special in the hand - and there is no stone tool without a stone: one made or found without
+ * a mark is quartzite, and is marked so the moment anyone has it.
  */
 public enum StoneMaterial {
     BASALT("Basalt", ChatFormatting.DARK_GRAY, 0.25F, "dense, dark lava stone - a tier behind chert"),
@@ -81,14 +82,54 @@ public enum StoneMaterial {
         return stone.is(ModItems.BASALT_ROCK.get()) ? BASALT : null;
     }
 
-    /** What a stone tool is made of: what it was stamped with, or what the item always is. */
+    /** What plain country rock - anything that is not one of the named stones - is, in a tool: quartzite. */
+    public static StoneMaterial plain() {
+        return QUARTZITE;
+    }
+
+    /**
+     * What a stone tool is made of: what it was stamped with, or what the item always is - and a stone tool with no
+     * mark is plain rock, quartzite. Null only for what is no stone tool and carries no mark.
+     */
     @Nullable
     public static StoneMaterial of(ItemStack tool) {
         Integer stored = tool.get(ModDataComponents.MATERIAL.get());
         if (stored != null && stored >= 0 && stored < values().length) {
             return values()[stored];
         }
-        return tool.is(ModItems.CHERT_HAMMERSTONE.get()) ? CHERT : null;
+        if (tool.is(ModItems.CHERT_HAMMERSTONE.get())) {
+            return CHERT;
+        }
+        return isStoneTool(tool) ? plain() : null;
+    }
+
+    /**
+     * A stone tool with no stone marked on it gets one - plain rock, quartzite - and a plain hammerstone marked chert
+     * becomes the chert hammerstone. Returns the stack to keep: the same one, or its replacement.
+     */
+    public static ItemStack tidy(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return stack;
+        }
+        if (stack.is(ModItems.HAMMERSTONE.get()) && of(stack) == CHERT) {
+            return new ItemStack(ModItems.CHERT_HAMMERSTONE.get(), stack.getCount());
+        }
+        if (isStoneTool(stack) && !stack.is(ModItems.CHERT_HAMMERSTONE.get())
+                && stack.get(ModDataComponents.MATERIAL.get()) == null) {
+            stack.set(ModDataComponents.MATERIAL.get(), plain().ordinal());
+        }
+        return stack;
+    }
+
+    /** Every slot of a container, tidied. */
+    public static void tidy(net.minecraft.world.Container container) {
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack stack = container.getItem(slot);
+            ItemStack kept = tidy(stack);
+            if (kept != stack) {
+                container.setItem(slot, kept);
+            }
+        }
     }
 
     public static boolean isStoneTool(ItemStack stack) {
@@ -100,6 +141,10 @@ public enum StoneMaterial {
      * which is the chert hammerstone: one item, not a plain hammerstone that happens to be chert.
      */
     public static ItemStack stamp(ItemStack tool, @Nullable StoneMaterial material) {
+        if (material == null) {
+            // Knapped from plain rock - or from nothing anyone noted: quartzite.
+            material = plain();
+        }
         if (material == CHERT && tool.is(ModItems.HAMMERSTONE.get())) {
             return new ItemStack(ModItems.CHERT_HAMMERSTONE.get(), tool.getCount());
         }
@@ -117,15 +162,12 @@ public enum StoneMaterial {
         return stack;
     }
 
-    /** Any plain hammerstone stamped chert, from before there was only the one, becomes the chert hammerstone. */
+    /**
+     * Everything a player carries, tidied: stone tools without a stone get one, and any plain hammerstone stamped
+     * chert, from before there was only the one, becomes the chert hammerstone.
+     */
     public static void tidyHammerstones(net.minecraft.server.level.ServerPlayer player) {
-        var inventory = player.getInventory();
-        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (stack.is(ModItems.HAMMERSTONE.get()) && of(stack) == CHERT) {
-                inventory.setItem(slot, new ItemStack(ModItems.CHERT_HAMMERSTONE.get(), stack.getCount()));
-            }
-        }
+        tidy(player.getInventory());
     }
 
     /** Marks a tool made from this piece of stone. */

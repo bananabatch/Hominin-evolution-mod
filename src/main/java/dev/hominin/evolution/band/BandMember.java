@@ -3806,6 +3806,15 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         MemberSurvival.tick(this);
         if ((tickCount + getId()) % 100 == 0) {
             ((Pack) inventory).dropOverflow();
+            // Stone tools with no stone marked get one, as a player's do.
+            dev.hominin.evolution.item.StoneMaterial.tidy(inventory);
+            for (EquipmentSlot hand : new EquipmentSlot[] {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
+                ItemStack held = getItemBySlot(hand);
+                ItemStack kept = dev.hominin.evolution.item.StoneMaterial.tidy(held);
+                if (kept != held) {
+                    setItemSlot(hand, kept);
+                }
+            }
         }
         if (tickCount == 1) {
             ensureName();

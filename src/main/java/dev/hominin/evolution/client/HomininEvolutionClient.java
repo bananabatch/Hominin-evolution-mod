@@ -60,6 +60,10 @@ public class HomininEvolutionClient {
                 net.minecraft.client.renderer.item.ItemProperties.register(item.get(), material,
                         (stack, level, entity, seed) -> {
                             Integer stone = stack.get(dev.hominin.evolution.ModDataComponents.MATERIAL.get());
+                            if (stone == null && dev.hominin.evolution.item.StoneMaterial.isStoneTool(stack)) {
+                                // No stone marked yet: plain rock, drawn as the quartzite it is.
+                                stone = dev.hominin.evolution.item.StoneMaterial.plain().ordinal();
+                            }
                             return stone == null ? 0.0F : (stone + 1) / 10.0F;
                         });
             }

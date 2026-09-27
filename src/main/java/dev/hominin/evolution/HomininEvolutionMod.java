@@ -63,6 +63,28 @@ public class HomininEvolutionMod {
                 event.setCanceled(true);
             }
         });
+        // No stone tool without a stone: one lying on the ground, or in a chest opened, is marked as it is found.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) -> {
+            if (!event.getLevel().isClientSide()
+                    && event.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity item) {
+                net.minecraft.world.item.ItemStack stack = item.getItem();
+                net.minecraft.world.item.ItemStack kept = dev.hominin.evolution.item.StoneMaterial.tidy(stack);
+                if (kept != stack) {
+                    item.setItem(kept);
+                }
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerContainerEvent.Open event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer) {
+                for (net.minecraft.world.inventory.Slot slot : event.getContainer().slots) {
+                    net.minecraft.world.item.ItemStack stack = slot.getItem();
+                    net.minecraft.world.item.ItemStack kept = dev.hominin.evolution.item.StoneMaterial.tidy(stack);
+                    if (kept != stack) {
+                        slot.set(kept);
+                    }
+                }
+            }
+        });
         // A closed world takes everything held in memory about it along with it.
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> ServerState.clear());
         NeoForge.EVENT_BUS.addListener(dev.hominin.evolution.build.Building::onWakeUp);
