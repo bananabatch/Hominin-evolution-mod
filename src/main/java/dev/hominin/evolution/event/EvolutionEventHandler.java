@@ -1040,6 +1040,7 @@ public final class EvolutionEventHandler {
             dev.hominin.evolution.survival.Afflictions.forget(playerId);
             Thinking.forget(leaving);
             Arrival.forget(leaving);
+            dev.hominin.evolution.knapping.KnapShow.forget(leaving);
             dev.hominin.evolution.survival.Seasons.forget(playerId);
             dev.hominin.evolution.band.Lines.forget(playerId);
         }
@@ -1127,6 +1128,7 @@ public final class EvolutionEventHandler {
         if (entity instanceof ServerPlayer dead) {
             // However you died, the disease died with you.
             dev.hominin.evolution.survival.Kuru.clear(dead);
+            dev.hominin.evolution.knapping.KnapShow.forget(dead);
             dev.hominin.evolution.survival.FoodIllness.cure(dead);
             dev.hominin.evolution.band.Mating.clearPregnancy(dead);
         }
@@ -1397,6 +1399,7 @@ public final class EvolutionEventHandler {
             return;
         }
         Arrival.tick(player);
+        dev.hominin.evolution.knapping.KnapShow.tick(player);
         dev.hominin.evolution.band.Panic.tick(player);
         dev.hominin.evolution.survival.Thirst.tick(player);
         dev.hominin.evolution.survival.FoodIllness.tick(player);

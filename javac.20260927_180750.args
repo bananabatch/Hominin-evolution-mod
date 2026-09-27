@@ -1,0 +1,15 @@
+-proc:none
+-Xmaxerrs
+100000
+-d
+/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/jc
+-sourcepath
+src/main/java
+src/main/java/dev/hominin/evolution/block/KnappingStationBlock.java
+src/main/java/dev/hominin/evolution/block/KnappingStationBlockEntity.java
+src/main/java/dev/hominin/evolution/client/HomininEvolutionClient.java
+src/main/java/dev/hominin/evolution/event/EvolutionEventHandler.java
+src/main/java/dev/hominin/evolution/knapping/KnappingStationMenu.java
+src/main/java/dev/hominin/evolution/network/KnappingChoicePayload.java
+src/main/java/dev/hominin/evolution/client/KnappingStationRenderer.java
+src/main/java/dev/hominin/evolution/knapping/KnapShow.java

@@ -10,7 +10,7 @@
     "granite": "hominin_evolution:block/granite_rock",
     "chert": "hominin_evolution:block/chert_rock",
     "lime": "hominin_evolution:block/limestone_rock",
-    "particle": "hominin_evolution:block/knapping_anvil_side"
+    "particle": "hominin_evolution:block/knapping_mat"
   },
   "elements": [
     {
@@ -42,38 +42,6 @@
         },
         "down": {
           "texture": "#mat"
-        }
-      }
-    },
-    {
-      "from": [
-        4.5,
-        1,
-        4.5
-      ],
-      "to": [
-        11.5,
-        5,
-        11.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#anvil"
-        },
-        "south": {
-          "texture": "#anvil"
-        },
-        "east": {
-          "texture": "#anvil"
-        },
-        "west": {
-          "texture": "#anvil"
-        },
-        "up": {
-          "texture": "#anvil_top"
-        },
-        "down": {
-          "texture": "#anvil"
         }
       }
     },

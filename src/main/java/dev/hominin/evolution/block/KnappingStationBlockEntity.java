@@ -40,8 +40,39 @@ public class KnappingStationBlockEntity extends BlockEntity {
         }
     };
 
+    /** What is shown out on the mat while someone works: the stone about to be struck, then the tool it became. */
+    private ItemStack display = ItemStack.EMPTY;
+    private boolean displayMade;
+    /** Taken up in the hand for a moment: shown off the mat. */
+    private boolean hammerOut;
+    private boolean boneOut;
+
     public KnappingStationBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.KNAPPING_STATION.get(), pos, state);
+    }
+
+    public ItemStack display() {
+        return display;
+    }
+
+    public boolean displayMade() {
+        return displayMade;
+    }
+
+    /** Lays a stone out on the mat to be worked - or, made, the tool it became; empty clears it. */
+    public void setDisplay(ItemStack stack, boolean made) {
+        display = stack.copyWithCount(Math.min(1, stack.getCount()));
+        displayMade = made && !stack.isEmpty();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    /** The hammerstone or the bone taken up off the mat into someone's hand - or both put back. */
+    public void lift(boolean hammer, boolean bone) {
+        hammerOut = hammer;
+        boneOut = bone;
+        refreshLook();
     }
 
     public SimpleContainer items() {
@@ -89,8 +120,8 @@ public class KnappingStationBlockEntity extends BlockEntity {
         int stones = stoneCount();
         int pile = stones == 0 ? 0 : stones <= 8 ? 1 : stones <= 24 ? 2 : 3;
         BlockState shown = state
-                .setValue(KnappingStationBlock.HAMMER, !items.getItem(HAMMER).isEmpty())
-                .setValue(KnappingStationBlock.BOPPER, !items.getItem(BOPPER).isEmpty())
+                .setValue(KnappingStationBlock.HAMMER, !items.getItem(HAMMER).isEmpty() && !hammerOut)
+                .setValue(KnappingStationBlock.BOPPER, !items.getItem(BOPPER).isEmpty() && !boneOut)
                 .setValue(KnappingStationBlock.STONES, pile);
         if (shown != state) {
             level.setBlock(worldPosition, shown, 3);
@@ -105,6 +136,38 @@ public class KnappingStationBlockEntity extends BlockEntity {
             list.set(slot, items.getItem(slot));
         }
         ContainerHelper.saveAllItems(tag, list, registries);
+    }
+
+    /** Only what is shown out on the mat goes to the client: the contents are the menu's business. */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        if (!display.isEmpty()) {
+            tag.put("Display", display.save(registries));
+            tag.putBoolean("Made", displayMade);
+        }
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+        readDisplay(tag, registries);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection connection,
+            net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet, HolderLookup.Provider registries) {
+        readDisplay(packet.getTag(), registries);
+    }
+
+    private void readDisplay(CompoundTag tag, HolderLookup.Provider registries) {
+        display = tag.contains("Display") ? ItemStack.parseOptional(registries, tag.getCompound("Display")) : ItemStack.EMPTY;
+        displayMade = tag.getBoolean("Made");
     }
 
     @Override

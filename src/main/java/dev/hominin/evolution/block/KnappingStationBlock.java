@@ -43,7 +43,7 @@ public class KnappingStationBlock extends HorizontalDirectionalBlock implements 
     /** 0 (none) to 3 (a heap). */
     public static final IntegerProperty STONES = IntegerProperty.create("stones", 0, 3);
     private static final Component TITLE = Component.literal("Knapping Station");
-    private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 6.0, 16.0);
+    private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0);
 
     public KnappingStationBlock(Properties properties) {
         super(properties);

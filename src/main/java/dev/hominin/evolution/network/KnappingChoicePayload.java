@@ -22,7 +22,7 @@ public record KnappingChoicePayload(int choice) implements CustomPacketPayload {
 
     public static void handle(KnappingChoicePayload payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer player) {
-            Knapping.resolve(player, KnappingChoice.byId(payload.choice()));
+            dev.hominin.evolution.knapping.KnapShow.beginHand(player, KnappingChoice.byId(payload.choice()));
         }
     }
 

@@ -135,7 +135,12 @@ public class KnappingStationMenu extends AbstractContainerMenu {
     public boolean clickMenuButton(Player player, int id) {
         KnappingChoice choice = KnappingChoice.byId(id);
         if (choice != null && player instanceof ServerPlayer server) {
-            StationKnapping.knap(server, station, choice, pos);
+            // Worked with the hands, and watched: the screen closes, and the stone is knapped over a few seconds.
+            if (server.serverLevel().getBlockEntity(pos) instanceof dev.hominin.evolution.block.KnappingStationBlockEntity be) {
+                KnapShow.beginStation(server, be, choice);
+            } else {
+                StationKnapping.knap(server, station, choice, pos);
+            }
         }
         return choice != null;
     }

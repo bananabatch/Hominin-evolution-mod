@@ -1,0 +1,239 @@
+{
+  "version": 3,
+  "name": "station_smash",
+  "description": "At the knapping station: the hammerstone in both hands, raised and brought down on the stone",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 30,
+    "stopTick": 34,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -26,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0223,
+          "z": -0.1467
+        },
+        "head": {
+          "pitch": 48,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -20,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -20,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 4,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -16,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0137,
+          "z": -0.0903
+        },
+        "head": {
+          "pitch": 20,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -150,
+          "yaw": 18,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -150,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 10,
+        "easing": "easeInQuad",
+        "body": {
+          "pitch": -32,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0274,
+          "z": -0.1806
+        },
+        "head": {
+          "pitch": 48,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -44,
+          "yaw": 20,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -44,
+          "yaw": -20,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 18,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -16,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0137,
+          "z": -0.0903
+        },
+        "head": {
+          "pitch": 20,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -150,
+          "yaw": 18,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -150,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 24,
+        "easing": "easeInQuad",
+        "body": {
+          "pitch": -32,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0274,
+          "z": -0.1806
+        },
+        "head": {
+          "pitch": 48,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -44,
+          "yaw": 20,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -44,
+          "yaw": -20,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 30,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -26,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0223,
+          "z": -0.1467
+        },
+        "head": {
+          "pitch": 48,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -44,
+          "yaw": 20,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -44,
+          "yaw": -20,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

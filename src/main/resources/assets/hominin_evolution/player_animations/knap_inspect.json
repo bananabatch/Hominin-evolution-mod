@@ -1,0 +1,202 @@
+{
+  "version": 3,
+  "name": "knap_inspect",
+  "description": "Looking over a tool just knapped: raised before the face and turned in the hand",
+  "author": "Hominin Evolution",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 30,
+    "stopTick": 34,
+    "isLoop": false,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": false,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -8,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0069,
+          "z": -0.0451
+        },
+        "head": {
+          "pitch": 32,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -52,
+          "yaw": 14,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -60,
+          "yaw": -6,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 7,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0017,
+          "z": -0.0113
+        },
+        "head": {
+          "pitch": 4,
+          "yaw": -14,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -84,
+          "yaw": -24,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": 0,
+          "roll": -4
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 15,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0017,
+          "z": -0.0113
+        },
+        "head": {
+          "pitch": 6,
+          "yaw": -18,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -84,
+          "yaw": -24,
+          "roll": -28
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": 0,
+          "roll": -4
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 23,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0017,
+          "z": -0.0113
+        },
+        "head": {
+          "pitch": 6,
+          "yaw": -12,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -84,
+          "yaw": -24,
+          "roll": 22
+        },
+        "leftArm": {
+          "pitch": -10,
+          "yaw": 0,
+          "roll": -4
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      },
+      {
+        "tick": 30,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0.0,
+          "y": -0.0,
+          "z": -0.0
+        },
+        "head": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftArm": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "leftLeg": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        }
+      }
+    ]
+  }
+}

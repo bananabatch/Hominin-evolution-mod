@@ -130,6 +130,8 @@ public class HomininEvolutionClient {
             event.registerEntityRenderer(ModEntities.THROWN_TORCH.get(), ThrownItemRenderer::new);
             event.registerEntityRenderer(ModEntities.THROWN_SPEAR.get(), ThrownSpearRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.FIRE_PIT.get(), FirePitRenderer::new);
+            event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.KNAPPING_STATION.get(),
+                    KnappingStationRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.TOOL_PILE.get(), ToolPileRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.TOOL_RACK.get(), ToolRackRenderer::new);
             event.registerBlockEntityRenderer(dev.hominin.evolution.ModBlockEntities.COOKING_SPIT.get(),
