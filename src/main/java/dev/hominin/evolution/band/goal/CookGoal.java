@@ -126,6 +126,14 @@ public class CookGoal extends Goal {
                 item -> Cooking.isCooked(item.getItem()));
         if (!done.isEmpty()) {
             ItemEntity nearest = done.get(0);
+            if (BandMember.burningAt(level, nearest.blockPosition())
+                    || BandMember.burningAt(level, nearest.blockPosition().below())) {
+                // Rolled into the fire: raked out with a stick from the edge, not fetched by walking into it.
+                member.swing(InteractionHand.MAIN_HAND);
+                member.addToInventory(nearest.getItem().copy());
+                nearest.discard();
+                return;
+            }
             member.getNavigation().moveTo(nearest, 1.0D);
             return;
         }

@@ -1,0 +1,11 @@
+-proc:none
+-Xmaxerrs
+100000
+-d
+/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/jc
+-sourcepath
+src/main/java
+src/main/java/dev/hominin/evolution/band/Band.java
+src/main/java/dev/hominin/evolution/band/BandMember.java
+src/main/java/dev/hominin/evolution/band/goal/CookGoal.java
+src/main/java/dev/hominin/evolution/band/goal/GatherItemsGoal.java

@@ -985,10 +985,11 @@ public final class Band {
         return Math.abs(y - center.getY()) > 4 ? null : new BlockPos(x, y, z);
     }
 
-    /** Somewhere to stand: no water here or underfoot, and ground under it. */
+    /** Somewhere to stand: no water here or underfoot, ground under it, and nothing burning there. */
     public static boolean dry(ServerLevel level, BlockPos pos) {
         return level.getFluidState(pos).isEmpty() && level.getFluidState(pos.below()).isEmpty()
-                && !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty();
+                && !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty()
+                && !BandMember.burningAt(level, pos) && !BandMember.burningAt(level, pos.below());
     }
 
     /**

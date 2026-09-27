@@ -39,6 +39,9 @@ public class GatherItemsGoal extends Goal {
         List<ItemEntity> items = member.level().getEntitiesOfClass(ItemEntity.class,
                 member.getBoundingBox().inflate(SEARCH_RADIUS, 3.0D, SEARCH_RADIUS),
                 item -> item.isAlive() && !item.hasPickUpDelay() && member.wantsToPickUp(item.getItem())
+                        // Nothing lying in a fire is worth walking into it for.
+                        && !BandMember.burningAt(member.level(), item.blockPosition())
+                        && !BandMember.burningAt(member.level(), item.blockPosition().below())
                         && (leader == null || item.distanceToSqr(leader) < LEADER_TETHER * LEADER_TETHER));
         target = null;
         double best = Double.MAX_VALUE;

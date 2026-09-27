@@ -3772,7 +3772,19 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     // ------------------------------------------------------------ lava
 
     private static boolean lavaAt(Level level, BlockPos pos) {
-        return level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA);
+        return level.getFluidState(pos).is(net.minecraft.tags.FluidTags.LAVA) || burningAt(level, pos);
+    }
+
+    /**
+     * Anything burning a body walks into: fire, a lit campfire, a lit fire pit, a magma block. Kept out of exactly as
+     * lava is - whatever was leading them there, a cooked piece of meat rolled into the flames included.
+     */
+    public static boolean burningAt(net.minecraft.world.level.BlockGetter level, BlockPos pos) {
+        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+        return state.is(net.minecraft.tags.BlockTags.FIRE) || state.is(net.minecraft.world.level.block.Blocks.MAGMA_BLOCK)
+                || net.minecraft.world.level.block.CampfireBlock.isLitCampfire(state)
+                || state.is(dev.hominin.evolution.ModBlocks.FIRE_PIT.get())
+                        && state.getValue(dev.hominin.evolution.block.FirePitBlock.LIT);
     }
 
     /**
@@ -3783,7 +3795,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
      */
     private void keepOutOfLava() {
         Level level = level();
-        if (isInLava()) {
+        if (isInLava() || burningAt(level, blockPosition()) || burningAt(level, blockPosition().below())
+                && getY() - blockPosition().getY() < 0.05D) {
             escapeLava(level);
             return;
         }
