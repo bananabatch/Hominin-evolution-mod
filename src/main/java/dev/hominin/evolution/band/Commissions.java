@@ -270,6 +270,8 @@ public final class Commissions {
             return;
         }
         if (now < workUntil) {
+            ItemStack stone = member.findCarried(dev.hominin.evolution.band.Wants::isGoodStone);
+            MemberKnapping.inHands(member, (int) (now % 3200L), stone == null ? ItemStack.EMPTY : stone);
             if (now % 60 < 20) {
                 member.swing(InteractionHand.MAIN_HAND);
                 member.level().playSound(null, member.blockPosition(), SoundEvents.STONE_HIT, SoundSource.NEUTRAL,
@@ -285,6 +287,7 @@ public final class Commissions {
         if (tool.isEmpty()) {
             return;
         }
+        MemberKnapping.made(member, tool);
         member.setCommission(new CompoundTag());
         String made = tool.getItem() instanceof AcheuleanToolItem
                 ? AcheuleanToolItem.TIER_NAMES[AcheuleanToolItem.qualityOf(tool)].toLowerCase() + " " + KIND_NAMES[kind]

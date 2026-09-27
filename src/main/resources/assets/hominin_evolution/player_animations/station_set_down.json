@@ -16,26 +16,26 @@
         "tick": 0,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -26,
+          "pitch": 0,
           "yaw": 0,
           "roll": 0,
           "x": 0.0,
-          "y": -0.0223,
-          "z": -0.1467
+          "y": 0.0,
+          "z": 0.0
         },
         "head": {
-          "pitch": 48,
+          "pitch": 52,
           "yaw": 0,
           "roll": 0
         },
         "rightArm": {
           "pitch": -40,
-          "yaw": 10,
+          "yaw": -14,
           "roll": 0
         },
         "leftArm": {
-          "pitch": -34,
-          "yaw": -22,
+          "pitch": -30,
+          "yaw": 24,
           "roll": 0
         },
         "rightLeg": {
@@ -53,26 +53,26 @@
         "tick": 3,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -26,
+          "pitch": 0,
           "yaw": 0,
           "roll": 0,
           "x": 0.0,
-          "y": -0.0223,
-          "z": -0.1467
+          "y": 0.0,
+          "z": 0.0
         },
         "head": {
-          "pitch": 40,
-          "yaw": 20,
+          "pitch": 44,
+          "yaw": 22,
           "roll": 0
         },
         "rightArm": {
-          "pitch": -30,
-          "yaw": 40,
+          "pitch": -26,
+          "yaw": 30,
           "roll": 0
         },
         "leftArm": {
           "pitch": -20,
-          "yaw": -10,
+          "yaw": 10,
           "roll": 0
         },
         "rightLeg": {
@@ -90,26 +90,26 @@
         "tick": 6,
         "easing": "easeInOutSine",
         "body": {
-          "pitch": -26,
+          "pitch": 0,
           "yaw": 0,
           "roll": 0,
           "x": 0.0,
-          "y": -0.0223,
-          "z": -0.1467
+          "y": 0.0,
+          "z": 0.0
         },
         "head": {
-          "pitch": 48,
+          "pitch": 52,
           "yaw": 0,
           "roll": 0
         },
         "rightArm": {
-          "pitch": -20,
-          "yaw": 0,
+          "pitch": -24,
+          "yaw": -14,
           "roll": 0
         },
         "leftArm": {
-          "pitch": -20,
-          "yaw": 0,
+          "pitch": -24,
+          "yaw": 14,
           "roll": 0
         },
         "rightLeg": {

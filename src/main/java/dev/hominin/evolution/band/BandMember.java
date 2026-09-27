@@ -83,6 +83,14 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
     /** Synced for the climbing animation: hauling itself up a wall or cliff. */
     private static final EntityDataAccessor<Boolean> WALL_CLIMBING =
             SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.BOOLEAN);
+    /** A worked gesture, played as the player's own animation - knapping in the hands, or at a station. */
+    private static final EntityDataAccessor<String> GESTURE =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.STRING);
+    /** What is shown in the hands while it plays. Only shown: what they really hold is untouched. */
+    private static final EntityDataAccessor<ItemStack> GESTURE_MAIN =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> GESTURE_OFF =
+            SynchedEntityData.defineId(BandMember.class, EntityDataSerializers.ITEM_STACK);
 
     /** Entity event: play the threat display animation on clients. */
     public static final byte DISPLAY_EVENT = 64;
@@ -368,6 +376,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
 
     /** Client only: tick the last display started, for the animation. */
     public int clientDisplayStart = -1000;
+    /** When, on this client, the gesture now playing began. */
+    public int clientGestureStart;
+    private int gestureUntil;
 
     public BandMember(EntityType<? extends BandMember> type, Level level) {
         super(type, level);
@@ -402,6 +413,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         builder.define(CLIMBING, false);
         builder.define(WILD, false);
         builder.define(WALL_CLIMBING, false);
+        builder.define(GESTURE, "");
+        builder.define(GESTURE_MAIN, ItemStack.EMPTY);
+        builder.define(GESTURE_OFF, ItemStack.EMPTY);
         builder.define(GRIEVING, false);
     }
 
@@ -1651,6 +1665,56 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         if (BABY.equals(key)) {
             refreshDimensions();
         }
+        if (GESTURE.equals(key)) {
+            clientGestureStart = tickCount;
+        }
+    }
+
+    // ------------------------------------------------------------ gestures: knapping, as the player does it
+
+    /**
+     * Plays one of the player's animations on this member - the name of the file - for this long, with these shown in
+     * its hands. The same name again carries it on without starting it over. A station's work is done crouched.
+     */
+    public void gesture(String name, int length, ItemStack main, ItemStack off) {
+        if (!name.equals(entityData.get(GESTURE))) {
+            entityData.set(GESTURE, name);
+        }
+        entityData.set(GESTURE_MAIN, main.isEmpty() ? ItemStack.EMPTY : main.copyWithCount(1));
+        entityData.set(GESTURE_OFF, off.isEmpty() ? ItemStack.EMPTY : off.copyWithCount(1));
+        gestureUntil = tickCount + length;
+        net.minecraft.world.entity.Pose wanted = name.startsWith("station_") ? net.minecraft.world.entity.Pose.CROUCHING
+                : net.minecraft.world.entity.Pose.STANDING;
+        if (getPose() != wanted && !isSleeping()) {
+            setPose(wanted);
+        }
+    }
+
+    public void clearGesture() {
+        if (entityData.get(GESTURE).isEmpty()) {
+            return;
+        }
+        entityData.set(GESTURE, "");
+        entityData.set(GESTURE_MAIN, ItemStack.EMPTY);
+        entityData.set(GESTURE_OFF, ItemStack.EMPTY);
+        if (getPose() == net.minecraft.world.entity.Pose.CROUCHING) {
+            setPose(net.minecraft.world.entity.Pose.STANDING);
+        }
+    }
+
+    /** The gesture playing, or "" for none. */
+    public String gestureName() {
+        return entityData.get(GESTURE);
+    }
+
+    /** While a gesture plays, the hands show what it shows - on the client only, where it is drawn. */
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        if (level().isClientSide() && (slot == EquipmentSlot.MAINHAND || slot == EquipmentSlot.OFFHAND)
+                && !entityData.get(GESTURE).isEmpty()) {
+            return entityData.get(slot == EquipmentSlot.MAINHAND ? GESTURE_MAIN : GESTURE_OFF);
+        }
+        return super.getItemBySlot(slot);
     }
 
     /** Ticks until the birth; zero if not expecting. */
@@ -3804,6 +3868,9 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
         keepOutOfLava();
         dev.hominin.evolution.survival.Diseases.tick(this);
         MemberSurvival.tick(this);
+        if (tickCount >= gestureUntil && !entityData.get(GESTURE).isEmpty()) {
+            clearGesture();
+        }
         if ((tickCount + getId()) % 100 == 0) {
             ((Pack) inventory).dropOverflow();
             // Stone tools with no stone marked get one, as a player's do.

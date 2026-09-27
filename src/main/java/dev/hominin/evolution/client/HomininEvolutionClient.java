@@ -22,6 +22,7 @@ public class HomininEvolutionClient {
         // Each bleeding tier draws its own icon.
         modEventBus.addListener(BleedingIcons::register);
         NeoForge.EVENT_BUS.addListener(ClientInputHandler::onRightClickEmpty);
+        NeoForge.EVENT_BUS.addListener(KnapCrouch::onMovementInput);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ToolPlacing::onLeftClickBlock);
         NeoForge.EVENT_BUS.addListener(BuildPlanner::onRenderLevel);

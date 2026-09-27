@@ -113,9 +113,19 @@ public class CraftGoal extends Goal {
         nextTry = member.tickCount + MIN_COOLDOWN + member.getRandom().nextInt(COOLDOWN_SPREAD);
     }
 
+    /** Plans worked in stone: knapped in the hands, and seen to be. */
+    private boolean knapped() {
+        return plan == Plan.FLAKE || plan == Plan.CHOPPER || plan == Plan.MULTITOOL || plan == Plan.HAND_AXE
+                || plan == Plan.GRINDING_STONE;
+    }
+
     @Override
     public void tick() {
         member.getNavigation().stop();
+        if (knapped()) {
+            ItemStack stone = find(s -> s.is(ModTags.Items.KNAPPABLE_STONE) || s.is(ModTags.Items.ROCKS));
+            dev.hominin.evolution.band.MemberKnapping.inHands(member, working, stone == null ? ItemStack.EMPTY : stone);
+        }
         if (++working % 12 == 0) {
             member.swing(working % 24 == 0 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
             SoundEvent sound = plan == Plan.POINTY_STICK || plan == Plan.SPEAR || plan == Plan.DIGGING_STICK
@@ -292,7 +302,12 @@ public class CraftGoal extends Goal {
 
     /** Makes the thing, and tells the leader - in one of several ways, never the same twice running. */
     private void make(Item item, String kind) {
-        member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(item), worked));
+        ItemStack made = dev.hominin.evolution.item.StoneMaterial.stamp(new ItemStack(item), worked);
+        if (knapped()) {
+            // Held up and looked over, as you look over yours.
+            dev.hominin.evolution.band.MemberKnapping.made(member, made);
+        }
+        member.addToInventory(made);
         dev.hominin.evolution.band.Lines.announce(member, kind);
         Band.contribute(member, "craft_oldowan_tools");
     }

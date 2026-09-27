@@ -281,6 +281,12 @@ public class ErectusCraftGoal extends Goal {
             }
         }
         member.getNavigation().stop();
+        if (job == Job.CLEAVER) {
+            // At the knapping station, crouched over it: the bone first, then the hammerstone in both hands.
+            ItemStack stone = member.findCarried(dev.hominin.evolution.band.Wants::isGoodStone);
+            dev.hominin.evolution.band.MemberKnapping.atStation(member, working, WORK_TICKS,
+                    stone == null ? ItemStack.EMPTY : stone);
+        }
         if (++working % 12 == 0) {
             member.swing(working % 24 == 0 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
             SoundEvent sound = switch (job) {
@@ -363,8 +369,10 @@ public class ErectusCraftGoal extends Goal {
                 member.takeFirst(s -> s.is(kind.getItem()));
                 int quality = dev.hominin.evolution.band.Species.capQuality(member.getStage(),
                         dev.hominin.evolution.knapping.Acheulean.rollQuality(member.getKnapLevel(), kind, member.getRandom()));
-                member.addToInventory(dev.hominin.evolution.item.StoneMaterial.stampFrom(
-                        ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(quality), kind));
+                ItemStack cleaver = dev.hominin.evolution.item.StoneMaterial.stampFrom(
+                        ((dev.hominin.evolution.item.AcheuleanToolItem) ModItems.CLEAVER.get()).make(quality), kind);
+                dev.hominin.evolution.band.MemberKnapping.made(member, cleaver);
+                member.addToInventory(cleaver);
                 member.practiseKnapping();
                 Lines.announce(member, "craft_cleaver",
                         dev.hominin.evolution.item.AcheuleanToolItem.TIER_NAMES[quality].toLowerCase(), quality);

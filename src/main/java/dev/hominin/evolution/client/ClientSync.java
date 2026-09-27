@@ -56,6 +56,10 @@ public final class ClientSync {
         }
         if (mc.level.getEntity(entityId) instanceof AbstractClientPlayer player) {
             BodyAnimationHandler.playOnce(player, animation);
+            if (player == mc.player && animation.startsWith("station_")) {
+                // Down over the station's mat for the work: the camera crouches with you.
+                KnapCrouch.hold();
+            }
         }
     }
 

@@ -94,6 +94,15 @@ public class BandMemberModel extends PlayerModel<BandMember> {
         if (member.isGrieving()) {
             return at(GRIEVE, ageInTicks);
         }
+        String gesture = member.gestureName();
+        if (!gesture.isEmpty()) {
+            // Knapping, as the player does it - played over for as long as the work lasts.
+            KeyframeAnimations.Animation animation = KeyframeAnimations.get(id(gesture));
+            if (animation != null) {
+                float since = Math.max(0.0F, ageInTicks - member.clientGestureStart);
+                return new Playing(animation, animation.length() > 0 ? since % animation.length() : since);
+            }
+        }
         int sinceDisplay = member.tickCount - member.clientDisplayStart;
         if (sinceDisplay >= 0 && sinceDisplay < DISPLAY_TICKS) {
             return at(DISPLAY, sinceDisplay + ageInTicks - member.tickCount);

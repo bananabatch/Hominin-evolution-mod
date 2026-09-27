@@ -110,6 +110,8 @@ public class TinkerGoal extends Goal {
             return;
         }
         member.getNavigation().stop();
+        ItemStack stone = member.findCarried(TinkerGoal::isStone);
+        dev.hominin.evolution.band.MemberKnapping.inHands(member, knapping, stone == null ? ItemStack.EMPTY : stone);
         if (++knapping % 10 == 0) {
             member.swing(knapping % 20 == 0 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
             member.level().playSound(null, member.blockPosition(), SoundEvents.STONE_HIT, SoundSource.NEUTRAL,
@@ -165,6 +167,7 @@ public class TinkerGoal extends Goal {
             made = roll < 0.5F ? ModItems.FLAKE.get() : roll < 0.75F ? ModItems.CHOPPER.get() : ModItems.LOMEKWIAN_TOOL.get();
         }
         ItemStack tool = new ItemStack(made);
+        dev.hominin.evolution.band.MemberKnapping.made(member, tool);
         member.addToInventory(tool.copy());
         dev.hominin.evolution.band.Lines.announce(member, "tinker_made", tool.getHoverName().getString());
         knapping = 0;
