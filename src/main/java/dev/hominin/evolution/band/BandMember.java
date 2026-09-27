@@ -415,7 +415,8 @@ public class BandMember extends PathfinderMob implements InventoryCarrier {
                 dev.hominin.evolution.entity.Dinopithecus.class, 10.0F, 1.1D, 1.4D,
                 giant -> getTarget() != giant && !isHunting()));
         goalSelector.addGoal(1, new FleeToTreeGoal(this));
-        goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.DrinkGoal(this));
+        // Ahead of the fighting and guiding goals: a member dying of thirst, or bleeding out, goes for water.
+        goalSelector.addGoal(1, new dev.hominin.evolution.band.goal.DrinkGoal(this));
         goalSelector.addGoal(2, new ArmedMeleeGoal(this, 1.25D));
         goalSelector.addGoal(2, new dev.hominin.evolution.band.goal.GuideGoal(this));
         goalSelector.addGoal(1, new dev.hominin.evolution.band.goal.LabourGoal(this));

@@ -1325,6 +1325,10 @@ public final class Band {
             if (member.isSleeping() || member.isTurnedIn()) {
                 continue;
             }
+            // Gone for water it badly needs: left to get there, not lifted back.
+            if (dev.hominin.evolution.band.goal.DrinkGoal.seeking(member)) {
+                continue;
+            }
             if (!member.isOnExcursion() && member.distanceToSqr(player) > LOST_DISTANCE * LOST_DISTANCE) {
                 BlockPos pos = standingSpotNear(level, player.blockPosition(), member.getRandom().nextInt(3) + 2,
                         member.getRandom().nextFloat() * Mth.TWO_PI);
