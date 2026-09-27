@@ -47,6 +47,8 @@ public final class Intermission {
     /** Time left for a co-leader asked whether to split, however late in the intermission it comes. */
     private static final long SPLIT_ANSWER = 10 * 20L;
     private static final long ASK_AGAIN = 10 * 20L;
+    /** How close to the evolving band another player must be to be carried along with it. */
+    private static final double CARRY = 200.0D;
 
     private static final int WITH_BAND = 0;
     private static final int SPLIT = 1;
@@ -411,6 +413,10 @@ public final class Intermission {
         if (s.branch) {
             Lineage.chosen(evolver, leaderRoute);
         }
+        // Where the band stood as it evolved: anyone else within this far is carried along with it.
+        net.minecraft.world.phys.Vec3 bandWasAt = evolver.position();
+        net.minecraft.world.level.Level bandLevel = evolver.level();
+        Set<UUID> carried = new HashSet<>();
         StageDefinition before = StageRegistry.get(stageOf(evolver));
         int fromYears = before != null ? before.yearsAgo() : 0;
         StageDefinition worldInto = StageRegistry.get(s.into);
@@ -452,13 +458,17 @@ public final class Intermission {
                 EvolutionManager.become(one, s.into);
                 continue;
             }
+            // Close by - within 200 blocks of the band as it evolved - they are carried along with it. Further off,
+            // they are somewhere else in the world, and stay there.
+            boolean near = one.level() == bandLevel && one.position().distanceToSqr(bandWasAt) <= CARRY * CARRY;
             ResourceLocation bump = bumpTarget(one, s.into);
             if (bump == null) {
-                // Not behind: they stay what they are - but nobody is left behind in an age that has passed. The
-                // same deep time goes by for them, and they wake near the band that evolved, with their own.
+                // Not behind: they stay what they are - but nobody near is left behind in an age that has passed.
+                // The same deep time goes by for them, and they wake near the band that evolved, with their own.
                 StageDefinition theirs = StageRegistry.get(stageOf(one));
-                if (theirs != null && worldInto != null) {
+                if (near && theirs != null && worldInto != null) {
                     Arrival.carryAlong(one, evolver.getUUID(), theirs, worldInto, fromYears);
+                    carried.add(one.getUUID());
                 }
                 continue;
             }
@@ -472,7 +482,7 @@ public final class Intermission {
                 }
                 Lineage.chosen(one, route);
             }
-            if (route == null || route == leaderRoute) {
+            if (near && (route == null || route == leaderRoute)) {
                 Arrival.alongside(one, evolver.getUUID());
             }
             one.sendSystemMessage(Component.literal("The world has moved on, and your band with it: "
@@ -491,7 +501,7 @@ public final class Intermission {
             if (theirs.equals(stageOf(one))) {
                 // Their band's leader was carried along without evolving: so are they, beside them.
                 StageDefinition same = StageRegistry.get(theirs);
-                if (same != null && worldInto != null && !host.getUUID().equals(s.evolver)) {
+                if (same != null && worldInto != null && carried.contains(host.getUUID())) {
                     Arrival.carryAlong(one, host.getUUID(), same, worldInto, fromYears);
                 }
                 continue;
