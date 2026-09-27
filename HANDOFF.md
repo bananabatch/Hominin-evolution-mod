@@ -3,7 +3,7 @@
 This covers everything done in one long chat session on **Hominin Evolution** (NeoForge 1.21.1, Mojang mappings).
 
 - **Branch:** everything was pushed to `claude/keen-lamport-dqsh4q`.
-- **Commits:** 39, from `aac743c` (salt textures) to `359114b` (knapping hands fix). The session started from `474942f`.
+- **Commits:** 35, from `aac743c` (salt textures) to `359114b` (knapping hands fix). The session started from `474942f`.
 - **Merge:** `git pull origin claude/keen-lamport-dqsh4q`, then `git push origin main`.
 - **FEATURES.md** was updated with every change. It is the player-facing record; this file is the developer summary.
 
