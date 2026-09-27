@@ -60,7 +60,7 @@ public final class Band {
 
     private static final double PAIR_RADIUS = 8.0D;
 
-    private static final ResourceLocation BAND_FORMED =
+    public static final ResourceLocation BAND_FORMED =
             ResourceLocation.fromNamespaceAndPath(HomininEvolutionMod.MODID, "band_formed");
 
     /** Counter under the skill prefix, so it survives evolving. Unused until erectus. */

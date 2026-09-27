@@ -234,7 +234,9 @@ public final class Newcomers extends SavedData {
     private static List<ServerPlayer> hosts(ServerPlayer player) {
         List<ServerPlayer> hosts = new ArrayList<>();
         for (ServerPlayer other : others(player)) {
-            if (hostOf(other) == null && !Band.all(other).isEmpty() && hosts.size() < 4) {
+            // Leading a band of their own: its people round them, or out of sight just now.
+            if (hostOf(other) == null && hosts.size() < 4 && (!Band.all(other).isEmpty()
+                    || other.getData(Attachments.PLAYER_EVOLUTION_DATA).getUnlockedRecipes().contains(Band.BAND_FORMED))) {
                 hosts.add(other);
             }
         }
@@ -270,10 +272,18 @@ public final class Newcomers extends SavedData {
         if (waiting == null) {
             return;
         }
-        if (value >= 0 && value < waiting.offered().size()
-                && player.server.getPlayerList().getPlayer(waiting.offered().get(value)) instanceof ServerPlayer host
-                && hostOf(host) == null && !Band.all(host).isEmpty()) {
-            walkWith(player, host);
+        if (value >= 0 && value < waiting.offered().size()) {
+            // Walking with someone: it goes through as long as they are here and still lead their own band - even
+            // with its people out of sight or not yet round them (just evolved, say). A choice that cannot go through
+            // is asked again; it never quietly turns into a band of your own far off.
+            if (player.server.getPlayerList().getPlayer(waiting.offered().get(value)) instanceof ServerPlayer host
+                    && host.level() == player.level() && hostOf(host) == null) {
+                walkWith(player, host);
+                return;
+            }
+            player.displayClientMessage(Component.literal("That band's leader is not here to walk with just now. "
+                    + "Choose again."), true);
+            asking.put(player.getUUID(), new Asking(List.of(), player.level().getGameTime() + 40L));
             return;
         }
         ownBandFarOff(player);
