@@ -65,6 +65,7 @@ public final class ClientSync {
 
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         STAGES.clear();
+        KnapHands.clear();
     }
 
     private ClientSync() {

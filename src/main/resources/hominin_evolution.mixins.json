@@ -12,7 +12,8 @@
     "SlotMixin"
   ],
   "client": [
-    "client.AbstractClientPlayerMixin"
+    "client.AbstractClientPlayerMixin",
+    "client.PlayerHeldItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

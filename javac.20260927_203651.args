@@ -1,0 +1,11 @@
+-proc:none
+-d
+/tmp/claude-0/-home-user-Hominin-evolution-mod/ad6ee10b-6a9a-5b6c-ae1c-805adda9d738/scratchpad/out
+-sourcepath
+src/main/java
+src/main/java/dev/hominin/evolution/client/ClientSync.java
+src/main/java/dev/hominin/evolution/knapping/KnapShow.java
+src/main/java/dev/hominin/evolution/network/ModNetworking.java
+src/main/java/dev/hominin/evolution/client/KnapHands.java
+src/main/java/dev/hominin/evolution/mixin/client/PlayerHeldItemMixin.java
+src/main/java/dev/hominin/evolution/network/KnapHandsPayload.java

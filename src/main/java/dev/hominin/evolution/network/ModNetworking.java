@@ -18,6 +18,7 @@ public final class ModNetworking {
         registrar.playToServer(BuildActionPayload.TYPE, BuildActionPayload.STREAM_CODEC, BuildActionPayload::handle);
         registrar.playToServer(PileActionPayload.TYPE, PileActionPayload.STREAM_CODEC, PileActionPayload::handle);
         registrar.playToClient(PilePayload.TYPE, PilePayload.STREAM_CODEC, PilePayload::handle);
+        registrar.playToClient(KnapHandsPayload.TYPE, KnapHandsPayload.STREAM_CODEC, KnapHandsPayload::handle);
         registrar.playToClient(BuildMenuPayload.TYPE, BuildMenuPayload.STREAM_CODEC, BuildMenuPayload::handle);
         registrar.playToClient(BlueprintsPayload.TYPE, BlueprintsPayload.STREAM_CODEC, BlueprintsPayload::handle);
         registrar.playToClient(SitesPayload.TYPE, SitesPayload.STREAM_CODEC, SitesPayload::handle);

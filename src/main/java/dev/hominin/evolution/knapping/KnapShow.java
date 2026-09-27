@@ -14,6 +14,7 @@ import dev.hominin.evolution.ModItems;
 import dev.hominin.evolution.ModTags;
 import dev.hominin.evolution.block.KnappingStationBlockEntity;
 import dev.hominin.evolution.network.BodyAnimationPayload;
+import dev.hominin.evolution.network.KnapHandsPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -327,13 +328,21 @@ public final class KnapShow {
     }
 
     private static void send(ServerPlayer player, ItemStack main, ItemStack off) {
-        player.serverLevel().getChunkSource().broadcastAndSend(player, new ClientboundSetEquipmentPacket(player.getId(),
+        // Everyone else sees it held. The knapper is told apart, to draw it only: the equipment packet would put it
+        // in their selected slot - a second tool in the hotbar beside the real one, and one creative mode keeps.
+        others(player, main, off);
+        PacketDistributor.sendToPlayer(player, new KnapHandsPayload(true, main.copy(), off.copy()));
+    }
+
+    private static void others(ServerPlayer player, ItemStack main, ItemStack off) {
+        player.serverLevel().getChunkSource().broadcast(player, new ClientboundSetEquipmentPacket(player.getId(),
                 List.of(Pair.of(EquipmentSlot.MAINHAND, main.copy()), Pair.of(EquipmentSlot.OFFHAND, off.copy()))));
     }
 
     /** The hands as they really are again. */
     private static void restore(ServerPlayer player) {
-        send(player, player.getMainHandItem(), player.getOffhandItem());
+        others(player, player.getMainHandItem(), player.getOffhandItem());
+        PacketDistributor.sendToPlayer(player, new KnapHandsPayload(false, ItemStack.EMPTY, ItemStack.EMPTY));
         player.inventoryMenu.sendAllDataToRemote();
     }
 
